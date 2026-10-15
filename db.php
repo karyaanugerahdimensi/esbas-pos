@@ -1823,6 +1823,44 @@ function autoMigrateAndSync($pdo) {
     )");
 }
 
+function autoMigrateMysql($pdo) {
+    // 1. Kolom default_work_shift_id pada tabel users
+    try {
+        $cols = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'default_work_shift_id'")->fetchAll();
+        if (empty($cols)) {
+            $pdo->exec("ALTER TABLE `users` ADD COLUMN `default_work_shift_id` INT DEFAULT NULL");
+            $firstShift = $pdo->query("SELECT id FROM `work_shifts` WHERE `is_day_off` = 0 ORDER BY `id` ASC LIMIT 1")->fetch();
+            if ($firstShift && !empty($firstShift['id'])) {
+                $firstShiftId = (int)$firstShift['id'];
+                $pdo->exec("UPDATE `users` SET default_work_shift_id = {$firstShiftId} WHERE role IN ('CASHIER', 'STAFF') AND default_work_shift_id IS NULL");
+            }
+        }
+    } catch (Exception $e) {}
+
+    // 2. Kolom water meter pada cashier_shifts
+    try {
+        $cols = $pdo->query("SHOW COLUMNS FROM `cashier_shifts` LIKE 'water_meter_start'")->fetchAll();
+        if (empty($cols)) {
+            $pdo->exec("ALTER TABLE `cashier_shifts` ADD COLUMN `water_meter_start` DECIMAL(12,2) DEFAULT NULL, ADD COLUMN `water_meter_end` DECIMAL(12,2) DEFAULT NULL");
+        }
+    } catch (Exception $e) {}
+
+    // 3. Tabel water_meter_logs jika belum ada
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `water_meter_logs` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `branch_id` INT NOT NULL,
+            `shift_id` INT DEFAULT NULL,
+            `user_id` INT NOT NULL,
+            `log_type` VARCHAR(20) NOT NULL,
+            `meter_value` DECIMAL(12,2) NOT NULL,
+            `photo_path` VARCHAR(255) DEFAULT NULL,
+            `notes` TEXT,
+            `recorded_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    } catch (Exception $e) {}
+}
+
 if ($dbDriver === 'mysql') {
     // Pada MySQL, jika database masih kosong dan ada esbas_pos_mysql.sql, coba inisialisasi otomatis
     try {
@@ -1834,7 +1872,8 @@ if ($dbDriver === 'mysql') {
     } catch (Exception $e) {
         // Skema tabel di-import manual via phpMyAdmin
     }
-    autoMigrateAndSync($pdo);
+    // Jalankan migrasi ringan khusus MySQL yang aman (bebas syntax error SQLite)
+    autoMigrateMysql($pdo);
 } else {
     initDatabaseSchema($pdo);
     autoMigrateAndSync($pdo);
