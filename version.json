@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.1.9",
-  "build": "20261015-12",
+  "version": "1.2.0",
+  "build": "20261015-13",
   "release_date": "2026-10-15",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.0",
+      "commit": "HEAD",
+      "date": "2026-10-15",
+      "title": "Optimalisasi Layout POS Kasir Mode Landscape Ponsel",
+      "description": "Menyesuaikan grid POS kasir agar katalog produk (kiri) dan keranjang belanja (kanan) otomatis berdampingan (side-by-side) pada layar HP mode landscape dengan pembatasan tinggi viewport responsif, scroll internal yang mulus, dan tombol checkout tetap presisi terjangkau.",
+      "rollback_command": "git checkout v1.1.9"
+    },
     {
       "version": "1.1.9",
       "commit": "HEAD",

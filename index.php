@@ -34,6 +34,44 @@ $appVersionData = getAppVersionData();
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Mobile Landscape Optimization for POS Screen (Side-by-Side Products & Cart) */
+        @media (orientation: landscape) and (max-width: 1023px) {
+            #pos-main-grid {
+                display: grid !important;
+                grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+                gap: 0.75rem !important;
+                align-items: start !important;
+            }
+            #pos-products-col {
+                grid-column: span 7 / span 7 !important;
+            }
+            #pos-cart-col {
+                grid-column: span 5 / span 5 !important;
+                height: calc(100vh - 75px) !important;
+                max-height: calc(100vh - 75px) !important;
+                position: sticky !important;
+                top: 3.5rem !important;
+                overflow-y: auto !important;
+            }
+            #products-grid {
+                max-height: calc(100vh - 170px) !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 0.5rem !important;
+            }
+            #cart-items {
+                flex: 1 1 auto !important;
+                max-height: 170px !important;
+                overflow-y: auto !important;
+                padding: 0.5rem !important;
+            }
+            header {
+                height: 3rem !important;
+            }
+            #shift-banner {
+                padding: 0.5rem 0.75rem !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-row overflow-x-hidden">
@@ -387,28 +425,28 @@ $appVersionData = getAppVersionData();
                 </div>
 
                 <!-- Main POS Responsive Grid -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <div id="pos-main-grid" class="grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-6 items-start">
                     
-                    <!-- Left: Product Catalog (7 Cols on desktop, full on mobile) -->
-                    <div class="lg:col-span-7 space-y-4">
-                        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-2.5 items-center justify-between">
-                            <div class="relative flex-1 min-w-[200px]">
-                                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-                                <input type="text" id="product-search" oninput="filterProducts()" placeholder="Cari nama produk atau SKU/Barcode..." class="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                    <!-- Left: Product Catalog (7 Cols on desktop & landscape, full on mobile portrait) -->
+                    <div id="pos-products-col" class="md:col-span-7 space-y-3 sm:space-y-4">
+                        <div class="bg-white p-2.5 sm:p-3.5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-2.5 items-center justify-between">
+                            <div class="relative flex-1 min-w-[180px]">
+                                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 sm:top-3 text-slate-400"></i>
+                                <input type="text" id="product-search" oninput="filterProducts()" placeholder="Cari nama produk atau SKU/Barcode..." class="w-full pl-9 pr-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
                             </div>
-                            <div id="category-pills" class="flex flex-wrap gap-1.5">
-                                <button onclick="setCategoryFilter('ALL')" class="cat-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white">Semua</button>
+                            <div id="category-pills" class="flex flex-wrap gap-1 sm:gap-1.5">
+                                <button onclick="setCategoryFilter('ALL')" class="cat-pill px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white">Semua</button>
                             </div>
                         </div>
 
                         <!-- Products Responsive Grid -->
-                        <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3.5 max-h-[620px] overflow-y-auto p-1">
+                        <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3.5 max-h-[620px] overflow-y-auto p-1">
                             <!-- Populated via JS -->
                         </div>
                     </div>
 
-                    <!-- Right: Cart & Checkout (5 Cols) -->
-                    <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[700px] sticky top-20">
+                    <!-- Right: Cart & Checkout (5 Cols on desktop & landscape) -->
+                    <div id="pos-cart-col" class="md:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[650px] lg:h-[700px] sticky top-16 sm:top-20">
                         <div class="p-4 border-b border-slate-100 flex items-center justify-between">
                             <div class="flex items-center space-x-2">
                                 <i data-lucide="shopping-bag" class="w-5 h-5 text-indigo-600"></i>
