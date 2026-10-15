@@ -4486,7 +4486,13 @@ try {
             list($year, $mon) = explode('-', $month);
             $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$mon, (int)$year);
 
-            $stmtEmp = $pdo->prepare("SELECT id, nik, name, role, branch_id FROM users WHERE branch_id = ? AND is_active = 1 ORDER BY id ASC");
+            $stmtEmp = $pdo->prepare("
+                SELECT id, nik, name, role, branch_id 
+                FROM users 
+                WHERE branch_id = ? AND is_active = 1 
+                  AND role NOT IN ('SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER')
+                ORDER BY id ASC
+            ");
             $stmtEmp->execute([$branchId]);
             $employees = $stmtEmp->fetchAll();
 
@@ -4499,6 +4505,7 @@ try {
                 JOIN users u ON u.id = ss.user_id
                 LEFT JOIN work_shifts ws ON ws.id = ss.work_shift_id
                 WHERE ss.branch_id = ? AND strftime('%Y-%m', ss.shift_date) = ?
+                  AND u.role NOT IN ('SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER')
                 ORDER BY ss.shift_date ASC, ss.user_id ASC
             ");
             $stmtSched->execute([$branchId, $month]);
@@ -4525,6 +4532,14 @@ try {
 
             if (!$userId || empty($shiftDate)) {
                 echo json_encode(['success' => false, 'message' => 'Karyawan dan Tanggal wajib ditentukan.']);
+                exit;
+            }
+
+            $stmtRole = $pdo->prepare("SELECT role, name FROM users WHERE id = ?");
+            $stmtRole->execute([$userId]);
+            $uRow = $stmtRole->fetch();
+            if ($uRow && in_array(strtoupper($uRow['role']), ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'])) {
+                echo json_encode(['success' => false, 'message' => "Karyawan {$uRow['name']} ({$uRow['role']}) tidak dimapping ke jadwal shift kerja (khusus staf operasional & kasir)."]);
                 exit;
             }
 
@@ -4573,6 +4588,9 @@ try {
                 $shiftsLookup[$ws['id']] = $ws;
             }
 
+            $exemptUsers = $pdo->query("SELECT id FROM users WHERE role IN ('SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER')")->fetchAll(PDO::FETCH_COLUMN);
+            $exemptMap = array_flip($exemptUsers);
+
             $pdo->beginTransaction();
             $stmtCheck = $pdo->prepare("SELECT id FROM shift_schedules WHERE user_id = ? AND shift_date = ?");
             $stmtUp = $pdo->prepare("UPDATE shift_schedules SET branch_id = ?, work_shift_id = ?, shift_name = ?, start_time = ?, end_time = ?, is_holiday = ?, notes = ? WHERE id = ?");
@@ -4587,6 +4605,8 @@ try {
                 $notes = trim($item['notes'] ?? '');
 
                 if (!$userId || empty($shiftDate)) continue;
+                // Lewati karyawan Super Admin & Branch Manager (tidak dimapping ke shift)
+                if (isset($exemptMap[$userId])) continue;
 
                 $shiftName = 'Libur / Off';
                 $startTime = '00:00';
@@ -4628,7 +4648,11 @@ try {
             $offId = $offShift ? $offShift['id'] : null;
             $offName = $offShift ? $offShift['name'] : 'Libur / Off';
 
-            $users = $pdo->prepare("SELECT id FROM users WHERE branch_id = ? AND is_active = 1");
+            $users = $pdo->prepare("
+                SELECT id FROM users 
+                WHERE branch_id = ? AND is_active = 1 
+                  AND role NOT IN ('SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER')
+            ");
             $users->execute([$branchId]);
             $userIds = $users->fetchAll(PDO::FETCH_COLUMN);
 
@@ -4676,6 +4700,7 @@ try {
                 JOIN branches b ON b.id = ss.branch_id
                 LEFT JOIN work_shifts ws ON ws.id = ss.work_shift_id
                 WHERE ss.branch_id = ? AND strftime('%Y-%m', ss.shift_date) = ?
+                  AND u.role NOT IN ('SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER')
                 ORDER BY ss.shift_date ASC, u.nik ASC
             ");
             $stmt->execute([$branchId, $month]);
@@ -4726,7 +4751,7 @@ try {
             }
 
             $userByNik = [];
-            $uStmt = $pdo->query("SELECT id, nik, name, branch_id FROM users");
+            $uStmt = $pdo->query("SELECT id, nik, name, role, branch_id FROM users");
             foreach ($uStmt->fetchAll() as $u) {
                 $userByNik[strtoupper(trim($u['nik']))] = $u;
             }
@@ -4793,6 +4818,11 @@ try {
                     continue;
                 }
                 $user = $userByNik[$nik];
+                if (in_array(strtoupper($user['role'] ?? ''), ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'])) {
+                    $errors[] = "Baris " . ($lineNum + 2) . ": Karyawan {$user['name']} ({$user['role']}) dilewati karena tidak dimapping ke jadwal shift.";
+                    $skipped++;
+                    continue;
+                }
                 $userId = $user['id'];
                 $rowBranchId = $user['branch_id'] ?: $branchId;
 
@@ -4904,6 +4934,15 @@ try {
             if ($requesterId === $targetId) {
                 echo json_encode(['success' => false, 'message' => 'Tidak dapat bertukar jadwal dengan diri sendiri.']);
                 exit;
+            }
+
+            $stmtRoles = $pdo->prepare("SELECT id, role, name FROM users WHERE id IN (?, ?)");
+            $stmtRoles->execute([$requesterId, $targetId]);
+            foreach ($stmtRoles->fetchAll() as $uInfo) {
+                if (in_array(strtoupper($uInfo['role']), ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'])) {
+                    echo json_encode(['success' => false, 'message' => "Karyawan {$uInfo['name']} ({$uInfo['role']}) tidak memiliki jadwal shift sehingga tidak dapat melakukan tukar shift."]);
+                    exit;
+                }
             }
 
             $stmtS1 = $pdo->prepare("SELECT shift_name FROM shift_schedules WHERE user_id = ? AND shift_date = ?");

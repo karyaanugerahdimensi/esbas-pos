@@ -1135,7 +1135,10 @@
                                 <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                                 <span>Muat Roster</span>
                             </button>
-                            <span class="text-[11px] text-slate-500 ml-auto">💡 Klik pada cell tanggal karyawan untuk langsung mengubah shift kerja atau menjadikannya libur.</span>
+                            <div class="w-full sm:w-auto ml-auto flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 shrink-0">Staf Operasional</span>
+                                <span>Super Admin & Branch Manager tidak dimapping ke jadwal shift.</span>
+                            </div>
                         </div>
 
                         <!-- Roster Matrix Table Container -->
@@ -10903,7 +10906,7 @@ Manager / Supervisor: __________________
             const select = document.getElementById('swap-target-user');
             if (!select) return;
             const curUserId = state.currentUser ? state.currentUser.id : 3;
-            const peers = (state.users || []).filter(u => u.id != curUserId && u.is_active == 1);
+            const peers = (state.users || []).filter(u => u.id != curUserId && u.is_active == 1 && !['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'].includes(u.role));
             select.innerHTML = peers.map(u => `
                 <option value="${u.id}">${u.name} (${u.nik} - ${u.role})</option>
             `).join('') || `<option value="">Belum ada rekan kerja terdaftar</option>`;
