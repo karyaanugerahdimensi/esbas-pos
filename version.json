@@ -1,17 +1,25 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.1.1",
-  "build": "20261015-03",
+  "version": "1.1.2",
+  "build": "20261015-04",
   "release_date": "2026-10-15",
-  "commit_hash": "fcd46bf",
+  "commit_hash": "7c5015d",
   "branch": "main",
   "history": [
     {
-      "version": "1.1.1",
+      "version": "1.1.2",
       "commit": "HEAD",
       "date": "2026-10-15",
-      "title": "Perbaikan Visibilitas Menu 11-15 & Normalisasi Hak Akses Role Super Admin",
-      "description": "Menjamin menu 11-15 (Kurir, Cabang, Metode Pembayaran, Void Sales, Pengaturan Sistem) tampil lengkap untuk Super Admin dan perbaikan normalisasi role SUPER_ADMIN.",
+      "title": "Perbaikan Penutupan Tag DOM Tab Pelanggan & Pemulihan Konten Menu 11-15",
+      "description": "Menutup tag div tab-customers yang bocor sehingga tab 11-15 (Kurir, Cabang, Metode Pembayaran, Void Sales, Pengaturan Sistem) tidak lagi terperangkap di dalam container yang berstatus hidden, serta optimalisasi scroll flex sidebar.",
+      "rollback_command": "git checkout 7c5015d"
+    },
+    {
+      "version": "1.1.1",
+      "commit": "7c5015d",
+      "date": "2026-10-15",
+      "title": "Normalisasi Hak Akses Role SUPER_ADMIN",
+      "description": "Menjamin role SUPER_ADMIN selalu mendapatkan hak akses penuh ke seluruh 15 menu.",
       "rollback_command": "git checkout fcd46bf"
     },
     {

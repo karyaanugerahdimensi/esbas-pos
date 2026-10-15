@@ -125,8 +125,8 @@ $appVersionData = getAppVersionData();
     <aside id="app-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shrink-0 fixed md:sticky top-0 h-screen z-40 transition-all duration-300 ease-in-out -translate-x-full md:translate-x-0 border-r border-slate-800 shadow-xl">
         
         <!-- Sidebar Top: Brand & Collapse Toggle -->
-        <div>
-            <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800">
+        <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
+            <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800 shrink-0">
                 <div class="flex items-center space-x-3 overflow-hidden">
                     <span id="sidebar-app-logo" class="p-2 bg-indigo-600 rounded-xl text-xl shrink-0">🛍️</span>
                     <div class="sidebar-label transition-opacity duration-200 overflow-hidden whitespace-nowrap">
@@ -145,7 +145,7 @@ $appVersionData = getAppVersionData();
             </div>
 
             <!-- Navigation Menu Items -->
-            <nav class="p-3 space-y-6 overflow-y-auto max-h-[calc(100vh-140px)]">
+            <nav class="p-3 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
                 
                 <!-- Section 1: Transaksi & Laporan -->
                 <div class="space-y-1">
@@ -2927,6 +2927,7 @@ $appVersionData = getAppVersionData();
                         </div>
                     </div>
                 </div>
+            </div>
 
             <!-- ---------------------------------------------------- -->
             <!-- TAB 10: MODUL LOGISTIK, ARMADA KURIR & BIAYA KIRIM   -->
@@ -4244,8 +4245,6 @@ $appVersionData = getAppVersionData();
                         </div>
                     </div>
                 </div>
-
-            </div>
 
         </main>
     </div>
