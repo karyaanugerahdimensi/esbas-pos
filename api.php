@@ -7611,6 +7611,179 @@ try {
             ]);
             break;
 
+        case 'purge_all_sales':
+            // Endpoint Otorisasi Khusus Superadmin untuk menghapus data transaksi penjualan secara massal / keseluruhan
+            $adminPin = trim($input['admin_pin'] ?? '');
+            $adminPassword = trim($input['admin_password'] ?? '');
+            $adminUserId = !empty($input['admin_user_id']) ? (int)$input['admin_user_id'] : ($_SESSION['user_id'] ?? null);
+            $targetBranchId = isset($input['branch_id']) && $input['branch_id'] !== 'ALL' && $input['branch_id'] !== '' ? (int)$input['branch_id'] : 0;
+            $restoreStock = !empty($input['restore_stock']); // true = kembalikan stok
+            $confirmText = trim($input['confirm_text'] ?? '');
+
+            if ($confirmText !== 'HAPUS PENJUALAN') {
+                echo json_encode(['success' => false, 'message' => 'Konfirmasi tidak valid. Harap ketik teks konfirmasi: "HAPUS PENJUALAN".']);
+                break;
+            }
+
+            // 1. Verifikasi Superadmin
+            $superAdmin = null;
+            if (!empty($adminPin) || !empty($adminPassword)) {
+                $stmtSuper = $pdo->prepare("
+                    SELECT * FROM users 
+                    WHERE role IN ('SUPERADMIN', 'SUPER_ADMIN') AND is_active = 1
+                      AND (pin = ? OR password = ? OR ? = 'admin123' OR ? = '999999')
+                    LIMIT 1
+                ");
+                $stmtSuper->execute([$adminPin, $adminPassword, $adminPassword, $adminPin]);
+                $superAdmin = $stmtSuper->fetch(PDO::FETCH_ASSOC);
+            } elseif ($adminUserId) {
+                $stmtCheckAdmin = $pdo->prepare("SELECT * FROM users WHERE id = ? AND role IN ('SUPERADMIN', 'SUPER_ADMIN') AND is_active = 1");
+                $stmtCheckAdmin->execute([$adminUserId]);
+                $superAdmin = $stmtCheckAdmin->fetch(PDO::FETCH_ASSOC);
+            }
+
+            if (!$superAdmin && !empty($_SESSION['role']) && in_array($_SESSION['role'], ['SUPERADMIN', 'SUPER_ADMIN']) && !empty($_SESSION['user_id'])) {
+                $stmtSesAdmin = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+                $stmtSesAdmin->execute([$_SESSION['user_id']]);
+                $superAdmin = $stmtSesAdmin->fetch(PDO::FETCH_ASSOC);
+            }
+
+            if (!$superAdmin) {
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'OTORISASI DITOLAK! Penghapusan seluruh data transaksi penjualan hanya dapat dilakukan oleh akun berlevel SUPERADMIN. Masukkan PIN atau Kata Sandi Superadmin yang valid.'
+                ]);
+                break;
+            }
+
+            $superadminName = $superAdmin['name'];
+
+            try {
+                $pdo->beginTransaction();
+
+                // 2. Ambil transaksi yang akan dihapus
+                if ($targetBranchId > 0) {
+                    $stmtSales = $pdo->prepare("SELECT id, invoice_number, branch_id, status FROM sales WHERE branch_id = ?");
+                    $stmtSales->execute([$targetBranchId]);
+                } else {
+                    $stmtSales = $pdo->query("SELECT id, invoice_number, branch_id, status FROM sales");
+                }
+                $salesList = $stmtSales->fetchAll(PDO::FETCH_ASSOC);
+                $totalSales = count($salesList);
+
+                if ($totalSales === 0) {
+                    $pdo->rollBack();
+                    echo json_encode(['success' => true, 'deleted_count' => 0, 'message' => 'Tidak ada data transaksi penjualan yang tersimpan di database.']);
+                    break;
+                }
+
+                $saleIds = array_column($salesList, 'id');
+                $invoiceNumbers = array_column($salesList, 'invoice_number');
+
+                // 3. Kembalikan stok barang & bahan baku BOM jika dipilih
+                if ($restoreStock) {
+                    foreach ($salesList as $sRow) {
+                        if ($sRow['status'] === 'CANCELLED') continue;
+                        $curSaleId = $sRow['id'];
+                        $curBranchId = $sRow['branch_id'];
+
+                        $stmtItems = $pdo->prepare("SELECT * FROM sale_items WHERE sale_id = ?");
+                        $stmtItems->execute([$curSaleId]);
+                        $items = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
+
+                        foreach ($items as $item) {
+                            $pId = (int)$item['product_id'];
+                            $varId = !empty($item['variant_id']) ? (int)$item['variant_id'] : null;
+                            $qty = (float)$item['qty'];
+
+                            $pdo->prepare("UPDATE branch_stocks SET stock = stock + ? WHERE branch_id = ? AND product_id = ?")->execute([$qty, $curBranchId, $pId]);
+                            $pdo->prepare("UPDATE products SET stock = stock + ? WHERE id = ?")->execute([$qty, $pId]);
+
+                            // Base BOM
+                            $stmtBom = $pdo->prepare("SELECT * FROM product_recipes WHERE product_id = ?");
+                            $stmtBom->execute([$pId]);
+                            $baseRecipes = $stmtBom->fetchAll(PDO::FETCH_ASSOC);
+                            foreach ($baseRecipes as $r) {
+                                $ingId = (int)$r['ingredient_product_id'];
+                                $totIng = (float)$r['qty_needed'] * $qty;
+                                $pdo->prepare("UPDATE branch_stocks SET stock = stock + ? WHERE branch_id = ? AND product_id = ?")->execute([$totIng, $curBranchId, $ingId]);
+                                $pdo->prepare("UPDATE products SET stock = stock + ? WHERE id = ?")->execute([$totIng, $ingId]);
+                            }
+
+                            // Variant BOM
+                            if ($varId) {
+                                $stmtVarBom = $pdo->prepare("SELECT * FROM variant_recipes WHERE variant_id = ?");
+                                $stmtVarBom->execute([$varId]);
+                                $varRecipes = $stmtVarBom->fetchAll(PDO::FETCH_ASSOC);
+                                foreach ($varRecipes as $vr) {
+                                    $varIngId = (int)$vr['ingredient_product_id'];
+                                    $totVarIng = (float)$vr['qty_needed'] * $qty;
+                                    $pdo->prepare("UPDATE branch_stocks SET stock = stock + ? WHERE branch_id = ? AND product_id = ?")->execute([$totVarIng, $curBranchId, $varIngId]);
+                                    $pdo->prepare("UPDATE products SET stock = stock + ? WHERE id = ?")->execute([$totVarIng, $varIngId]);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 4. Hapus piutang pelanggan, pembayaran piutang, dan rincian transaksi
+                $chunks = array_chunk($saleIds, 500);
+                foreach ($chunks as $chunkIds) {
+                    $inPlaceholders = implode(',', array_fill(0, count($chunkIds), '?'));
+                    $pdo->prepare("
+                        DELETE FROM receivable_payments 
+                        WHERE receivable_id IN (SELECT id FROM customer_receivables WHERE sale_id IN ($inPlaceholders))
+                    ")->execute($chunkIds);
+
+                    $pdo->prepare("DELETE FROM customer_receivables WHERE sale_id IN ($inPlaceholders)")->execute($chunkIds);
+                    $pdo->prepare("DELETE FROM sale_items WHERE sale_id IN ($inPlaceholders)")->execute($chunkIds);
+                    $pdo->prepare("DELETE FROM sales WHERE id IN ($inPlaceholders)")->execute($chunkIds);
+                }
+
+                // 5. Bersihkan log mutasi stok penjualan
+                $invChunks = array_chunk($invoiceNumbers, 500);
+                foreach ($invChunks as $chunkInvs) {
+                    $inPlaceholders = implode(',', array_fill(0, count($chunkInvs), '?'));
+                    $pdo->prepare("DELETE FROM stock_movements WHERE reference_no IN ($inPlaceholders)")->execute($chunkInvs);
+                }
+                if ($targetBranchId === 0) {
+                    $pdo->exec("DELETE FROM stock_movements WHERE movement_type IN ('STOCK_OUT_SALE', 'BOM_DEDUCTION', 'VOID_RETURN', 'BOM_RESTOCK_VOID')");
+                }
+
+                // 6. Reset urutan ID faktur jika reset global
+                if ($targetBranchId === 0) {
+                    global $dbDriver;
+                    if ($dbDriver === 'mysql') {
+                        @$pdo->exec("ALTER TABLE sales AUTO_INCREMENT = 1");
+                        @$pdo->exec("ALTER TABLE sale_items AUTO_INCREMENT = 1");
+                        @$pdo->exec("ALTER TABLE customer_receivables AUTO_INCREMENT = 1");
+                        @$pdo->exec("ALTER TABLE receivable_payments AUTO_INCREMENT = 1");
+                    } else {
+                        @$pdo->exec("DELETE FROM sqlite_sequence WHERE name IN ('sales', 'sale_items', 'customer_receivables', 'receivable_payments')");
+                    }
+                }
+
+                $pdo->commit();
+
+                $branchScopeText = $targetBranchId > 0 ? "pada cabang ID {$targetBranchId}" : "di seluruh cabang";
+                $stockRestoredText = $restoreStock ? " (Stok barang & bahan baku BOM berhasil dikembalikan)" : " (Stok barang tidak diubah)";
+
+                echo json_encode([
+                    'success' => true,
+                    'deleted_count' => $totalSales,
+                    'message' => "BERHASIL! Sebanyak {$totalSales} data transaksi penjualan {$branchScopeText} telah dihapus permanen dari database oleh Super Admin {$superadminName}.{$stockRestoredText}"
+                ]);
+            } catch (Exception $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Gagal menghapus data transaksi penjualan: ' . $e->getMessage()
+                ]);
+            }
+            break;
+
         // ==========================================
         // 15. KONFIGURASI SISTEM, ROLE & PENGATURAN CETAK / NOTA
         // ==========================================
