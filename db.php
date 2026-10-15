@@ -33,6 +33,10 @@ class AppPDO extends PDO {
             $sql = str_replace("date('now')", "CURDATE()", $sql);
             $sql = preg_replace("/strftime\('%Y-%m',\s*created_at\)\s*=\s*strftime\('%Y-%m',\s*'now'\)/", "DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(NOW(), '%Y-%m')", $sql);
             $sql = preg_replace("/strftime\('%Y-%m',\s*([^)]+)\)/", "DATE_FORMAT($1, '%Y-%m')", $sql);
+            if (preg_match('/PRAGMA\s+table_info\(([^)]+)\)/i', $sql, $m)) {
+                $tableName = trim($m[1], '`"\' ');
+                $sql = "SELECT COLUMN_NAME AS name, DATA_TYPE AS type FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$tableName}'";
+            }
         }
         return $sql;
     }
@@ -715,28 +719,42 @@ function initDatabaseSchema($pdo) {
  */
 function autoMigrateAndSync($pdo) {
     // 1. Ensure `users` columns exist
-    $userCols = array_column($pdo->query("PRAGMA table_info(users)")->fetchAll(), 'name');
-    if (!in_array('password', $userCols)) {
-        $pdo->exec("ALTER TABLE users ADD COLUMN password TEXT DEFAULT 'password123'");
-    }
-    if (!in_array('is_active', $userCols)) {
-        $pdo->exec("ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1");
-    }
-    if (!in_array('pin', $userCols)) {
-        $pdo->exec("ALTER TABLE users ADD COLUMN pin TEXT DEFAULT '123456'");
-    }
-    if (!in_array('base_salary', $userCols)) {
-        $pdo->exec("ALTER TABLE users ADD COLUMN base_salary REAL DEFAULT 3000000");
-    }
-    if (!in_array('allowance', $userCols)) {
-        $pdo->exec("ALTER TABLE users ADD COLUMN allowance REAL DEFAULT 500000");
-    }
-    if (!in_array('daily_transport', $userCols)) {
-        $pdo->exec("ALTER TABLE users ADD COLUMN daily_transport REAL DEFAULT 25000");
-    }
-    if (!in_array('default_work_shift_id', $userCols)) {
-        $pdo->exec("ALTER TABLE users ADD COLUMN default_work_shift_id INTEGER DEFAULT NULL");
-    }
+    $userCols = getDbTableColumns($pdo, 'users');
+    try {
+        if (!in_array('password', $userCols)) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN password TEXT DEFAULT 'password123'");
+        }
+    } catch (Exception $e) {}
+    try {
+        if (!in_array('is_active', $userCols)) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1");
+        }
+    } catch (Exception $e) {}
+    try {
+        if (!in_array('pin', $userCols)) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN pin TEXT DEFAULT '123456'");
+        }
+    } catch (Exception $e) {}
+    try {
+        if (!in_array('base_salary', $userCols)) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN base_salary REAL DEFAULT 3000000");
+        }
+    } catch (Exception $e) {}
+    try {
+        if (!in_array('allowance', $userCols)) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN allowance REAL DEFAULT 500000");
+        }
+    } catch (Exception $e) {}
+    try {
+        if (!in_array('daily_transport', $userCols)) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN daily_transport REAL DEFAULT 25000");
+        }
+    } catch (Exception $e) {}
+    try {
+        if (!in_array('default_work_shift_id', $userCols)) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN default_work_shift_id INT DEFAULT NULL");
+        }
+    } catch (Exception $e) {}
 
     // Inisialisasi kredensial default & branch awal HANYA jika belum diset (mencegah penimpaan perubahan user)
     $pdo->exec("UPDATE users SET password = 'admin123' WHERE nik = 'ADM001' AND (password IS NULL OR password = '')");
@@ -1816,6 +1834,7 @@ if ($dbDriver === 'mysql') {
     } catch (Exception $e) {
         // Skema tabel di-import manual via phpMyAdmin
     }
+    autoMigrateAndSync($pdo);
 } else {
     initDatabaseSchema($pdo);
     autoMigrateAndSync($pdo);

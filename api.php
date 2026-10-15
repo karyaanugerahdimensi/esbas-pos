@@ -430,18 +430,54 @@ try {
         // 2. MANAJEMEN KARYAWAN (CRUD EMPLOYEES)
         // ==========================================
         case 'get_employees':
-            $stmt = $pdo->query("
-                SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.email, u.phone, u.commission_rate, u.is_active, u.pin,
-                       u.base_salary, u.allowance, u.daily_transport,
-                       u.default_work_shift_id,
-                       ws.name as default_shift_name, ws.code as default_shift_code, ws.start_time as default_shift_start, ws.end_time as default_shift_end, ws.color_tag as default_shift_color,
-                       b.name as branch_name
-                FROM users u
-                LEFT JOIN branches b ON b.id = u.branch_id
-                LEFT JOIN work_shifts ws ON ws.id = u.default_work_shift_id
-                ORDER BY u.id ASC
-            ");
-            echo json_encode(['success' => true, 'employees' => $stmt->fetchAll()]);
+            try {
+                $stmt = $pdo->query("
+                    SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.email, u.phone, u.commission_rate, u.is_active, u.pin,
+                           u.base_salary, u.allowance, u.daily_transport,
+                           u.default_work_shift_id,
+                           ws.name as default_shift_name, ws.code as default_shift_code, ws.start_time as default_shift_start, ws.end_time as default_shift_end, ws.color_tag as default_shift_color,
+                           b.name as branch_name
+                    FROM users u
+                    LEFT JOIN branches b ON b.id = u.branch_id
+                    LEFT JOIN work_shifts ws ON ws.id = u.default_work_shift_id
+                    ORDER BY u.id ASC
+                ");
+                echo json_encode(['success' => true, 'employees' => $stmt->fetchAll()]);
+            } catch (Exception $e) {
+                // Auto-healing: Tambahkan kolom default_work_shift_id jika belum ada di database MySQL / SQLite
+                try {
+                    $pdo->exec("ALTER TABLE users ADD COLUMN default_work_shift_id INT DEFAULT NULL");
+                    $firstShiftId = $pdo->query("SELECT id FROM work_shifts WHERE is_day_off = 0 ORDER BY id ASC LIMIT 1")->fetchColumn();
+                    if ($firstShiftId) {
+                        $pdo->exec("UPDATE users SET default_work_shift_id = {$firstShiftId} WHERE role IN ('CASHIER', 'STAFF') AND default_work_shift_id IS NULL");
+                    }
+                    $stmt = $pdo->query("
+                        SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.email, u.phone, u.commission_rate, u.is_active, u.pin,
+                               u.base_salary, u.allowance, u.daily_transport,
+                               u.default_work_shift_id,
+                               ws.name as default_shift_name, ws.code as default_shift_code, ws.start_time as default_shift_start, ws.end_time as default_shift_end, ws.color_tag as default_shift_color,
+                               b.name as branch_name
+                        FROM users u
+                        LEFT JOIN branches b ON b.id = u.branch_id
+                        LEFT JOIN work_shifts ws ON ws.id = u.default_work_shift_id
+                        ORDER BY u.id ASC
+                    ");
+                    echo json_encode(['success' => true, 'employees' => $stmt->fetchAll()]);
+                } catch (Exception $e2) {
+                    // Fallback query tanpa join shift agar data karyawan TETAP TAMPIL normal
+                    $stmt = $pdo->query("
+                        SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.email, u.phone, u.commission_rate, u.is_active, u.pin,
+                               u.base_salary, u.allowance, u.daily_transport,
+                               NULL as default_work_shift_id,
+                               NULL as default_shift_name, NULL as default_shift_code, NULL as default_shift_start, NULL as default_shift_end, NULL as default_shift_color,
+                               b.name as branch_name
+                        FROM users u
+                        LEFT JOIN branches b ON b.id = u.branch_id
+                        ORDER BY u.id ASC
+                    ");
+                    echo json_encode(['success' => true, 'employees' => $stmt->fetchAll()]);
+                }
+            }
             break;
 
         case 'save_employee':
@@ -509,17 +545,33 @@ try {
                 exit;
             }
 
-            $stmtUser = $pdo->prepare("
-                SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.default_work_shift_id,
-                       ws.name as default_shift_name, ws.code as default_shift_code, ws.start_time as default_shift_start, ws.end_time as default_shift_end,
-                       b.name as branch_name
-                FROM users u
-                LEFT JOIN branches b ON b.id = u.branch_id
-                LEFT JOIN work_shifts ws ON ws.id = u.default_work_shift_id
-                WHERE u.id = ?
-            ");
-            $stmtUser->execute([$userId]);
-            $user = $stmtUser->fetch();
+            try {
+                $stmtUser = $pdo->prepare("
+                    SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.default_work_shift_id,
+                           ws.name as default_shift_name, ws.code as default_shift_code, ws.start_time as default_shift_start, ws.end_time as default_shift_end,
+                           b.name as branch_name
+                    FROM users u
+                    LEFT JOIN branches b ON b.id = u.branch_id
+                    LEFT JOIN work_shifts ws ON ws.id = u.default_work_shift_id
+                    WHERE u.id = ?
+                ");
+                $stmtUser->execute([$userId]);
+                $user = $stmtUser->fetch();
+            } catch (Exception $e) {
+                try {
+                    $pdo->exec("ALTER TABLE users ADD COLUMN default_work_shift_id INT DEFAULT NULL");
+                } catch (Exception $e2) {}
+                $stmtUser = $pdo->prepare("
+                    SELECT u.id, u.nik, u.name, u.role, u.branch_id, NULL as default_work_shift_id,
+                           NULL as default_shift_name, NULL as default_shift_code, NULL as default_shift_start, NULL as default_shift_end,
+                           b.name as branch_name
+                    FROM users u
+                    LEFT JOIN branches b ON b.id = u.branch_id
+                    WHERE u.id = ?
+                ");
+                $stmtUser->execute([$userId]);
+                $user = $stmtUser->fetch();
+            }
             if (!$user) {
                 echo json_encode(['success' => false, 'message' => 'Karyawan tidak ditemukan.']);
                 exit;
