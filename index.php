@@ -152,11 +152,11 @@ $appVersionData = getAppVersionData();
                     <p class="sidebar-label px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 whitespace-nowrap">Transaksi & Penjualan</p>
                     <button onclick="switchTab('pos')" id="tab-btn-pos" title="Penjualan POS Kasir" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors sidebar-item-active">
                         <i data-lucide="shopping-cart" class="w-4 h-4 shrink-0"></i>
-                        <span class="sidebar-label whitespace-nowrap">1. POS Penjualan</span>
+                        <span class="sidebar-label whitespace-nowrap">POS Penjualan</span>
                     </button>
                     <button onclick="switchTab('reports')" id="tab-btn-reports" title="Laporan Penjualan" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="bar-chart-3" class="w-4 h-4 shrink-0"></i>
-                        <span class="sidebar-label whitespace-nowrap">2. Laporan Penjualan</span>
+                        <span class="sidebar-label whitespace-nowrap">Laporan Penjualan</span>
                     </button>
                 </div>
 
@@ -165,11 +165,11 @@ $appVersionData = getAppVersionData();
                     <p class="sidebar-label px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 whitespace-nowrap">Karyawan & Layanan Mandiri</p>
                     <button onclick="switchTab('ess')" id="tab-btn-ess" title="Employee Self Service" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="user-check" class="w-4 h-4 shrink-0"></i>
-                        <span class="sidebar-label whitespace-nowrap">3. Portal ESS Karyawan</span>
+                        <span class="sidebar-label whitespace-nowrap">Portal ESS Karyawan</span>
                     </button>
                     <button onclick="switchTab('employees')" id="tab-btn-employees" title="Manajemen Karyawan CRUD" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="users" class="w-4 h-4 shrink-0"></i>
-                        <span class="sidebar-label whitespace-nowrap">4. Kelola Karyawan (CRUD)</span>
+                        <span class="sidebar-label whitespace-nowrap">Kelola Karyawan (CRUD)</span>
                     </button>
                 </div>
 
@@ -178,15 +178,15 @@ $appVersionData = getAppVersionData();
                     <p class="sidebar-label px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 whitespace-nowrap">Katalog, BOM & Stok</p>
                     <button onclick="switchTab('products')" id="tab-btn-products" title="Master Produk, Kategori & Varian" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="package" class="w-4 h-4 shrink-0"></i>
-                        <span class="sidebar-label whitespace-nowrap">5. Master Produk & Varian</span>
+                        <span class="sidebar-label whitespace-nowrap">Master Produk & Varian</span>
                     </button>
                     <button onclick="switchTab('bom')" id="tab-btn-bom" title="Formula Resep / BOM" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="flask-conical" class="w-4 h-4 shrink-0"></i>
-                        <span class="sidebar-label whitespace-nowrap">6. Resep / BOM Bahan</span>
+                        <span class="sidebar-label whitespace-nowrap">Resep / BOM Bahan</span>
                     </button>
                     <button onclick="switchTab('stocks')" id="tab-btn-stocks" title="Stok & Kartu Pergerakan" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="layers" class="w-4 h-4 shrink-0"></i>
-                        <span class="sidebar-label whitespace-nowrap">7. Stok & Kartu Mutasi</span>
+                        <span class="sidebar-label whitespace-nowrap">Stok & Kartu Mutasi</span>
                     </button>
                 </div>
 
@@ -195,11 +195,11 @@ $appVersionData = getAppVersionData();
                     <p class="sidebar-label px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 whitespace-nowrap">Laporan Keuangan</p>
                     <button onclick="switchTab('pnl')" id="tab-btn-pnl" title="Laporan Laba Rugi" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="pie-chart" class="w-4 h-4 shrink-0"></i>
-                        <span class="sidebar-label whitespace-nowrap">8. Laporan Laba Rugi</span>
+                        <span class="sidebar-label whitespace-nowrap">Laporan Laba Rugi</span>
                     </button>
                     <button onclick="switchTab('expenses')" id="tab-btn-expenses" title="Buku Catatan Beban Operasional Cabang & Kategori" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="book-open" class="w-4 h-4 shrink-0"></i>
-                        <span class="sidebar-label whitespace-nowrap">9. Beban Operasional Cabang</span>
+                        <span class="sidebar-label whitespace-nowrap">Beban Operasional Cabang</span>
                     </button>
                 </div>
 
@@ -208,7 +208,7 @@ $appVersionData = getAppVersionData();
                     <p class="sidebar-label px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 whitespace-nowrap">CRM & Kemitraan</p>
                     <button onclick="switchTab('customers')" id="tab-btn-customers" title="Pelanggan, Mitra & Tier Harga" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="handshake" class="w-4 h-4 shrink-0"></i>
-                        <span class="sidebar-label whitespace-nowrap">10. Pelanggan & Mitra CRM</span>
+                        <span class="sidebar-label whitespace-nowrap">Pelanggan & Mitra CRM</span>
                     </button>
                 </div>
 
@@ -217,7 +217,7 @@ $appVersionData = getAppVersionData();
                     <p class="sidebar-label px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 whitespace-nowrap">Logistik & Armada</p>
                     <button onclick="switchTab('logistics')" id="tab-btn-logistics" title="Armada Kurir, Bensin & Biaya Kirim" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="truck" class="w-4 h-4 shrink-0"></i>
-                        <span class="sidebar-label whitespace-nowrap">11. Kurir & Biaya Kirim</span>
+                        <span class="sidebar-label whitespace-nowrap">Kurir & Biaya Kirim</span>
                     </button>
                 </div>
 
@@ -226,11 +226,11 @@ $appVersionData = getAppVersionData();
                     <p class="sidebar-label px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 whitespace-nowrap">Pengaturan Multi-Cabang</p>
                     <button onclick="switchTab('branches')" id="tab-btn-branches" title="Kelola Cabang / Outlet (CRUD)" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="store" class="w-4 h-4 shrink-0"></i>
-                        <span class="sidebar-label whitespace-nowrap">12. Kelola Cabang (CRUD)</span>
+                        <span class="sidebar-label whitespace-nowrap">Kelola Cabang (CRUD)</span>
                     </button>
                     <button onclick="switchTab('payments')" id="tab-btn-payments" title="Kelola Metode Pembayaran (CRUD)" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="credit-card" class="w-4 h-4 shrink-0"></i>
-                        <span class="sidebar-label whitespace-nowrap">13. Metode Pembayaran</span>
+                        <span class="sidebar-label whitespace-nowrap">Metode Pembayaran</span>
                     </button>
                 </div>
 
@@ -240,7 +240,7 @@ $appVersionData = getAppVersionData();
                     <button onclick="switchTab('sale-cancellations')" id="tab-btn-sale-cancellations" title="Pembatalan Transaksi Penjualan (Superadmin Only)" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="ban" class="w-4 h-4 shrink-0 text-rose-400"></i>
                         <span class="sidebar-label whitespace-nowrap flex items-center justify-between w-full">
-                            <span>14. Pembatalan Penjualan</span>
+                            <span>Pembatalan Penjualan</span>
                             <span class="px-1.5 py-0.5 text-[9px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded ml-1">SUPER</span>
                         </span>
                     </button>
@@ -251,7 +251,7 @@ $appVersionData = getAppVersionData();
                     <p class="sidebar-label px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 whitespace-nowrap">Pengaturan Sistem</p>
                     <button onclick="switchTab('settings')" id="tab-btn-settings" title="Pengaturan Aplikasi, Logo, Hak Akses Role, Printer & Notifikasi" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="settings" class="w-4 h-4 shrink-0 text-indigo-400"></i>
-                        <span class="sidebar-label whitespace-nowrap">15. Konfigurasi Sistem</span>
+                        <span class="sidebar-label whitespace-nowrap">Konfigurasi Sistem</span>
                     </button>
                 </div>
 
@@ -19193,21 +19193,21 @@ Manager / Supervisor: __________________
             if (!tbody) return;
 
             const allMenus = [
-                { key: 'pos', title: '1. POS Penjualan Kasir' },
-                { key: 'reports', title: '2. Laporan Penjualan & Piutang' },
-                { key: 'ess', title: '3. Portal ESS Karyawan' },
-                { key: 'employees', title: '4. Kelola Karyawan (CRUD)' },
-                { key: 'products', title: '5. Master Produk & Varian' },
-                { key: 'bom', title: '6. Resep / BOM Bahan' },
-                { key: 'stocks', title: '7. Stok & Kartu Mutasi' },
-                { key: 'pnl', title: '8. Laporan Laba Rugi' },
-                { key: 'expenses', title: '9. Beban Operasional Cabang' },
-                { key: 'customers', title: '10. Pelanggan & Mitra CRM' },
-                { key: 'logistics', title: '11. Kurir & Biaya Kirim' },
-                { key: 'branches', title: '12. Kelola Cabang (CRUD)' },
-                { key: 'payments', title: '13. Metode Pembayaran' },
-                { key: 'sale-cancellations', title: '14. Pembatalan Penjualan (Void)' },
-                { key: 'settings', title: '15. Konfigurasi Sistem & Cetak' }
+                { key: 'pos', title: 'POS Penjualan Kasir' },
+                { key: 'reports', title: 'Laporan Penjualan & Piutang' },
+                { key: 'ess', title: 'Portal ESS Karyawan' },
+                { key: 'employees', title: 'Kelola Karyawan (CRUD)' },
+                { key: 'products', title: 'Master Produk & Varian' },
+                { key: 'bom', title: 'Resep / BOM Bahan' },
+                { key: 'stocks', title: 'Stok & Kartu Mutasi' },
+                { key: 'pnl', title: 'Laporan Laba Rugi' },
+                { key: 'expenses', title: 'Beban Operasional Cabang' },
+                { key: 'customers', title: 'Pelanggan & Mitra CRM' },
+                { key: 'logistics', title: 'Kurir & Biaya Kirim' },
+                { key: 'branches', title: 'Kelola Cabang (CRUD)' },
+                { key: 'payments', title: 'Metode Pembayaran' },
+                { key: 'sale-cancellations', title: 'Pembatalan Penjualan (Void)' },
+                { key: 'settings', title: 'Konfigurasi Sistem & Cetak' }
             ];
 
             const grouped = state.groupedRolePermissions || {};

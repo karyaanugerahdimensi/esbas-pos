@@ -1,17 +1,25 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.1.3",
-  "build": "20261015-06",
+  "version": "1.1.4",
+  "build": "20261015-07",
   "release_date": "2026-10-15",
-  "commit_hash": "986a54e",
+  "commit_hash": "bf895e1",
   "branch": "main",
   "history": [
     {
-      "version": "1.1.3",
+      "version": "1.1.4",
       "commit": "HEAD",
       "date": "2026-10-15",
+      "title": "Penyempurnaan Tampilan Sidebar: Penghapusan Nomor Urut Menu",
+      "description": "Menghapus nomor urut 1 s/d 15 pada label menu navigasi sidebar kiri dan matriks hak akses peran untuk tampilan antarmuka yang lebih bersih, modern, dan profesional.",
+      "rollback_command": "git checkout v1.1.3"
+    },
+    {
+      "version": "1.1.3",
+      "commit": "bf895e1",
+      "date": "2026-10-15",
       "title": "Fitur Penghapusan Massal Riwayat Transaksi Penjualan (Purge / Wipe All Sales)",
-      "description": "Menambahkan tombol dan modal otorisasi Super Admin untuk menghapus seluruh riwayat transaksi penjualan (sales, sale_items, piutang, log mutasi penjualan) dengan verifikasi PIN/password, teks konfirmasi ganda 'HAPUS PENJUALAN', opsi lingkup per cabang / global, dan opsi pengembalian persediaan produk & BOM.",
+      "description": "Menambahkan tombol dan modal otorisasi Super Admin untuk menghapus seluruh riwayat transaksi penjualan (sales, sale_items, piutang, log mutasi penjualan) dengan verifikasi PIN/password, teks konfirmasi ganda 'HAPUS PENJUALAN', opsi lingkup per cabang / global, dan pemulihan persediaan produk & BOM di branch_stocks.",
       "rollback_command": "git checkout v1.1.2"
     },
     {
