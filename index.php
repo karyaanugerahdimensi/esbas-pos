@@ -4673,95 +4673,153 @@ $appVersionData = getAppVersionData();
         </div>
     </div>
 
-    <!-- Modal 3.1: Cabang / Outlet CRUD Modal -->
-    <div id="branch-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <h3 id="branch-modal-title" class="font-bold text-slate-800 text-base flex items-center space-x-2">
-                <i data-lucide="store" class="w-5 h-5 text-indigo-600"></i>
-                <span>Tambah Cabang / Outlet Baru</span>
-            </h3>
-            <p class="text-xs text-slate-500">Cabang baru akan otomatis memiliki stok awal seluruh produk katalog dan pengaturan biaya kirim dinamis.</p>
-            <form onsubmit="saveBranchForm(event)" class="space-y-3 text-xs">
+    <!-- Modal 3.1: Cabang / Outlet CRUD Modal (Responsive Precision Landscape Design) -->
+    <div id="branch-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto hidden">
+        <div class="bg-white rounded-3xl max-w-5xl w-full shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <!-- Modal Header (Sticky / Non-scrolling) -->
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/70">
+                <div class="flex items-center space-x-3">
+                    <span class="p-2.5 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+                        <i data-lucide="store" class="w-5 h-5 text-indigo-600"></i>
+                    </span>
+                    <div>
+                        <h3 id="branch-modal-title" class="font-black text-slate-800 text-base sm:text-lg flex items-center space-x-2">
+                            <span>Tambah Cabang / Outlet Baru</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Konfigurasi data fisik outlet, sinkronisasi produk & penetapan koordinat geospasial presensi.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeBranchModal()" class="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-200/60 transition-colors" title="Tutup Modal">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form & Scrollable Body -->
+            <form onsubmit="saveBranchForm(event)" class="flex flex-col flex-1 overflow-hidden m-0">
                 <input type="hidden" id="branch-modal-id">
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Kode Cabang (Unik):</label>
-                        <input type="text" id="branch-modal-code" placeholder="MDN-01 / JKT-02" class="w-full p-2.5 bg-slate-50 border rounded-xl uppercase font-mono font-bold" required>
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Nomor Kontak / Telepon:</label>
-                        <input type="text" id="branch-modal-phone" placeholder="021-5551234" class="w-full p-2.5 bg-slate-50 border rounded-xl">
-                    </div>
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Nama Outlet / Cabang:</label>
-                    <input type="text" id="branch-modal-name" placeholder="Cabang Medan (Sun Plaza)..." class="w-full p-2.5 bg-slate-50 border rounded-xl font-semibold" required>
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Alamat Fisik Toko:</label>
-                    <textarea id="branch-modal-address" rows="2" placeholder="Jl. Zainul Arifin No. 7, Medan..." class="w-full p-2.5 bg-slate-50 border rounded-xl" required></textarea>
-                </div>
-                <!-- Pemilihan Titik Lokasi Peta Langsung Cabang & Geofence -->
-                <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <label class="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
-                                <i data-lucide="map-pin" class="w-4 h-4 text-indigo-600"></i>
-                                <span>Pilih Titik Lokasi Outlet Langsung pada Peta:</span>
-                            </label>
-                            <p class="text-[10px] text-slate-500">Klik pada peta atau seret marker pin 📍 toko</p>
+
+                <!-- Main Landscape Content Body -->
+                <div class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
+                        
+                        <!-- Kolom Kiri: Informasi Profil & Legal Toko (5 Cols) -->
+                        <div class="lg:col-span-5 space-y-3.5">
+                            <div class="border-b border-slate-100 pb-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-indigo-900 flex items-center space-x-1.5">
+                                    <i data-lucide="file-text" class="w-3.5 h-3.5 text-indigo-600"></i>
+                                    <span>Informasi & Profil Outlet</span>
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block font-bold text-slate-700 text-xs mb-1">Kode Cabang (Unik):</label>
+                                    <input type="text" id="branch-modal-code" placeholder="MDN-01 / JKT-02" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl uppercase font-mono font-bold text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all" required>
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-700 text-xs mb-1">Nomor Kontak / Telepon:</label>
+                                    <input type="text" id="branch-modal-phone" placeholder="021-5551234" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block font-bold text-slate-700 text-xs mb-1">Nama Outlet / Cabang:</label>
+                                <input type="text" id="branch-modal-name" placeholder="Cabang Medan (Sun Plaza)..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all" required>
+                            </div>
+
+                            <div>
+                                <label class="block font-bold text-slate-700 text-xs mb-1">Alamat Fisik Toko:</label>
+                                <textarea id="branch-modal-address" rows="3" placeholder="Jl. Zainul Arifin No. 7, Medan..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all" required></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block font-bold text-slate-700 text-xs mb-1">Status Operasional Cabang:</label>
+                                <select id="branch-modal-active" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all">
+                                    <option value="1">Aktif (Bisa transaksi POS kasir)</option>
+                                    <option value="0">Nonaktif (Toko Ditutup Sementara)</option>
+                                </select>
+                            </div>
+
+                            <!-- Info Box -->
+                            <div class="p-3 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex items-start space-x-2.5 text-[11px] text-indigo-800">
+                                <i data-lucide="shield-check" class="w-4 h-4 text-indigo-600 shrink-0 mt-0.5"></i>
+                                <p class="leading-relaxed">Cabang baru akan otomatis memiliki data stok produk awal serta pengaturan jarak & ongkir dinamis kurir.</p>
+                            </div>
                         </div>
-                        <button type="button" onclick="autoDetectBranchLocation()" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[10px] shadow-sm flex items-center space-x-1 transition-colors">
-                            <span>📍 GPS Saya</span>
+
+                        <!-- Kolom Kanan: Peta Geospasial & Radius Geofence (7 Cols) -->
+                        <div class="lg:col-span-7 space-y-3 bg-slate-50/70 p-4 rounded-2xl border border-slate-200/80">
+                            <div class="flex items-center justify-between pb-1 border-b border-slate-200/60">
+                                <div>
+                                    <label class="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
+                                        <i data-lucide="map-pin" class="w-4 h-4 text-indigo-600"></i>
+                                        <span>Titik Lokasi GPS & Radius Geofence Outlet:</span>
+                                    </label>
+                                    <p class="text-[10px] text-slate-500">Klik peta atau seret pin marker untuk akurasi radius presensi staf</p>
+                                </div>
+                                <button type="button" onclick="autoDetectBranchLocation()" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[10px] shadow-sm flex items-center space-x-1 transition-colors">
+                                    <span>📍 GPS Saya</span>
+                                </button>
+                            </div>
+
+                            <!-- Direct Leaflet Map Canvas with Geofence circle -->
+                            <div class="relative rounded-2xl border border-slate-300 shadow-sm overflow-hidden bg-slate-100">
+                                <div id="branch-modal-map-picker" style="height: 250px; min-height: 250px; width: 100%;" class="z-10"></div>
+                                <div class="absolute bottom-2 left-2 z-20 pointer-events-none">
+                                    <span class="bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-medium px-2 py-0.5 rounded-lg shadow">
+                                        💡 Klik peta atau seret pin untuk atur koordinat
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Coordinate & Radius Readout Badge -->
+                            <div class="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-slate-200 text-[11px]">
+                                <span class="text-slate-500 font-semibold flex items-center space-x-1">
+                                    <i data-lucide="crosshair" class="w-3.5 h-3.5 text-indigo-500"></i>
+                                    <span>Titik & Radius Geofence:</span>
+                                </span>
+                                <div class="flex items-center space-x-2 font-mono">
+                                    <span id="branch-picker-coords-text" class="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/60">-6.195000, 106.823000</span>
+                                    <span id="branch-picker-radius-badge" class="font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200/60">100m</span>
+                                </div>
+                            </div>
+
+                            <!-- Fine-tune Inputs -->
+                            <div class="grid grid-cols-3 gap-2 text-[10px]">
+                                <div class="flex items-center space-x-1">
+                                    <span class="text-slate-500 font-bold">Lat:</span>
+                                    <input type="number" step="0.000001" id="branch-modal-lat" oninput="updateBranchPickerFromInputs()" placeholder="-6.1950" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-mono text-[11px] text-slate-800 focus:ring-1 focus:ring-indigo-500" required>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <span class="text-slate-500 font-bold">Lng:</span>
+                                    <input type="number" step="0.000001" id="branch-modal-lng" oninput="updateBranchPickerFromInputs()" placeholder="106.8230" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-mono text-[11px] text-slate-800 focus:ring-1 focus:ring-indigo-500" required>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <span class="text-slate-500 font-bold">Radius:</span>
+                                    <input type="number" id="branch-modal-radius" oninput="updateBranchPickerFromInputs()" value="100" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-mono text-center text-[11px] text-slate-800 focus:ring-1 focus:ring-indigo-500" required>
+                                    <span class="text-slate-500 font-bold">m</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Modal Footer (Sticky / Non-scrolling) -->
+                <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                    <div class="text-[11px] text-slate-400 flex items-center space-x-1.5">
+                        <i data-lucide="info" class="w-3.5 h-3.5 text-indigo-500"></i>
+                        <span>Pastikan titik GPS toko tepat agar presensi geofence kasir akurat.</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="closeBranchModal()" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-xs border border-slate-200 transition-colors shadow-2xs">
+                            Batal
+                        </button>
+                        <button type="submit" id="branch-modal-submit-btn" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md shadow-indigo-100 flex items-center space-x-1.5 transition-colors">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            <span>Simpan Cabang</span>
                         </button>
                     </div>
-
-                    <!-- Direct Leaflet Map Canvas with Geofence circle -->
-                    <div class="relative rounded-2xl border border-slate-300 shadow-sm overflow-hidden bg-slate-100">
-                        <div id="branch-modal-map-picker" style="height: 220px; min-height: 220px; width: 100%;" class="z-10"></div>
-                        <div class="absolute bottom-2 left-2 z-20 pointer-events-none">
-                            <span class="bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-medium px-2 py-0.5 rounded-lg shadow">
-                                💡 Klik peta untuk posisikan outlet
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Coordinate & Radius Readout -->
-                    <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200 text-[11px]">
-                        <span class="text-slate-500 font-medium">Titik & Radius Geofence:</span>
-                        <div class="flex items-center space-x-2 font-mono">
-                            <span id="branch-picker-coords-text" class="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/60">-6.195000, 106.823000</span>
-                            <span id="branch-picker-radius-badge" class="font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200/60">100m</span>
-                        </div>
-                    </div>
-
-                    <!-- Fine-tune Inputs -->
-                    <div class="grid grid-cols-3 gap-2 text-[10px]">
-                        <div class="flex items-center space-x-1">
-                            <span class="text-slate-400 font-semibold">Lat:</span>
-                            <input type="number" step="0.000001" id="branch-modal-lat" oninput="updateBranchPickerFromInputs()" placeholder="-6.1950" class="w-full p-1.5 bg-white border border-slate-200 rounded-lg font-mono text-[11px] text-slate-700" required>
-                        </div>
-                        <div class="flex items-center space-x-1">
-                            <span class="text-slate-400 font-semibold">Lng:</span>
-                            <input type="number" step="0.000001" id="branch-modal-lng" oninput="updateBranchPickerFromInputs()" placeholder="106.8230" class="w-full p-1.5 bg-white border border-slate-200 rounded-lg font-mono text-[11px] text-slate-700" required>
-                        </div>
-                        <div class="flex items-center space-x-1">
-                            <span class="text-slate-400 font-semibold">Radius:</span>
-                            <input type="number" id="branch-modal-radius" oninput="updateBranchPickerFromInputs()" value="100" class="w-full p-1.5 bg-white border border-slate-200 rounded-lg font-mono text-center text-[11px] text-slate-700" required>
-                            <span class="text-slate-400 font-bold">m</span>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Status Operasional Cabang:</label>
-                    <select id="branch-modal-active" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium">
-                        <option value="1">Aktif (Bisa transaksi POS kasir)</option>
-                        <option value="0">Nonaktif (Toko Ditutup Sementara)</option>
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 gap-2 pt-2">
-                    <button type="button" onclick="closeBranchModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700">Batal</button>
-                    <button type="submit" id="branch-modal-submit-btn" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow">Simpan Cabang</button>
                 </div>
             </form>
         </div>

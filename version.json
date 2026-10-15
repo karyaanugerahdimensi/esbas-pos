@@ -1,14 +1,22 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.1.5",
-  "build": "20261015-08",
+  "version": "1.1.6",
+  "build": "20261015-09",
   "release_date": "2026-10-15",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
     {
-      "version": "1.1.5",
+      "version": "1.1.6",
       "commit": "HEAD",
+      "date": "2026-10-15",
+      "title": "Desain Responsif Landscape Presisi Modal Kelola Cabang",
+      "description": "Merombak tampilan modal Tambah / Edit Cabang menjadi format landscape 2 kolom (profil outlet dan peta geospasial GPS interaktif) dengan kontainer max-h-[92vh], header dan footer sticky, serta scroll body responsif agar tidak terpotong pada layar laptop/desktop maupun perangkat mobile.",
+      "rollback_command": "git checkout v1.1.5"
+    },
+    {
+      "version": "1.1.5",
+      "commit": "v1.1.5",
       "date": "2026-10-15",
       "title": "Penghapusan Nomor Urut Sub-Tab di Seluruh Menu & Topbar View",
       "description": "Menghapus penomoran urut (1., 2., dst.) pada tombol navigasi sub-tab di setiap modul menu (Laporan, ESS, Master Produk, BOM, Stok, Beban, Pelanggan, Logistik, Cabang, Pengaturan), modal pengeluaran kasir, serta penyesuaian judul topbar navigasi agar tampilan lebih bersih, konsisten, dan modern.",
