@@ -5747,122 +5747,210 @@ $appVersionData = getAppVersionData();
         </div>
     </div>
 
-    <!-- Modal 7: Tambah / Edit Pelanggan & Mitra (CRM) -->
-    <div id="customer-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <h3 id="cust-modal-title" class="font-bold text-slate-800 text-base">Tambah Pelanggan / Mitra</h3>
-            <form onsubmit="saveCustomerForm(event)" class="space-y-3 text-xs">
+    <!-- Modal 7: Tambah / Edit Pelanggan & Mitra (CRM) (Responsive Precision Landscape Design) -->
+    <div id="customer-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto hidden">
+        <div class="bg-white rounded-3xl max-w-5xl w-full shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <!-- Modal Header (Sticky / Non-scrolling) -->
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/70">
+                <div class="flex items-center space-x-3">
+                    <span class="p-2.5 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+                        <i data-lucide="users" class="w-5 h-5 text-indigo-600"></i>
+                    </span>
+                    <div>
+                        <h3 id="cust-modal-title" class="font-black text-slate-800 text-base sm:text-lg flex items-center space-x-2">
+                            <span>Tambah Pelanggan / Mitra</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Kelola data profil pelanggan, kategori tier harga khusus, kontak, dan titik acuan kurir.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCustomerModal()" class="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-200/60 transition-colors" title="Tutup Modal">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form & Scrollable Body -->
+            <form onsubmit="saveCustomerForm(event)" class="flex flex-col flex-1 overflow-hidden m-0">
                 <input type="hidden" id="cust-id">
-                
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Kategori Pelanggan:</label>
-                        <select id="cust-category" onchange="onModalCustCategoryChange()" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-indigo-900">
-                            <option value="REGULER">Reguler (Ritel Umum)</option>
-                            <option value="MEMBER">Member (VIP Tier)</option>
-                            <option value="RESELLER">Reseller (Grosir)</option>
-                            <option value="MITRA">Mitra B2B (Rekanan Bisnis)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Kode / NIK Pelanggan:</label>
-                        <input type="text" id="cust-code" placeholder="Otomatis / CUST-01" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono">
-                    </div>
-                </div>
 
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Nama Pelanggan / Badan Usaha Mitra:</label>
-                    <input type="text" id="cust-name" placeholder="Contoh: Anisa Maharani / PT Mitra Sejahtera" class="w-full p-2.5 bg-slate-50 border rounded-xl" required>
-                </div>
+                <!-- Main Landscape Content Body -->
+                <div class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
 
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">No. HP / WhatsApp:</label>
-                        <input type="text" id="cust-phone" placeholder="08123456789" class="w-full p-2.5 bg-slate-50 border rounded-xl">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Email:</label>
-                        <input type="email" id="cust-email" placeholder="kontak@mitra.com" class="w-full p-2.5 bg-slate-50 border rounded-xl">
-                    </div>
-                </div>
+                        <!-- Kolom Kiri: Profil & Data Pelanggan (5 Cols) -->
+                        <div class="lg:col-span-5 space-y-3.5">
+                            <div class="border-b border-slate-100 pb-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-indigo-900 flex items-center space-x-1.5">
+                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-indigo-600"></i>
+                                    <span>Informasi & Profil Pelanggan</span>
+                                </span>
+                            </div>
 
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Diskon Tambahan (%):</label>
-                        <input type="number" step="0.5" id="cust-discount" placeholder="0" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Cabang Registrasi:</label>
-                        <select id="cust-branch" onchange="onCustBranchChangeInModal()" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium">
-                            <!-- Populated via JS -->
-                        </select>
-                    </div>
-                </div>
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block font-bold text-slate-700 text-xs mb-1">Kategori Pelanggan:</label>
+                                    <select id="cust-category" onchange="onModalCustCategoryChange()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-indigo-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all">
+                                        <option value="REGULER">Reguler (Ritel Umum)</option>
+                                        <option value="MEMBER">Member (VIP Tier)</option>
+                                        <option value="RESELLER">Reseller (Grosir)</option>
+                                        <option value="MITRA">Mitra B2B (Rekanan Bisnis)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-700 text-xs mb-1">Kode / NIK Pelanggan:</label>
+                                    <input type="text" id="cust-code" placeholder="Otomatis / CUST-01" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all">
+                                </div>
+                            </div>
 
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Alamat Lengkap:</label>
-                    <textarea id="cust-address" rows="2" placeholder="Alamat pengiriman / domisili..." class="w-full p-2.5 bg-slate-50 border rounded-xl"></textarea>
-                </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 text-xs mb-1">Nama Pelanggan / Badan Usaha Mitra:</label>
+                                <input type="text" id="cust-name" placeholder="Contoh: Anisa Maharani / PT Mitra Sejahtera" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all" required>
+                            </div>
 
-                <!-- Penentuan Titik Lokasi Peta Langsung Pelanggan -->
-                <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <label class="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
-                                <i data-lucide="map-pin" class="w-4 h-4 text-indigo-600"></i>
-                                <span>Pilih Titik Lokasi Peta (Acuan Kurir & Jarak):</span>
-                            </label>
-                            <p class="text-[10px] text-slate-500">Klik langsung pada peta atau seret marker pin 📍</p>
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block font-bold text-slate-700 text-xs mb-1">No. HP / WhatsApp:</label>
+                                    <input type="text" id="cust-phone" placeholder="08123456789" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-700 text-xs mb-1">Email:</label>
+                                    <input type="email" id="cust-email" placeholder="kontak@mitra.com" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block font-bold text-slate-700 text-xs mb-1">Diskon Tambahan (%):</label>
+                                    <input type="number" step="0.5" id="cust-discount" placeholder="0" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-700 text-xs mb-1">Cabang Registrasi:</label>
+                                    <select id="cust-branch" onchange="onCustBranchChangeInModal()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all">
+                                        <!-- Populated via JS -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block font-bold text-slate-700 text-xs mb-1">Alamat Lengkap:</label>
+                                <textarea id="cust-address" rows="2" placeholder="Alamat pengiriman / domisili..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block font-bold text-slate-700 text-xs mb-1">Catatan Khusus / Kontrak:</label>
+                                <input type="text" id="cust-notes" placeholder="Catatan termin pembayaran / perjanjian kerjasama..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all">
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-1">
-                            <button type="button" onclick="resetCustPickerToBranch()" title="Pusatkan peta ke cabang registrasi" class="px-2 py-1 bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 font-bold rounded-lg text-[10px] transition-colors flex items-center space-x-1">
-                                <span>↺ Cabang</span>
-                            </button>
-                            <button type="button" onclick="autoDetectCustLocation()" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[10px] shadow-sm flex items-center space-x-1 transition-colors">
-                                <span>📍 GPS Saya</span>
-                            </button>
-                        </div>
-                    </div>
 
-                    <!-- Direct Leaflet Map Canvas -->
-                    <div class="relative rounded-2xl border border-slate-300 shadow-sm overflow-hidden bg-slate-100">
-                        <div id="cust-modal-map-picker" style="height: 220px; min-height: 220px; width: 100%;" class="z-10"></div>
-                        <div class="absolute bottom-2 left-2 z-20 pointer-events-none">
-                            <span class="bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-medium px-2 py-0.5 rounded-lg shadow">
-                                💡 Klik peta untuk set titik lokasi
-                            </span>
-                        </div>
-                    </div>
+                        <!-- Kolom Kanan: Peta Geospasial Pelanggan, Acuan Kurir & Pencarian Google Maps (7 Cols) -->
+                        <div class="lg:col-span-7 space-y-3 bg-slate-50/70 p-4 rounded-2xl border border-slate-200/80">
+                            <div class="flex items-center justify-between pb-1 border-b border-slate-200/60">
+                                <div>
+                                    <label class="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
+                                        <i data-lucide="map-pin" class="w-4 h-4 text-indigo-600"></i>
+                                        <span>Titik Lokasi GPS & Acuan Kurir Pengantaran:</span>
+                                    </label>
+                                    <p class="text-[10px] text-slate-500">Klik peta atau seret pin marker untuk akurasi jarak & tarif ongkir</p>
+                                </div>
+                                <div class="flex items-center space-x-1.5">
+                                    <button type="button" onclick="resetCustPickerToBranch()" title="Pusatkan peta ke cabang registrasi" class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold rounded-lg text-[10px] shadow-2xs transition-colors flex items-center space-x-1">
+                                        <span>↺ Cabang</span>
+                                    </button>
+                                    <button type="button" onclick="autoDetectCustLocation()" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[10px] shadow-sm flex items-center space-x-1 transition-colors">
+                                        <span>📍 GPS Saya</span>
+                                    </button>
+                                </div>
+                            </div>
 
-                    <!-- Coordinate Readout & Fine-Tune Inputs -->
-                    <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200 text-[11px]">
-                        <span class="text-slate-500 font-medium">Titik Terpilih:</span>
-                        <div class="flex items-center space-x-2 font-mono">
-                            <span id="cust-picker-coords-text" class="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/60">-6.195000, 106.823000</span>
-                        </div>
-                    </div>
+                            <!-- Input Pencarian Alamat & Terhubung ke Google Maps -->
+                            <div class="space-y-1.5 bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="font-bold text-slate-700 flex items-center space-x-1">
+                                        <i data-lucide="search" class="w-3.5 h-3.5 text-indigo-600"></i>
+                                        <span>Cari Alamat / Lokasi Pelanggan:</span>
+                                    </span>
+                                    <div class="flex items-center space-x-2">
+                                        <button type="button" onclick="copyCustAddressToSearch()" class="text-indigo-600 hover:text-indigo-800 font-bold hover:underline flex items-center space-x-1 text-[10px]" title="Salin nama & alamat pelanggan dari form sebelah kiri">
+                                            <i data-lucide="copy" class="w-3 h-3"></i>
+                                            <span>Pakai Alamat Pelanggan</span>
+                                        </button>
+                                        <span class="text-slate-300">|</span>
+                                        <a id="cust-modal-gmaps-link" href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" class="text-emerald-700 hover:text-emerald-900 font-bold hover:underline flex items-center space-x-1 text-[10px]" title="Buka dan verifikasi titik koordinat pelanggan langsung di Google Maps">
+                                            <i data-lucide="external-link" class="w-3 h-3 text-emerald-600"></i>
+                                            <span>Buka di Google Maps</span>
+                                        </a>
+                                    </div>
+                                </div>
 
-                    <!-- Fine-tune Lat Lng Inputs -->
-                    <div class="grid grid-cols-2 gap-2 text-[10px]">
-                        <div class="flex items-center space-x-1">
-                            <span class="text-slate-400 font-semibold">Lat:</span>
-                            <input type="number" step="any" id="cust-latitude" oninput="updateCustPickerFromInputs()" placeholder="-6.195000" class="w-full p-1.5 bg-white border border-slate-200 rounded-lg font-mono text-[11px] text-slate-700">
+                                <div class="flex items-center gap-1.5">
+                                    <div class="relative flex-1">
+                                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                        <input type="text" id="cust-modal-search-input" oninput="toggleCustSearchClearBtn()" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); searchCustAddressOnMap(); }" placeholder="Ketik alamat pelanggan/tempat, atau paste link/koordinat Google Maps..." class="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                                        <button type="button" onclick="clearCustAddressSearch()" id="cust-modal-search-clear-btn" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 hidden">
+                                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </div>
+                                    <button type="button" id="cust-modal-search-btn" onclick="searchCustAddressOnMap()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs shadow-xs flex items-center space-x-1 shrink-0 transition-colors">
+                                        <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                                        <span>Cari di Peta</span>
+                                    </button>
+                                </div>
+
+                                <!-- Feedback Status Pencarian -->
+                                <div id="cust-modal-search-status" class="text-[10px] text-slate-500 hidden px-1 pt-0.5"></div>
+                            </div>
+
+                            <!-- Direct Leaflet Map Canvas -->
+                            <div class="relative rounded-2xl border border-slate-300 shadow-sm overflow-hidden bg-slate-100">
+                                <div id="cust-modal-map-picker" style="height: 250px; min-height: 250px; width: 100%;" class="z-10"></div>
+                                <div class="absolute bottom-2 left-2 z-20 pointer-events-none">
+                                    <span class="bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-medium px-2 py-0.5 rounded-lg shadow">
+                                        💡 Klik peta atau seret pin untuk tentukan titik alamat
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Coordinate Readout Badge -->
+                            <div class="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-slate-200 text-[11px]">
+                                <span class="text-slate-500 font-semibold flex items-center space-x-1">
+                                    <i data-lucide="crosshair" class="w-3.5 h-3.5 text-indigo-500"></i>
+                                    <span>Titik Koordinat Pelanggan:</span>
+                                </span>
+                                <div class="flex items-center space-x-2 font-mono">
+                                    <span id="cust-picker-coords-text" class="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/60">-6.195000, 106.823000</span>
+                                </div>
+                            </div>
+
+                            <!-- Fine-tune Lat Lng Inputs -->
+                            <div class="grid grid-cols-2 gap-2 text-[10px]">
+                                <div class="flex items-center space-x-1">
+                                    <span class="text-slate-500 font-bold">Lat:</span>
+                                    <input type="number" step="any" id="cust-latitude" oninput="updateCustPickerFromInputs()" placeholder="-6.195000" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-mono text-[11px] text-slate-800 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <span class="text-slate-500 font-bold">Lng:</span>
+                                    <input type="number" step="any" id="cust-longitude" oninput="updateCustPickerFromInputs()" placeholder="106.823000" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-mono text-[11px] text-slate-800 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-1">
-                            <span class="text-slate-400 font-semibold">Lng:</span>
-                            <input type="number" step="any" id="cust-longitude" oninput="updateCustPickerFromInputs()" placeholder="106.823000" class="w-full p-1.5 bg-white border border-slate-200 rounded-lg font-mono text-[11px] text-slate-700">
-                        </div>
+
                     </div>
                 </div>
 
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Catatan Khusus / Kontrak:</label>
-                    <input type="text" id="cust-notes" placeholder="Catatan termin pembayaran / perjanjian kerjasama..." class="w-full p-2.5 bg-slate-50 border rounded-xl">
-                </div>
-
-                <div class="grid grid-cols-2 gap-2 pt-2">
-                    <button type="button" onclick="closeCustomerModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700">Batal</button>
-                    <button type="submit" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow">Simpan Data</button>
+                <!-- Modal Footer (Sticky / Non-scrolling) -->
+                <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                    <div class="text-[11px] text-slate-400 flex items-center space-x-1.5">
+                        <i data-lucide="info" class="w-3.5 h-3.5 text-indigo-500"></i>
+                        <span>Titik koordinat digunakan sebagai acuan perhitungan ongkir kurir dinamis.</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="closeCustomerModal()" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-xs border border-slate-200 transition-colors shadow-2xs">
+                            Batal
+                        </button>
+                        <button type="submit" id="cust-modal-submit-btn" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md shadow-indigo-100 flex items-center space-x-1.5 transition-colors">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            <span>Simpan Data</span>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -15423,14 +15511,169 @@ Manager / Supervisor: __________________
 
         function updateCustPickerBadge(lat, lon) {
             const badge = document.getElementById('cust-picker-coords-text');
+            const gmapsLink = document.getElementById('cust-modal-gmaps-link');
+            const nLat = parseFloat(lat);
+            const nLon = parseFloat(lon);
             if (badge) {
-                const nLat = parseFloat(lat);
-                const nLon = parseFloat(lon);
                 if (!isNaN(nLat) && !isNaN(nLon)) {
                     badge.innerText = `${nLat.toFixed(6)}, ${nLon.toFixed(6)}`;
                 } else {
                     badge.innerText = '-';
                 }
+            }
+            if (gmapsLink && !isNaN(nLat) && !isNaN(nLon)) {
+                gmapsLink.href = `https://www.google.com/maps?q=${nLat.toFixed(6)},${nLon.toFixed(6)}`;
+            }
+        }
+
+        function toggleCustSearchClearBtn() {
+            const input = document.getElementById('cust-modal-search-input');
+            const clearBtn = document.getElementById('cust-modal-search-clear-btn');
+            if (input && clearBtn) {
+                if (input.value.trim().length > 0) {
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                }
+            }
+        }
+
+        function clearCustAddressSearch() {
+            const input = document.getElementById('cust-modal-search-input');
+            if (input) input.value = '';
+            toggleCustSearchClearBtn();
+            const statusEl = document.getElementById('cust-modal-search-status');
+            if (statusEl) {
+                statusEl.innerHTML = '';
+                statusEl.classList.add('hidden');
+            }
+        }
+
+        function copyCustAddressToSearch() {
+            const address = document.getElementById('cust-address')?.value?.trim() || '';
+            const name = document.getElementById('cust-name')?.value?.trim() || '';
+            const query = address || name;
+            if (!query) {
+                alert('Silakan ketik Nama Pelanggan atau Alamat Lengkap terlebih dahulu pada formulir di sebelah kiri.');
+                return;
+            }
+            const input = document.getElementById('cust-modal-search-input');
+            if (input) {
+                input.value = query;
+                toggleCustSearchClearBtn();
+                searchCustAddressOnMap();
+            }
+        }
+
+        function applyCustFoundCoords(lat, lon, label) {
+            const latVal = Number(lat).toFixed(6);
+            const lonVal = Number(lon).toFixed(6);
+            document.getElementById('cust-latitude').value = latVal;
+            document.getElementById('cust-longitude').value = lonVal;
+            updateCustPickerFromInputs();
+            if (state.customerPickerMap) {
+                state.customerPickerMap.setView([lat, lon], 16);
+            }
+            const statusEl = document.getElementById('cust-modal-search-status');
+            if (statusEl) {
+                statusEl.innerHTML = `<div class="p-2 bg-emerald-50 border border-emerald-200/80 rounded-lg text-emerald-800 text-[11px] flex items-start space-x-1.5"><i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5"></i><div class="min-w-0 flex-1"><span class="font-bold">Lokasi Ditemukan (${latVal}, ${lonVal}):</span><p class="text-[10px] text-slate-600 truncate">${escapeHtml(label)}</p></div><a href="https://www.google.com/maps?q=${latVal},${lonVal}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:text-indigo-800 font-bold underline shrink-0 text-[10px]">Google Maps</a></div>`;
+                statusEl.classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+
+        async function searchCustAddressOnMap() {
+            const input = document.getElementById('cust-modal-search-input');
+            let query = input?.value?.trim() || '';
+            if (!query) {
+                query = document.getElementById('cust-address')?.value?.trim() || '';
+                if (query && input) {
+                    input.value = query;
+                    toggleCustSearchClearBtn();
+                }
+            }
+            if (!query) {
+                alert('Silakan masukkan alamat pelanggan, nama tempat, atau link / koordinat Google Maps.');
+                if (input) input.focus();
+                return;
+            }
+
+            const searchBtn = document.getElementById('cust-modal-search-btn');
+            const statusEl = document.getElementById('cust-modal-search-status');
+            const originalBtnHtml = searchBtn ? searchBtn.innerHTML : '';
+
+            if (searchBtn) {
+                searchBtn.disabled = true;
+                searchBtn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span><span>Mencari...</span>';
+            }
+            if (statusEl) {
+                statusEl.innerHTML = '<span class="text-slate-500 italic flex items-center space-x-1"><span class="animate-spin inline-block">⏳</span><span>Menghubungkan & mencari lokasi alamat di peta...</span></span>';
+                statusEl.classList.remove('hidden');
+            }
+
+            const finishSearch = () => {
+                if (searchBtn) {
+                    searchBtn.disabled = false;
+                    searchBtn.innerHTML = originalBtnHtml;
+                    if (window.lucide) lucide.createIcons();
+                }
+            };
+
+            // 1. Cek apakah input berupa koordinat langsung atau URL Google Maps
+            const coordRegex = /([-+]?\d{1,2}\.\d+)[,\s]+([-+]?\d{1,3}\.\d+)/;
+            const match = query.match(coordRegex);
+            if (match) {
+                const lat = parseFloat(match[1]);
+                const lon = parseFloat(match[2]);
+                if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+                    applyCustFoundCoords(lat, lon, `Koordinat Google Maps Terdeteksi: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+                    finishSearch();
+                    return;
+                }
+            }
+
+            // 2. Geocoding via OpenStreetMap Nominatim API
+            try {
+                const encodedQuery = encodeURIComponent(query);
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedQuery}&addressdetails=1&limit=1`;
+                const resp = await fetch(url, { headers: { 'Accept-Language': 'id,en' } });
+                const data = await resp.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+                    applyCustFoundCoords(lat, lon, data[0].display_name);
+                } else {
+                    let fallbackFound = false;
+                    const commaParts = query.split(',').map(s => s.trim()).filter(Boolean);
+                    if (commaParts.length > 1) {
+                        const broaderQuery = commaParts.slice(1).join(', ');
+                        const resp2 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(broaderQuery)}&addressdetails=1&limit=1`, { headers: { 'Accept-Language': 'id,en' } });
+                        const data2 = await resp2.json();
+                        if (Array.isArray(data2) && data2.length > 0) {
+                            fallbackFound = true;
+                            const lat = parseFloat(data2[0].lat);
+                            const lon = parseFloat(data2[0].lon);
+                            applyCustFoundCoords(lat, lon, `${data2[0].display_name} (Wilayah Terdekat)`);
+                        }
+                    }
+
+                    if (!fallbackFound) {
+                        const gmapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+                        if (statusEl) {
+                            statusEl.innerHTML = `<div class="p-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-[11px] flex items-start space-x-1.5"><i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5"></i><div class="min-w-0 flex-1"><span>Alamat tidak ditemukan otomatis.</span> <a href="${gmapsSearchUrl}" target="_blank" rel="noopener noreferrer" class="font-bold underline text-indigo-700 hover:text-indigo-900 inline-flex items-center space-x-1 ml-1"><span>Cari di Google Maps</span><i data-lucide="external-link" class="w-3 h-3 inline"></i></a><p class="text-[10px] text-slate-500 mt-0.5">Anda bisa salin link atau koordinat dari Google Maps dan tempel di sini.</p></div></div>`;
+                            if (window.lucide) lucide.createIcons();
+                        }
+                    }
+                }
+            } catch (err) {
+                const gmapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+                if (statusEl) {
+                    statusEl.innerHTML = `<div class="p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-[11px] flex items-start space-x-1.5"><i data-lucide="wifi-off" class="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5"></i><div class="min-w-0 flex-1"><span>Koneksi pencarian alamat gagal.</span> <a href="${gmapsSearchUrl}" target="_blank" rel="noopener noreferrer" class="font-bold underline text-indigo-700 hover:text-indigo-900 inline-flex items-center space-x-1 ml-1"><span>Buka Langsung di Google Maps</span><i data-lucide="external-link" class="w-3 h-3 inline"></i></a></div></div>`;
+                    if (window.lucide) lucide.createIcons();
+                }
+            } finally {
+                finishSearch();
             }
         }
 
@@ -15499,6 +15742,8 @@ Manager / Supervisor: __________________
 
             if (cust) {
                 title.innerText = 'Edit Data Pelanggan / Mitra';
+                const submitBtn = document.getElementById('cust-modal-submit-btn');
+                if (submitBtn) submitBtn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i><span>Perbarui Data</span>';
                 document.getElementById('cust-id').value = cust.id;
                 document.getElementById('cust-category').value = cust.category || 'REGULER';
                 document.getElementById('cust-code').value = cust.code;
@@ -15511,9 +15756,21 @@ Manager / Supervisor: __________________
                 document.getElementById('cust-latitude').value = cust.latitude || '';
                 document.getElementById('cust-longitude').value = cust.longitude || '';
                 document.getElementById('cust-notes').value = cust.notes || '';
+                
+                const searchInput = document.getElementById('cust-modal-search-input');
+                if (searchInput) searchInput.value = cust.address || cust.name || '';
+                toggleCustSearchClearBtn();
+                const statusEl = document.getElementById('cust-modal-search-status');
+                if (statusEl) {
+                    statusEl.innerHTML = '';
+                    statusEl.classList.add('hidden');
+                }
+
                 updateCustPickerBadge(cust.latitude, cust.longitude);
             } else {
                 title.innerText = 'Tambah Pelanggan / Mitra Baru';
+                const submitBtn = document.getElementById('cust-modal-submit-btn');
+                if (submitBtn) submitBtn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i><span>Simpan Data</span>';
                 document.getElementById('cust-id').value = '';
                 document.getElementById('cust-category').value = 'REGULER';
                 document.getElementById('cust-code').value = '';
@@ -15528,6 +15785,7 @@ Manager / Supervisor: __________________
                 document.getElementById('cust-latitude').value = Number(defLat).toFixed(6);
                 document.getElementById('cust-longitude').value = Number(defLon).toFixed(6);
                 document.getElementById('cust-notes').value = '';
+                clearCustAddressSearch();
                 updateCustPickerBadge(defLat, defLon);
             }
             modal.classList.remove('hidden');
@@ -15537,6 +15795,10 @@ Manager / Supervisor: __________________
             setTimeout(() => {
                 if (state.customerPickerMap) state.customerPickerMap.invalidateSize();
             }, 300);
+            setTimeout(() => {
+                if (state.customerPickerMap) state.customerPickerMap.invalidateSize();
+            }, 500);
+            lucide.createIcons();
         }
 
         function closeCustomerModal() {

@@ -1,14 +1,22 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.1.7",
-  "build": "20261015-10",
+  "version": "1.1.8",
+  "build": "20261015-11",
   "release_date": "2026-10-15",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
     {
-      "version": "1.1.7",
+      "version": "1.1.8",
       "commit": "HEAD",
+      "date": "2026-10-15",
+      "title": "Desain Responsif Landscape & Pencarian Google Maps Modal Pelanggan (CRM)",
+      "description": "Merombak tampilan modal Tambah / Edit Pelanggan menjadi format landscape presisi 2 kolom (profil data pelanggan dan peta geospasial acuan kurir) dengan kontainer max-h-[92vh], header dan footer sticky, kotak pencarian alamat otomatis, pemindai link/koordinat Google Maps, tombol 'Pakai Alamat Pelanggan', serta tombol tautan sinkronisasi real-time 'Buka di Google Maps'.",
+      "rollback_command": "git checkout v1.1.7"
+    },
+    {
+      "version": "1.1.7",
+      "commit": "v1.1.7",
       "date": "2026-10-15",
       "title": "Fitur Pencarian Alamat Peta & Integrasi Google Maps pada Kelola Cabang",
       "description": "Menambahkan input pencarian alamat dan nama tempat pada peta modal kelola cabang dengan geocoding otomatis, pemindaian link / koordinat Google Maps langsung, tombol pintas 'Pakai Alamat Toko', serta tombol tautan sinkronisasi real-time 'Buka di Google Maps'.",
