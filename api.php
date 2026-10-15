@@ -7,6 +7,7 @@ if (!headers_sent()) {
 }
 
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/version.php';
 
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
     session_start();
@@ -63,7 +64,17 @@ try {
     switch ($action) {
 
         // ==========================================
-        // 0. AUTHENTICATION & SESSION CONTROL
+        // 0. VERSION & SYSTEM INFO
+        // ==========================================
+        case 'get_version_info':
+            echo json_encode([
+                'success' => true,
+                'version_data' => getAppVersionData()
+            ]);
+            break;
+
+        // ==========================================
+        // 0.1 AUTHENTICATION & SESSION CONTROL
         // ==========================================
         case 'login':
             $username = trim($input['username'] ?? ''); // NIK or Email
@@ -111,7 +122,8 @@ try {
             echo json_encode([
                 'success' => true,
                 'message' => 'Login berhasil! Selamat datang, ' . $user['name'],
-                'user' => $user
+                'user' => $user,
+                'app_version' => getAppVersionData()
             ]);
             break;
 
@@ -310,7 +322,8 @@ try {
                 'app_settings' => $appSettingsMap,
                 'raw_settings' => $rawSettings,
                 'role_permissions' => $rolePerms,
-                'user_permissions' => $userPerms
+                'user_permissions' => $userPerms,
+                'app_version' => getAppVersionData()
             ]);
             break;
 

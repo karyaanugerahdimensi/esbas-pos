@@ -1,0 +1,42 @@
+{
+  "app_name": "ESBAS POS Multicabang",
+  "version": "1.1.0",
+  "build": "20261015-02",
+  "release_date": "2026-10-15",
+  "commit_hash": "adebd44",
+  "branch": "main",
+  "history": [
+    {
+      "version": "1.1.0",
+      "commit": "adebd44",
+      "date": "2026-10-15",
+      "title": "Perbaikan Kompatibilitas MySQL & Pemetaan Jadwal Shift Karyawan",
+      "description": "Menambahkan opsi mapping shift kerja di modal detail karyawan (kecuali Super Admin dan BM) serta perbaikan migrasi MySQL ringan autoMigrateMysql.",
+      "rollback_command": "git checkout adebd44"
+    },
+    {
+      "version": "1.0.2",
+      "commit": "36ebb2d",
+      "date": "2026-10-15",
+      "title": "Pencatatan Meteran Air Kasir",
+      "description": "Pencatatan meteran air display counter closing shift dengan rumus (hari ini - kemarin)/782 dan form adjustment.",
+      "rollback_command": "git checkout 36ebb2d"
+    },
+    {
+      "version": "1.0.1",
+      "commit": "ebf441d",
+      "date": "2026-10-15",
+      "title": "Dukungan Dual Database MySQL & SQLite",
+      "description": "Inisialisasi konfigurasi config.php dan dump SQL schema MySQL terpadu.",
+      "rollback_command": "git checkout ebf441d"
+    },
+    {
+      "version": "1.0.0",
+      "commit": "d9d4fbe",
+      "date": "2026-10-14",
+      "title": "Rilis Awal ESBAS POS Multicabang",
+      "description": "Sistem POS kasir multi-cabang, multi-shift, inventori resep BOM otomatis, logistik kurir, dan penggajian.",
+      "rollback_command": "git checkout d9d4fbe"
+    }
+  ]
+}

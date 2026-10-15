@@ -1,9 +1,13 @@
+<?php
+require_once __DIR__ . '/version.php';
+$appVersionData = getAppVersionData();
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESBAS Retail - POS Multi-Cabang, BOM & ESS</title>
+    <title>ESBAS Retail - POS Multi-Cabang v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</title>
     <!-- Production Compiled Tailwind CSS & CDN Fallback -->
     <link rel="stylesheet" href="assets/css/tailwind.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -95,6 +99,17 @@
                         <p class="text-[10px] text-slate-400">Rian Kurniawan</p>
                     </button>
                 </div>
+            </div>
+
+            <!-- Version Badge & System Info -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                <button type="button" onclick="openVersionModal()" class="hover:text-indigo-600 font-mono transition-colors inline-flex items-center space-x-1.5 group text-left">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                    <span class="font-bold group-hover:underline">Base Ver: v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</span>
+                </button>
+                <button type="button" onclick="openVersionModal()" class="text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition-colors">
+                    Riwayat / Rollback
+                </button>
             </div>
         </div>
     </div>
@@ -257,6 +272,16 @@
                 </div>
                 <button onclick="handleLogout()" title="Keluar dari Aplikasi" class="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors shrink-0">
                     <i data-lucide="log-out" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <!-- Version Badge & Quick Rollback Helper -->
+            <div class="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 px-1">
+                <button type="button" onclick="openVersionModal()" title="Lihat Riwayat Versi & Titik Rollback" class="hover:text-indigo-400 flex items-center space-x-1.5 transition-colors group">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                    <span class="font-mono font-bold group-hover:underline">v<?= htmlspecialchars($appVersionData['version']) ?>-<?= htmlspecialchars($appVersionData['commit_hash']) ?></span>
+                </button>
+                <button type="button" onclick="openVersionModal()" title="Buka Panduan Rollback Git" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition-colors">
+                    Rollback
                 </button>
             </div>
         </div>
@@ -6807,6 +6832,121 @@
     </div>
 
     <!-- ======================================================== -->
+    <!-- MODAL INFORMASI BASE VERSION & PANDUAN ROLLBACK          -->
+    <!-- ======================================================== -->
+    <div id="version-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+            <!-- Modal Header -->
+            <div class="p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-xl shrink-0">
+                        🚀
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h3 class="text-base font-extrabold tracking-tight">Informasi Versi & Rollback</h3>
+                            <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-mono font-bold">
+                                Active: v<?= htmlspecialchars($appVersionData['version']) ?>
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-400">Identifikasi base version untuk deployment dan rollback cepat</p>
+                    </div>
+                </div>
+                <button onclick="closeVersionModal()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content (Scrollable) -->
+            <div class="p-6 overflow-y-auto space-y-6 text-sm">
+                
+                <!-- Current Active Build Stats -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+                        <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Base Version</p>
+                        <p class="text-base font-black text-indigo-700 font-mono mt-0.5">v<?= htmlspecialchars($appVersionData['version']) ?></p>
+                    </div>
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+                        <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Git Commit</p>
+                        <p class="text-base font-black text-slate-800 font-mono mt-0.5">#<?= htmlspecialchars($appVersionData['commit_hash']) ?></p>
+                    </div>
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+                        <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Tanggal Rilis</p>
+                        <p class="text-sm font-bold text-slate-700 mt-0.5"><?= htmlspecialchars($appVersionData['release_date']) ?></p>
+                    </div>
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+                        <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Branch</p>
+                        <p class="text-sm font-bold text-emerald-700 font-mono mt-0.5"><?= htmlspecialchars($appVersionData['branch']) ?></p>
+                    </div>
+                </div>
+
+                <!-- Quick Terminal Rollback Snippet -->
+                <div class="bg-slate-900 rounded-2xl p-4 text-slate-200 space-y-2.5 border border-slate-800">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-300 flex items-center space-x-1.5">
+                            <i data-lucide="terminal" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+                            <span>Perintah Rollback Cepat (SSH Cloud Hosting)</span>
+                        </span>
+                        <span class="text-[10px] text-slate-500 font-mono">Terminal / Bash</span>
+                    </div>
+                    <div class="bg-black/50 rounded-xl p-3 font-mono text-xs text-emerald-400 overflow-x-auto relative flex items-center justify-between gap-2 border border-slate-800">
+                        <code class="whitespace-nowrap">cd ~/public_html &amp;&amp; git checkout <?= htmlspecialchars($appVersionData['commit_hash']) ?></code>
+                        <button type="button" onclick="copyRollbackSnippet('cd ~/public_html && git checkout <?= htmlspecialchars($appVersionData['commit_hash']) ?>', this)" class="shrink-0 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-sans font-bold transition-colors">
+                            Salin
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                        💡 <em>Tip: Untuk kembali ke rilis paling mutakhir kapan saja, jalankan: <code class="text-indigo-300 font-mono bg-slate-800 px-1 py-0.5 rounded">git checkout main &amp;&amp; git pull origin main</code></em>
+                    </p>
+                </div>
+
+                <!-- Rollback Points / Version History -->
+                <div class="space-y-3">
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-500">Riwayat Rilis & Titik Kembalian (Rollback Points)</h4>
+                    <div class="space-y-2.5">
+                        <?php foreach ($appVersionData['history'] as $idx => $hist): ?>
+                        <div class="p-3.5 rounded-2xl border <?= ($idx === 0) ? 'border-indigo-200 bg-indigo-50/40' : 'border-slate-200 bg-white hover:bg-slate-50' ?> transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="space-y-1">
+                                <div class="flex items-center space-x-2">
+                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold <?= ($idx === 0) ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700' ?>">
+                                        v<?= htmlspecialchars($hist['version']) ?>
+                                    </span>
+                                    <span class="text-xs font-bold text-slate-800"><?= htmlspecialchars($hist['title']) ?></span>
+                                    <?php if ($idx === 0): ?>
+                                    <span class="px-1.5 py-0.2 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded">TERBARU</span>
+                                    <?php endif; ?>
+                                </div>
+                                <p class="text-xs text-slate-500"><?= htmlspecialchars($hist['description']) ?></p>
+                                <div class="flex items-center space-x-3 text-[11px] text-slate-400 font-mono">
+                                    <span>Commit: <strong class="text-slate-600">#<?= htmlspecialchars($hist['commit']) ?></strong></span>
+                                    <span>&bull;</span>
+                                    <span><?= htmlspecialchars($hist['date']) ?></span>
+                                </div>
+                            </div>
+                            <div class="shrink-0">
+                                <button type="button" onclick="copyRollbackSnippet('<?= htmlspecialchars($hist['rollback_command']) ?>', this)" class="w-full sm:w-auto px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 transition-colors flex items-center justify-center space-x-1.5">
+                                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                    <span>Copy Rollback</span>
+                                </button>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
+                <span class="text-xs text-slate-400 font-mono">Build ID: <?= htmlspecialchars($appVersionData['build'] ?? '-') ?></span>
+                <button type="button" onclick="closeVersionModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-colors">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
     <!-- JAVASCRIPT APP LOGIC                                     -->
     <!-- ======================================================== -->
     <script>
@@ -6900,6 +7040,39 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#39;');
+        }
+
+        // ==========================================
+        // VERSION & ROLLBACK MODAL CONTROLS
+        // ==========================================
+        function openVersionModal() {
+            const modal = document.getElementById('version-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+
+        function closeVersionModal() {
+            const modal = document.getElementById('version-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function copyRollbackSnippet(cmd, btn) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(cmd).then(() => {
+                    const originalHTML = btn.innerHTML;
+                    btn.innerHTML = '<span class="text-emerald-600 font-bold">✓ Tersalin!</span>';
+                    setTimeout(() => {
+                        btn.innerHTML = originalHTML;
+                        if (window.lucide) lucide.createIcons();
+                    }, 2000);
+                }).catch(() => {
+                    prompt('Salin perintah rollback ini:', cmd);
+                });
+            } else {
+                prompt('Salin perintah rollback ini:', cmd);
+            }
         }
 
         // ==========================================
