@@ -18687,7 +18687,8 @@ Manager / Supervisor: __________________
         function applyRolePermissionsToSidebar() {
             const curUser = state.currentUser || state.loggedInUser;
             if (!curUser) return;
-            const role = curUser.role || 'CASHIER';
+            const role = (curUser.role || 'CASHIER').toUpperCase().trim();
+            const isSuperAdmin = (role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'SUPER ADMIN');
 
             // Ambil izin menu role
             const userPerms = state.userPermissions || {};
@@ -18697,12 +18698,16 @@ Manager / Supervisor: __________________
                 const btn = document.getElementById(`tab-btn-${mKey}`);
                 if (!btn) return;
 
-                // Superadmin selalu memiliki akses penuh jika tidak diset secara khusus
+                // Superadmin SELALU memiliki akses penuh ke seluruh menu (1 s/d 15)
                 let canAccess = true;
-                if (role !== 'SUPERADMIN' && userPerms[mKey] !== undefined) {
-                    canAccess = userPerms[mKey] == 1;
-                } else if (userPerms[mKey] !== undefined) {
-                    canAccess = userPerms[mKey] == 1;
+                if (!isSuperAdmin) {
+                    if (userPerms[mKey] !== undefined) {
+                        canAccess = (userPerms[mKey] == 1);
+                    } else if (role === 'MANAGER' || role === 'BRANCH_MANAGER') {
+                        canAccess = (mKey !== 'sale-cancellations');
+                    } else {
+                        canAccess = false;
+                    }
                 }
 
                 if (canAccess) {

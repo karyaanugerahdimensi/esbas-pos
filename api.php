@@ -163,7 +163,7 @@ try {
         // ==========================================
         case 'bootstrap':
             $branchId = (int)($_GET['branch_id'] ?? ($_SESSION['branch_id'] ?? 1));
-            $userId = (int)($_GET['user_id'] ?? ($_SESSION['user_id'] ?? 3));
+            $userId = (int)($_GET['user_id'] ?? ($_SESSION['user_id'] ?? 1));
 
             $branches = $pdo->query("
                 SELECT b.*,
@@ -290,10 +290,30 @@ try {
             // Role Menu Permissions
             $rolePerms = $pdo->query("SELECT * FROM role_menu_permissions ORDER BY id ASC")->fetchAll();
             $userPerms = [];
-            $curRole = $currentUser['role'] ?? 'CASHIER';
+            $curRole = $currentUser['role'] ?? 'SUPER_ADMIN';
+            $normCurRole = str_replace('_', '', strtoupper($curRole));
+
+            // 15 Menu Lengkap Sistem
+            $allMenuKeys = ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
+
+            // Jika Super Admin, berikan akses penuh (1) ke seluruh 15 menu
+            if ($normCurRole === 'SUPERADMIN') {
+                foreach ($allMenuKeys as $mk) {
+                    $userPerms[$mk] = 1;
+                }
+            }
+
             foreach ($rolePerms as $rp) {
-                if ($rp['role'] === $curRole) {
+                $normRpRole = str_replace('_', '', strtoupper($rp['role']));
+                if ($normRpRole === $normCurRole) {
                     $userPerms[$rp['menu_key']] = (int)$rp['can_access'];
+                }
+            }
+
+            // Pastikan Super Admin tetap dapat mengakses menu 11-15 tanpa terkunci
+            if ($normCurRole === 'SUPERADMIN') {
+                foreach (['logistics', 'branches', 'payments', 'sale-cancellations', 'settings'] as $mk) {
+                    $userPerms[$mk] = 1;
                 }
             }
 

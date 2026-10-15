@@ -1,17 +1,25 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.1.0",
-  "build": "20261015-02",
+  "version": "1.1.1",
+  "build": "20261015-03",
   "release_date": "2026-10-15",
-  "commit_hash": "adebd44",
+  "commit_hash": "fcd46bf",
   "branch": "main",
   "history": [
     {
-      "version": "1.1.0",
-      "commit": "adebd44",
+      "version": "1.1.1",
+      "commit": "HEAD",
       "date": "2026-10-15",
-      "title": "Perbaikan Kompatibilitas MySQL & Pemetaan Jadwal Shift Karyawan",
-      "description": "Menambahkan opsi mapping shift kerja di modal detail karyawan (kecuali Super Admin dan BM) serta perbaikan migrasi MySQL ringan autoMigrateMysql.",
+      "title": "Perbaikan Visibilitas Menu 11-15 & Normalisasi Hak Akses Role Super Admin",
+      "description": "Menjamin menu 11-15 (Kurir, Cabang, Metode Pembayaran, Void Sales, Pengaturan Sistem) tampil lengkap untuk Super Admin dan perbaikan normalisasi role SUPER_ADMIN.",
+      "rollback_command": "git checkout fcd46bf"
+    },
+    {
+      "version": "1.1.0",
+      "commit": "fcd46bf",
+      "date": "2026-10-15",
+      "title": "Sistem Informasi Base Version & Rollback 1-Klik",
+      "description": "Menambahkan metadata versi terstruktur, hash commit dinamis, dan modal riwayat rilis dengan tombol copy perintah rollback.",
       "rollback_command": "git checkout adebd44"
     },
     {

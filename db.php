@@ -1771,10 +1771,12 @@ function autoMigrateAndSync($pdo) {
     ];
 
     $roleAccessRules = [
-        'SUPERADMIN' => ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'],
-        'MANAGER'    => ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'settings'],
-        'CASHIER'    => ['pos', 'reports', 'ess'],
-        'STAFF'      => ['ess', 'stocks', 'logistics']
+        'SUPERADMIN'     => ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'],
+        'SUPER_ADMIN'    => ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'],
+        'BRANCH_MANAGER' => ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
+        'MANAGER'        => ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
+        'CASHIER'        => ['pos', 'reports', 'ess'],
+        'STAFF'          => ['ess', 'stocks', 'logistics']
     ];
 
     $stmtRolePerm = $pdo->prepare("INSERT OR IGNORE INTO role_menu_permissions (role, menu_key, menu_title, can_access) VALUES (?, ?, ?, ?)");
