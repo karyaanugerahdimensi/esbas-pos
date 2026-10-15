@@ -782,7 +782,11 @@
                                 <span id="shift-report-branch-label" class="inline-block px-3 py-1.5 text-xs bg-slate-100 border border-slate-200 rounded-xl font-bold text-indigo-900">Cabang</span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <button onclick="openWaterMeterModal()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-2 transition-all">
+                                <i data-lucide="gauge" class="w-4 h-4"></i>
+                                <span>Meteran Air & Koreksi</span>
+                            </button>
                             <button onclick="loadShiftReports()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-2 transition-all">
                                 <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                                 <span>Muat Ulang Data</span>
@@ -6572,6 +6576,88 @@
                 </div>
             </form>
         </div>
+    <!-- Modal: Riwayat & Penyesuaian Nilai Meteran Air Display Counter -->
+    <div id="water-meter-adjust-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between border-b pb-3 shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <span class="p-2 bg-cyan-100 text-cyan-800 rounded-2xl text-xl">💧</span>
+                    <div>
+                        <h3 class="font-black text-slate-800 text-base leading-tight">Kelola & Adjustment Meteran Air</h3>
+                        <p class="text-xs text-slate-500">Pencatatan display counter & kalibrasi pengeluaran galon</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeWaterMeterModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-sm transition-colors">✕</button>
+            </div>
+
+            <div class="overflow-y-auto space-y-4 flex-1 pr-1">
+                <!-- Form Input / Penyesuaian Meteran Baru -->
+                <form onsubmit="saveWaterMeterAdjustmentForm(event)" class="bg-gradient-to-br from-cyan-50/70 to-sky-50/50 border border-cyan-200 rounded-2xl p-4 space-y-3 shadow-2xs">
+                    <div class="flex items-center justify-between border-b border-cyan-200/60 pb-2">
+                        <span class="text-xs font-black text-cyan-950 uppercase tracking-wide">Form Penyesuaian / Input Baru</span>
+                        <span class="text-[10px] text-cyan-700 bg-white px-2 py-0.5 rounded font-bold border border-cyan-200">Rumus: (Hari Ini - Kemarin) / 782</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Tanggal Rekam:</label>
+                            <input type="date" id="wma-date" required class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Meteran Kemarin (Awal):</label>
+                            <input type="number" step="any" id="wma-yesterday" oninput="calculateModalMeterOutput()" required class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-mono font-bold text-slate-800">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Meteran Hari Ini (Display):</label>
+                            <input type="number" step="any" id="wma-today" oninput="calculateModalMeterOutput()" required placeholder="Angka counter..." class="w-full p-2.5 bg-white border-2 border-cyan-400 rounded-xl font-mono font-black text-cyan-950 text-sm">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Satuan Koreksi (+/-):</label>
+                            <select id="wma-adj-type" onchange="calculateModalMeterOutput()" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800">
+                                <option value="PULSE">Pulsa Meteran (/ 782)</option>
+                                <option value="GALON">Galon Langsung (+/-)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Nilai Koreksi (+/-):</label>
+                            <input type="number" step="any" id="wma-adj-val" oninput="calculateModalMeterOutput()" value="0" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-mono font-bold text-slate-800">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Hasil Pengeluaran Air:</label>
+                            <div class="p-2.5 bg-cyan-600 text-white rounded-xl font-mono font-black text-center text-sm truncate shadow-xs" id="wma-calc-preview">
+                                0 Galon
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-xs">
+                        <label class="block font-bold text-slate-700 mb-1">Alasan Penyesuaian / Keterangan:</label>
+                        <input type="text" id="wma-reason" placeholder="Contoh: Kalibrasi flow meter / kuras pipa filter 10 galon" required class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800">
+                    </div>
+
+                    <div class="text-right pt-1">
+                        <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold shadow-md shadow-cyan-200 transition-colors">Simpan Penyesuaian Meteran</button>
+                    </div>
+                </form>
+
+                <!-- Riwayat Pencatatan Meteran -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-700">Riwayat Pencatatan Meteran Air (30 Terakhir)</span>
+                        <span id="wma-branch-name-badge" class="text-[10px] font-bold text-slate-400">Cabang Aktif</span>
+                    </div>
+                    <div id="wma-logs-table-container" class="border border-slate-200 rounded-2xl overflow-hidden bg-white text-xs">
+                        <div class="p-6 text-center text-slate-400">Memuat riwayat meteran air...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ======================================================== -->
@@ -7982,13 +8068,17 @@
                     const expectedCash = closingData?.expected_cash ?? (initCash + cashSales);
                     const txCount = closingData?.total_transactions ?? 0;
                     const items = closingData?.items || [];
+                    const waterMeter = closingData?.water_meter || {};
+                    const meterYesterday = waterMeter.meter_yesterday ?? 0;
+                    const meterYesterdayDate = waterMeter.last_log_date ?? null;
 
                     window.closingShiftState = {
                         initialCash: initCash,
                         cashSales: cashSales,
                         expectedCash: expectedCash,
                         categories: closingData?.expense_categories || [],
-                        employees: closingData?.branch_employees || []
+                        employees: closingData?.branch_employees || [],
+                        waterMeter: waterMeter
                     };
 
                     let closingItemsRows = '';
@@ -8207,6 +8297,96 @@
                             <span class="leading-relaxed">
                                 <b>Penting untuk Shift Terakhir:</b> Laporan sisa stok fisik malam yang Anda simpan di sini akan <b>otomatis terkunci</b> dan menjadi <b>STOK MALAM</b> bagi kasir shift pagi esok hari.
                             </span>
+                        </div>
+                    </div>
+
+                    <!-- 2.3 Pencatatan Meteran Air Mesin Isi Ulang (Display Counter) -->
+                    <div class="bg-gradient-to-br from-sky-50 via-cyan-50/40 to-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-sky-200/90 shadow-sm space-y-3.5">
+                        <div class="flex items-center justify-between border-b border-sky-100 pb-2 flex-wrap gap-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-base">💧</span>
+                                <span class="text-xs sm:text-sm font-black text-sky-950 uppercase tracking-wider">Meteran Air Mesin Isi Ulang (Display Counter)</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-sky-100 text-sky-800">Closing Harian</span>
+                            </div>
+                            <div class="text-[10px] text-sky-700 bg-white/90 border border-sky-200 px-2.5 py-0.5 rounded-lg font-mono font-bold">
+                                Rumus: (Hari Ini - Kemarin) / 782
+                            </div>
+                        </div>
+
+                        <p class="text-[11px] text-slate-500 leading-relaxed">
+                            Karyawan shift terakhir mencatat angka counter terakhir yang tertera pada display meteran mesin isi ulang untuk menghitung estimasi pengeluaran galon.
+                        </p>
+
+                        <!-- Baris Input Counter: Kemarin vs Hari Ini vs Hasil Galon -->
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                            <!-- Meteran Kemarin (Awal) -->
+                            <div class="sm:col-span-4 space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-[11px] font-black text-slate-700 uppercase">Meter Kemarin (Awal):</label>
+                                    <button type="button" onclick="unlockYesterdayMeter()" id="btn-unlock-yesterday" class="text-[10px] font-bold text-sky-600 hover:text-sky-800 underline">Ubah</button>
+                                </div>
+                                <div class="relative">
+                                    <input type="number" step="any" id="closing-meter-yesterday" value="${meterYesterday}" readonly class="w-full py-2.5 px-3 bg-slate-100 border border-slate-300 rounded-xl font-mono font-bold text-slate-700 text-sm focus:ring-2 focus:ring-sky-500 transition-all">
+                                </div>
+                                <span class="block text-[9px] text-slate-400 italic">${meterYesterdayDate ? 'Terakhir dicatat: ' + escapeHtml(meterYesterdayDate) : 'Belum ada catatan sebelumnya'}</span>
+                            </div>
+
+                            <!-- Meteran Hari Ini (Display Akhir) -->
+                            <div class="sm:col-span-4 space-y-1">
+                                <label class="text-[11px] font-black text-sky-950 uppercase flex items-center justify-between">
+                                    <span>Meter Hari Ini (Display):</span>
+                                    <span class="text-[10px] text-rose-500 font-bold">*Wajib shift akhir</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="number" step="any" id="closing-meter-today" oninput="calculateWaterMeterOutput()" placeholder="Catat angka counter..." class="w-full py-2.5 px-3 bg-white border-2 border-sky-400 rounded-xl font-mono font-black text-sky-950 text-sm sm:text-base focus:ring-2 focus:ring-sky-500 shadow-inner">
+                                </div>
+                                <span class="block text-[9px] text-slate-400">Angka meteran saat penutupan shift</span>
+                            </div>
+
+                            <!-- Hasil Pengeluaran Air (Galon) -->
+                            <div class="sm:col-span-4 bg-sky-600 text-white p-3 rounded-2xl shadow-sm text-center flex flex-col justify-center">
+                                <span class="text-[10px] uppercase font-bold text-sky-100 block">Pengeluaran Air (Galon)</span>
+                                <span id="closing-meter-dispensed-preview" class="text-base sm:text-lg font-black font-mono tracking-tight block mt-0.5">0.00 Galon</span>
+                                <span id="closing-meter-diff-pulsa" class="text-[9px] text-sky-200 block font-mono mt-0.5">Selisih: 0 pulsa</span>
+                            </div>
+                        </div>
+
+                        <!-- Accordion Toggle Adjustment / Koreksi Meteran -->
+                        <div class="pt-1">
+                            <button type="button" onclick="toggleWaterMeterAdjustmentForm()" class="text-xs font-bold text-sky-700 hover:text-sky-900 flex items-center space-x-1.5 transition-colors">
+                                <span id="closing-meter-adj-icon">➕</span>
+                                <span id="closing-meter-adj-toggle-text">Tambah Koreksi / Adjustment Nilai Meteran (Opsional)</span>
+                            </button>
+
+                            <!-- Form Adjustment Collapsible -->
+                            <div id="closing-meter-adj-container" class="hidden mt-2.5 p-3.5 bg-white rounded-2xl border border-sky-200/90 shadow-2xs space-y-2.5">
+                                <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                                    <span class="text-xs font-black text-slate-800 uppercase">Form Adjustment / Koreksi Pengeluaran Air</span>
+                                    <span class="text-[10px] text-slate-400">Gunakan jika ada kalibrasi sensor, bilas pipa, atau error</span>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                                    <div>
+                                        <label class="block font-bold text-slate-600 mb-1">Jenis Koreksi:</label>
+                                        <select id="closing-meter-adj-type" onchange="calculateWaterMeterOutput()" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-800">
+                                            <option value="PULSE">Pulsa Meteran (/ 782)</option>
+                                            <option value="GALON">Galon Langsung (+/-)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block font-bold text-slate-600 mb-1">Nilai Koreksi (+ / -):</label>
+                                        <input type="number" step="any" id="closing-meter-adj-val" oninput="calculateWaterMeterOutput()" value="0" placeholder="0" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-mono font-bold text-slate-800">
+                                    </div>
+                                    <div>
+                                        <label class="block font-bold text-slate-600 mb-1">Alasan Penyesuaian:</label>
+                                        <input type="text" id="closing-meter-adj-reason" placeholder="Contoh: Kuras pipa filter 5 galon" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-800">
+                                    </div>
+                                </div>
+                                <div class="text-[10px] text-slate-500 bg-sky-50/50 p-2 rounded-xl flex items-center justify-between">
+                                    <span>Total Output Setelah Koreksi:</span>
+                                    <span id="closing-meter-final-adjusted-galon" class="font-mono font-black text-sky-900">0.00 Galon</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -8738,6 +8918,256 @@
             }
         }
 
+        // ==========================================
+        // WATER METER COUNTER & ADJUSTMENT HELPERS
+        // ==========================================
+        function calculateWaterMeterOutput() {
+            const yesterday = parseFloat(document.getElementById('closing-meter-yesterday')?.value) || 0;
+            const todayInput = document.getElementById('closing-meter-today');
+            const todayVal = todayInput ? todayInput.value.trim() : '';
+            const previewEl = document.getElementById('closing-meter-dispensed-preview');
+            const diffPulsaEl = document.getElementById('closing-meter-diff-pulsa');
+            const adjustedPreviewEl = document.getElementById('closing-meter-final-adjusted-galon');
+            
+            if (todayVal === '') {
+                if (previewEl) previewEl.innerText = '0.00 Galon';
+                if (diffPulsaEl) diffPulsaEl.innerText = 'Selisih: 0 pulsa';
+                if (adjustedPreviewEl) adjustedPreviewEl.innerText = '0.00 Galon';
+                return;
+            }
+
+            const today = parseFloat(todayVal) || 0;
+            const diff = today - yesterday;
+            const adjType = document.getElementById('closing-meter-adj-type')?.value || 'PULSE';
+            const adjVal = parseFloat(document.getElementById('closing-meter-adj-val')?.value) || 0;
+
+            let galon = 0;
+            if (adjType === 'GALON') {
+                galon = (diff / 782) + adjVal;
+            } else {
+                galon = (diff + adjVal) / 782;
+            }
+
+            const rawGalon = diff / 782;
+
+            if (previewEl) {
+                previewEl.innerText = (galon < 0 ? '0.00' : galon.toFixed(2)) + ' Galon';
+            }
+            if (diffPulsaEl) {
+                diffPulsaEl.innerText = `Selisih: ${diff.toLocaleString('id-ID')} pulsa (${rawGalon.toFixed(2)} gal)`;
+            }
+            if (adjustedPreviewEl) {
+                adjustedPreviewEl.innerText = (galon < 0 ? '0.00' : galon.toFixed(2)) + ' Galon';
+            }
+        }
+
+        function unlockYesterdayMeter() {
+            const input = document.getElementById('closing-meter-yesterday');
+            const btn = document.getElementById('btn-unlock-yesterday');
+            if (!input) return;
+            if (input.hasAttribute('readonly')) {
+                input.removeAttribute('readonly');
+                input.classList.remove('bg-slate-100');
+                input.classList.add('bg-white', 'border-amber-400');
+                input.focus();
+                if (btn) btn.innerText = 'Kunci';
+            } else {
+                input.setAttribute('readonly', 'true');
+                input.classList.remove('bg-white', 'border-amber-400');
+                input.classList.add('bg-slate-100');
+                if (btn) btn.innerText = 'Ubah';
+            }
+            calculateWaterMeterOutput();
+        }
+
+        function toggleWaterMeterAdjustmentForm() {
+            const container = document.getElementById('closing-meter-adj-container');
+            const icon = document.getElementById('closing-meter-adj-icon');
+            const text = document.getElementById('closing-meter-adj-toggle-text');
+            if (!container) return;
+            if (container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                if (icon) icon.innerText = '➖';
+                if (text) text.innerText = 'Sembunyikan Form Koreksi / Adjustment';
+            } else {
+                container.classList.add('hidden');
+                if (icon) icon.innerText = '➕';
+                if (text) text.innerText = 'Tambah Koreksi / Adjustment Nilai Meteran (Opsional)';
+            }
+        }
+
+        async function openWaterMeterModal() {
+            const modal = document.getElementById('water-meter-adjust-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+
+            const dateInput = document.getElementById('wma-date');
+            if (dateInput) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.value = today;
+            }
+
+            const branchLabel = document.getElementById('wma-branch-name-badge');
+            if (branchLabel) {
+                branchLabel.innerText = state.currentBranch ? state.currentBranch.name : 'Cabang';
+            }
+
+            await loadWaterMeterLogs();
+        }
+
+        function closeWaterMeterModal() {
+            const modal = document.getElementById('water-meter-adjust-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function calculateModalMeterOutput() {
+            const yesterday = parseFloat(document.getElementById('wma-yesterday')?.value) || 0;
+            const today = parseFloat(document.getElementById('wma-today')?.value) || 0;
+            const adjType = document.getElementById('wma-adj-type')?.value || 'PULSE';
+            const adjVal = parseFloat(document.getElementById('wma-adj-val')?.value) || 0;
+            const previewEl = document.getElementById('wma-calc-preview');
+
+            const diff = today - yesterday;
+            let galon = 0;
+            if (adjType === 'GALON') {
+                galon = (diff / 782) + adjVal;
+            } else {
+                galon = (diff + adjVal) / 782;
+            }
+
+            if (previewEl) {
+                previewEl.innerText = `${galon.toFixed(2)} Galon (Δ ${diff.toLocaleString('id-ID')} pulsa)`;
+            }
+        }
+
+        async function loadWaterMeterLogs() {
+            const branchId = state.currentBranch ? state.currentBranch.id : 1;
+            const container = document.getElementById('wma-logs-table-container');
+            const yesterdayInput = document.getElementById('wma-yesterday');
+
+            try {
+                const res = await fetch(`api.php?action=get_water_meter_logs&branch_id=${branchId}&limit=30`);
+                const data = await res.json();
+                if (!data.success) {
+                    if (container) container.innerHTML = `<div class="p-4 text-center text-rose-500">${escapeHtml(data.message || 'Gagal memuat log meteran')}</div>`;
+                    return;
+                }
+
+                if (yesterdayInput && (!yesterdayInput.value || yesterdayInput.value === '0')) {
+                    yesterdayInput.value = data.latest_meter || 0;
+                }
+
+                const logs = data.logs || [];
+                if (logs.length === 0) {
+                    if (container) container.innerHTML = `<div class="p-6 text-center text-slate-400">Belum ada riwayat pencatatan meteran air untuk cabang ini.</div>`;
+                    return;
+                }
+
+                let rows = logs.map(l => {
+                    const galon = parseFloat(l.water_dispensed_galon) || 0;
+                    const diff = parseFloat(l.meter_difference) || 0;
+                    const adj = parseFloat(l.meter_adjustment) || 0;
+                    let adjText = '-';
+                    if (adj !== 0) {
+                        adjText = `<span class="text-amber-700 font-bold">${adj > 0 ? '+' : ''}${adj} ${escapeHtml(l.adjustment_type || 'PULSE')}</span>`;
+                        if (l.adjustment_reason) {
+                            adjText += `<br><span class="text-[9px] text-slate-400 italic">${escapeHtml(l.adjustment_reason)}</span>`;
+                        }
+                    }
+
+                    return `
+                        <tr class="hover:bg-slate-50 border-b border-slate-100 last:border-0">
+                            <td class="p-2.5 font-bold text-slate-800">
+                                <div>${l.log_date}</div>
+                                <div class="text-[10px] text-slate-400 font-normal">${escapeHtml(l.shift_name || 'Penyesuaian')} • ${escapeHtml(l.recorder_name || '-')}</div>
+                            </td>
+                            <td class="p-2.5 text-center font-mono text-slate-600">${parseFloat(l.meter_yesterday).toLocaleString('id-ID')}</td>
+                            <td class="p-2.5 text-center font-mono font-bold text-sky-900 bg-sky-50/50">${parseFloat(l.meter_today).toLocaleString('id-ID')}</td>
+                            <td class="p-2.5 text-center font-mono text-slate-700">${diff.toLocaleString('id-ID')}</td>
+                            <td class="p-2.5 text-center text-[11px]">${adjText}</td>
+                            <td class="p-2.5 text-right font-mono font-black text-emerald-700">${galon.toFixed(2)} Galon</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                if (container) {
+                    container.innerHTML = `
+                        <div class="overflow-x-auto max-h-60">
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-100 text-slate-600 font-black text-[10px] uppercase sticky top-0">
+                                    <tr>
+                                        <th class="p-2.5">Tanggal / Petugas</th>
+                                        <th class="p-2.5 text-center">Awal</th>
+                                        <th class="p-2.5 text-center">Akhir</th>
+                                        <th class="p-2.5 text-center">Selisih</th>
+                                        <th class="p-2.5 text-center">Koreksi</th>
+                                        <th class="p-2.5 text-right">Galon</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    ${rows}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                if (container) container.innerHTML = `<div class="p-4 text-center text-rose-500">Error: ${escapeHtml(e.message)}</div>`;
+            }
+        }
+
+        async function saveWaterMeterAdjustmentForm(e) {
+            if (e) e.preventDefault();
+            const branchId = state.currentBranch ? state.currentBranch.id : 1;
+            const userId = state.currentUser ? state.currentUser.id : 1;
+            const date = document.getElementById('wma-date')?.value;
+            const yesterday = parseFloat(document.getElementById('wma-yesterday')?.value) || 0;
+            const today = parseFloat(document.getElementById('wma-today')?.value) || 0;
+            const adjVal = parseFloat(document.getElementById('wma-adj-val')?.value) || 0;
+            const adjType = document.getElementById('wma-adj-type')?.value || 'PULSE';
+            const reason = document.getElementById('wma-reason')?.value?.trim() || '';
+
+            if (!date) {
+                alert('Silakan pilih tanggal pencatatan.');
+                return;
+            }
+
+            try {
+                const res = await fetch('api.php?action=save_water_meter_adjustment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        branch_id: branchId,
+                        user_id: userId,
+                        log_date: date,
+                        meter_yesterday: yesterday,
+                        meter_today: today,
+                        meter_adjustment: adjVal,
+                        adjustment_type: adjType,
+                        adjustment_reason: reason
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Penyesuaian meteran air berhasil disimpan!');
+                    const todayInput = document.getElementById('wma-today');
+                    if (todayInput) todayInput.value = '';
+                    const reasonInput = document.getElementById('wma-reason');
+                    if (reasonInput) reasonInput.value = '';
+                    const adjValInput = document.getElementById('wma-adj-val');
+                    if (adjValInput) adjValInput.value = '0';
+                    await loadWaterMeterLogs();
+                    if (state.reportActiveSubtab === 'shifts') {
+                        loadShiftReports();
+                    }
+                } else {
+                    alert(data.message || 'Gagal menyimpan penyesuaian meteran air.');
+                }
+            } catch (err) {
+                alert('Terjadi kesalahan koneksi: ' + err.message);
+            }
+        }
+
         function closeShiftModal() {
             document.getElementById('shift-modal').classList.add('hidden');
         }
@@ -8795,6 +9225,15 @@
                     }
                 });
 
+                // Collect Water Meter Display Counter Input
+                const meterTodayVal = document.getElementById('closing-meter-today') ? document.getElementById('closing-meter-today').value.trim() : '';
+                const meterToday = meterTodayVal !== '' ? parseFloat(meterTodayVal) : null;
+                const meterYesterdayVal = document.getElementById('closing-meter-yesterday') ? document.getElementById('closing-meter-yesterday').value.trim() : '';
+                const meterYesterday = meterYesterdayVal !== '' ? parseFloat(meterYesterdayVal) : null;
+                const meterAdj = document.getElementById('closing-meter-adj-val') ? (parseFloat(document.getElementById('closing-meter-adj-val').value) || 0) : 0;
+                const meterAdjType = document.getElementById('closing-meter-adj-type')?.value || 'PULSE';
+                const meterAdjReason = document.getElementById('closing-meter-adj-reason')?.value || '';
+
                 const res = await fetch('api.php?action=close_shift', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -8809,7 +9248,12 @@
                         is_final_shift: isFinal,
                         expenses: expenses,
                         loans: loans,
-                        meals: meals
+                        meals: meals,
+                        meter_today: meterToday,
+                        meter_yesterday: meterYesterday,
+                        meter_adjustment: meterAdj,
+                        adjustment_type: meterAdjType,
+                        adjustment_reason: meterAdjReason
                     })
                 });
                 const data = await res.json();
@@ -8819,10 +9263,15 @@
                         disbInfo = `\n\n💸 Rincian Pengeluaran Kas Laci:\n- Biaya Beban Toko: ${formatRupiah(data.summary.total_expenses)}\n- Kasbon Karyawan: ${formatRupiah(data.summary.total_kasbon)}\n- Uang Makan Karyawan: ${formatRupiah(data.summary.total_meal_allowance)}\nTotal Kas Keluar: ${formatRupiah(data.summary.total_disbursements)}`;
                     }
 
+                    let meterInfo = '';
+                    if (data.summary && data.summary.water_meter_dispensed_galon !== null && data.summary.water_meter_dispensed_galon !== undefined) {
+                        meterInfo = `\n💧 Pengeluaran Air Mesin: ${parseFloat(data.summary.water_meter_dispensed_galon).toFixed(2)} Galon (Display: ${data.summary.water_meter_today})`;
+                    }
+
                     if (data.is_final_shift) {
-                        alert(`Penutupan Toko Malam Selesai (Closing Akhir Terkunci)!\n\nShift: ${data.summary?.shift_name || 'Shift Akhir'}\nUang Fisik Aktual: ${formatRupiah(data.summary.actual_cash)}\nEkspektasi Sistem: ${formatRupiah(data.summary.expected_cash)}\nSelisih Kas: ${formatRupiah(data.summary.cash_difference)}${disbInfo}\n\nLaporan pengeluaran telah otomatis tersinkronisasi ke Beban Operasional, Kasbon, dan Slip Gaji!`);
+                        alert(`Penutupan Toko Malam Selesai (Closing Akhir Terkunci)!\n\nShift: ${data.summary?.shift_name || 'Shift Akhir'}\nUang Fisik Aktual: ${formatRupiah(data.summary.actual_cash)}\nEkspektasi Sistem: ${formatRupiah(data.summary.expected_cash)}\nSelisih Kas: ${formatRupiah(data.summary.cash_difference)}${disbInfo}${meterInfo}\n\nLaporan pengeluaran telah otomatis tersinkronisasi ke Beban Operasional, Kasbon, dan Slip Gaji!`);
                     } else {
-                        alert(`Shift Berhasil Ditutup (Serah Terima Kasir Selesai)!\n\nShift: ${data.summary?.shift_name || 'Shift 1'}\nUang Fisik Aktual: ${formatRupiah(data.summary.actual_cash)}\nEkspektasi Sistem: ${formatRupiah(data.summary.expected_cash)}\nSelisih Kas: ${formatRupiah(data.summary.cash_difference)}${disbInfo}\n\nSisa stok fisik & saldo kas otomatis siap diserahterimakan ke Shift berikutnya.`);
+                        alert(`Shift Berhasil Ditutup (Serah Terima Kasir Selesai)!\n\nShift: ${data.summary?.shift_name || 'Shift 1'}\nUang Fisik Aktual: ${formatRupiah(data.summary.actual_cash)}\nEkspektasi Sistem: ${formatRupiah(data.summary.expected_cash)}\nSelisih Kas: ${formatRupiah(data.summary.cash_difference)}${disbInfo}${meterInfo}\n\nSisa stok fisik & saldo kas otomatis siap diserahterimakan ke Shift berikutnya.`);
                     }
                     state.activeShift = null;
                     renderShiftBanner();
@@ -9388,6 +9837,40 @@
                                 </table>
                             </div>
                         </div>
+
+                        ${s.water_meter_today !== null ? `
+                            <!-- Rincian Meteran Air Display Counter -->
+                            <div class="p-3 bg-sky-50/70 rounded-2xl border border-sky-200 text-xs space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-black text-sky-950 flex items-center gap-1.5">
+                                        <span>💧</span> Meteran Air Mesin (Display Counter)
+                                    </span>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-sky-600 text-white shadow-2xs font-mono">
+                                        ${s.water_meter_dispensed_galon !== null ? s.water_meter_dispensed_galon.toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 2}) : '0'} Galon
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2 text-center pt-1 border-t border-sky-100">
+                                    <div class="bg-white/80 p-1.5 rounded-xl border border-sky-100">
+                                        <span class="text-[9px] text-slate-400 font-bold block uppercase">Kemarin</span>
+                                        <span class="font-mono font-bold text-slate-700 text-xs">${(s.water_meter_yesterday || 0).toLocaleString('id-ID')}</span>
+                                    </div>
+                                    <div class="bg-white/80 p-1.5 rounded-xl border border-sky-100">
+                                        <span class="text-[9px] text-slate-400 font-bold block uppercase">Hari Ini</span>
+                                        <span class="font-mono font-black text-sky-900 text-xs">${(s.water_meter_today || 0).toLocaleString('id-ID')}</span>
+                                    </div>
+                                    <div class="bg-sky-100/70 p-1.5 rounded-xl border border-sky-200">
+                                        <span class="text-[9px] text-sky-800 font-bold block uppercase">Selisih Pulsa</span>
+                                        <span class="font-mono font-black text-sky-950 text-xs">${(s.water_meter_difference || 0).toLocaleString('id-ID')}</span>
+                                    </div>
+                                </div>
+                                ${s.water_meter_adjustment ? `
+                                    <div class="text-[10px] text-sky-900 bg-white/70 p-2 rounded-xl border border-sky-100 flex items-center justify-between">
+                                        <span>Adjustment (${escapeHtml(s.water_meter_adjustment_type || 'PULSE')}): <b>${s.water_meter_adjustment > 0 ? '+' : ''}${s.water_meter_adjustment}</b></span>
+                                        <span class="italic text-slate-500">${escapeHtml(s.water_meter_adjustment_reason || '-')}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        ` : ''}
 
                         <!-- Catatan Shift & Tombol Cetak -->
                         <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">

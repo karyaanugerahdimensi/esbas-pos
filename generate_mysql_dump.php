@@ -32,6 +32,7 @@ $preferredOrder = [
     'delivery_settings',
     'courier_vehicles',
     'cashier_shifts',
+    'water_meter_logs',
     'opening_shift_products',
     'sales',
     'sale_items',

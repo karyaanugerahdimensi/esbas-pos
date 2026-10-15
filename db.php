@@ -1438,6 +1438,29 @@ function autoMigrateAndSync($pdo) {
         $pdo->exec("ALTER TABLE cashier_shifts ADD COLUMN shift_disbursements_json TEXT DEFAULT NULL");
     }
 
+    // Meteran Air Display Counter Kolom
+    if (!in_array('water_meter_yesterday', $shiftCols)) {
+        $pdo->exec("ALTER TABLE cashier_shifts ADD COLUMN water_meter_yesterday REAL DEFAULT NULL");
+    }
+    if (!in_array('water_meter_today', $shiftCols)) {
+        $pdo->exec("ALTER TABLE cashier_shifts ADD COLUMN water_meter_today REAL DEFAULT NULL");
+    }
+    if (!in_array('water_meter_difference', $shiftCols)) {
+        $pdo->exec("ALTER TABLE cashier_shifts ADD COLUMN water_meter_difference REAL DEFAULT NULL");
+    }
+    if (!in_array('water_meter_adjustment', $shiftCols)) {
+        $pdo->exec("ALTER TABLE cashier_shifts ADD COLUMN water_meter_adjustment REAL DEFAULT 0");
+    }
+    if (!in_array('water_meter_adjustment_type', $shiftCols)) {
+        $pdo->exec("ALTER TABLE cashier_shifts ADD COLUMN water_meter_adjustment_type TEXT DEFAULT 'PULSE'");
+    }
+    if (!in_array('water_meter_adjustment_reason', $shiftCols)) {
+        $pdo->exec("ALTER TABLE cashier_shifts ADD COLUMN water_meter_adjustment_reason TEXT DEFAULT NULL");
+    }
+    if (!in_array('water_meter_dispensed_galon', $shiftCols)) {
+        $pdo->exec("ALTER TABLE cashier_shifts ADD COLUMN water_meter_dispensed_galon REAL DEFAULT NULL");
+    }
+
     // Ensure branch_expenses has shift_id
     $expCols = array_column($pdo->query("PRAGMA table_info(branch_expenses)")->fetchAll(), 'name');
     if (!in_array('shift_id', $expCols)) {
@@ -1744,6 +1767,28 @@ function autoMigrateAndSync($pdo) {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(branch_id, setting_key),
         FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE
+    )");
+
+    // 45. Ensure water_meter_logs table exists (Pencatatan Display Counter Meteran Air Closing Harian)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS water_meter_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        branch_id INTEGER NOT NULL,
+        shift_id INTEGER DEFAULT NULL,
+        user_id INTEGER NOT NULL,
+        log_date DATE NOT NULL,
+        meter_yesterday REAL NOT NULL DEFAULT 0,
+        meter_today REAL NOT NULL DEFAULT 0,
+        meter_difference REAL NOT NULL DEFAULT 0,
+        meter_adjustment REAL NOT NULL DEFAULT 0,
+        adjustment_type TEXT DEFAULT 'PULSE',
+        adjustment_reason TEXT,
+        water_dispensed_galon REAL NOT NULL DEFAULT 0,
+        notes TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (branch_id) REFERENCES branches(id),
+        FOREIGN KEY (shift_id) REFERENCES cashier_shifts(id),
+        FOREIGN KEY (user_id) REFERENCES users(id)
     )");
 }
 

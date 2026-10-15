@@ -2743,6 +2743,19 @@ try {
                 $branchEmployees = $stmtEmpsAll ? $stmtEmpsAll->fetchAll() : [];
             }
 
+            // Ambil data meteran air terakhir untuk acuan (Meteran Hari Kemarin)
+            $stmtLastMeter = $pdo->prepare("
+                SELECT meter_today, log_date, water_dispensed_galon 
+                FROM water_meter_logs 
+                WHERE branch_id = ? 
+                ORDER BY id DESC LIMIT 1
+            ");
+            $stmtLastMeter->execute([$shift['branch_id']]);
+            $lastMeterRow = $stmtLastMeter->fetch();
+            $meterYesterday = $lastMeterRow ? (float)$lastMeterRow['meter_today'] : 0;
+            $meterYesterdayDate = $lastMeterRow ? $lastMeterRow['log_date'] : null;
+            $lastDispensedGalon = $lastMeterRow ? (float)$lastMeterRow['water_dispensed_galon'] : 0;
+
             echo json_encode([
                 'success' => true,
                 'shift' => $shift,
@@ -2752,7 +2765,12 @@ try {
                 'total_transactions' => $txCount,
                 'items' => $closingItems,
                 'expense_categories' => $expenseCategories,
-                'branch_employees' => $branchEmployees
+                'branch_employees' => $branchEmployees,
+                'water_meter' => [
+                    'meter_yesterday' => $meterYesterday,
+                    'last_log_date' => $meterYesterdayDate,
+                    'last_dispensed_galon' => $lastDispensedGalon
+                ]
             ]);
             break;
 
@@ -2945,6 +2963,61 @@ try {
                     'total_disbursements' => $totalDisbursements
                 ];
 
+                // Parse Meteran Air Display Counter Input
+                $meterToday = (isset($input['meter_today']) && $input['meter_today'] !== '') ? (float)$input['meter_today'] : null;
+                $meterYesterday = (isset($input['meter_yesterday']) && $input['meter_yesterday'] !== '') ? (float)$input['meter_yesterday'] : null;
+                $meterAdjustment = isset($input['meter_adjustment']) ? (float)$input['meter_adjustment'] : 0;
+                $adjustmentType = trim($input['adjustment_type'] ?? 'PULSE');
+                if (!in_array($adjustmentType, ['PULSE', 'GALON'])) $adjustmentType = 'PULSE';
+                $adjustmentReason = trim($input['adjustment_reason'] ?? '');
+
+                $meterDiff = null;
+                $dispensedGalon = null;
+
+                if ($meterToday !== null) {
+                    if ($meterYesterday === null) {
+                        $stmtPrevM = $pdo->prepare("SELECT meter_today FROM water_meter_logs WHERE branch_id = ? ORDER BY id DESC LIMIT 1");
+                        $stmtPrevM->execute([$shift['branch_id']]);
+                        $meterYesterday = (float)($stmtPrevM->fetchColumn() ?: 0);
+                    }
+
+                    $meterDiff = $meterToday - $meterYesterday;
+
+                    // Rumus: (meteran hari ini - meteran hari kemarin) / 782
+                    if ($adjustmentType === 'GALON') {
+                        $dispensedGalon = round(($meterDiff / 782) + $meterAdjustment, 2);
+                    } else {
+                        $dispensedGalon = round(($meterDiff + $meterAdjustment) / 782, 2);
+                    }
+
+                    $stmtWML = $pdo->prepare("
+                        INSERT INTO water_meter_logs (
+                            branch_id, shift_id, user_id, log_date,
+                            meter_yesterday, meter_today, meter_difference,
+                            meter_adjustment, adjustment_type, adjustment_reason,
+                            water_dispensed_galon, notes, created_at, updated_at
+                        ) VALUES (
+                            ?, ?, ?, date('now', 'localtime'),
+                            ?, ?, ?,
+                            ?, ?, ?,
+                            ?, ?, datetime('now', 'localtime'), datetime('now', 'localtime')
+                        )
+                    ");
+                    $stmtWML->execute([
+                        $shift['branch_id'],
+                        $shiftId,
+                        $shift['user_id'],
+                        $meterYesterday,
+                        $meterToday,
+                        $meterDiff,
+                        $meterAdjustment,
+                        $adjustmentType,
+                        $adjustmentReason ?: null,
+                        $dispensedGalon,
+                        $shiftNotes ?: null
+                    ]);
+                }
+
                 // D. Update cashier_shifts
                 $stmtUpdate = $pdo->prepare("
                     UPDATE cashier_shifts
@@ -2962,6 +3035,13 @@ try {
                         shift_notes = COALESCE(?, shift_notes),
                         closing_items_json = ?,
                         is_final_shift = ?,
+                        water_meter_yesterday = ?,
+                        water_meter_today = ?,
+                        water_meter_difference = ?,
+                        water_meter_adjustment = ?,
+                        water_meter_adjustment_type = ?,
+                        water_meter_adjustment_reason = ?,
+                        water_meter_dispensed_galon = ?,
                         status = 'CLOSED'
                     WHERE id = ?
                 ");
@@ -2973,6 +3053,13 @@ try {
                     $shiftNotes ?: null,
                     !empty($closingMap) ? json_encode($closingMap) : null,
                     $isFinalShift,
+                    $meterYesterday,
+                    $meterToday,
+                    $meterDiff,
+                    $meterAdjustment,
+                    $adjustmentType,
+                    $adjustmentReason ?: null,
+                    $dispensedGalon,
                     $shiftId
                 ]);
 
@@ -3178,6 +3265,13 @@ try {
                     'debit_sales' => (float)$salesData['debit_sales'],
                     'piutang_sales' => (float)$salesData['piutang_sales'],
                     'tx_count' => $txCount,
+                    'water_meter_yesterday' => $s['water_meter_yesterday'] !== null ? (float)$s['water_meter_yesterday'] : null,
+                    'water_meter_today' => $s['water_meter_today'] !== null ? (float)$s['water_meter_today'] : null,
+                    'water_meter_difference' => $s['water_meter_difference'] !== null ? (float)$s['water_meter_difference'] : null,
+                    'water_meter_adjustment' => (float)($s['water_meter_adjustment'] ?? 0),
+                    'water_meter_adjustment_type' => $s['water_meter_adjustment_type'] ?? 'PULSE',
+                    'water_meter_adjustment_reason' => $s['water_meter_adjustment_reason'] ?? null,
+                    'water_meter_dispensed_galon' => $s['water_meter_dispensed_galon'] !== null ? (float)$s['water_meter_dispensed_galon'] : null,
                     'shift_notes' => $s['shift_notes'],
                     'reconciled_items' => $reconciledItems
                 ];
@@ -3224,12 +3318,97 @@ try {
                 }
             }
 
+            // Ambil log meteran air untuk tanggal tersebut jika ada
+            $stmtWaterLogs = $pdo->prepare("
+                SELECT wml.*, u.name as recorder_name, cs.shift_name
+                FROM water_meter_logs wml
+                JOIN users u ON u.id = wml.user_id
+                LEFT JOIN cashier_shifts cs ON cs.id = wml.shift_id
+                WHERE wml.branch_id = ? AND wml.log_date = ?
+                ORDER BY wml.id DESC
+            ");
+            $stmtWaterLogs->execute([$branchId, $reportDate]);
+            $waterMeterLogs = $stmtWaterLogs->fetchAll();
+
             echo json_encode([
                 'success' => true,
                 'branch_id' => $branchId,
                 'report_date' => $reportDate,
                 'shifts' => $shiftSummaries,
-                'daily_summary' => $dailyTotals
+                'daily_summary' => $dailyTotals,
+                'water_meter_logs' => $waterMeterLogs
+            ]);
+            break;
+
+        case 'get_water_meter_logs':
+            $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : 1;
+            $limit = !empty($_GET['limit']) ? (int)$_GET['limit'] : 30;
+
+            $stmtLogs = $pdo->prepare("
+                SELECT wml.*, u.name as recorder_name, b.name as branch_name, cs.shift_name
+                FROM water_meter_logs wml
+                JOIN users u ON u.id = wml.user_id
+                JOIN branches b ON b.id = wml.branch_id
+                LEFT JOIN cashier_shifts cs ON cs.id = wml.shift_id
+                WHERE wml.branch_id = ?
+                ORDER BY wml.id DESC LIMIT ?
+            ");
+            $stmtLogs->execute([$branchId, $limit]);
+            $logs = $stmtLogs->fetchAll();
+
+            $latest = !empty($logs) ? $logs[0] : null;
+
+            echo json_encode([
+                'success' => true,
+                'logs' => $logs,
+                'latest_meter' => $latest ? (float)$latest['meter_today'] : 0,
+                'latest_date' => $latest ? $latest['log_date'] : null
+            ]);
+            break;
+
+        case 'save_water_meter_adjustment':
+            $branchId = (int)($input['branch_id'] ?? 1);
+            $userId = (int)($input['user_id'] ?? 1);
+            $meterToday = (float)($input['meter_today'] ?? 0);
+            $meterYesterday = (float)($input['meter_yesterday'] ?? 0);
+            $meterAdjustment = (float)($input['meter_adjustment'] ?? 0);
+            $adjustmentType = trim($input['adjustment_type'] ?? 'PULSE');
+            if (!in_array($adjustmentType, ['PULSE', 'GALON'])) $adjustmentType = 'PULSE';
+            $adjustmentReason = trim($input['adjustment_reason'] ?? 'Penyesuaian / Kalibrasi Manual Meteran Air');
+            $logDate = !empty($input['log_date']) ? trim($input['log_date']) : date('Y-m-d');
+            $notes = trim($input['notes'] ?? '');
+
+            $meterDiff = $meterToday - $meterYesterday;
+            if ($adjustmentType === 'GALON') {
+                $dispensedGalon = round(($meterDiff / 782) + $meterAdjustment, 2);
+            } else {
+                $dispensedGalon = round(($meterDiff + $meterAdjustment) / 782, 2);
+            }
+
+            $stmt = $pdo->prepare("
+                INSERT INTO water_meter_logs (
+                    branch_id, shift_id, user_id, log_date,
+                    meter_yesterday, meter_today, meter_difference,
+                    meter_adjustment, adjustment_type, adjustment_reason,
+                    water_dispensed_galon, notes, created_at, updated_at
+                ) VALUES (
+                    ?, NULL, ?, ?,
+                    ?, ?, ?,
+                    ?, ?, ?,
+                    ?, ?, datetime('now', 'localtime'), datetime('now', 'localtime')
+                )
+            ");
+            $stmt->execute([
+                $branchId, $userId, $logDate,
+                $meterYesterday, $meterToday, $meterDiff,
+                $meterAdjustment, $adjustmentType, $adjustmentReason,
+                $dispensedGalon, $notes ?: null
+            ]);
+
+            echo json_encode([
+                'success' => true,
+                'message' => "Penyesuaian meteran air berhasil disimpan. Pengeluaran terhitung: {$dispensedGalon} galon.",
+                'water_dispensed_galon' => $dispensedGalon
             ]);
             break;
 
