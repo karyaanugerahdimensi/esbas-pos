@@ -301,7 +301,7 @@ $appVersionData = getAppVersionData();
                     <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
                 <div>
-                    <h2 id="topbar-view-title" class="text-sm sm:text-base font-extrabold text-slate-800 leading-tight">1. Point of Sale (POS Kasir)</h2>
+                    <h2 id="topbar-view-title" class="text-sm sm:text-base font-extrabold text-slate-800 leading-tight">Point of Sale (POS Kasir)</h2>
                     <p id="topbar-view-subtitle" class="text-[11px] text-slate-400 hidden sm:block">Operasional transaksi kasir cepat &bull; Bahan baku BOM terpotong otomatis</p>
                 </div>
             </div>
@@ -525,15 +525,15 @@ $appVersionData = getAppVersionData();
                     <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
                         <button onclick="setReportSubtab('sales')" id="report-subtab-btn-sales" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1.5">
                             <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
-                            <span>1. Laporan Penjualan & Omzet</span>
+                            <span>Laporan Penjualan & Omzet</span>
                         </button>
                         <button onclick="setReportSubtab('receivables')" id="report-subtab-btn-receivables" class="px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-indigo-600 hover:bg-slate-50 flex items-center space-x-1.5">
                             <i data-lucide="book-open-check" class="w-4 h-4"></i>
-                            <span>2. Laporan Piutang Usaha & Pelanggan</span>
+                            <span>Laporan Piutang Usaha & Pelanggan</span>
                         </button>
                         <button onclick="setReportSubtab('shifts')" id="report-subtab-btn-shifts" class="px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-indigo-600 hover:bg-slate-50 flex items-center space-x-1.5">
                             <i data-lucide="clock" class="w-4 h-4"></i>
-                            <span>3. Laporan Shift Kasir & Tutup Toko</span>
+                            <span>Laporan Shift Kasir & Tutup Toko</span>
                         </button>
                     </div>
                     <div class="text-xs text-slate-500 font-medium px-2 hidden sm:block">
@@ -963,31 +963,31 @@ $appVersionData = getAppVersionData();
                 <div class="flex items-center space-x-2 border-b border-slate-200 pb-2 overflow-x-auto text-xs font-bold no-scrollbar">
                     <button id="ess-subtab-btn-presensi" onclick="setEssSubtab('presensi')" class="px-4 py-2.5 rounded-xl bg-indigo-600 text-white shadow-sm flex items-center space-x-2 transition-all">
                         <i data-lucide="map-pin" class="w-4 h-4"></i>
-                        <span>1. Presensi & Klaim Toko</span>
+                        <span>Presensi & Klaim Toko</span>
                     </button>
                     <button id="ess-subtab-btn-schedules" onclick="setEssSubtab('schedules')" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-2 transition-all">
                         <i data-lucide="calendar" class="w-4 h-4"></i>
-                        <span>2. Jam Kerja & Roster Bulanan</span>
+                        <span>Jam Kerja & Roster Bulanan</span>
                     </button>
                     <button id="ess-subtab-btn-swaps" onclick="setEssSubtab('swaps')" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-2 transition-all">
                         <i data-lucide="repeat" class="w-4 h-4"></i>
-                        <span>3. Tukar Jadwal (Shift Swap)</span>
+                        <span>Tukar Jadwal (Shift Swap)</span>
                     </button>
                     <button id="ess-subtab-btn-leaves" onclick="setEssSubtab('leaves')" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-2 transition-all">
                         <i data-lucide="calendar-off" class="w-4 h-4"></i>
-                        <span>4. Cuti, Izin & Sakit</span>
+                        <span>Cuti, Izin & Sakit</span>
                     </button>
                     <button id="ess-subtab-btn-attendance" onclick="setEssSubtab('attendance')" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-2 transition-all">
                         <i data-lucide="file-bar-chart" class="w-4 h-4"></i>
-                        <span>5. Laporan Kehadiran</span>
+                        <span>Laporan Kehadiran</span>
                     </button>
                     <button id="ess-subtab-btn-payslip" onclick="setEssSubtab('payslip')" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-2 transition-all">
                         <i data-lucide="receipt" class="w-4 h-4"></i>
-                        <span>6. Cetak Slip Gaji Mandiri</span>
+                        <span>Cetak Slip Gaji Mandiri</span>
                     </button>
                     <button id="ess-subtab-btn-loans" onclick="setEssSubtab('loans')" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-2 transition-all">
                         <i data-lucide="hand-coins" class="w-4 h-4"></i>
-                        <span>7. Pinjaman / Kasbon Gaji</span>
+                        <span>Pinjaman / Kasbon Gaji</span>
                     </button>
                 </div>
 
@@ -1817,22 +1817,22 @@ $appVersionData = getAppVersionData();
                 <!-- Sub-Tab Navigation: 1. Katalog Produk, 2. Kategori, 3. Jenis Produk, 4. Satuan, 5. Master Pajak, 6. Produk Opening Sales -->
                 <div class="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
                     <button onclick="switchProductSubTab('catalog')" id="prod-subtab-btn-catalog" class="px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold transition-colors">
-                        1. Katalog Produk & Varian
+                        Katalog Produk & Varian
                     </button>
                     <button onclick="switchProductSubTab('categories')" id="prod-subtab-btn-categories" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors">
-                        2. Kategori Produk
+                        Kategori Produk
                     </button>
                     <button onclick="switchProductSubTab('types')" id="prod-subtab-btn-types" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors">
-                        3. Jenis Produk
+                        Jenis Produk
                     </button>
                     <button onclick="switchProductSubTab('units')" id="prod-subtab-btn-units" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors">
-                        4. Satuan Produk
+                        Satuan Produk
                     </button>
                     <button onclick="switchProductSubTab('taxes')" id="prod-subtab-btn-taxes" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors">
-                        5. Master Pajak / Taxes
+                        Master Pajak / Taxes
                     </button>
                     <button onclick="switchProductSubTab('opening_shift')" id="prod-subtab-btn-opening_shift" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors">
-                        6. Produk Opening Sales
+                        Produk Opening Sales
                     </button>
                 </div>
 
@@ -2068,10 +2068,10 @@ $appVersionData = getAppVersionData();
                 <!-- Sub Navigation: Base Product BOM vs Variant BOM -->
                 <div class="flex space-x-2 border-b border-slate-200 pb-2">
                     <button onclick="switchBOMSubTab('base')" id="bom-subtab-btn-base" class="px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold transition-colors">
-                        1. Resep Produk Utama (Base BOM)
+                        Resep Produk Utama (Base BOM)
                     </button>
                     <button onclick="switchBOMSubTab('variant')" id="bom-subtab-btn-variant" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors">
-                        2. Resep Pilihan Varian (Variant BOM)
+                        Resep Pilihan Varian (Variant BOM)
                     </button>
                 </div>
 
@@ -2122,10 +2122,10 @@ $appVersionData = getAppVersionData();
                 <!-- Sub Navigation: Saldo Stok vs Kartu Pergerakan -->
                 <div class="flex space-x-2 border-b border-slate-200 pb-2">
                     <button onclick="switchStockSubTab('balance')" id="subtab-btn-balance" class="px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold">
-                        1. Saldo Stok Cabang
+                        Saldo Stok Cabang
                     </button>
                     <button onclick="switchStockSubTab('movements')" id="subtab-btn-movements" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300">
-                        2. Buku Kartu Pergerakan (Movement Ledger)
+                        Buku Kartu Pergerakan (Movement Ledger)
                     </button>
                 </div>
 
@@ -2351,11 +2351,11 @@ $appVersionData = getAppVersionData();
                     <div class="flex flex-wrap gap-1">
                         <button type="button" onclick="setExpenseSubtab('ledger')" id="subtab-btn-exp-ledger" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white transition-colors flex items-center space-x-1.5 shadow-2xs">
                             <i data-lucide="book-open" class="w-4 h-4"></i>
-                            <span>1. Buku Catatan Beban Operasional</span>
+                            <span>Buku Catatan Beban Operasional</span>
                         </button>
                         <button type="button" onclick="setExpenseSubtab('category')" id="subtab-btn-exp-category" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5">
                             <i data-lucide="tags" class="w-4 h-4"></i>
-                            <span>2. Kelola Kategori Beban (CRUD)</span>
+                            <span>Kelola Kategori Beban (CRUD)</span>
                         </button>
                     </div>
 
@@ -2542,23 +2542,23 @@ $appVersionData = getAppVersionData();
                     <div class="flex flex-wrap gap-1">
                         <button type="button" onclick="setCustomerSubtab('list')" id="subtab-btn-cust-list" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white transition-colors flex items-center space-x-1.5 shadow-sm">
                             <i data-lucide="users" class="w-4 h-4"></i>
-                            <span>1. Data Pelanggan & Mitra</span>
+                            <span>Data Pelanggan & Mitra</span>
                         </button>
                         <button type="button" onclick="setCustomerSubtab('mitra-pricing')" id="subtab-btn-cust-mitra" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5">
                             <i data-lucide="handshake" class="w-4 h-4"></i>
-                            <span>2. Harga Kontrak Khusus Mitra</span>
+                            <span>Harga Kontrak Khusus Mitra</span>
                         </button>
                         <button type="button" onclick="setCustomerSubtab('branch-pricing')" id="subtab-btn-cust-branch" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5">
                             <i data-lucide="map-pin" class="w-4 h-4"></i>
-                            <span>3. Menu & Harga Cabang</span>
+                            <span>Menu & Harga Cabang</span>
                         </button>
                         <button type="button" onclick="setCustomerSubtab('category')" id="subtab-btn-cust-category" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5">
                             <i data-lucide="tags" class="w-4 h-4"></i>
-                            <span>4. Kategori Pelanggan</span>
+                            <span>Kategori Pelanggan</span>
                         </button>
                         <button type="button" onclick="setCustomerSubtab('maps')" id="subtab-btn-cust-maps" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5">
                             <i data-lucide="map" class="w-4 h-4"></i>
-                            <span>5. Peta Geospasial Pelanggan</span>
+                            <span>Peta Geospasial Pelanggan</span>
                         </button>
                     </div>
 
@@ -2979,23 +2979,23 @@ $appVersionData = getAppVersionData();
                     <div class="flex flex-wrap gap-2">
                         <button type="button" onclick="switchLogisticsSubtab('vehicles')" id="subtab-btn-vehicles" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1.5">
                             <i data-lucide="bike" class="w-4 h-4"></i>
-                            <span>1. Armada Kendaraan Kurir</span>
+                            <span>Armada Kendaraan Kurir</span>
                         </button>
                         <button type="button" onclick="switchLogisticsSubtab('fuel')" id="subtab-btn-fuel" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 flex items-center space-x-1.5">
                             <i data-lucide="fuel" class="w-4 h-4 text-amber-600"></i>
-                            <span>2. Bensin & KM Motor</span>
+                            <span>Bensin & KM Motor</span>
                         </button>
                         <button type="button" onclick="switchLogisticsSubtab('service')" id="subtab-btn-service" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 flex items-center space-x-1.5">
                             <i data-lucide="wrench" class="w-4 h-4 text-rose-600"></i>
-                            <span>3. Servis & Beban Biaya</span>
+                            <span>Servis & Beban Biaya</span>
                         </button>
                         <button type="button" onclick="switchLogisticsSubtab('settings')" id="subtab-btn-settings" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 flex items-center space-x-1.5">
                             <i data-lucide="sliders" class="w-4 h-4 text-indigo-600"></i>
-                            <span>4. Tarif Kirim Dinamis</span>
+                            <span>Tarif Kirim Dinamis</span>
                         </button>
                         <button type="button" onclick="switchLogisticsSubtab('maps')" id="subtab-btn-maps" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 flex items-center space-x-1.5">
                             <i data-lucide="map" class="w-4 h-4 text-emerald-600"></i>
-                            <span>5. Peta Maps Outlet & Pelanggan</span>
+                            <span>Peta Maps Outlet & Pelanggan</span>
                         </button>
                     </div>
                 </div>
@@ -3368,11 +3368,11 @@ $appVersionData = getAppVersionData();
                     <div class="flex flex-wrap gap-1">
                         <button type="button" onclick="setBranchSubtab('table')" id="subtab-btn-branch-table" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white transition-colors flex items-center space-x-1.5 shadow-sm">
                             <i data-lucide="list" class="w-4 h-4"></i>
-                            <span>1. Tabel Data Cabang & Koordinat</span>
+                            <span>Tabel Data Cabang & Koordinat</span>
                         </button>
                         <button type="button" onclick="setBranchSubtab('maps')" id="subtab-btn-branch-maps" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5">
                             <i data-lucide="map" class="w-4 h-4"></i>
-                            <span>2. Peta Geospasial Jaringan Cabang (Outlet Maps)</span>
+                            <span>Peta Geospasial Jaringan Cabang (Outlet Maps)</span>
                         </button>
                     </div>
                 </div>
@@ -3827,22 +3827,22 @@ $appVersionData = getAppVersionData();
                 <!-- 5 Sub-Tab Navigasi Pills -->
                 <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
                     <button id="settings-tab-btn-general" onclick="setSettingsSubtab('general')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1.5">
-                        <span>🏷️ 1. Identitas & Logo</span>
+                        <span>🏷️ Identitas & Logo</span>
                     </button>
                     <button id="settings-tab-btn-roles" onclick="setSettingsSubtab('roles')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-1.5">
-                        <span>🛡️ 2. Hak Akses Role</span>
+                        <span>🛡️ Hak Akses Role</span>
                     </button>
                     <button id="settings-tab-btn-printer" onclick="setSettingsSubtab('printer')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-1.5">
-                        <span>🖨️ 3. Printer USB / IP</span>
+                        <span>🖨️ Printer USB / IP</span>
                     </button>
                     <button id="settings-tab-btn-receipt" onclick="setSettingsSubtab('receipt')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-1.5">
-                        <span>🧾 4. Layout Nota Struk</span>
+                        <span>🧾 Layout Nota Struk</span>
                     </button>
                     <button id="settings-tab-btn-payslip" onclick="setSettingsSubtab('payslip')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-1.5">
-                        <span>💼 5. Layout Slip Gaji</span>
+                        <span>💼 Layout Slip Gaji</span>
                     </button>
                     <button id="settings-tab-btn-notifications" onclick="setSettingsSubtab('notifications')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-1.5">
-                        <span>📱 6. Nota WA & Telegram</span>
+                        <span>📱 Nota WA & Telegram</span>
                     </button>
                 </div>
 
@@ -7110,21 +7110,21 @@ $appVersionData = getAppVersionData();
         };
 
         const tabTitles = {
-            'pos': { title: '1. Point of Sale (POS Kasir)', sub: 'Operasional transaksi kasir &bull; Tier harga & bahan baku BOM terpotong otomatis' },
-            'reports': { title: '2. Laporan Penjualan', sub: 'Omzet bersih, HPP riil, Laba Kotor, dan 10 produk terlaris' },
-            'ess': { title: '3. Employee Self Service (ESS)', sub: 'Presensi GPS Geofencing, Shift Swap, Komisi, dan Reimbursement Toko' },
-            'employees': { title: '4. Manajemen Karyawan (CRUD)', sub: 'Master data staf, hak akses peran, cabang tugas, dan PIN kasir' },
-            'products': { title: '5. Master Produk, Kategori & Varian', sub: 'Katalog Barang Jadi (Finished Goods), Bahan Baku (Raw Material), dan Varian' },
-            'bom': { title: '6. Formula Resep & Bill of Materials (BOM)', sub: 'Penyusunan komposisi bahan baku dan kalkulasi HPP otomatis' },
-            'stocks': { title: '7. Manajemen Stok & Kartu Pergerakan', sub: 'Saldo stok cabang aktif & log audit kartu pergerakan stok (Movement Ledger)' },
-            'pnl': { title: '8. Laporan Laba Rugi (Income Statement)', sub: 'Ikhtisar pendapatan bersih, HPP, beban operasional, dan Laba Bersih Akhir' },
-            'expenses': { title: '9. Buku Catatan Beban Operasional Cabang', sub: 'Pencatatan pengeluaran operasional outlet &bull; Buku mutasi beban & CRUD master kategori beban' },
-            'customers': { title: '10. Manajemen Pelanggan, Mitra B2B & Tier Harga', sub: 'Data Pelanggan CRM, Kategori Penjualan, Harga Kontrak Mitra, dan Harga Jual Antar Cabang' },
-            'logistics': { title: '11. Kurir, Biaya Kirim Dinamis & Armada Motor', sub: 'Peta Geospasial Leaflet, Kalkulator Ongkir Jarak Dinamis, Log BBM Odometer Motor & Servis Armada Masuk Beban Biaya' },
-            'branches': { title: '12. Manajemen Cabang & Outlet (CRUD)', sub: 'Kelola data seluruh toko, titik koordinat GPS maps outlet, radius presensi, dan nomor kontak cabang' },
-            'payments': { title: '13. Manajemen Metode Pembayaran (CRUD)', sub: 'Kelola saluran pembayaran kasir (Tunai, QRIS Dinamis, Kartu Debit EDC, Transfer Bank, E-Wallet) & status aktivasi' },
-            'sale-cancellations': { title: '14. Pembatalan Transaksi Penjualan (Void Sales)', sub: 'Otorisasi Super Admin &bull; Pembatalan faktur, pengembalian stok barang & bahan baku BOM, serta pembatalan piutang' },
-            'settings': { title: '15. Konfigurasi Sistem, Perangkat & Hak Akses', sub: 'Pengaturan Identitas Toko, Logo, Printer Thermal USB/IP, Format Nota, Slip Gaji, serta Notifikasi WA & Telegram' }
+            'pos': { title: 'Point of Sale (POS Kasir)', sub: 'Operasional transaksi kasir &bull; Tier harga & bahan baku BOM terpotong otomatis' },
+            'reports': { title: 'Laporan Penjualan', sub: 'Omzet bersih, HPP riil, Laba Kotor, dan 10 produk terlaris' },
+            'ess': { title: 'Employee Self Service (ESS)', sub: 'Presensi GPS Geofencing, Shift Swap, Komisi, dan Reimbursement Toko' },
+            'employees': { title: 'Manajemen Karyawan (CRUD)', sub: 'Master data staf, hak akses peran, cabang tugas, dan PIN kasir' },
+            'products': { title: 'Master Produk, Kategori & Varian', sub: 'Katalog Barang Jadi (Finished Goods), Bahan Baku (Raw Material), dan Varian' },
+            'bom': { title: 'Formula Resep & Bill of Materials (BOM)', sub: 'Penyusunan komposisi bahan baku dan kalkulasi HPP otomatis' },
+            'stocks': { title: 'Manajemen Stok & Kartu Pergerakan', sub: 'Saldo stok cabang aktif & log audit kartu pergerakan stok (Movement Ledger)' },
+            'pnl': { title: 'Laporan Laba Rugi (Income Statement)', sub: 'Ikhtisar pendapatan bersih, HPP, beban operasional, dan Laba Bersih Akhir' },
+            'expenses': { title: 'Buku Catatan Beban Operasional Cabang', sub: 'Pencatatan pengeluaran operasional outlet &bull; Buku mutasi beban & CRUD master kategori beban' },
+            'customers': { title: 'Manajemen Pelanggan, Mitra B2B & Tier Harga', sub: 'Data Pelanggan CRM, Kategori Penjualan, Harga Kontrak Mitra, dan Harga Jual Antar Cabang' },
+            'logistics': { title: 'Kurir, Biaya Kirim Dinamis & Armada Motor', sub: 'Peta Geospasial Leaflet, Kalkulator Ongkir Jarak Dinamis, Log BBM Odometer Motor & Servis Armada Masuk Beban Biaya' },
+            'branches': { title: 'Manajemen Cabang & Outlet (CRUD)', sub: 'Kelola data seluruh toko, titik koordinat GPS maps outlet, radius presensi, dan nomor kontak cabang' },
+            'payments': { title: 'Manajemen Metode Pembayaran (CRUD)', sub: 'Kelola saluran pembayaran kasir (Tunai, QRIS Dinamis, Kartu Debit EDC, Transfer Bank, E-Wallet) & status aktivasi' },
+            'sale-cancellations': { title: 'Pembatalan Transaksi Penjualan (Void Sales)', sub: 'Otorisasi Super Admin &bull; Pembatalan faktur, pengembalian stok barang & bahan baku BOM, serta pembatalan piutang' },
+            'settings': { title: 'Konfigurasi Sistem, Perangkat & Hak Akses', sub: 'Pengaturan Identitas Toko, Logo, Printer Thermal USB/IP, Format Nota, Slip Gaji, serta Notifikasi WA & Telegram' }
         };
 
         function formatRupiah(num) {
@@ -8595,13 +8595,13 @@ $appVersionData = getAppVersionData();
                             <!-- Segmented Tabs 3 Opsi -->
                             <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-xl">
                                 <button type="button" id="disb-btn-expense" onclick="switchDisbursementTab('expense')" class="disb-tab-btn py-1.5 px-2 rounded-lg text-[11px] sm:text-xs font-black bg-rose-600 text-white shadow-xs transition-all flex items-center justify-center space-x-1">
-                                    <span>🏢</span><span class="truncate">1. Beban Toko</span>
+                                    <span>🏢</span><span class="truncate">Beban Toko</span>
                                 </button>
                                 <button type="button" id="disb-btn-loan" onclick="switchDisbursementTab('loan')" class="disb-tab-btn py-1.5 px-2 rounded-lg text-[11px] sm:text-xs font-black bg-slate-100 text-slate-600 transition-all flex items-center justify-center space-x-1">
-                                    <span>👤</span><span class="truncate">2. Kasbon Karyawan</span>
+                                    <span>👤</span><span class="truncate">Kasbon Karyawan</span>
                                 </button>
                                 <button type="button" id="disb-btn-meal" onclick="switchDisbursementTab('meal')" class="disb-tab-btn py-1.5 px-2 rounded-lg text-[11px] sm:text-xs font-black bg-slate-100 text-slate-600 transition-all flex items-center justify-center space-x-1">
-                                    <span>🍱</span><span class="truncate">3. Uang Makan</span>
+                                    <span>🍱</span><span class="truncate">Uang Makan</span>
                                 </button>
                             </div>
 

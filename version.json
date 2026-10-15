@@ -1,14 +1,22 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.1.4",
-  "build": "20261015-07",
+  "version": "1.1.5",
+  "build": "20261015-08",
   "release_date": "2026-10-15",
-  "commit_hash": "bf895e1",
+  "commit_hash": "HEAD",
   "branch": "main",
   "history": [
     {
-      "version": "1.1.4",
+      "version": "1.1.5",
       "commit": "HEAD",
+      "date": "2026-10-15",
+      "title": "Penghapusan Nomor Urut Sub-Tab di Seluruh Menu & Topbar View",
+      "description": "Menghapus penomoran urut (1., 2., dst.) pada tombol navigasi sub-tab di setiap modul menu (Laporan, ESS, Master Produk, BOM, Stok, Beban, Pelanggan, Logistik, Cabang, Pengaturan), modal pengeluaran kasir, serta penyesuaian judul topbar navigasi agar tampilan lebih bersih, konsisten, dan modern.",
+      "rollback_command": "git checkout v1.1.4"
+    },
+    {
+      "version": "1.1.4",
+      "commit": "v1.1.4",
       "date": "2026-10-15",
       "title": "Penyempurnaan Tampilan Sidebar: Penghapusan Nomor Urut Menu",
       "description": "Menghapus nomor urut 1 s/d 15 pada label menu navigasi sidebar kiri dan matriks hak akses peran untuk tampilan antarmuka yang lebih bersih, modern, dan profesional.",
