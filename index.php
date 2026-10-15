@@ -1118,7 +1118,7 @@ $appVersionData = getAppVersionData();
                             </div>
 
                             <div class="pt-2 border-t">
-                                <h4 class="text-xs font-bold text-slate-700 mb-2">Daftar Klaim Toko & Aksi Pencairan (Manager / Finance):</h4>
+                                <h4 id="ess-reimburse-table-title" class="text-xs font-bold text-slate-700 mb-2">Daftar Klaim Toko & Aksi Pencairan (Manager / Finance):</h4>
                                 <div class="overflow-x-auto">
                                     <table class="w-full text-left text-xs">
                                         <thead class="bg-slate-50 text-slate-500 font-bold border-b">
@@ -1152,7 +1152,7 @@ $appVersionData = getAppVersionData();
                                 </h3>
                                 <p class="text-[11px] text-slate-500">Atur jam masuk, jam pulang, toleransi keterlambatan, dan kode shift (Shift 1, Shift 2, dll).</p>
                             </div>
-                            <button onclick="openWorkShiftModal()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-1.5">
+                            <button id="btn-add-work-shift" onclick="openWorkShiftModal()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-1.5">
                                 <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
                                 <span>+ Tambah Shift Jam Kerja</span>
                             </button>
@@ -1177,11 +1177,11 @@ $appVersionData = getAppVersionData();
                                     <i data-lucide="download" class="w-3.5 h-3.5"></i>
                                     <span>Export Excel / CSV</span>
                                 </button>
-                                <button onclick="openImportScheduleModal()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-1.5 transition-colors" title="Import jadwal bulanan dari file Excel / CSV">
+                                <button id="btn-import-schedule" onclick="openImportScheduleModal()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-1.5 transition-colors" title="Import jadwal bulanan dari file Excel / CSV">
                                     <i data-lucide="upload" class="w-3.5 h-3.5"></i>
                                     <span>Import Excel / CSV</span>
                                 </button>
-                                <button onclick="openHolidaySetterModal()" class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors">
+                                <button id="btn-holiday-setter" onclick="openHolidaySetterModal()" class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors">
                                     <i data-lucide="calendar-off" class="w-3.5 h-3.5"></i>
                                     <span>Set Hari Libur Toko</span>
                                 </button>
@@ -1507,7 +1507,7 @@ $appVersionData = getAppVersionData();
                                     <i data-lucide="printer" class="w-3.5 h-3.5"></i>
                                     <span>🖨️ Cetak Slip Gaji</span>
                                 </button>
-                                <button onclick="saveCurrentPayroll()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors">
+                                <button id="btn-save-payroll" onclick="saveCurrentPayroll()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors">
                                     <i data-lucide="lock" class="w-3.5 h-3.5"></i>
                                     <span>Kunci / Simpan Slip</span>
                                 </button>
@@ -11034,9 +11034,18 @@ Manager / Supervisor: __________________
         // ==========================================
         // 3. EMPLOYEE SELF SERVICE (ESS)
         // ==========================================
+        function isManagerOrSuperAdminUser(user) {
+            const u = user || state.currentUser || state.loggedInUser;
+            if (!u || !u.role) return false;
+            const r = String(u.role).toUpperCase().trim();
+            return ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'].includes(r);
+        }
+
         async function loadEssData() {
-            const uId = state.currentUser ? state.currentUser.id : 3;
+            const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
+            const uId = curUser.id || 3;
             const bId = state.currentBranch ? state.currentBranch.id : 1;
+            const isManager = isManagerOrSuperAdminUser(curUser);
 
             const res = await fetch(`api.php?action=ess_get_data&user_id=${uId}&branch_id=${bId}`);
             const data = await res.json();
@@ -11069,6 +11078,11 @@ Manager / Supervisor: __________________
                 </div>
             `).join('') || `<p class="text-slate-400">Belum ada riwayat</p>`;
 
+            const titleEl = document.getElementById('ess-reimburse-table-title');
+            if (titleEl) {
+                titleEl.innerText = isManager ? 'Daftar Klaim Toko & Aksi Pencairan (Manager / Finance):' : 'Riwayat Pengajuan Klaim Reimbursement Saya:';
+            }
+
             document.getElementById('ess-reimburse-table-body').innerHTML = data.branch_reimbursements.map(r => `
                 <tr class="hover:bg-slate-50">
                     <td class="py-2.5 px-2.5 font-semibold text-slate-800">${r.employee_name}</td>
@@ -11076,9 +11090,11 @@ Manager / Supervisor: __________________
                     <td class="py-2.5 px-2.5 text-right font-bold text-slate-800">${formatRupiah(r.amount)}</td>
                     <td class="py-2.5 px-2.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.status === 'DISBURSED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${r.status}</span></td>
                     <td class="py-2.5 px-2.5 text-center">
-                        ${r.status !== 'DISBURSED' ? `
-                            <button onclick="disburseReimbursement(${r.id})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-sm">Cairkan & Catat</button>
-                        ` : `<span class="text-slate-400 text-[10px]">Tuntas</span>`}
+                        ${r.status !== 'DISBURSED' ? (
+                            isManager ? `
+                                <button onclick="disburseReimbursement(${r.id})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-sm">Cairkan & Catat</button>
+                            ` : `<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full text-[10px] font-semibold">⏳ Menunggu</span>`
+                        ) : `<span class="text-emerald-700 font-bold text-[10px]">✓ Dicairkan</span>`}
                     </td>
                 </tr>
             `).join('') || `<tr><td colspan="5" class="text-center py-3 text-slate-400">Belum ada klaim</td></tr>`;
@@ -11206,6 +11222,11 @@ Manager / Supervisor: __________________
         // --- 1. Master Jam Kerja (Work Shifts CRUD) ---
         async function loadWorkShifts() {
             try {
+                const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
+                const isManager = isManagerOrSuperAdminUser(curUser);
+                const addBtn = document.getElementById('btn-add-work-shift');
+                if (addBtn) addBtn.style.display = isManager ? '' : 'none';
+
                 const res = await fetch('api.php?action=get_work_shifts');
                 const data = await res.json();
                 if (!data.success) return;
@@ -11229,6 +11250,7 @@ Manager / Supervisor: __________________
                             </p>
                             ${!ws.is_day_off ? `<p class="text-[10px] text-slate-400 mt-0.5">Toleransi: ${ws.late_tolerance_mins} menit</p>` : ''}
                         </div>
+                        ${isManager ? `
                         <div class="flex items-center justify-end space-x-1 pt-2 border-t border-slate-100">
                             <button onclick='openWorkShiftModal(${JSON.stringify(ws)})' class="p-1 text-slate-500 hover:text-indigo-600 rounded-lg text-xs font-semibold flex items-center space-x-1">
                                 <i data-lucide="edit" class="w-3.5 h-3.5"></i>
@@ -11238,6 +11260,7 @@ Manager / Supervisor: __________________
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                             </button>
                         </div>
+                        ` : ''}
                     </div>
                 `).join('') || `<p class="text-xs text-slate-400 col-span-4">Belum ada shift kerja terdaftar</p>`;
 
@@ -11342,11 +11365,18 @@ Manager / Supervisor: __________________
         }
 
         async function loadMonthlySchedules() {
+            const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
+            const isManager = isManagerOrSuperAdminUser(curUser);
             const bId = document.getElementById('ess-roster-branch-select')?.value || state.currentBranch.id;
             const mVal = document.getElementById('ess-roster-month-input')?.value || new Date().toISOString().slice(0, 7);
 
+            const impBtn = document.getElementById('btn-import-schedule');
+            if (impBtn) impBtn.style.display = isManager ? '' : 'none';
+            const holBtn = document.getElementById('btn-holiday-setter');
+            if (holBtn) holBtn.style.display = isManager ? '' : 'none';
+
             try {
-                const res = await fetch(`api.php?action=get_monthly_schedules&branch_id=${bId}&month=${mVal}`);
+                const res = await fetch(`api.php?action=get_monthly_schedules&branch_id=${bId}&month=${mVal}&user_id=${curUser.id}`);
                 const data = await res.json();
                 if (!data.success) return;
 
@@ -11383,7 +11413,7 @@ Manager / Supervisor: __________________
 
                 // Render Body
                 if (employees.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="${daysCount + 1}" class="text-center py-6 text-slate-400">Belum ada karyawan di cabang ini</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="${daysCount + 1}" class="text-center py-6 text-slate-400">Belum ada jadwal untuk Anda di periode ini</td></tr>`;
                     return;
                 }
 
@@ -11407,10 +11437,10 @@ Manager / Supervisor: __________________
                         let bgColor = isOff ? 'bg-slate-200' : '';
 
                         tbHtml += `<td class="p-1 text-center border-r border-slate-200 ${isSun ? 'bg-rose-50/30' : ''}">
-                            <button onclick="openSingleScheduleModal(${emp.id}, '${fullDate}', '${emp.name}', ${cellSched ? cellSched.work_shift_id : null})"
-                                    class="w-full py-1 rounded text-[10px] font-black font-mono shadow-2xs hover:scale-105 transition-transform ${textColor} ${bgColor}"
+                            <button ${isManager ? `onclick="openSingleScheduleModal(${emp.id}, '${fullDate}', '${emp.name}', ${cellSched ? cellSched.work_shift_id : null})"` : `onclick="void(0)"`}
+                                    class="w-full py-1 rounded text-[10px] font-black font-mono shadow-2xs ${isManager ? 'hover:scale-105 cursor-pointer' : 'cursor-default'} transition-transform ${textColor} ${bgColor}"
                                     style="${!isOff ? `background-color: ${badgeColor};` : ''}"
-                                    title="${cellSched ? `${cellSched.shift_name} (${cellSched.start_time}-${cellSched.end_time})` : 'Klik untuk atur shift'}">
+                                    title="${cellSched ? `${cellSched.shift_name} (${cellSched.start_time}-${cellSched.end_time})` : (isManager ? 'Klik untuk atur shift' : 'Libur / Tidak Terjadwal')}">
                                 ${badgeCode}
                             </button>
                         </td>`;
@@ -11560,8 +11590,10 @@ Manager / Supervisor: __________________
 
         async function loadShiftSwaps() {
             try {
+                const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
+                const isManager = isManagerOrSuperAdminUser(curUser);
                 const bId = state.currentBranch ? state.currentBranch.id : 1;
-                const res = await fetch(`api.php?action=get_shift_swaps&branch_id=${bId}`);
+                const res = await fetch(`api.php?action=get_shift_swaps&branch_id=${bId}&user_id=${curUser.id}`);
                 const data = await res.json();
                 if (!data.success) return;
 
@@ -11588,12 +11620,14 @@ Manager / Supervisor: __________________
                             </span>
                         </td>
                         <td class="py-2.5 px-3 text-center">
-                            ${s.status === 'PENDING' ? `
-                                <div class="flex items-center justify-center space-x-1">
-                                    <button onclick="approveShiftSwap(${s.id}, 'APPROVE')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Setujui</button>
-                                    <button onclick="approveShiftSwap(${s.id}, 'REJECT')" class="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Tolak</button>
-                                </div>
-                            ` : `<span class="text-[10px] text-slate-400">Selesai</span>`}
+                            ${s.status === 'PENDING' ? (
+                                isManager ? `
+                                    <div class="flex items-center justify-center space-x-1">
+                                        <button onclick="approveShiftSwap(${s.id}, 'APPROVE')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Setujui</button>
+                                        <button onclick="approveShiftSwap(${s.id}, 'REJECT')" class="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Tolak</button>
+                                    </div>
+                                ` : `<span class="text-[10px] text-amber-700 font-semibold">⏳ Menunggu Manajer</span>`
+                            ) : `<span class="text-[10px] text-slate-400">Selesai</span>`}
                         </td>
                     </tr>
                 `).join('') || `<tr><td colspan="5" class="text-center py-4 text-slate-400">Belum ada pengajuan tukar jadwal</td></tr>`;
@@ -11653,8 +11687,10 @@ Manager / Supervisor: __________________
         // --- 4. Cuti, Izin & Sakit (Leave Management) ---
         async function loadLeaveRequests() {
             try {
+                const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
+                const isManager = isManagerOrSuperAdminUser(curUser);
                 const bId = state.currentBranch ? state.currentBranch.id : 1;
-                const res = await fetch(`api.php?action=get_leave_requests&branch_id=${bId}`);
+                const res = await fetch(`api.php?action=get_leave_requests&branch_id=${bId}&user_id=${curUser.id}`);
                 const data = await res.json();
                 if (!data.success) return;
 
@@ -11687,12 +11723,14 @@ Manager / Supervisor: __________________
                             </span>
                         </td>
                         <td class="py-2.5 px-3 text-center">
-                            ${lv.status === 'PENDING' ? `
-                                <div class="flex items-center justify-center space-x-1">
-                                    <button onclick="approveLeaveRequest(${lv.id}, 'APPROVE')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Setujui</button>
-                                    <button onclick="approveLeaveRequest(${lv.id}, 'REJECT')" class="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Tolak</button>
-                                </div>
-                            ` : `<span class="text-[10px] text-slate-400">Selesai</span>`}
+                            ${lv.status === 'PENDING' ? (
+                                isManager ? `
+                                    <div class="flex items-center justify-center space-x-1">
+                                        <button onclick="approveLeaveRequest(${lv.id}, 'APPROVE')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Setujui</button>
+                                        <button onclick="approveLeaveRequest(${lv.id}, 'REJECT')" class="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Tolak</button>
+                                    </div>
+                                ` : `<span class="text-[10px] text-amber-700 font-semibold">⏳ Menunggu Manajer</span>`
+                            ) : `<span class="text-[10px] text-slate-400">Selesai</span>`}
                         </td>
                     </tr>
                 `).join('') || `<tr><td colspan="5" class="text-center py-4 text-slate-400">Belum ada permohonan ketidakhadiran</td></tr>`;
@@ -11746,10 +11784,18 @@ Manager / Supervisor: __________________
 
         // --- 5. Laporan Kehadiran (Attendance Report) ---
         function initAttendanceControls() {
+            const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
+            const isManager = isManagerOrSuperAdminUser(curUser);
             const bSelect = document.getElementById('ess-att-branch-select');
             const mInput = document.getElementById('ess-att-month-input');
             if (bSelect && state.branches.length > 0 && bSelect.children.length === 0) {
-                bSelect.innerHTML = `<option value="">Semua Cabang</option>` + state.branches.map(b => `<option value="${b.id}" ${b.id === state.currentBranch.id ? 'selected' : ''}>${b.name}</option>`).join('');
+                if (isManager) {
+                    bSelect.innerHTML = `<option value="">Semua Cabang</option>` + state.branches.map(b => `<option value="${b.id}" ${b.id === state.currentBranch.id ? 'selected' : ''}>${b.name}</option>`).join('');
+                    bSelect.disabled = false;
+                } else {
+                    bSelect.innerHTML = `<option value="${state.currentBranch.id}">${state.currentBranch.name}</option>`;
+                    bSelect.disabled = true;
+                }
             }
             if (mInput && !mInput.value) {
                 mInput.value = new Date().toISOString().slice(0, 7);
@@ -11757,11 +11803,13 @@ Manager / Supervisor: __________________
         }
 
         async function loadAttendanceReport() {
+            const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
+            const isManager = isManagerOrSuperAdminUser(curUser);
             const bId = document.getElementById('ess-att-branch-select')?.value || '';
             const mVal = document.getElementById('ess-att-month-input')?.value || new Date().toISOString().slice(0, 7);
 
             try {
-                const res = await fetch(`api.php?action=get_attendance_report&branch_id=${bId}&month=${mVal}`);
+                const res = await fetch(`api.php?action=get_attendance_report&branch_id=${bId}&month=${mVal}&user_id=${curUser.id}&actor_id=${curUser.id}`);
                 const data = await res.json();
                 if (!data.success) return;
 
@@ -11774,7 +11822,7 @@ Manager / Supervisor: __________________
                 const totalLate = summary.reduce((acc, s) => acc + s.late_days, 0);
                 const totalLeave = summary.reduce((acc, s) => acc + s.leave_days + s.sick_days, 0);
 
-                document.getElementById('ess-kpi-total-emp').innerText = `${totalEmp} Orang`;
+                document.getElementById('ess-kpi-total-emp').innerText = isManager ? `${totalEmp} Orang` : '1 Karyawan (Data Pribadi)';
                 document.getElementById('ess-kpi-att-rate').innerText = `${avgAtt}%`;
                 document.getElementById('ess-kpi-late-count').innerText = `${totalLate} Kali`;
                 document.getElementById('ess-kpi-leave-count').innerText = `${totalLeave} Hari`;
@@ -11825,14 +11873,27 @@ Manager / Supervisor: __________________
         function initPayslipControls() {
             const uSelect = document.getElementById('ess-payslip-user-select');
             const mInput = document.getElementById('ess-payslip-month-input');
-            const curUserId = state.currentUser ? state.currentUser.id : 3;
+            const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
+            const isManager = isManagerOrSuperAdminUser(curUser);
+            const curUserId = curUser.id || 3;
 
-            if (uSelect && state.users.length > 0 && uSelect.children.length === 0) {
-                uSelect.innerHTML = state.users.map(u => `
-                    <option value="${u.id}" ${u.id == curUserId ? 'selected' : ''}>
-                        ${u.name} (${u.nik} - ${u.role})
-                    </option>
-                `).join('');
+            const saveBtn = document.getElementById('btn-save-payroll');
+            if (saveBtn) saveBtn.style.display = isManager ? '' : 'none';
+
+            if (uSelect) {
+                if (isManager) {
+                    uSelect.disabled = false;
+                    if (state.users && state.users.length > 0) {
+                        uSelect.innerHTML = state.users.map(u => `
+                            <option value="${u.id}" ${u.id == curUserId ? 'selected' : ''}>
+                                ${u.name} (${u.nik} - ${u.role})
+                            </option>
+                        `).join('');
+                    }
+                } else {
+                    uSelect.innerHTML = `<option value="${curUser.id}" selected>${curUser.name} (${curUser.nik || ''} - ${curUser.role || ''})</option>`;
+                    uSelect.disabled = true;
+                }
             }
             if (mInput && !mInput.value) {
                 mInput.value = new Date().toISOString().slice(0, 7);
@@ -11866,11 +11927,13 @@ Manager / Supervisor: __________________
         }
 
         async function loadEmployeePayslip() {
-            const uId = document.getElementById('ess-payslip-user-select')?.value || (state.currentUser ? state.currentUser.id : 3);
+            const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
+            const isManager = isManagerOrSuperAdminUser(curUser);
+            const uId = isManager ? (document.getElementById('ess-payslip-user-select')?.value || curUser.id) : curUser.id;
             const mVal = document.getElementById('ess-payslip-month-input')?.value || new Date().toISOString().slice(0, 7);
 
             try {
-                const res = await fetch(`api.php?action=get_employee_payslip&user_id=${uId}&month=${mVal}`);
+                const res = await fetch(`api.php?action=get_employee_payslip&user_id=${uId}&req_user_id=${curUser.id}&month=${mVal}`);
                 const data = await res.json();
                 if (!data.success) {
                     alert(data.message || 'Gagal memuat slip gaji');
@@ -11942,11 +12005,13 @@ Manager / Supervisor: __________________
         // --- 7. Pinjaman / Kasbon Gaji Karyawan ---
         async function loadSalaryLoans() {
             try {
+                const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
+                const isManager = isManagerOrSuperAdminUser(curUser);
                 const bId = state.currentBranch ? state.currentBranch.id : 1;
-                const curUserId = state.currentUser ? state.currentUser.id : 3;
+                const curUserId = curUser.id || 3;
 
                 // Load loans
-                const res = await fetch(`api.php?action=get_salary_loans&branch_id=${bId}`);
+                const res = await fetch(`api.php?action=get_salary_loans&branch_id=${bId}&user_id=${curUserId}`);
                 const data = await res.json();
                 if (!data.success) return;
 
@@ -11955,7 +12020,7 @@ Manager / Supervisor: __________________
                 // Calculate personal plafon
                 const userLoans = loans.filter(l => l.user_id == curUserId && l.status === 'ACTIVE');
                 const curDebt = userLoans.reduce((acc, l) => acc + (parseFloat(l.remaining_amount) || 0), 0);
-                const baseSal = (state.currentUser && state.currentUser.base_salary) ? state.currentUser.base_salary : 3000000;
+                const baseSal = (curUser && curUser.base_salary) ? curUser.base_salary : 3000000;
                 const maxPlafon = baseSal * 0.7;
                 const available = Math.max(0, maxPlafon - curDebt);
 
@@ -11987,12 +12052,14 @@ Manager / Supervisor: __________________
                             </span>
                         </td>
                         <td class="py-2.5 px-3 text-center">
-                            ${l.status === 'PENDING' ? `
-                                <div class="flex items-center justify-center space-x-1">
-                                    <button onclick="approveSalaryLoan(${l.id}, 'APPROVE')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Setujui</button>
-                                    <button onclick="approveSalaryLoan(${l.id}, 'REJECT')" class="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Tolak</button>
-                                </div>
-                            ` : (l.status === 'ACTIVE' && l.remaining_amount > 0 ? `
+                            ${l.status === 'PENDING' ? (
+                                isManager ? `
+                                    <div class="flex items-center justify-center space-x-1">
+                                        <button onclick="approveSalaryLoan(${l.id}, 'APPROVE')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Setujui</button>
+                                        <button onclick="approveSalaryLoan(${l.id}, 'REJECT')" class="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Tolak</button>
+                                    </div>
+                                ` : `<span class="text-[10px] text-amber-700 font-semibold">⏳ Menunggu Manajer</span>`
+                            ) : (l.status === 'ACTIVE' && l.remaining_amount > 0 ? `
                                 <button onclick="openLoanRepayModal(${l.id}, ${l.remaining_amount})" class="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Bayar Angsuran</button>
                             ` : `<span class="text-[10px] text-slate-400">Tuntas</span>`)}
                         </td>

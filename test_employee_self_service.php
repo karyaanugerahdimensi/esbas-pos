@@ -277,8 +277,63 @@ try {
     ]);
     assertTest($resRepay['success'] === true && $resRepay['remaining_amount'] == 400000, "Pembayaran angsuran berhasil, sisa utang pas Rp 400.000");
 
-    echo "\n=== SEMUA 24 UJI INTEGRASI EMPLOYEE SELF SERVICE BERHASIL (100% PASS) ===\n";
+    // ----------------------------------------------------
+    // TEST 9: Isolasi Privasi Data Karyawan (Non-Manager Access Control)
+    // ----------------------------------------------------
+    echo "\n9. Menguji Isolasi Privasi Data Karyawan Non-Manager (Hak Akses Terisolasi)...\n";
+
+    // Pastikan ada data reimbursement milik user 4 (Abdul Latif) di cabang 1
+    $pdo->exec("INSERT INTO reimbursements (branch_id, user_id, expense_date, category, amount, description, status) 
+                VALUES ($branchId, 4, '2026-10-15', 'BENSIN', 75000, 'Bensin antar barang Abdul Latif', 'PENDING')");
+    $abdulReimburseId = $pdo->lastInsertId();
+
+    // 9a. Non-manager (Bima / user 3) akses ess_get_data: HANYA melihat klaim miliknya
+    $resEssBima = callApi('ess_get_data', [], ['user_id' => 3, 'branch_id' => $branchId]);
+    assertTest($resEssBima['success'] === true, "Kasir Bima berhasil panggil ess_get_data");
+    assertTest($resEssBima['is_manager'] === false, "Kasir Bima teridentifikasi sebagai non-manager (is_manager = false)");
+    $hasOtherClaim = false;
+    foreach ($resEssBima['branch_reimbursements'] as $br) {
+        if ($br['user_id'] != 3) { $hasOtherClaim = true; break; }
+    }
+    assertTest(!$hasOtherClaim, "Kasir Bima TIDAK DAPAT melihat klaim reimbursement karyawan lain (Abdul Latif terisolasi)");
+
+    // 9b. Non-manager coba cairkan reimbursement -> HARUS DITOLAK
+    $resDisburseHack = callApi('ess_approve_reimbursement', [
+        'reimbursement_id' => $abdulReimburseId,
+        'approval_action' => 'DISBURSE',
+        'user_id' => 3
+    ]);
+    assertTest($resDisburseHack['success'] === false, "Kasir Bima DITOLAK saat mencoba mencairkan reimbursement (Akses Ditolak)");
+
+    // 9c. Non-manager ambil jadwal bulanan (get_monthly_schedules): HANYA dapat baris miliknya
+    $resSchedBima = callApi('get_monthly_schedules', [], ['branch_id' => $branchId, 'month' => $testMonth, 'user_id' => 3]);
+    assertTest($resSchedBima['success'] === true, "Kasir Bima berhasil panggil get_monthly_schedules");
+    assertTest(count($resSchedBima['employees']) === 1 && $resSchedBima['employees'][0]['id'] == 3, "Roster karyawan non-manager terisolasi hanya menampilkan 1 karyawan (Bima sendiri)");
+
+    // 9d. Non-manager coba intip slip gaji karyawan lain (user_id = 4 dengan req_user_id = 3)
+    $resPayslipHack = callApi('get_employee_payslip', [], ['user_id' => 4, 'req_user_id' => 3, 'month' => $testMonth]);
+    assertTest($resPayslipHack['success'] === true, "Endpoint get_employee_payslip merespons");
+    assertTest($resPayslipHack['user']['id'] == 3, "Backend berhasil memproteksi slip gaji: target di-override paksa ke user login (ID: 3)");
+
+    // 9e. Non-manager ambil laporan kehadiran: terisolasi untuk dirinya sendiri
+    $resAttBima = callApi('get_attendance_report', [], ['branch_id' => $branchId, 'month' => $testMonth, 'user_id' => 3, 'actor_id' => 3]);
+    assertTest($resAttBima['success'] === true, "Kasir Bima berhasil panggil get_attendance_report");
+    assertTest(count($resAttBima['summary']) === 1 && $resAttBima['summary'][0]['user_id'] == 3, "Ringkasan kehadiran non-manager terisolasi hanya 1 karyawan");
+
+    // 9f. Non-manager coba approve kasbon / tukar shift -> DITOLAK
+    $resLoanHack = callApi('approve_salary_loan', [
+        'loan_id' => $loanRecord['id'],
+        'action' => 'APPROVE',
+        'user_id' => 3 // Kasir
+    ]);
+    assertTest($resLoanHack['success'] === false, "Kasir Bima DITOLAK saat mencoba menyetujui pinjaman gaji (Akses Ditolak)");
+
+    // Bersihkan dummy klaim Abdul Latif
+    $pdo->exec("DELETE FROM reimbursements WHERE id = $abdulReimburseId");
+
+    echo "\n=== SEMUA 31 UJI INTEGRASI EMPLOYEE SELF SERVICE & ISOLASI PRIVASI BERHASIL (100% PASS) ===\n";
 } catch (Exception $e) {
     echo "\n[ERROR] " . $e->getMessage() . "\n";
     exit(1);
 }
+

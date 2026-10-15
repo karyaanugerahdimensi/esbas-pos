@@ -4574,19 +4574,33 @@ try {
             $stmtColleagues->execute([$branchId, $userId]);
             $colleagues = $stmtColleagues->fetchAll();
 
-            $stmtPendingReimburse = $pdo->prepare("
-                SELECT r.*, u.name as employee_name, b.name as branch_name
-                FROM reimbursements r
-                JOIN users u ON u.id = r.user_id
-                JOIN branches b ON b.id = r.branch_id
-                WHERE r.branch_id = ?
-                ORDER BY r.id DESC LIMIT 15
-            ");
-            $stmtPendingReimburse->execute([$branchId]);
+            $isManager = in_array(strtoupper($user['role'] ?? ''), ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+            if ($isManager) {
+                $stmtPendingReimburse = $pdo->prepare("
+                    SELECT r.*, u.name as employee_name, b.name as branch_name
+                    FROM reimbursements r
+                    JOIN users u ON u.id = r.user_id
+                    JOIN branches b ON b.id = r.branch_id
+                    WHERE r.branch_id = ?
+                    ORDER BY r.id DESC LIMIT 15
+                ");
+                $stmtPendingReimburse->execute([$branchId]);
+            } else {
+                $stmtPendingReimburse = $pdo->prepare("
+                    SELECT r.*, u.name as employee_name, b.name as branch_name
+                    FROM reimbursements r
+                    JOIN users u ON u.id = r.user_id
+                    JOIN branches b ON b.id = r.branch_id
+                    WHERE r.user_id = ?
+                    ORDER BY r.id DESC LIMIT 15
+                ");
+                $stmtPendingReimburse->execute([$userId]);
+            }
             $allBranchReimbursements = $stmtPendingReimburse->fetchAll();
 
             echo json_encode([
                 'success' => true,
+                'is_manager' => $isManager,
                 'user' => $user,
                 'commission' => [
                     'rate_percent' => ($user['commission_rate'] ?? 0.015) * 100,
@@ -4675,6 +4689,21 @@ try {
             break;
 
         case 'ess_approve_reimbursement':
+            $approverId = (int)($input['user_id'] ?? ($_SESSION['user_id'] ?? 0));
+            $approverRole = '';
+            if ($approverId > 0) {
+                $stmtRole = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                $stmtRole->execute([$approverId]);
+                $approverRole = strtoupper($stmtRole->fetchColumn() ?: '');
+            }
+            if (empty($approverRole) && !empty($input['approver_role'])) {
+                $approverRole = strtoupper($input['approver_role']);
+            }
+            if (!in_array($approverRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'])) {
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak! Hanya Super Admin atau Branch Manager yang berhak menyetujui / mencairkan klaim reimbursement.']);
+                break;
+            }
+
             $reimburseId = (int)($input['reimbursement_id'] ?? 0);
             $actionType = $input['approval_action'] ?? 'DISBURSE';
 
@@ -4788,6 +4817,7 @@ try {
         case 'get_monthly_schedules':
             $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : 1;
             $month = !empty($_GET['month']) ? trim($_GET['month']) : date('Y-m');
+            $userId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : (int)($_SESSION['user_id'] ?? 0);
 
             if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
                 $month = date('Y-m');
@@ -4796,33 +4826,63 @@ try {
             list($year, $mon) = explode('-', $month);
             $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$mon, (int)$year);
 
-            $stmtEmp = $pdo->prepare("
-                SELECT id, nik, name, role, branch_id 
-                FROM users 
-                WHERE branch_id = ? AND is_active = 1 
-                  AND role NOT IN ('SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER')
-                ORDER BY id ASC
-            ");
-            $stmtEmp->execute([$branchId]);
-            $employees = $stmtEmp->fetchAll();
+            $isManager = true;
+            if ($userId > 0) {
+                $stmtR = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                $stmtR->execute([$userId]);
+                $userRole = strtoupper($stmtR->fetchColumn() ?: '');
+                $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+            }
+
+            if (!$isManager && $userId > 0) {
+                $stmtEmp = $pdo->prepare("
+                    SELECT id, nik, name, role, branch_id 
+                    FROM users 
+                    WHERE id = ? AND is_active = 1
+                ");
+                $stmtEmp->execute([$userId]);
+                $employees = $stmtEmp->fetchAll();
+
+                $stmtSched = $pdo->prepare("
+                    SELECT ss.*, ws.code as shift_code, ws.color_tag, ws.is_day_off as shift_is_day_off, u.name as employee_name, u.nik as employee_nik
+                    FROM shift_schedules ss
+                    JOIN users u ON u.id = ss.user_id
+                    LEFT JOIN work_shifts ws ON ws.id = ss.work_shift_id
+                    WHERE ss.user_id = ? AND strftime('%Y-%m', ss.shift_date) = ?
+                    ORDER BY ss.shift_date ASC
+                ");
+                $stmtSched->execute([$userId, $month]);
+                $schedules = $stmtSched->fetchAll();
+            } else {
+                $stmtEmp = $pdo->prepare("
+                    SELECT id, nik, name, role, branch_id 
+                    FROM users 
+                    WHERE branch_id = ? AND is_active = 1 
+                      AND role NOT IN ('SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER')
+                    ORDER BY id ASC
+                ");
+                $stmtEmp->execute([$branchId]);
+                $employees = $stmtEmp->fetchAll();
+
+                $stmtSched = $pdo->prepare("
+                    SELECT ss.*, ws.code as shift_code, ws.color_tag, ws.is_day_off as shift_is_day_off, u.name as employee_name, u.nik as employee_nik
+                    FROM shift_schedules ss
+                    JOIN users u ON u.id = ss.user_id
+                    LEFT JOIN work_shifts ws ON ws.id = ss.work_shift_id
+                    WHERE ss.branch_id = ? AND strftime('%Y-%m', ss.shift_date) = ?
+                      AND u.role NOT IN ('SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER')
+                    ORDER BY ss.shift_date ASC, ss.user_id ASC
+                ");
+                $stmtSched->execute([$branchId, $month]);
+                $schedules = $stmtSched->fetchAll();
+            }
 
             $stmtShifts = $pdo->query("SELECT * FROM work_shifts WHERE is_active = 1 ORDER BY is_day_off ASC, start_time ASC");
             $workShifts = $stmtShifts->fetchAll();
 
-            $stmtSched = $pdo->prepare("
-                SELECT ss.*, ws.code as shift_code, ws.color_tag, ws.is_day_off as shift_is_day_off, u.name as employee_name, u.nik as employee_nik
-                FROM shift_schedules ss
-                JOIN users u ON u.id = ss.user_id
-                LEFT JOIN work_shifts ws ON ws.id = ss.work_shift_id
-                WHERE ss.branch_id = ? AND strftime('%Y-%m', ss.shift_date) = ?
-                  AND u.role NOT IN ('SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER')
-                ORDER BY ss.shift_date ASC, ss.user_id ASC
-            ");
-            $stmtSched->execute([$branchId, $month]);
-            $schedules = $stmtSched->fetchAll();
-
             echo json_encode([
                 'success' => true,
+                'is_manager' => $isManager,
                 'branch_id' => $branchId,
                 'month' => $month,
                 'days_in_month' => $daysInMonth,
@@ -5191,8 +5251,16 @@ try {
         // ==========================================
         case 'get_shift_swaps':
             $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : null;
-            $userId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : null;
+            $userId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : (int)($_SESSION['user_id'] ?? 0);
             $status = $_GET['status'] ?? 'ALL';
+
+            $isManager = true;
+            if ($userId > 0) {
+                $stmtR = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                $stmtR->execute([$userId]);
+                $userRole = strtoupper($stmtR->fetchColumn() ?: '');
+                $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+            }
 
             $sql = "
                 SELECT sw.*, u1.name as requester_name, u1.nik as requester_nik,
@@ -5207,11 +5275,15 @@ try {
                 WHERE 1=1
             ";
             $params = [];
-            if ($branchId) {
+            if ($branchId && $isManager) {
                 $sql .= " AND sw.branch_id = ?";
                 $params[] = $branchId;
             }
-            if ($userId) {
+            if (!$isManager && $userId > 0) {
+                $sql .= " AND (sw.requester_id = ? OR sw.target_id = ?)";
+                $params[] = $userId;
+                $params[] = $userId;
+            } elseif ($userId && !empty($_GET['filter_user'])) {
                 $sql .= " AND (sw.requester_id = ? OR sw.target_id = ?)";
                 $params[] = $userId;
                 $params[] = $userId;
@@ -5226,7 +5298,7 @@ try {
             $stmt->execute($params);
             $swaps = $stmt->fetchAll();
 
-            echo json_encode(['success' => true, 'swaps' => $swaps]);
+            echo json_encode(['success' => true, 'is_manager' => $isManager, 'swaps' => $swaps]);
             break;
 
         case 'request_shift_swap':
@@ -5275,7 +5347,14 @@ try {
         case 'approve_shift_swap':
             $swapId = (int)($input['swap_id'] ?? 0);
             $action = strtoupper($input['action'] ?? 'APPROVE');
-            $approverId = (int)($input['user_id'] ?? 1);
+            $approverId = (int)($input['user_id'] ?? ($_SESSION['user_id'] ?? 1));
+            $stmtRole = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+            $stmtRole->execute([$approverId]);
+            $approverRole = strtoupper($stmtRole->fetchColumn() ?: '');
+            if (!in_array($approverRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'])) {
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak! Hanya Super Admin atau Branch Manager yang berhak menyetujui / menolak tukar jadwal.']);
+                break;
+            }
             $rejectionReason = trim($input['rejection_reason'] ?? '');
 
             $stmt = $pdo->prepare("SELECT * FROM shift_swaps WHERE id = ?");
@@ -5331,8 +5410,16 @@ try {
         // ==========================================
         case 'get_leave_requests':
             $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : null;
-            $userId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : null;
+            $userId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : (int)($_SESSION['user_id'] ?? 0);
             $status = $_GET['status'] ?? 'ALL';
+
+            $isManager = true;
+            if ($userId > 0) {
+                $stmtR = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                $stmtR->execute([$userId]);
+                $userRole = strtoupper($stmtR->fetchColumn() ?: '');
+                $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+            }
 
             $sql = "
                 SELECT lr.*, u.name as employee_name, u.nik as employee_nik,
@@ -5345,11 +5432,14 @@ try {
                 WHERE 1=1
             ";
             $params = [];
-            if ($branchId) {
+            if ($branchId && $isManager) {
                 $sql .= " AND lr.branch_id = ?";
                 $params[] = $branchId;
             }
-            if ($userId) {
+            if (!$isManager && $userId > 0) {
+                $sql .= " AND lr.user_id = ?";
+                $params[] = $userId;
+            } elseif ($userId && !empty($_GET['filter_user'])) {
                 $sql .= " AND lr.user_id = ?";
                 $params[] = $userId;
             }
@@ -5363,7 +5453,7 @@ try {
             $stmt->execute($params);
             $leaves = $stmt->fetchAll();
 
-            echo json_encode(['success' => true, 'leaves' => $leaves]);
+            echo json_encode(['success' => true, 'is_manager' => $isManager, 'leaves' => $leaves]);
             break;
 
         case 'submit_leave_request':
@@ -5396,7 +5486,14 @@ try {
         case 'approve_leave_request':
             $leaveId = (int)($input['leave_id'] ?? 0);
             $action = strtoupper($input['action'] ?? 'APPROVE');
-            $approverId = (int)($input['user_id'] ?? 1);
+            $approverId = (int)($input['user_id'] ?? ($_SESSION['user_id'] ?? 1));
+            $stmtRole = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+            $stmtRole->execute([$approverId]);
+            $approverRole = strtoupper($stmtRole->fetchColumn() ?: '');
+            if (!in_array($approverRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'])) {
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak! Hanya Super Admin atau Branch Manager yang berhak menyetujui / menolak permohonan cuti.']);
+                break;
+            }
             $rejectionReason = trim($input['rejection_reason'] ?? '');
 
             $stmt = $pdo->prepare("SELECT * FROM leave_requests WHERE id = ?");
@@ -5447,7 +5544,22 @@ try {
         case 'get_attendance_report':
             $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : null;
             $month = !empty($_GET['month']) ? trim($_GET['month']) : date('Y-m');
-            $userIdFilter = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : null;
+            $actorId = !empty($_GET['actor_id']) ? (int)$_GET['actor_id'] : (!empty($_GET['user_id']) ? (int)$_GET['user_id'] : (int)($_SESSION['user_id'] ?? 0));
+            $filterUserId = !empty($_GET['filter_user_id']) ? (int)$_GET['filter_user_id'] : null;
+
+            $isManager = true;
+            if ($actorId > 0) {
+                $stmtR = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                $stmtR->execute([$actorId]);
+                $userRole = strtoupper($stmtR->fetchColumn() ?: '');
+                $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+            }
+
+            if (!$isManager && $actorId > 0) {
+                $userIdFilter = $actorId;
+            } else {
+                $userIdFilter = $filterUserId ?: (!empty($_GET['user_id']) && $isManager ? (int)$_GET['user_id'] : null);
+            }
 
             $startDate = $month . '-01';
             list($y, $m) = explode('-', $month);
@@ -5456,7 +5568,7 @@ try {
 
             $sqlEmp = "SELECT u.id, u.nik, u.name, u.role, b.name as branch_name, u.branch_id FROM users u JOIN branches b ON b.id = u.branch_id WHERE u.is_active = 1";
             $paramsEmp = [];
-            if ($branchId) {
+            if ($branchId && $isManager) {
                 $sqlEmp .= " AND u.branch_id = ?";
                 $paramsEmp[] = $branchId;
             }
@@ -5477,7 +5589,7 @@ try {
                 WHERE date(al.clock_in) BETWEEN ? AND ?
             ";
             $paramsLogs = [$startDate, $endDate];
-            if ($branchId) {
+            if ($branchId && $isManager) {
                 $sqlLogs .= " AND al.branch_id = ?";
                 $paramsLogs[] = $branchId;
             }
@@ -5563,6 +5675,7 @@ try {
 
             echo json_encode([
                 'success' => true,
+                'is_manager' => $isManager,
                 'period' => ['month' => $month, 'start' => $startDate, 'end' => $endDate],
                 'summary' => $summary,
                 'logs' => $logs
@@ -5573,8 +5686,23 @@ try {
         // 8h. CETAK SLIP GAJI MANDIRI (SELF-SERVICE PAYSLIP)
         // ==========================================
         case 'get_employee_payslip':
-            $userId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : 3;
+            $reqUserId = !empty($_GET['req_user_id']) ? (int)$_GET['req_user_id'] : (int)($_SESSION['user_id'] ?? 0);
+            $targetUserId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : 3;
             $month = !empty($_GET['month']) ? trim($_GET['month']) : date('Y-m');
+
+            $isManager = true;
+            if ($reqUserId > 0) {
+                $stmtR = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                $stmtR->execute([$reqUserId]);
+                $userRole = strtoupper($stmtR->fetchColumn() ?: '');
+                $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+            }
+
+            // Jika BUKAN Super Admin / Branch Manager, paksakan user_id adalah ID user itu sendiri!
+            if (!$isManager && $reqUserId > 0) {
+                $targetUserId = $reqUserId;
+            }
+            $userId = $targetUserId;
 
             $stmtU = $pdo->prepare("SELECT u.*, b.name as branch_name, b.address as branch_address FROM users u LEFT JOIN branches b ON b.id = u.branch_id WHERE u.id = ?");
             $stmtU->execute([$userId]);
@@ -5682,6 +5810,16 @@ try {
             break;
 
         case 'generate_or_save_payroll':
+            $actorId = (int)($input['actor_id'] ?? ($input['approver_id'] ?? ($_SESSION['user_id'] ?? 0)));
+            if ($actorId > 0) {
+                $stmtRole = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                $stmtRole->execute([$actorId]);
+                $actorRole = strtoupper($stmtRole->fetchColumn() ?: '');
+                if (!in_array($actorRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'])) {
+                    echo json_encode(['success' => false, 'message' => 'Akses ditolak! Hanya Super Admin atau Branch Manager yang berwenang mengunci / menyimpan slip gaji resmi.']);
+                    break;
+                }
+            }
             $userId = (int)($input['user_id'] ?? 3);
             $month = trim($input['month'] ?? date('Y-m'));
             $branchId = (int)($input['branch_id'] ?? 1);
@@ -5754,8 +5892,16 @@ try {
         // ==========================================
         case 'get_salary_loans':
             $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : null;
-            $userId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : null;
+            $userId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : (int)($_SESSION['user_id'] ?? 0);
             $status = $_GET['status'] ?? 'ALL';
+
+            $isManager = true;
+            if ($userId > 0) {
+                $stmtR = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                $stmtR->execute([$userId]);
+                $userRole = strtoupper($stmtR->fetchColumn() ?: '');
+                $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+            }
 
             $sql = "
                 SELECT sl.*, u.name as employee_name, u.nik as employee_nik, u.base_salary,
@@ -5768,11 +5914,14 @@ try {
                 WHERE 1=1
             ";
             $params = [];
-            if ($branchId) {
+            if ($branchId && $isManager) {
                 $sql .= " AND sl.branch_id = ?";
                 $params[] = $branchId;
             }
-            if ($userId) {
+            if (!$isManager && $userId > 0) {
+                $sql .= " AND sl.user_id = ?";
+                $params[] = $userId;
+            } elseif ($userId && !empty($_GET['filter_user'])) {
                 $sql .= " AND sl.user_id = ?";
                 $params[] = $userId;
             }
@@ -5786,7 +5935,7 @@ try {
             $stmt->execute($params);
             $loans = $stmt->fetchAll();
 
-            echo json_encode(['success' => true, 'loans' => $loans]);
+            echo json_encode(['success' => true, 'is_manager' => $isManager, 'loans' => $loans]);
             break;
 
         case 'submit_salary_loan':
@@ -5836,7 +5985,14 @@ try {
         case 'approve_salary_loan':
             $loanId = (int)($input['loan_id'] ?? 0);
             $action = strtoupper($input['action'] ?? 'APPROVE');
-            $approverId = (int)($input['user_id'] ?? 1);
+            $approverId = (int)($input['user_id'] ?? ($_SESSION['user_id'] ?? 1));
+            $stmtRole = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+            $stmtRole->execute([$approverId]);
+            $approverRole = strtoupper($stmtRole->fetchColumn() ?: '');
+            if (!in_array($approverRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'])) {
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak! Hanya Super Admin atau Branch Manager yang berhak menyetujui / menolak kasbon gaji.']);
+                break;
+            }
             $rejectionReason = trim($input['rejection_reason'] ?? '');
 
             $stmt = $pdo->prepare("SELECT * FROM salary_loans WHERE id = ?");

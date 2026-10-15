@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.0",
-  "build": "20261015-13",
-  "release_date": "2026-10-15",
+  "version": "1.2.1",
+  "build": "20261015-14",
+  "release_date": "2026-10-16",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.1",
+      "commit": "HEAD",
+      "date": "2026-10-16",
+      "title": "Isolasi Privasi Data Karyawan pada Portal ESS Berdasarkan Level Pengguna",
+      "description": "Menerapkan isolasi privasi data ketat pada 7 subtab Portal ESS di mana pengguna non-manager (Kasir, Staf, Operator, Kurir) hanya dapat mengakses data pribadi milik akun login aktif dan dilarang melihat data rekan kerja lainnya, sementara Super Admin dan Branch Manager memegang pengawasan dan otorisasi penuh.",
+      "rollback_command": "git checkout v1.2.0"
+    },
     {
       "version": "1.2.0",
       "commit": "HEAD",
