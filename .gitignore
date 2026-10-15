@@ -1,0 +1,26 @@
+# Dependencies & Binaries
+tailwindcss.exe
+*.exe
+
+# Database SQLite (Jangan push database lokal agar tidak menimpa data transaksi kasir di produksi)
+database.sqlite
+database.sqlite-wal
+database.sqlite-shm
+*.sqlite
+*.sqlite3
+*.db
+
+# Temporary & Log files
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS & Environment
+.env
+.env.local

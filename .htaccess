@@ -1,0 +1,31 @@
+# =====================================================
+# ESBAS POS Web Security & Configuration (.htaccess)
+# =====================================================
+
+# 1. Nonaktifkan Directory Listing
+Options -Indexes
+
+# 2. Blokir Akses Langsung ke File Sensitif (Database SQLite, Log, Script Test, Config)
+<FilesMatch "\.(sqlite|sqlite3|db|wal|shm|log|env|md|bat|ps1|exe)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# 3. Blokir Akses Langsung ke Seluruh File Testing
+<FilesMatch "^test_.*\.php$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# 4. UTF-8 Encoding Default
+AddDefaultCharset UTF-8
