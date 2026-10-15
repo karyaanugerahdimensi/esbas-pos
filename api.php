@@ -7682,6 +7682,20 @@ try {
 
                 // 3. Kembalikan stok barang & bahan baku BOM jika dipilih
                 if ($restoreStock) {
+                    $restoreBranchStock = function($bId, $productId, $addQty) use ($pdo) {
+                        if ($addQty <= 0) return;
+                        $stmtUpd = $pdo->prepare("UPDATE branch_stocks SET stock = stock + ?, last_updated = datetime('now', 'localtime') WHERE branch_id = ? AND product_id = ?");
+                        $stmtUpd->execute([$addQty, $bId, $productId]);
+                        if ($stmtUpd->rowCount() === 0) {
+                            try {
+                                $stmtIns = $pdo->prepare("INSERT INTO branch_stocks (branch_id, product_id, stock, min_stock, last_updated) VALUES (?, ?, ?, 0, datetime('now', 'localtime'))");
+                                $stmtIns->execute([$bId, $productId, $addQty]);
+                            } catch (Exception $e) {
+                                // Abaikan jika record sudah ada
+                            }
+                        }
+                    };
+
                     foreach ($salesList as $sRow) {
                         if ($sRow['status'] === 'CANCELLED') continue;
                         $curSaleId = $sRow['id'];
@@ -7696,21 +7710,20 @@ try {
                             $varId = !empty($item['variant_id']) ? (int)$item['variant_id'] : null;
                             $qty = (float)$item['qty'];
 
-                            $pdo->prepare("UPDATE branch_stocks SET stock = stock + ? WHERE branch_id = ? AND product_id = ?")->execute([$qty, $curBranchId, $pId]);
-                            $pdo->prepare("UPDATE products SET stock = stock + ? WHERE id = ?")->execute([$qty, $pId]);
+                            // 1. Kembalikan stok produk jadi di cabang
+                            $restoreBranchStock($curBranchId, $pId, $qty);
 
-                            // Base BOM
-                            $stmtBom = $pdo->prepare("SELECT * FROM product_recipes WHERE product_id = ?");
+                            // 2. Kembalikan bahan baku Base BOM jika ada
+                            $stmtBom = $pdo->prepare("SELECT * FROM product_recipes WHERE finished_product_id = ?");
                             $stmtBom->execute([$pId]);
                             $baseRecipes = $stmtBom->fetchAll(PDO::FETCH_ASSOC);
                             foreach ($baseRecipes as $r) {
                                 $ingId = (int)$r['ingredient_product_id'];
                                 $totIng = (float)$r['qty_needed'] * $qty;
-                                $pdo->prepare("UPDATE branch_stocks SET stock = stock + ? WHERE branch_id = ? AND product_id = ?")->execute([$totIng, $curBranchId, $ingId]);
-                                $pdo->prepare("UPDATE products SET stock = stock + ? WHERE id = ?")->execute([$totIng, $ingId]);
+                                $restoreBranchStock($curBranchId, $ingId, $totIng);
                             }
 
-                            // Variant BOM
+                            // 3. Kembalikan bahan baku Variant BOM jika ada
                             if ($varId) {
                                 $stmtVarBom = $pdo->prepare("SELECT * FROM variant_recipes WHERE variant_id = ?");
                                 $stmtVarBom->execute([$varId]);
@@ -7718,8 +7731,7 @@ try {
                                 foreach ($varRecipes as $vr) {
                                     $varIngId = (int)$vr['ingredient_product_id'];
                                     $totVarIng = (float)$vr['qty_needed'] * $qty;
-                                    $pdo->prepare("UPDATE branch_stocks SET stock = stock + ? WHERE branch_id = ? AND product_id = ?")->execute([$totVarIng, $curBranchId, $varIngId]);
-                                    $pdo->prepare("UPDATE products SET stock = stock + ? WHERE id = ?")->execute([$totVarIng, $varIngId]);
+                                    $restoreBranchStock($curBranchId, $varIngId, $totVarIng);
                                 }
                             }
                         }
