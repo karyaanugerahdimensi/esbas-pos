@@ -1,6 +1,6 @@
 -- ========================================================
 -- ESBAS POS Database Export (MySQL / MariaDB Compatible)
--- Generated: 2026-10-15 11:52:05
+-- Generated: 2026-10-15 14:12:38
 -- ========================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -381,17 +381,18 @@ CREATE TABLE `users` (
     `is_active` TINYINT(1) DEFAULT 1,
     `base_salary` DECIMAL(15, 2) DEFAULT 3000000,
     `allowance` DECIMAL(15, 2) DEFAULT 500000,
-    `daily_transport` DECIMAL(15, 2) DEFAULT 25000
+    `daily_transport` DECIMAL(15, 2) DEFAULT 25000,
+    `default_work_shift_id` INT DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table `users`
-INSERT INTO `users` (`id`, `nik`, `name`, `role`, `branch_id`, `email`, `phone`, `pin`, `commission_rate`, `password`, `is_active`, `base_salary`, `allowance`, `daily_transport`) VALUES
-(1, 'ADM001', 'Muhamad Ismail', 'SUPER_ADMIN', 1, 'mailmamenster@gmail.com', '08111000111', '999999', 0, 'admin123', 1, 3000000, 500000, 25000),
-(2, 'MGR001', 'Nina Indrayani', 'SUPER_ADMIN', 1, 'hendra@jkt.retail.com', '08122000222', '888888', 0, 'manager123', 1, 3000000, 500000, 25000),
-(3, 'CSR001', 'Bima', 'CASHIER', 1, 'siti.kasir@jkt.retail.com', '08133000333', '123456', 0, 'kasir123', 1, 3000000, 500000, 25000),
-(4, 'CSR002', 'Abdul Latif', 'CASHIER', 1, 'latif@esbas.com', '0822113344', '654321', 0.015, 'kasir123', 1, 3000000, 500000, 25000),
-(5, 'CSR003', 'Shafiqa', 'CASHIER', 3, 'anisa@sby.retail.com', '08155000555', '112233', 0, 'kasir123', 1, 3000000, 500000, 25000),
-(6, 'STF001', 'Keenan', 'STAFF', 3, 'rian@jkt.retail.com', '08166000666', '000000', 0, 'staff123', 1, 3000000, 500000, 25000);
+INSERT INTO `users` (`id`, `nik`, `name`, `role`, `branch_id`, `email`, `phone`, `pin`, `commission_rate`, `password`, `is_active`, `base_salary`, `allowance`, `daily_transport`, `default_work_shift_id`) VALUES
+(1, 'ADM001', 'Muhamad Ismail', 'SUPER_ADMIN', 1, 'mailmamenster@gmail.com', '08111000111', '999999', 0, 'admin123', 1, 3000000, 500000, 25000, NULL),
+(2, 'MGR001', 'Nina Indrayani', 'SUPER_ADMIN', 1, 'hendra@jkt.retail.com', '08122000222', '888888', 0, 'manager123', 1, 3000000, 500000, 25000, NULL),
+(3, 'CSR001', 'Bima', 'CASHIER', 1, 'siti.kasir@jkt.retail.com', '08133000333', '123456', 0, 'kasir123', 1, 3000000, 500000, 25000, 1),
+(4, 'CSR002', 'Abdul Latif', 'CASHIER', 1, 'latif@esbas.com', '0822113344', '654321', 0, 'kasir123', 1, 3000000, 500000, 25000, 1),
+(5, 'CSR003', 'Shafiqa', 'CASHIER', 3, 'anisa@sby.retail.com', '08155000555', '112233', 0, 'kasir123', 1, 3000000, 500000, 25000, 1),
+(6, 'STF001', 'Keenan', 'STAFF', 3, 'rian@jkt.retail.com', '08166000666', '000000', 0, 'staff123', 1, 3000000, 500000, 25000, 1);
 
 -- --------------------------------------------------------
 -- Table structure for `products`
@@ -766,7 +767,7 @@ INSERT INTO `cashier_shifts` (`id`, `branch_id`, `user_id`, `start_time`, `end_t
 (36, 1, 4, '2026-10-12 18:41:50', '2026-10-12 18:41:50', 250000, 254500, 254500, 0, 'CLOSED', 147, 179, 198, 147, 179, 198, 146, 179, 197, 'Tutup toko operasional malam selesai. Toko terkunci aman.', '{\"89\":147,\"88\":179,\"105\":198}', '{\"89\":146,\"88\":179,\"105\":197}', 2, 'Shift 2 (Siang/Malam)', 'SHIFT_2', 1, 0, 0, 0, NULL, NULL, NULL, NULL, 0, 'PULSE', NULL, NULL),
 (37, 1, 3, '2026-10-12 18:59:09', '2026-10-12 18:59:09', 300000, 309000, 309000, 0, 'CLOSED', 150, 180, 200, 140, 180, 200, 147, 179, 198, 'Serah terima siang dari Kasir 1 ke Kasir 2 berjalan lancar.', '{\"89\":150,\"88\":180,\"105\":200}', '{\"89\":147,\"88\":179,\"105\":198}', 1, 'Shift 1 (Pagi)', 'SHIFT_1', 0, 0, 0, 0, NULL, NULL, NULL, NULL, 0, 'PULSE', NULL, NULL),
 (38, 1, 4, '2026-10-12 18:59:09', '2026-10-12 18:59:09', 250000, 254500, 254500, 0, 'CLOSED', 147, 179, 198, 147, 179, 198, 146, 179, 197, 'Tutup toko operasional malam selesai. Toko terkunci aman.', '{\"89\":147,\"88\":179,\"105\":198}', '{\"89\":146,\"88\":179,\"105\":197}', 2, 'Shift 2 (Siang/Malam)', 'SHIFT_2', 1, 0, 0, 0, NULL, NULL, NULL, NULL, 0, 'PULSE', NULL, NULL),
-(39, 1, 1, '2026-10-12 20:20:17', NULL, 300000, 0, 0, 0, 'OPEN', 146, 179, 197, 146, 179, 197, NULL, NULL, NULL, '', '{\"89\":146,\"88\":179,\"105\":197,\"103\":37,\"102\":50}', NULL, 35, 'Shift 35', 'SHIFT_35', 0, 0, 0, 0, NULL, NULL, NULL, NULL, 0, 'PULSE', NULL, NULL),
+(39, 1, 1, '2026-10-12 20:20:17', '2026-10-15 17:52:54', 300000, 304500, 0, -304500, 'CLOSED', 146, 179, 197, 146, 179, 197, 145, 179, 197, '', '{\"89\":146,\"88\":179,\"105\":197,\"103\":37,\"102\":50}', '{\"89\":145,\"88\":179,\"105\":197,\"103\":37,\"102\":50}', 35, 'Shift 35', 'SHIFT_35', 1, 0, 0, 0, '{\"expenses\":[],\"loans\":[],\"meals\":[],\"total_expenses\":0,\"total_loans\":0,\"total_meals\":0,\"total_disbursements\":0}', 0, 33000, 33000, 0, 'PULSE', NULL, 42.2),
 (40, 1, 1, '2026-10-12 20:53:46', '2026-10-12 20:53:47', 300000, 775000, 775000, 0, 'CLOSED', 0, 0, 0, 0, 0, 0, 10, 15, 20, 'Tutup shift uji integrasi pengeluaran kasir', NULL, NULL, 1, 'Shift Uji Kasir', 'SHIFT_1', 1, 50000, 150000, 25000, '{\"expenses\":[{\"category\":\"Biaya Operasional Toko\",\"amount\":50000,\"notes\":\"Beli lakban packing & pembersih galon\"}],\"loans\":[{\"user_id\":2,\"amount\":150000,\"notes\":\"Kasbon tunai laci kasir darurat\"}],\"meals\":[{\"user_id\":2,\"amount\":25000,\"notes\":\"Uang makan harian shift kerja\"}],\"total_expenses\":50000,\"total_loans\":150000,\"total_meals\":25000,\"total_disbursements\":225000}', NULL, NULL, NULL, 0, 'PULSE', NULL, NULL),
 (41, 1, 1, '2026-10-12 20:54:09', '2026-10-12 20:54:10', 300000, 775000, 775000, 0, 'CLOSED', 0, 0, 0, 0, 0, 0, 10, 15, 20, 'Tutup shift uji integrasi pengeluaran kasir', NULL, NULL, 1, 'Shift Uji Kasir', 'SHIFT_1', 1, 50000, 150000, 25000, '{\"expenses\":[{\"category\":\"Biaya Operasional Toko\",\"amount\":50000,\"notes\":\"Beli lakban packing & pembersih galon\"}],\"loans\":[{\"user_id\":2,\"amount\":150000,\"notes\":\"Kasbon tunai laci kasir darurat\"}],\"meals\":[{\"user_id\":2,\"amount\":25000,\"notes\":\"Uang makan harian shift kerja\"}],\"total_expenses\":50000,\"total_loans\":150000,\"total_meals\":25000,\"total_disbursements\":225000}', NULL, NULL, NULL, 0, 'PULSE', NULL, NULL),
 (42, 1, 1, '2026-10-12 21:26:14', '2026-10-12 21:26:15', 300000, 775000, 775000, 0, 'CLOSED', 0, 0, 0, 0, 0, 0, 10, 15, 20, 'Tutup shift uji integrasi pengeluaran kasir', NULL, NULL, 1, 'Shift Uji Kasir', 'SHIFT_1', 1, 50000, 150000, 25000, '{\"expenses\":[{\"category\":\"Biaya Operasional Toko\",\"amount\":50000,\"notes\":\"Beli lakban packing & pembersih galon\"}],\"loans\":[{\"user_id\":2,\"amount\":150000,\"notes\":\"Kasbon tunai laci kasir darurat\"}],\"meals\":[{\"user_id\":2,\"amount\":25000,\"notes\":\"Uang makan harian shift kerja\"}],\"total_expenses\":50000,\"total_loans\":150000,\"total_meals\":25000,\"total_disbursements\":225000}', NULL, NULL, NULL, 0, 'PULSE', NULL, NULL),
@@ -793,6 +794,10 @@ CREATE TABLE `water_meter_logs` (
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table `water_meter_logs`
+INSERT INTO `water_meter_logs` (`id`, `branch_id`, `shift_id`, `user_id`, `log_date`, `meter_yesterday`, `meter_today`, `meter_difference`, `meter_adjustment`, `adjustment_type`, `adjustment_reason`, `water_dispensed_galon`, `notes`, `created_at`, `updated_at`) VALUES
+(2, 1, 39, 1, '2026-10-15', 0, 33000, 33000, 0, 'PULSE', NULL, 42.2, NULL, '2026-10-15 17:52:54', '2026-10-15 17:52:54');
 
 -- --------------------------------------------------------
 -- Table structure for `opening_shift_products`
@@ -1097,22 +1102,45 @@ CREATE TABLE `shift_schedules` (
 
 -- Dumping data for table `shift_schedules`
 INSERT INTO `shift_schedules` (`id`, `branch_id`, `user_id`, `shift_date`, `shift_name`, `start_time`, `end_time`, `work_shift_id`, `is_holiday`, `notes`) VALUES
-(1, 1, 3, '2026-10-09', 'PAGI (08:00 - 16:00)', '08:00', '16:00', NULL, 0, NULL),
+(1, 1, 3, '2026-10-09', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
 (2, 1, 4, '2026-10-09', 'SORE (14:00 - 22:00)', '14:00', '22:00', NULL, 0, NULL),
-(3, 1, 3, '2026-10-10', 'PAGI (08:00 - 16:00)', '08:00', '16:00', NULL, 0, NULL),
+(3, 1, 3, '2026-10-10', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
 (4, 1, 4, '2026-10-10', 'SORE (14:00 - 22:00)', '14:00', '22:00', NULL, 0, NULL),
 (5, 1, 4, '2026-10-15', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, 'Pagi Normal'),
-(6, 1, 3, '2026-10-16', 'Shift 2 (Siang/Sore)', '14:30', '22:30', 2, 0, 'Siang Normal'),
-(7, 1, 3, '2026-10-15', 'Shift 2 (Siang/Sore)', '14:30', '22:30', 2, 0, 'Siang Normal'),
+(6, 1, 3, '2026-10-16', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, 'Siang Normal'),
+(7, 1, 3, '2026-10-15', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, 'Siang Normal'),
 (8, 1, 4, '2026-10-16', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, 'Pagi Normal'),
 (9, 1, 1, '2026-10-25', 'Libur / Off Day', '00:00', '00:00', 4, 1, 'Hari Libur Toko Maintenance'),
 (10, 1, 2, '2026-10-25', 'Libur / Off Day', '00:00', '00:00', 4, 1, 'Hari Libur Toko Maintenance'),
-(11, 1, 3, '2026-10-25', 'Libur / Off Day', '00:00', '00:00', 4, 1, 'Hari Libur Toko Maintenance'),
+(11, 1, 3, '2026-10-25', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, 'Hari Libur Toko Maintenance'),
 (12, 1, 4, '2026-10-25', 'Libur / Off Day', '00:00', '00:00', 4, 1, 'Hari Libur Toko Maintenance'),
 (13, 1, 3, '2026-10-17', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, 'Imported via Test'),
 (14, 1, 4, '2026-10-17', 'Shift 2 (Siang/Sore)', '14:30', '22:30', 2, 0, 'Imported via Test'),
-(15, 1, 3, '2026-10-20', 'SAKIT', '00:00', '00:00', NULL, 1, '[SAKIT] Demam tinggi rawat jalan'),
-(16, 1, 3, '2026-10-21', 'SAKIT', '00:00', '00:00', NULL, 1, '[SAKIT] Demam tinggi rawat jalan');
+(15, 1, 3, '2026-10-20', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, '[SAKIT] Demam tinggi rawat jalan'),
+(16, 1, 3, '2026-10-21', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, '[SAKIT] Demam tinggi rawat jalan'),
+(17, 1, 3, '2026-10-01', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(18, 1, 3, '2026-10-02', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(19, 1, 3, '2026-10-03', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(20, 1, 3, '2026-10-04', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(21, 1, 3, '2026-10-05', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(22, 1, 3, '2026-10-06', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(23, 1, 3, '2026-10-07', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(24, 1, 3, '2026-10-08', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(25, 1, 3, '2026-10-11', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(26, 1, 3, '2026-10-12', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(27, 1, 3, '2026-10-13', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(28, 1, 3, '2026-10-14', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(29, 1, 3, '2026-10-18', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(30, 1, 3, '2026-10-19', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(31, 1, 3, '2026-10-22', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(32, 1, 3, '2026-10-23', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(33, 1, 3, '2026-10-24', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(34, 1, 3, '2026-10-26', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(35, 1, 3, '2026-10-27', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(36, 1, 3, '2026-10-28', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(37, 1, 3, '2026-10-29', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(38, 1, 3, '2026-10-30', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL),
+(39, 1, 3, '2026-10-31', 'Shift 1 (Pagi)', '07:00', '17:00', 1, 0, NULL);
 
 -- --------------------------------------------------------
 -- Table structure for `shift_swaps`

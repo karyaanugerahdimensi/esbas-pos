@@ -1725,6 +1725,7 @@
                                     <th class="py-3 px-4">Peran (Role)</th>
                                     <th class="py-3 px-4">Cabang Penempatan</th>
                                     <th class="py-3 px-4">Email / Telepon</th>
+                                    <th class="py-3 px-4">Shift Kerja</th>
                                     <th class="py-3 px-4">Komisi %</th>
                                     <th class="py-3 px-4">Status</th>
                                     <th class="py-3 px-4 text-center">Aksi</th>
@@ -4490,11 +4491,153 @@
                         <input type="password" id="emp-password" placeholder="Kosongkan jika tetap" class="w-full p-2.5 bg-slate-50 border rounded-xl">
                     </div>
                 </div>
+
+                <!-- Shift Kerja Bawaan (Default Work Shift) -->
+                <div id="emp-shift-section" class="border-t border-slate-100 pt-3 space-y-2">
+                    <div id="emp-shift-picker-group">
+                        <label class="block font-bold text-slate-700 mb-1 flex items-center justify-between">
+                            <span>Jadwal Shift Kerja Bawaan (Default Shift):</span>
+                            <span class="text-[10px] text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-full">Roster & Presensi</span>
+                        </label>
+                        <select id="emp-default-shift" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium text-slate-800">
+                            <option value="">-- Pilih Shift Kerja Bawaan --</option>
+                        </select>
+                        <p class="text-[10px] text-slate-500 mt-1">Shift bawaan yang otomatis diterapkan saat mapping roster bulanan dan presensi harian karyawan.</p>
+                    </div>
+                    <div id="emp-shift-exempt-notice" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-xs flex items-start space-x-2.5">
+                        <i data-lucide="shield-alert" class="w-4 h-4 text-amber-600 mt-0.5 shrink-0"></i>
+                        <div>
+                            <strong class="font-bold">Pengecualian Shift Manajerial:</strong>
+                            <p class="text-[11px] text-amber-800 mt-0.5">Role Super Admin dan Branch Manager memiliki fleksibilitas jam kerja dan dikecualikan dari pemetaan jadwal shift kerja roster operasional.</p>
+                        </div>
+                    </div>
+                    <div id="emp-shift-detail-action" class="hidden pt-1">
+                        <button type="button" onclick="openScheduleFromEmployeeModal()" class="w-full py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl font-bold flex items-center justify-center space-x-1.5 transition-colors text-xs">
+                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                            <span>🗓️ Kelola & Petakan Jadwal Shift Karyawan Ini</span>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-2 pt-2">
                     <button type="button" onclick="closeEmployeeModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700">Batal</button>
                     <button type="submit" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow">Simpan Karyawan</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal 3.0b: Detail & Pemetaan Jadwal Shift Karyawan Modal -->
+    <div id="employee-schedule-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between border-b pb-3">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-lg">
+                        <i data-lucide="calendar" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 id="emp-sched-modal-title" class="font-bold text-slate-800 text-base">Detail & Pemetaan Jadwal Shift Karyawan</h3>
+                        <p id="emp-sched-modal-sub" class="text-xs text-slate-500">Mapping penugasan shift bulanan untuk operasional toko dan presensi harian.</p>
+                    </div>
+                </div>
+                <button onclick="closeEmployeeScheduleModal()" class="text-slate-400 hover:text-slate-600 p-2 rounded-xl">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Employee Info Header Banner -->
+            <div id="emp-sched-banner" class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center space-x-3">
+                    <div>
+                        <div id="emp-sched-user-name" class="font-bold text-sm text-slate-800">Nama Karyawan</div>
+                        <div class="flex items-center space-x-2 text-[11px] text-slate-500 mt-0.5">
+                            <span id="emp-sched-user-nik" class="font-mono bg-white px-2 py-0.5 rounded border border-slate-200 font-bold text-indigo-700">NIK</span>
+                            <span id="emp-sched-user-role" class="px-2 py-0.5 rounded-full font-bold bg-indigo-100 text-indigo-700">Role</span>
+                            <span id="emp-sched-user-branch" class="text-slate-600 font-medium">Cabang</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label class="font-bold text-slate-600">Pilih Bulan:</label>
+                    <input type="month" id="emp-sched-month-input" onchange="loadEmployeeScheduleData()" class="p-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-800">
+                </div>
+            </div>
+
+            <!-- Exempt Notice Container (for Super Admin & Branch Manager) -->
+            <div id="emp-sched-exempt-container" class="hidden p-6 text-center space-y-3 bg-amber-50/70 border border-amber-200 rounded-2xl">
+                <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                    <i data-lucide="shield-alert" class="w-6 h-6"></i>
+                </div>
+                <h4 class="font-bold text-amber-900 text-sm">Karyawan Dikecualikan dari Jadwal Shift Roster</h4>
+                <p class="text-xs text-amber-800 max-w-lg mx-auto">
+                    Karyawan ini memegang peran manajerial / pimpinan (<span id="emp-sched-exempt-role" class="font-bold"></span>) dengan jam kerja fleksibel, sehingga tidak memerlukan pemetaan shift kerja harian roster.
+                </p>
+                <div class="pt-2">
+                    <button onclick="closeEmployeeScheduleModal()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Mapping Content -->
+            <div id="emp-sched-main-content" class="flex-1 flex flex-col space-y-3 overflow-hidden">
+                <!-- Action bar: Default shift & Bulk apply -->
+                <div class="flex flex-wrap items-center justify-between gap-2 bg-indigo-50/70 p-3 rounded-2xl border border-indigo-100 text-xs">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="font-bold text-slate-700">Shift Bawaan:</span>
+                        <select id="emp-sched-default-shift-select" class="p-2 bg-white border border-slate-300 rounded-xl font-medium text-slate-800 text-xs">
+                            <option value="">-- Pilih Shift Bawaan --</option>
+                        </select>
+                        <button type="button" onclick="applyDefaultShiftToMonth(false)" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center space-x-1.5 shadow-sm" title="Terapkan shift bawaan ke tanggal yang belum memiliki jadwal">
+                            <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                            <span>Terapkan ke Hari Kosong</span>
+                        </button>
+                        <button type="button" onclick="applyDefaultShiftToMonth(true)" class="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold flex items-center space-x-1.5 shadow-sm" title="Terapkan shift bawaan ke SELURUH hari di bulan ini (timpa jadwal lama)">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                            <span>Terapkan ke Seluruh Bulan</span>
+                        </button>
+                    </div>
+                    <div class="text-[11px] text-slate-500">
+                        <button type="button" onclick="goToBranchRosterTab()" class="text-indigo-600 hover:text-indigo-800 font-bold underline flex items-center space-x-1">
+                            <span>📋 Buka Roster Matriks Seluruh Cabang</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Daily Schedule Table Scrollable -->
+                <div class="flex-1 overflow-y-auto border border-slate-200 rounded-2xl">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0 border-b z-10">
+                            <tr>
+                                <th class="py-2.5 px-3">Tanggal</th>
+                                <th class="py-2.5 px-3">Hari</th>
+                                <th class="py-2.5 px-3">Penugasan Shift Kerja</th>
+                                <th class="py-2.5 px-3">Jam Kerja</th>
+                                <th class="py-2.5 px-3">Catatan / Status Khusus</th>
+                            </tr>
+                        </thead>
+                        <tbody id="emp-sched-table-body" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer Summary & Save Button -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t text-xs">
+                    <div id="emp-sched-stats" class="text-slate-600 font-medium text-xs">
+                        <!-- e.g. Total Kerja: 26 hari | Libur: 5 hari -->
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="closeEmployeeScheduleModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold">
+                            Tutup
+                        </button>
+                        <button type="button" onclick="saveEmployeeScheduleData()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md shadow-indigo-100 flex items-center space-x-1.5">
+                            <i data-lucide="save" class="w-4 h-4"></i>
+                            <span>Simpan Perubahan Jadwal</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -11450,36 +11593,72 @@ Manager / Supervisor: __________________
         }
 
         // ==========================================
-        // 4. KARYAWAN CRUD (EMPLOYEES)
+        // 4. KARYAWAN CRUD (EMPLOYEES) & SHIFT MAPPING
         // ==========================================
+        let currentEditingEmployee = null;
+        let currentScheduleEmployee = null;
+        let currentEmployeeScheduleData = null;
+
+        async function ensureWorkShiftsLoaded() {
+            if (!essWorkShiftsList || essWorkShiftsList.length === 0) {
+                try {
+                    const res = await fetch('api.php?action=get_work_shifts');
+                    const data = await res.json();
+                    if (data.success) {
+                        essWorkShiftsList = data.shifts || [];
+                    }
+                } catch (e) {
+                    console.error('Failed to load work shifts:', e);
+                }
+            }
+            return essWorkShiftsList;
+        }
+
         async function loadEmployees() {
+            await ensureWorkShiftsLoaded();
             const res = await fetch('api.php?action=get_employees');
             const data = await res.json();
             if (!data.success) return;
 
-            document.getElementById('employee-table-body').innerHTML = data.employees.map(e => `
+            document.getElementById('employee-table-body').innerHTML = data.employees.map(e => {
+                const isExempt = ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'].includes(e.role);
+                let shiftBadge = '';
+                if (isExempt) {
+                    shiftBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">Fleksibel (Manajerial)</span>`;
+                } else if (e.default_shift_name) {
+                    shiftBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">${e.default_shift_code ? '[' + e.default_shift_code + '] ' : ''}${e.default_shift_name}</span>`;
+                } else {
+                    shiftBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Belum Diset</span>`;
+                }
+
+                return `
                 <tr class="hover:bg-slate-50">
                     <td class="py-2.5 px-4 font-mono font-bold text-indigo-700">${e.nik}</td>
                     <td class="py-2.5 px-4 font-semibold text-slate-800">${e.name}</td>
                     <td class="py-2.5 px-4"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${e.role === 'SUPER_ADMIN' ? 'bg-purple-100 text-purple-800' : (e.role === 'BRANCH_MANAGER' ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-700')}">${e.role}</span></td>
                     <td class="py-2.5 px-4 text-slate-600">${e.branch_name || 'Semua Cabang'}</td>
                     <td class="py-2.5 px-4 text-slate-500">${e.email || '-'} / ${e.phone || '-'}</td>
+                    <td class="py-2.5 px-4">${shiftBadge}</td>
                     <td class="py-2.5 px-4 font-bold text-amber-700">${(e.commission_rate * 100).toFixed(1)}%</td>
                     <td class="py-2.5 px-4">
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${e.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
                             ${e.is_active ? 'Aktif' : 'Nonaktif'}
                         </span>
                     </td>
-                    <td class="py-2.5 px-4 text-center space-x-1">
+                    <td class="py-2.5 px-4 text-center space-x-1 whitespace-nowrap">
                         <button onclick='editEmployee(${JSON.stringify(e)})' class="px-2.5 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-[11px] font-bold">Edit</button>
+                        <button onclick='openEmployeeScheduleModal(${JSON.stringify(e)})' class="px-2.5 py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg text-[11px] font-bold" title="Detail & Petakan Jadwal Shift">🗓️ Jadwal Shift</button>
                         ${e.id !== 1 ? `<button onclick="deleteEmployee(${e.id})" class="px-2.5 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-[11px] font-bold">Nonaktifkan</button>` : ''}
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
             lucide.createIcons();
         }
 
-        function openEmployeeModal() {
+        async function openEmployeeModal() {
+            currentEditingEmployee = null;
+            await ensureWorkShiftsLoaded();
+
             document.getElementById('emp-id').value = '';
             document.getElementById('emp-nik').value = '';
             document.getElementById('emp-name').value = '';
@@ -11494,11 +11673,57 @@ Manager / Supervisor: __________________
                 `<option value="${b.id}">${b.name}</option>`
             ).join('');
 
+            // Populate default shifts
+            renderEmployeeModalShiftOptions();
+
+            // Set role change listener
+            const roleSelect = document.getElementById('emp-role');
+            roleSelect.onchange = handleEmployeeRoleChange;
+            handleEmployeeRoleChange();
+
+            document.getElementById('emp-shift-detail-action')?.classList.add('hidden');
             document.getElementById('employee-modal').classList.remove('hidden');
+            lucide.createIcons();
         }
 
-        function editEmployee(emp) {
-            openEmployeeModal();
+        function renderEmployeeModalShiftOptions(selectedId = null) {
+            const shiftSelect = document.getElementById('emp-default-shift');
+            if (!shiftSelect) return;
+            const options = ['<option value="">-- Pilih Shift Kerja Bawaan --</option>'];
+            (essWorkShiftsList || []).forEach(ws => {
+                const timeInfo = ws.is_day_off ? 'Hari Libur / Off' : `${ws.start_time} - ${ws.end_time}`;
+                options.push(`<option value="${ws.id}" ${ws.id == selectedId ? 'selected' : ''}>${ws.code} - ${ws.name} (${timeInfo})</option>`);
+            });
+            shiftSelect.innerHTML = options.join('');
+        }
+
+        function handleEmployeeRoleChange() {
+            const role = document.getElementById('emp-role').value;
+            const isExempt = ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'].includes(role);
+            const pickerGroup = document.getElementById('emp-shift-picker-group');
+            const exemptNotice = document.getElementById('emp-shift-exempt-notice');
+            const detailAction = document.getElementById('emp-shift-detail-action');
+
+            if (isExempt) {
+                if (pickerGroup) pickerGroup.classList.add('hidden');
+                if (exemptNotice) exemptNotice.classList.remove('hidden');
+                if (detailAction) detailAction.classList.add('hidden');
+                document.getElementById('emp-default-shift').value = '';
+            } else {
+                if (pickerGroup) pickerGroup.classList.remove('hidden');
+                if (exemptNotice) exemptNotice.classList.add('hidden');
+                if (currentEditingEmployee && currentEditingEmployee.id) {
+                    if (detailAction) detailAction.classList.remove('hidden');
+                } else {
+                    if (detailAction) detailAction.classList.add('hidden');
+                }
+            }
+            lucide.createIcons();
+        }
+
+        async function editEmployee(emp) {
+            currentEditingEmployee = emp;
+            await openEmployeeModal();
             document.getElementById('emp-id').value = emp.id;
             document.getElementById('emp-nik').value = emp.nik;
             document.getElementById('emp-name').value = emp.name;
@@ -11509,26 +11734,41 @@ Manager / Supervisor: __________________
             document.getElementById('emp-pin').value = emp.pin || '123456';
             document.getElementById('emp-commission').value = (emp.commission_rate * 100).toFixed(1);
             document.getElementById('emp-modal-title').innerText = 'Edit Karyawan: ' + emp.name;
+
+            renderEmployeeModalShiftOptions(emp.default_work_shift_id);
+            handleEmployeeRoleChange();
         }
 
         function closeEmployeeModal() {
             document.getElementById('employee-modal').classList.add('hidden');
         }
 
+        function openScheduleFromEmployeeModal() {
+            if (currentEditingEmployee) {
+                closeEmployeeModal();
+                openEmployeeScheduleModal(currentEditingEmployee);
+            }
+        }
+
         async function saveEmployeeForm(e) {
             e.preventDefault();
             const id = document.getElementById('emp-id').value;
+            const role = document.getElementById('emp-role').value;
+            const isExempt = ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'].includes(role);
+            const defaultShiftId = (!isExempt && document.getElementById('emp-default-shift').value) ? parseInt(document.getElementById('emp-default-shift').value) : null;
+
             const payload = {
                 id: id ? parseInt(id) : null,
                 nik: document.getElementById('emp-nik').value,
                 name: document.getElementById('emp-name').value,
-                role: document.getElementById('emp-role').value,
+                role: role,
                 branch_id: parseInt(document.getElementById('emp-branch').value),
                 email: document.getElementById('emp-email').value,
                 phone: document.getElementById('emp-phone').value,
                 pin: document.getElementById('emp-pin').value,
                 password: document.getElementById('emp-password').value,
-                commission_rate: parseFloat(document.getElementById('emp-commission').value) / 100
+                commission_rate: parseFloat(document.getElementById('emp-commission').value) / 100,
+                default_work_shift_id: defaultShiftId
             };
 
             const res = await fetch('api.php?action=save_employee', {
@@ -11542,6 +11782,271 @@ Manager / Supervisor: __________________
                 closeEmployeeModal();
                 loadEmployees();
             }
+        }
+
+        async function deleteEmployee(id) {
+            if (!confirm('Nonaktifkan karyawan ini?')) return;
+            const res = await fetch('api.php?action=delete_employee', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+            if (data.success) loadEmployees();
+        }
+
+        // ==========================================
+        // 4b. DETAIL & PEMETAAN JADWAL SHIFT KARYAWAN
+        // ==========================================
+        async function openEmployeeScheduleModal(emp) {
+            currentScheduleEmployee = emp;
+            await ensureWorkShiftsLoaded();
+
+            document.getElementById('emp-sched-user-name').innerText = emp.name;
+            document.getElementById('emp-sched-user-nik').innerText = emp.nik;
+            document.getElementById('emp-sched-user-role').innerText = emp.role;
+            document.getElementById('emp-sched-user-branch').innerText = emp.branch_name || 'Semua Cabang';
+
+            const mInput = document.getElementById('emp-sched-month-input');
+            if (!mInput.value) {
+                mInput.value = new Date().toISOString().slice(0, 7);
+            }
+
+            const isExempt = ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'].includes(emp.role);
+            const exemptContainer = document.getElementById('emp-sched-exempt-container');
+            const mainContent = document.getElementById('emp-sched-main-content');
+
+            if (isExempt) {
+                exemptContainer.classList.remove('hidden');
+                mainContent.classList.add('hidden');
+                document.getElementById('emp-sched-exempt-role').innerText = emp.role;
+            } else {
+                exemptContainer.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+
+                // Render default shift dropdown options in modal
+                const defSelect = document.getElementById('emp-sched-default-shift-select');
+                defSelect.innerHTML = ['<option value="">-- Pilih Shift Bawaan --</option>']
+                    .concat((essWorkShiftsList || []).map(ws => {
+                        const timeInfo = ws.is_day_off ? 'Libur / Off' : `${ws.start_time} - ${ws.end_time}`;
+                        return `<option value="${ws.id}" ${ws.id == emp.default_work_shift_id ? 'selected' : ''}>${ws.code} - ${ws.name} (${timeInfo})</option>`;
+                    })).join('');
+
+                await loadEmployeeScheduleData();
+            }
+
+            document.getElementById('employee-schedule-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeEmployeeScheduleModal() {
+            document.getElementById('employee-schedule-modal').classList.add('hidden');
+        }
+
+        async function loadEmployeeScheduleData() {
+            if (!currentScheduleEmployee) return;
+            const month = document.getElementById('emp-sched-month-input').value || new Date().toISOString().slice(0, 7);
+            const tbody = document.getElementById('emp-sched-table-body');
+            tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400">Memuat jadwal shift...</td></tr>';
+
+            try {
+                const res = await fetch(`api.php?action=get_employee_schedule&user_id=${currentScheduleEmployee.id}&month=${month}`);
+                const data = await res.json();
+                if (!data.success) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-rose-500 font-medium">${data.message || 'Gagal memuat jadwal.'}</td></tr>`;
+                    return;
+                }
+
+                currentEmployeeScheduleData = data;
+                if (data.work_shifts) essWorkShiftsList = data.work_shifts;
+
+                // Sync default shift dropdown if updated
+                if (data.employee && data.employee.default_work_shift_id) {
+                    currentScheduleEmployee.default_work_shift_id = data.employee.default_work_shift_id;
+                    const defSelect = document.getElementById('emp-sched-default-shift-select');
+                    if (defSelect) defSelect.value = data.employee.default_work_shift_id;
+                }
+
+                const daysInMonth = data.days_in_month;
+                const schedules = data.schedules || {};
+                const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+                let totalWork = 0;
+                let totalOff = 0;
+                let rowsHtml = '';
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateStr = `${month}-${String(d).padStart(2, '0')}`;
+                    const dateObj = new Date(`${dateStr}T00:00:00`);
+                    const dayName = dayNames[dateObj.getDay()];
+                    const isSunday = (dateObj.getDay() === 0);
+
+                    const sched = schedules[dateStr] || null;
+                    const assignedShiftId = sched ? sched.work_shift_id : null;
+                    const isHoliday = sched ? sched.is_holiday : (isSunday ? 1 : 0);
+
+                    let assignedShift = null;
+                    if (assignedShiftId) {
+                        assignedShift = essWorkShiftsList.find(ws => ws.id == assignedShiftId);
+                    }
+
+                    if (assignedShift && !assignedShift.is_day_off && !isHoliday) {
+                        totalWork++;
+                    } else {
+                        totalOff++;
+                    }
+
+                    const shiftOptions = ['<option value="">-- Belum Diset / Libur --</option>']
+                        .concat((essWorkShiftsList || []).map(ws => {
+                            return `<option value="${ws.id}" ${ws.id == assignedShiftId ? 'selected' : ''}>${ws.code} - ${ws.name}</option>`;
+                        })).join('');
+
+                    const timeDisplay = (assignedShift && !assignedShift.is_day_off) 
+                        ? `<span class="font-mono text-slate-700 font-bold">${assignedShift.start_time} - ${assignedShift.end_time}</span>` 
+                        : `<span class="text-slate-400 font-medium italic">Libur / Fleksibel</span>`;
+
+                    rowsHtml += `
+                        <tr class="hover:bg-slate-50 transition-colors ${isSunday ? 'bg-rose-50/30' : ''}" data-date="${dateStr}">
+                            <td class="py-2.5 px-3 font-mono font-bold text-slate-800">${dateStr}</td>
+                            <td class="py-2.5 px-3 font-medium ${isSunday ? 'text-rose-600 font-bold' : 'text-slate-600'}">${dayName}</td>
+                            <td class="py-2.5 px-3">
+                                <select class="emp-row-shift-select p-1.5 bg-white border border-slate-300 rounded-lg text-xs font-medium w-full max-w-[220px]" onchange="handleEmployeeRowShiftChange(this, '${dateStr}')">
+                                    ${shiftOptions}
+                                </select>
+                            </td>
+                            <td class="py-2.5 px-3 emp-row-time-col">
+                                ${timeDisplay}
+                            </td>
+                            <td class="py-2.5 px-3">
+                                <input type="text" class="emp-row-notes p-1.5 bg-white border border-slate-200 rounded-lg text-xs w-full" placeholder="Catatan shift..." value="${sched ? (sched.notes || '') : ''}">
+                            </td>
+                        </tr>
+                    `;
+                }
+
+                tbody.innerHTML = rowsHtml;
+                document.getElementById('emp-sched-stats').innerHTML = `
+                    <span class="inline-flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                        <span>Hari Kerja: <strong>${totalWork} hari</strong></span>
+                    </span>
+                    <span class="mx-2 text-slate-300">|</span>
+                    <span class="inline-flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                        <span>Hari Libur/Off: <strong>${totalOff} hari</strong></span>
+                    </span>
+                `;
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-rose-500 font-medium">Terjadi kesalahan: ${err.message}</td></tr>`;
+            }
+        }
+
+        function handleEmployeeRowShiftChange(selectEl, dateStr) {
+            const shiftId = selectEl.value;
+            const row = selectEl.closest('tr');
+            const timeCol = row.querySelector('.emp-row-time-col');
+            if (!shiftId) {
+                timeCol.innerHTML = `<span class="text-slate-400 font-medium italic">Libur / Fleksibel</span>`;
+                return;
+            }
+            const ws = (essWorkShiftsList || []).find(w => w.id == shiftId);
+            if (ws && !ws.is_day_off) {
+                timeCol.innerHTML = `<span class="font-mono text-slate-700 font-bold">${ws.start_time} - ${ws.end_time}</span>`;
+            } else {
+                timeCol.innerHTML = `<span class="text-slate-400 font-medium italic">Libur / Fleksibel</span>`;
+            }
+        }
+
+        async function applyDefaultShiftToMonth(overrideAll) {
+            if (!currentScheduleEmployee) return;
+            const defSelect = document.getElementById('emp-sched-default-shift-select');
+            const defaultShiftId = defSelect.value ? parseInt(defSelect.value) : null;
+            if (!defaultShiftId) {
+                alert('Silakan pilih Shift Bawaan terlebih dahulu pada dropdown di atas.');
+                return;
+            }
+
+            const month = document.getElementById('emp-sched-month-input').value || new Date().toISOString().slice(0, 7);
+            const confirmMsg = overrideAll 
+                ? `Terapkan shift ini ke SELURUH hari pada bulan ${month} (semua jadwal lama akan ditimpa)?` 
+                : `Terapkan shift ini ke tanggal-tanggal yang belum memiliki jadwal pada bulan ${month}?`;
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                const res = await fetch('api.php?action=apply_employee_default_shift_month', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentScheduleEmployee.id,
+                        month: month,
+                        default_work_shift_id: defaultShiftId,
+                        override_all: overrideAll ? 1 : 0
+                    })
+                });
+                const data = await res.json();
+                alert(data.message || data.error);
+                if (data.success) {
+                    currentScheduleEmployee.default_work_shift_id = defaultShiftId;
+                    await loadEmployeeScheduleData();
+                    loadEmployees();
+                }
+            } catch (e) {
+                alert('Terjadi kesalahan saat menerapkan shift: ' + e.message);
+            }
+        }
+
+        async function saveEmployeeScheduleData() {
+            if (!currentScheduleEmployee) return;
+            const month = document.getElementById('emp-sched-month-input').value || new Date().toISOString().slice(0, 7);
+            const rows = document.querySelectorAll('#emp-sched-table-body tr[data-date]');
+            const entries = [];
+
+            rows.forEach(r => {
+                const dateStr = r.getAttribute('data-date');
+                const shiftId = r.querySelector('.emp-row-shift-select').value;
+                const notes = r.querySelector('.emp-row-notes').value;
+                const ws = shiftId ? (essWorkShiftsList || []).find(w => w.id == shiftId) : null;
+                const isHoliday = (!ws || ws.is_day_off) ? 1 : 0;
+
+                entries.push({
+                    shift_date: dateStr,
+                    work_shift_id: shiftId ? parseInt(shiftId) : null,
+                    is_holiday: isHoliday,
+                    notes: notes
+                });
+            });
+
+            try {
+                const res = await fetch('api.php?action=save_employee_schedule_batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentScheduleEmployee.id,
+                        month: month,
+                        branch_id: currentScheduleEmployee.branch_id || 1,
+                        entries: entries
+                    })
+                });
+                const data = await res.json();
+                alert(data.message || data.error);
+                if (data.success) {
+                    await loadEmployeeScheduleData();
+                    loadEmployees();
+                }
+            } catch (e) {
+                alert('Gagal menyimpan jadwal shift: ' + e.message);
+            }
+        }
+
+        function goToBranchRosterTab() {
+            closeEmployeeScheduleModal();
+            const month = document.getElementById('emp-sched-month-input').value || new Date().toISOString().slice(0, 7);
+            if (typeof switchTab === 'function') switchTab('ess');
+            if (typeof setEssSubtab === 'function') setEssSubtab('schedules');
+            const rMonth = document.getElementById('ess-roster-month-input');
+            if (rMonth) rMonth.value = month;
+            if (typeof loadMonthlySchedules === 'function') loadMonthlySchedules();
         }
 
         async function deleteEmployee(id) {

@@ -433,9 +433,12 @@ try {
             $stmt = $pdo->query("
                 SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.email, u.phone, u.commission_rate, u.is_active, u.pin,
                        u.base_salary, u.allowance, u.daily_transport,
+                       u.default_work_shift_id,
+                       ws.name as default_shift_name, ws.code as default_shift_code, ws.start_time as default_shift_start, ws.end_time as default_shift_end, ws.color_tag as default_shift_color,
                        b.name as branch_name
                 FROM users u
                 LEFT JOIN branches b ON b.id = u.branch_id
+                LEFT JOIN work_shifts ws ON ws.id = u.default_work_shift_id
                 ORDER BY u.id ASC
             ");
             echo json_encode(['success' => true, 'employees' => $stmt->fetchAll()]);
@@ -459,6 +462,10 @@ try {
                 exit;
             }
 
+            // Role Super Admin & Branch Manager tidak dimapping ke shift kerja
+            $isManagerialExempt = in_array(strtoupper($role), ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+            $defaultWorkShiftId = (!$isManagerialExempt && !empty($input['default_work_shift_id'])) ? (int)$input['default_work_shift_id'] : null;
+
             $baseSalary = isset($input['base_salary']) ? (float)$input['base_salary'] : 3000000;
             $allowance = isset($input['allowance']) ? (float)$input['allowance'] : 500000;
             $dailyTransport = isset($input['daily_transport']) ? (float)$input['daily_transport'] : 25000;
@@ -468,10 +475,11 @@ try {
                 $stmt = $pdo->prepare("
                     UPDATE users 
                     SET nik = ?, name = ?, role = ?, branch_id = ?, email = ?, phone = ?, 
-                        pin = ?, commission_rate = ?, is_active = ?, base_salary = ?, allowance = ?, daily_transport = ? " . (!empty($input['password']) ? ", password = ?" : "") . "
+                        pin = ?, commission_rate = ?, is_active = ?, base_salary = ?, allowance = ?, daily_transport = ?,
+                        default_work_shift_id = ? " . (!empty($input['password']) ? ", password = ?" : "") . "
                     WHERE id = ?
                 ");
-                $params = [$nik, $name, $role, $branchId, $email, $phone, $pin, $commRate, $isActive, $baseSalary, $allowance, $dailyTransport];
+                $params = [$nik, $name, $role, $branchId, $email, $phone, $pin, $commRate, $isActive, $baseSalary, $allowance, $dailyTransport, $defaultWorkShiftId];
                 if (!empty($input['password'])) $params[] = $password;
                 $params[] = $id;
                 $stmt->execute($params);
@@ -479,14 +487,231 @@ try {
             } else {
                 // Insert
                 $stmt = $pdo->prepare("
-                    INSERT INTO users (nik, name, role, branch_id, email, phone, password, pin, commission_rate, is_active, base_salary, allowance, daily_transport)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO users (nik, name, role, branch_id, email, phone, password, pin, commission_rate, is_active, base_salary, allowance, daily_transport, default_work_shift_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
-                $stmt->execute([$nik, $name, $role, $branchId, $email, $phone, $password, $pin, $commRate, $isActive, $baseSalary, $allowance, $dailyTransport]);
+                $stmt->execute([$nik, $name, $role, $branchId, $email, $phone, $password, $pin, $commRate, $isActive, $baseSalary, $allowance, $dailyTransport, $defaultWorkShiftId]);
                 $msg = "Karyawan '{$name}' berhasil ditambahkan.";
             }
 
             echo json_encode(['success' => true, 'message' => $msg]);
+            break;
+
+        case 'get_employee_schedule':
+            $userId = (int)($_GET['user_id'] ?? 0);
+            $month = !empty($_GET['month']) ? trim($_GET['month']) : date('Y-m');
+            if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
+                $month = date('Y-m');
+            }
+
+            if (!$userId) {
+                echo json_encode(['success' => false, 'message' => 'User ID wajib ditentukan.']);
+                exit;
+            }
+
+            $stmtUser = $pdo->prepare("
+                SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.default_work_shift_id,
+                       ws.name as default_shift_name, ws.code as default_shift_code, ws.start_time as default_shift_start, ws.end_time as default_shift_end,
+                       b.name as branch_name
+                FROM users u
+                LEFT JOIN branches b ON b.id = u.branch_id
+                LEFT JOIN work_shifts ws ON ws.id = u.default_work_shift_id
+                WHERE u.id = ?
+            ");
+            $stmtUser->execute([$userId]);
+            $user = $stmtUser->fetch();
+            if (!$user) {
+                echo json_encode(['success' => false, 'message' => 'Karyawan tidak ditemukan.']);
+                exit;
+            }
+
+            $isExempt = in_array(strtoupper($user['role']), ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+
+            $workShifts = $pdo->query("SELECT * FROM work_shifts WHERE is_active = 1 ORDER BY is_day_off ASC, start_time ASC")->fetchAll();
+
+            list($year, $mon) = explode('-', $month);
+            $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$mon, (int)$year);
+
+            $stmtSched = $pdo->prepare("
+                SELECT ss.*, ws.code as shift_code, ws.color_tag, ws.is_day_off as shift_is_day_off
+                FROM shift_schedules ss
+                LEFT JOIN work_shifts ws ON ws.id = ss.work_shift_id
+                WHERE ss.user_id = ? AND strftime('%Y-%m', ss.shift_date) = ?
+                ORDER BY ss.shift_date ASC
+            ");
+            $stmtSched->execute([$userId, $month]);
+            $schedules = $stmtSched->fetchAll();
+
+            // Map schedules by shift_date
+            $schedByDate = [];
+            foreach ($schedules as $sc) {
+                $schedByDate[$sc['shift_date']] = $sc;
+            }
+
+            echo json_encode([
+                'success' => true,
+                'employee' => $user,
+                'is_exempt' => $isExempt,
+                'month' => $month,
+                'days_in_month' => $daysInMonth,
+                'work_shifts' => $workShifts,
+                'schedules' => $schedByDate
+            ]);
+            break;
+
+        case 'save_employee_schedule_batch':
+            $userId = (int)($input['user_id'] ?? 0);
+            $month = trim($input['month'] ?? date('Y-m'));
+            $branchId = (int)($input['branch_id'] ?? 1);
+            $entries = $input['entries'] ?? []; // array of {shift_date, work_shift_id, is_holiday, notes}
+
+            if (!$userId) {
+                echo json_encode(['success' => false, 'message' => 'User ID wajib ditentukan.']);
+                exit;
+            }
+
+            $stmtUser = $pdo->prepare("SELECT id, name, role, branch_id FROM users WHERE id = ?");
+            $stmtUser->execute([$userId]);
+            $u = $stmtUser->fetch();
+            if (!$u) {
+                echo json_encode(['success' => false, 'message' => 'Karyawan tidak ditemukan.']);
+                exit;
+            }
+
+            if (in_array(strtoupper($u['role']), ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'])) {
+                echo json_encode(['success' => false, 'message' => "Karyawan {$u['name']} ({$u['role']}) dikecualikan dari pemetaan jadwal shift (fleksibilitas manajerial)."]);
+                exit;
+            }
+
+            $branchId = !empty($u['branch_id']) ? $u['branch_id'] : $branchId;
+
+            $shiftsLookup = [];
+            $allWs = $pdo->query("SELECT * FROM work_shifts")->fetchAll();
+            foreach ($allWs as $ws) {
+                $shiftsLookup[$ws['id']] = $ws;
+            }
+
+            $pdo->beginTransaction();
+            $stmtCheck = $pdo->prepare("SELECT id FROM shift_schedules WHERE user_id = ? AND shift_date = ?");
+            $stmtUp = $pdo->prepare("UPDATE shift_schedules SET branch_id = ?, work_shift_id = ?, shift_name = ?, start_time = ?, end_time = ?, is_holiday = ?, notes = ? WHERE id = ?");
+            $stmtIn = $pdo->prepare("INSERT INTO shift_schedules (branch_id, user_id, shift_date, work_shift_id, shift_name, start_time, end_time, is_holiday, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+            $countSaved = 0;
+            foreach ($entries as $ent) {
+                $shiftDate = trim($ent['shift_date'] ?? '');
+                $workShiftId = !empty($ent['work_shift_id']) ? (int)$ent['work_shift_id'] : null;
+                $isHoliday = !empty($ent['is_holiday']) ? 1 : 0;
+                $notes = trim($ent['notes'] ?? '');
+
+                if (empty($shiftDate)) continue;
+
+                $shiftName = 'Libur / Off';
+                $startTime = '00:00';
+                $endTime = '00:00';
+                if ($workShiftId && isset($shiftsLookup[$workShiftId])) {
+                    $ws = $shiftsLookup[$workShiftId];
+                    $shiftName = $ws['name'];
+                    $startTime = $ws['start_time'];
+                    $endTime = $ws['end_time'];
+                    if ($ws['is_day_off']) $isHoliday = 1;
+                }
+
+                $stmtCheck->execute([$userId, $shiftDate]);
+                $exId = $stmtCheck->fetchColumn();
+
+                if ($exId) {
+                    $stmtUp->execute([$branchId, $workShiftId, $shiftName, $startTime, $endTime, $isHoliday, $notes, $exId]);
+                } else {
+                    $stmtIn->execute([$branchId, $userId, $shiftDate, $workShiftId, $shiftName, $startTime, $endTime, $isHoliday, $notes]);
+                }
+                $countSaved++;
+            }
+            $pdo->commit();
+
+            echo json_encode(['success' => true, 'message' => "Jadwal shift {$countSaved} hari berhasil disimpan untuk {$u['name']}."]);
+            break;
+
+        case 'apply_employee_default_shift_month':
+            $userId = (int)($input['user_id'] ?? 0);
+            $month = trim($input['month'] ?? date('Y-m'));
+            $overrideAll = !empty($input['override_all']) ? 1 : 0;
+            $defaultShiftId = !empty($input['default_work_shift_id']) ? (int)$input['default_work_shift_id'] : null;
+
+            if (!$userId) {
+                echo json_encode(['success' => false, 'message' => 'User ID wajib ditentukan.']);
+                exit;
+            }
+            if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
+                echo json_encode(['success' => false, 'message' => 'Format bulan harus YYYY-MM.']);
+                exit;
+            }
+
+            $stmtUser = $pdo->prepare("SELECT id, name, role, branch_id, default_work_shift_id FROM users WHERE id = ?");
+            $stmtUser->execute([$userId]);
+            $u = $stmtUser->fetch();
+            if (!$u) {
+                echo json_encode(['success' => false, 'message' => 'Karyawan tidak ditemukan.']);
+                exit;
+            }
+
+            if (in_array(strtoupper($u['role']), ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'])) {
+                echo json_encode(['success' => false, 'message' => "Karyawan {$u['name']} ({$u['role']}) dikecualikan dari jadwal shift."]);
+                exit;
+            }
+
+            $shiftIdToApply = $defaultShiftId ?: $u['default_work_shift_id'];
+            if (!$shiftIdToApply) {
+                echo json_encode(['success' => false, 'message' => 'Karyawan belum memiliki jadwal shift bawaan. Silakan pilih shift bawaan terlebih dahulu.']);
+                exit;
+            }
+
+            // Jika dikirim defaultShiftId baru, sekalian update default_work_shift_id karyawan
+            if ($defaultShiftId && $defaultShiftId != $u['default_work_shift_id']) {
+                $pdo->prepare("UPDATE users SET default_work_shift_id = ? WHERE id = ?")->execute([$defaultShiftId, $userId]);
+            }
+
+            $stmtWs = $pdo->prepare("SELECT * FROM work_shifts WHERE id = ?");
+            $stmtWs->execute([$shiftIdToApply]);
+            $ws = $stmtWs->fetch();
+            if (!$ws) {
+                echo json_encode(['success' => false, 'message' => 'Data shift kerja tidak ditemukan.']);
+                exit;
+            }
+
+            list($year, $mon) = explode('-', $month);
+            $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$mon, (int)$year);
+            $branchId = !empty($u['branch_id']) ? $u['branch_id'] : 1;
+
+            $pdo->beginTransaction();
+            $stmtCheck = $pdo->prepare("SELECT id, work_shift_id, is_holiday FROM shift_schedules WHERE user_id = ? AND shift_date = ?");
+            $stmtUp = $pdo->prepare("UPDATE shift_schedules SET branch_id = ?, work_shift_id = ?, shift_name = ?, start_time = ?, end_time = ?, is_holiday = ? WHERE id = ?");
+            $stmtIn = $pdo->prepare("INSERT INTO shift_schedules (branch_id, user_id, shift_date, work_shift_id, shift_name, start_time, end_time, is_holiday) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+
+            $countApplied = 0;
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $dateStr = sprintf('%s-%02d', $month, $d);
+                $stmtCheck->execute([$userId, $dateStr]);
+                $existing = $stmtCheck->fetch();
+
+                // Jika sudah ada jadwal dan bukan override, lewati
+                if ($existing && !$overrideAll) {
+                    continue;
+                }
+
+                $isHoliday = $ws['is_day_off'] ? 1 : 0;
+                if ($existing) {
+                    $stmtUp->execute([$branchId, $ws['id'], $ws['name'], $ws['start_time'], $ws['end_time'], $isHoliday, $existing['id']]);
+                } else {
+                    $stmtIn->execute([$branchId, $userId, $dateStr, $ws['id'], $ws['name'], $ws['start_time'], $ws['end_time'], $isHoliday]);
+                }
+                $countApplied++;
+            }
+            $pdo->commit();
+
+            echo json_encode([
+                'success' => true,
+                'message' => "Berhasil menerapkan {$ws['name']} ke {$countApplied} hari pada bulan {$month} untuk {$u['name']}."
+            ]);
             break;
 
         case 'delete_employee':

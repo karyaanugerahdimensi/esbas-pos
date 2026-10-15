@@ -127,9 +127,11 @@ function initDatabaseSchema($pdo) {
         password TEXT DEFAULT 'password123',
         pin TEXT DEFAULT '123456',
         commission_rate REAL DEFAULT 0.015,
+        default_work_shift_id INTEGER DEFAULT NULL,
         is_active INTEGER DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (branch_id) REFERENCES branches(id)
+        FOREIGN KEY (branch_id) REFERENCES branches(id),
+        FOREIGN KEY (default_work_shift_id) REFERENCES work_shifts(id)
     )");
 
     // 3. Product Categories
@@ -731,6 +733,9 @@ function autoMigrateAndSync($pdo) {
     }
     if (!in_array('daily_transport', $userCols)) {
         $pdo->exec("ALTER TABLE users ADD COLUMN daily_transport REAL DEFAULT 25000");
+    }
+    if (!in_array('default_work_shift_id', $userCols)) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN default_work_shift_id INTEGER DEFAULT NULL");
     }
 
     // Inisialisasi kredensial default & branch awal HANYA jika belum diset (mencegah penimpaan perubahan user)
@@ -1539,6 +1544,14 @@ function autoMigrateAndSync($pdo) {
             ('OFF', 'Libur / Off Day', '00:00', '00:00', 0, 1, '#94a3b8', 1)
         ");
     }
+
+    // Inisialisasi default shift untuk kasir/staf operasional (jika shift tersedia dan belum diset)
+    $firstShiftId = $pdo->query("SELECT id FROM work_shifts WHERE is_day_off = 0 ORDER BY id ASC LIMIT 1")->fetchColumn();
+    if ($firstShiftId) {
+        $pdo->exec("UPDATE users SET default_work_shift_id = {$firstShiftId} WHERE role IN ('CASHIER', 'STAFF') AND default_work_shift_id IS NULL");
+    }
+    // Pastikan Super Admin dan Branch Manager SELALU NULL (dikecualikan dari mapping shift kerja)
+    $pdo->exec("UPDATE users SET default_work_shift_id = NULL WHERE role IN ('SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER')");
 
     // 37. Ensure shift_schedules columns exist
     $schedCols = array_column($pdo->query("PRAGMA table_info(shift_schedules)")->fetchAll(), 'name');
