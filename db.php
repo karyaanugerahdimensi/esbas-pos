@@ -4,17 +4,102 @@
  * Includes: Multi-Branch, Users CRUD, Products/Categories/Variants/Types, Recipe/BOM, Stock Movements
  */
 
-$dbPath = __DIR__ . '/database.sqlite';
+if (file_exists(__DIR__ . '/config.php')) {
+    require_once __DIR__ . '/config.php';
+} elseif (file_exists(__DIR__ . '/config.example.php')) {
+    require_once __DIR__ . '/config.example.php';
+}
+
+$dbDriver = defined('DB_DRIVER') ? strtolower(DB_DRIVER) : 'sqlite';
+
+/**
+ * Universal PDO Wrapper to bridge MySQL and SQLite syntax seamlessly
+ */
+class AppPDO extends PDO {
+    private bool $isMysql = false;
+
+    public function __construct(string $dsn, ?string $username = null, ?string $password = null, ?array $options = null) {
+        parent::__construct($dsn, $username, $password, $options ?? []);
+        $this->isMysql = (strpos($dsn, 'mysql:') === 0);
+    }
+
+    public function isMysql(): bool {
+        return $this->isMysql;
+    }
+
+    public function adaptQuery(string $sql): string {
+        if ($this->isMysql) {
+            $sql = str_replace("datetime('now', 'localtime')", "NOW()", $sql);
+            $sql = str_replace("date('now')", "CURDATE()", $sql);
+            $sql = preg_replace("/strftime\('%Y-%m',\s*created_at\)\s*=\s*strftime\('%Y-%m',\s*'now'\)/", "DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(NOW(), '%Y-%m')", $sql);
+            $sql = preg_replace("/strftime\('%Y-%m',\s*([^)]+)\)/", "DATE_FORMAT($1, '%Y-%m')", $sql);
+        }
+        return $sql;
+    }
+
+    #[\ReturnTypeWillChange]
+    public function prepare(string $query, array $options = []): PDOStatement|false {
+        return parent::prepare($this->adaptQuery($query), $options);
+    }
+
+    #[\ReturnTypeWillChange]
+    public function exec(string $statement): int|false {
+        return parent::exec($this->adaptQuery($statement));
+    }
+
+    #[\ReturnTypeWillChange]
+    public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): PDOStatement|false {
+        $adapted = $this->adaptQuery($query);
+        if ($fetchMode !== null) {
+            return parent::query($adapted, $fetchMode, ...$fetchModeArgs);
+        }
+        return parent::query($adapted);
+    }
+}
 
 try {
-    $pdo = new PDO("sqlite:" . $dbPath);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-    $pdo->exec("PRAGMA foreign_keys = ON;");
-    $pdo->exec("PRAGMA journal_mode = WAL;");
-    $pdo->exec("PRAGMA busy_timeout = 5000;");
+    if ($dbDriver === 'mysql') {
+        $host = defined('DB_HOST') ? DB_HOST : 'localhost';
+        $port = defined('DB_PORT') ? DB_PORT : '3306';
+        $dbname = defined('DB_NAME') ? DB_NAME : 'esbas_pos';
+        $user = defined('DB_USER') ? DB_USER : 'root';
+        $pass = defined('DB_PASS') ? DB_PASS : '';
+
+        $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+        $pdo = new AppPDO($dsn, $user, $pass, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ]);
+        $pdo->exec("SET NAMES utf8mb4");
+    } else {
+        $dbPath = defined('DB_SQLITE_PATH') ? DB_SQLITE_PATH : (__DIR__ . '/database.sqlite');
+        $pdo = new AppPDO("sqlite:" . $dbPath);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $pdo->exec("PRAGMA foreign_keys = ON;");
+        $pdo->exec("PRAGMA journal_mode = WAL;");
+        $pdo->exec("PRAGMA busy_timeout = 5000;");
+    }
 } catch (PDOException $e) {
     die("Database Connection Error: " . $e->getMessage());
+}
+
+function getDbTableColumns($pdo, $tableName) {
+    global $dbDriver;
+    if ($dbDriver === 'mysql') {
+        try {
+            $stmt = $pdo->query("SHOW COLUMNS FROM `$tableName`");
+            return array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'Field');
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+    try {
+        return array_column($pdo->query("PRAGMA table_info($tableName)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+    } catch (Exception $e) {
+        return [];
+    }
 }
 
 function initDatabaseSchema($pdo) {
@@ -1662,8 +1747,21 @@ function autoMigrateAndSync($pdo) {
     )");
 }
 
-initDatabaseSchema($pdo);
-autoMigrateAndSync($pdo);
+if ($dbDriver === 'mysql') {
+    // Pada MySQL, jika database masih kosong dan ada esbas_pos_mysql.sql, coba inisialisasi otomatis
+    try {
+        $hasBranches = $pdo->query("SHOW TABLES LIKE 'branches'")->fetch();
+        if (!$hasBranches && file_exists(__DIR__ . '/esbas_pos_mysql.sql')) {
+            $sql = file_get_contents(__DIR__ . '/esbas_pos_mysql.sql');
+            $pdo->exec($sql);
+        }
+    } catch (Exception $e) {
+        // Skema tabel di-import manual via phpMyAdmin
+    }
+} else {
+    initDatabaseSchema($pdo);
+    autoMigrateAndSync($pdo);
+}
 
 if (!function_exists('getResolvedAppSettings')) {
     function getResolvedAppSettings($pdo, $branchId = null) {

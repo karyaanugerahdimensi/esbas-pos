@@ -21,6 +21,9 @@ Thumbs.db
 *.sublime-project
 *.sublime-workspace
 
+# Configuration (Kredensial database spesifik server, jangan timpa saat deploy)
+config.php
+
 # OS & Environment
 .env
 .env.local

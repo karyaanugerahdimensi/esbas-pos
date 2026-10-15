@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESBAS Retail - POS Multi-Cabang, BOM & ESS</title>
-    <!-- Production Compiled Tailwind CSS -->
+    <!-- Production Compiled Tailwind CSS & CDN Fallback -->
     <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Leaflet.js Interactive Map CDN -->
