@@ -4762,6 +4762,44 @@ $appVersionData = getAppVersionData();
                                 </button>
                             </div>
 
+                            <!-- Input Pencarian Alamat & Terhubung ke Google Maps -->
+                            <div class="space-y-1.5 bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="font-bold text-slate-700 flex items-center space-x-1">
+                                        <i data-lucide="search" class="w-3.5 h-3.5 text-indigo-600"></i>
+                                        <span>Cari Alamat / Lokasi di Peta:</span>
+                                    </span>
+                                    <div class="flex items-center space-x-2">
+                                        <button type="button" onclick="copyBranchAddressToSearch()" class="text-indigo-600 hover:text-indigo-800 font-bold hover:underline flex items-center space-x-1 text-[10px]" title="Salin nama & alamat toko dari form sebelah kiri">
+                                            <i data-lucide="copy" class="w-3 h-3"></i>
+                                            <span>Pakai Alamat Toko</span>
+                                        </button>
+                                        <span class="text-slate-300">|</span>
+                                        <a id="branch-modal-gmaps-link" href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" class="text-emerald-700 hover:text-emerald-900 font-bold hover:underline flex items-center space-x-1 text-[10px]" title="Buka dan verifikasi titik koordinat ini langsung di Google Maps">
+                                            <i data-lucide="external-link" class="w-3 h-3 text-emerald-600"></i>
+                                            <span>Buka di Google Maps</span>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-1.5">
+                                    <div class="relative flex-1">
+                                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                        <input type="text" id="branch-modal-search-input" oninput="toggleBranchSearchClearBtn()" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); searchBranchAddressOnMap(); }" placeholder="Ketik nama jalan/toko, atau paste link/koordinat Google Maps..." class="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                                        <button type="button" onclick="clearBranchAddressSearch()" id="branch-modal-search-clear-btn" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 hidden">
+                                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </div>
+                                    <button type="button" id="branch-modal-search-btn" onclick="searchBranchAddressOnMap()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs shadow-xs flex items-center space-x-1 shrink-0 transition-colors">
+                                        <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                                        <span>Cari di Peta</span>
+                                    </button>
+                                </div>
+
+                                <!-- Feedback Status Pencarian -->
+                                <div id="branch-modal-search-status" class="text-[10px] text-slate-500 hidden px-1 pt-0.5"></div>
+                            </div>
+
                             <!-- Direct Leaflet Map Canvas with Geofence circle -->
                             <div class="relative rounded-2xl border border-slate-300 shadow-sm overflow-hidden bg-slate-100">
                                 <div id="branch-modal-map-picker" style="height: 250px; min-height: 250px; width: 100%;" class="z-10"></div>
@@ -17845,9 +17883,10 @@ Manager / Supervisor: __________________
         function updateBranchPickerBadge(lat, lon, radius) {
             const badgeCoords = document.getElementById('branch-picker-coords-text');
             const badgeRadius = document.getElementById('branch-picker-radius-badge');
+            const gmapsLink = document.getElementById('branch-modal-gmaps-link');
+            const nLat = parseFloat(lat);
+            const nLon = parseFloat(lon);
             if (badgeCoords) {
-                const nLat = parseFloat(lat);
-                const nLon = parseFloat(lon);
                 if (!isNaN(nLat) && !isNaN(nLon)) {
                     badgeCoords.innerText = `${nLat.toFixed(6)}, ${nLon.toFixed(6)}`;
                 } else {
@@ -17856,6 +17895,160 @@ Manager / Supervisor: __________________
             }
             if (badgeRadius) {
                 badgeRadius.innerText = `${radius || 100}m`;
+            }
+            if (gmapsLink && !isNaN(nLat) && !isNaN(nLon)) {
+                gmapsLink.href = `https://www.google.com/maps?q=${nLat.toFixed(6)},${nLon.toFixed(6)}`;
+            }
+        }
+
+        function toggleBranchSearchClearBtn() {
+            const input = document.getElementById('branch-modal-search-input');
+            const clearBtn = document.getElementById('branch-modal-search-clear-btn');
+            if (input && clearBtn) {
+                if (input.value.trim().length > 0) {
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                }
+            }
+        }
+
+        function clearBranchAddressSearch() {
+            const input = document.getElementById('branch-modal-search-input');
+            if (input) input.value = '';
+            toggleBranchSearchClearBtn();
+            const statusEl = document.getElementById('branch-modal-search-status');
+            if (statusEl) {
+                statusEl.innerHTML = '';
+                statusEl.classList.add('hidden');
+            }
+        }
+
+        function copyBranchAddressToSearch() {
+            const address = document.getElementById('branch-modal-address')?.value?.trim() || '';
+            const name = document.getElementById('branch-modal-name')?.value?.trim() || '';
+            const query = address || name;
+            if (!query) {
+                alert('Silakan ketik Nama Outlet atau Alamat Fisik Toko terlebih dahulu pada formulir di sebelah kiri.');
+                return;
+            }
+            const input = document.getElementById('branch-modal-search-input');
+            if (input) {
+                input.value = query;
+                toggleBranchSearchClearBtn();
+                searchBranchAddressOnMap();
+            }
+        }
+
+        function applyBranchFoundCoords(lat, lon, label) {
+            const latVal = Number(lat).toFixed(6);
+            const lonVal = Number(lon).toFixed(6);
+            document.getElementById('branch-modal-lat').value = latVal;
+            document.getElementById('branch-modal-lng').value = lonVal;
+            updateBranchPickerFromInputs();
+            if (state.branchPickerMap) {
+                state.branchPickerMap.setView([lat, lon], 16);
+            }
+            const statusEl = document.getElementById('branch-modal-search-status');
+            if (statusEl) {
+                statusEl.innerHTML = `<div class="p-2 bg-emerald-50 border border-emerald-200/80 rounded-lg text-emerald-800 text-[11px] flex items-start space-x-1.5"><i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5"></i><div class="min-w-0 flex-1"><span class="font-bold">Lokasi Ditemukan (${latVal}, ${lonVal}):</span><p class="text-[10px] text-slate-600 truncate">${escapeHtml(label)}</p></div><a href="https://www.google.com/maps?q=${latVal},${lonVal}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:text-indigo-800 font-bold underline shrink-0 text-[10px]">Google Maps</a></div>`;
+                statusEl.classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+
+        async function searchBranchAddressOnMap() {
+            const input = document.getElementById('branch-modal-search-input');
+            let query = input?.value?.trim() || '';
+            if (!query) {
+                query = document.getElementById('branch-modal-address')?.value?.trim() || '';
+                if (query && input) {
+                    input.value = query;
+                    toggleBranchSearchClearBtn();
+                }
+            }
+            if (!query) {
+                alert('Silakan masukkan alamat toko, nama tempat, atau link / koordinat Google Maps.');
+                if (input) input.focus();
+                return;
+            }
+
+            const searchBtn = document.getElementById('branch-modal-search-btn');
+            const statusEl = document.getElementById('branch-modal-search-status');
+            const originalBtnHtml = searchBtn ? searchBtn.innerHTML : '';
+
+            if (searchBtn) {
+                searchBtn.disabled = true;
+                searchBtn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span><span>Mencari...</span>';
+            }
+            if (statusEl) {
+                statusEl.innerHTML = '<span class="text-slate-500 italic flex items-center space-x-1"><span class="animate-spin inline-block">⏳</span><span>Menghubungkan & mencari lokasi alamat di peta...</span></span>';
+                statusEl.classList.remove('hidden');
+            }
+
+            const finishSearch = () => {
+                if (searchBtn) {
+                    searchBtn.disabled = false;
+                    searchBtn.innerHTML = originalBtnHtml;
+                    if (window.lucide) lucide.createIcons();
+                }
+            };
+
+            // 1. Cek apakah input berupa koordinat langsung atau URL Google Maps
+            const coordRegex = /([-+]?\d{1,2}\.\d+)[,\s]+([-+]?\d{1,3}\.\d+)/;
+            const match = query.match(coordRegex);
+            if (match) {
+                const lat = parseFloat(match[1]);
+                const lon = parseFloat(match[2]);
+                if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+                    applyBranchFoundCoords(lat, lon, `Koordinat Google Maps Terdeteksi: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+                    finishSearch();
+                    return;
+                }
+            }
+
+            // 2. Geocoding via OpenStreetMap Nominatim API
+            try {
+                const encodedQuery = encodeURIComponent(query);
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedQuery}&addressdetails=1&limit=1`;
+                const resp = await fetch(url, { headers: { 'Accept-Language': 'id,en' } });
+                const data = await resp.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+                    applyBranchFoundCoords(lat, lon, data[0].display_name);
+                } else {
+                    let fallbackFound = false;
+                    const commaParts = query.split(',').map(s => s.trim()).filter(Boolean);
+                    if (commaParts.length > 1) {
+                        const broaderQuery = commaParts.slice(1).join(', ');
+                        const resp2 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(broaderQuery)}&addressdetails=1&limit=1`, { headers: { 'Accept-Language': 'id,en' } });
+                        const data2 = await resp2.json();
+                        if (Array.isArray(data2) && data2.length > 0) {
+                            fallbackFound = true;
+                            const lat = parseFloat(data2[0].lat);
+                            const lon = parseFloat(data2[0].lon);
+                            applyBranchFoundCoords(lat, lon, `${data2[0].display_name} (Wilayah Terdekat)`);
+                        }
+                    }
+
+                    if (!fallbackFound) {
+                        const gmapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+                        if (statusEl) {
+                            statusEl.innerHTML = `<div class="p-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-[11px] flex items-start space-x-1.5"><i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5"></i><div class="min-w-0 flex-1"><span>Alamat tidak ditemukan otomatis.</span> <a href="${gmapsSearchUrl}" target="_blank" rel="noopener noreferrer" class="font-bold underline text-indigo-700 hover:text-indigo-900 inline-flex items-center space-x-1 ml-1"><span>Cari di Google Maps</span><i data-lucide="external-link" class="w-3 h-3 inline"></i></a><p class="text-[10px] text-slate-500 mt-0.5">Anda bisa salin link atau koordinat dari Google Maps dan tempel di sini.</p></div></div>`;
+                            if (window.lucide) lucide.createIcons();
+                        }
+                    }
+                }
+            } catch (err) {
+                const gmapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+                if (statusEl) {
+                    statusEl.innerHTML = `<div class="p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-[11px] flex items-start space-x-1.5"><i data-lucide="wifi-off" class="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5"></i><div class="min-w-0 flex-1"><span>Koneksi pencarian alamat gagal.</span> <a href="${gmapsSearchUrl}" target="_blank" rel="noopener noreferrer" class="font-bold underline text-indigo-700 hover:text-indigo-900 inline-flex items-center space-x-1 ml-1"><span>Buka Langsung di Google Maps</span><i data-lucide="external-link" class="w-3 h-3 inline"></i></a></div></div>`;
+                    if (window.lucide) lucide.createIcons();
+                }
+            } finally {
+                finishSearch();
             }
         }
 
@@ -17872,6 +18065,7 @@ Manager / Supervisor: __________________
             document.getElementById('branch-modal-lng').value = Number(defLon).toFixed(6);
             document.getElementById('branch-modal-radius').value = '100';
             document.getElementById('branch-modal-active').value = '1';
+            clearBranchAddressSearch();
             updateBranchPickerBadge(defLat, defLon, 100);
             document.getElementById('branch-modal-title').innerHTML = '<i data-lucide="store" class="w-5 h-5 text-indigo-600"></i><span>Tambah Cabang / Outlet Baru</span>';
             document.getElementById('branch-modal-submit-btn').innerText = 'Simpan Cabang';
@@ -17896,6 +18090,16 @@ Manager / Supervisor: __________________
             document.getElementById('branch-modal-lng').value = b.longitude;
             document.getElementById('branch-modal-radius').value = b.radius_meters || 100;
             document.getElementById('branch-modal-active').value = (b.is_active != 0) ? '1' : '0';
+            
+            const searchInput = document.getElementById('branch-modal-search-input');
+            if (searchInput) searchInput.value = b.address || b.name || '';
+            toggleBranchSearchClearBtn();
+            const statusEl = document.getElementById('branch-modal-search-status');
+            if (statusEl) {
+                statusEl.innerHTML = '';
+                statusEl.classList.add('hidden');
+            }
+
             updateBranchPickerBadge(b.latitude, b.longitude, b.radius_meters || 100);
             document.getElementById('branch-modal-title').innerHTML = '<i data-lucide="edit-3" class="w-5 h-5 text-indigo-600"></i><span>Edit Cabang: ' + b.name + '</span>';
             document.getElementById('branch-modal-submit-btn').innerText = 'Perbarui Cabang';

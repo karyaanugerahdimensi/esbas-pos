@@ -1,14 +1,22 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.1.6",
-  "build": "20261015-09",
+  "version": "1.1.7",
+  "build": "20261015-10",
   "release_date": "2026-10-15",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
     {
-      "version": "1.1.6",
+      "version": "1.1.7",
       "commit": "HEAD",
+      "date": "2026-10-15",
+      "title": "Fitur Pencarian Alamat Peta & Integrasi Google Maps pada Kelola Cabang",
+      "description": "Menambahkan input pencarian alamat dan nama tempat pada peta modal kelola cabang dengan geocoding otomatis, pemindaian link / koordinat Google Maps langsung, tombol pintas 'Pakai Alamat Toko', serta tombol tautan sinkronisasi real-time 'Buka di Google Maps'.",
+      "rollback_command": "git checkout v1.1.6"
+    },
+    {
+      "version": "1.1.6",
+      "commit": "v1.1.6",
       "date": "2026-10-15",
       "title": "Desain Responsif Landscape Presisi Modal Kelola Cabang",
       "description": "Merombak tampilan modal Tambah / Edit Cabang menjadi format landscape 2 kolom (profil outlet dan peta geospasial GPS interaktif) dengan kontainer max-h-[92vh], header dan footer sticky, serta scroll body responsif agar tidak terpotong pada layar laptop/desktop maupun perangkat mobile.",
