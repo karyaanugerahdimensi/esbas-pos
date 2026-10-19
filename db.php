@@ -165,10 +165,12 @@ function initDatabaseSchema($pdo) {
         pin TEXT DEFAULT '123456',
         commission_rate REAL DEFAULT 0.015,
         default_work_shift_id INTEGER DEFAULT NULL,
+        assigned_vehicle_id INTEGER DEFAULT NULL,
         is_active INTEGER DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (branch_id) REFERENCES branches(id),
-        FOREIGN KEY (default_work_shift_id) REFERENCES work_shifts(id)
+        FOREIGN KEY (default_work_shift_id) REFERENCES work_shifts(id),
+        FOREIGN KEY (assigned_vehicle_id) REFERENCES courier_vehicles(id)
     )");
 
     // 3. Product Categories
@@ -801,6 +803,11 @@ function autoMigrateAndSync($pdo) {
             $pdo->exec("ALTER TABLE users ADD COLUMN default_work_shift_id INT DEFAULT NULL");
         }
     } catch (Exception $e) {}
+    try {
+        if (!in_array('assigned_vehicle_id', $userCols)) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN assigned_vehicle_id INT DEFAULT NULL");
+        }
+    } catch (Exception $e) {}
 
     // Inisialisasi kredensial default & branch awal HANYA jika belum diset (mencegah penimpaan perubahan user)
     $pdo->exec("UPDATE users SET password = 'admin123' WHERE nik = 'ADM001' AND (password IS NULL OR password = '')");
@@ -813,18 +820,22 @@ function autoMigrateAndSync($pdo) {
     $pdo->exec("UPDATE users SET password = 'kasir123' WHERE nik = 'CSR001' AND (password IS NULL OR password = '')");
     $pdo->exec("UPDATE users SET pin = '123456' WHERE nik = 'CSR001' AND (pin IS NULL OR pin = '')");
     $pdo->exec("UPDATE users SET branch_id = 1 WHERE nik = 'CSR001' AND (branch_id IS NULL OR branch_id = 0)");
+    $pdo->exec("UPDATE users SET assigned_vehicle_id = 1 WHERE nik = 'CSR001' AND (assigned_vehicle_id IS NULL OR assigned_vehicle_id = 0)"); // Bima -> B 4821 KTZ
 
     $pdo->exec("UPDATE users SET password = 'kasir123' WHERE nik = 'CSR002' AND (password IS NULL OR password = '')");
     $pdo->exec("UPDATE users SET pin = '654321' WHERE nik = 'CSR002' AND (pin IS NULL OR pin = '')");
     $pdo->exec("UPDATE users SET branch_id = 2 WHERE nik = 'CSR002' AND (branch_id IS NULL OR branch_id = 0)");
+    $pdo->exec("UPDATE users SET assigned_vehicle_id = 3 WHERE nik = 'CSR002' AND (assigned_vehicle_id IS NULL OR assigned_vehicle_id = 0)"); // Abdul Latif -> L 5520 YZ
 
     $pdo->exec("UPDATE users SET password = 'kasir123' WHERE nik = 'CSR003' AND (password IS NULL OR password = '')");
     $pdo->exec("UPDATE users SET pin = '112233' WHERE nik = 'CSR003' AND (pin IS NULL OR pin = '')");
     $pdo->exec("UPDATE users SET branch_id = 3 WHERE nik = 'CSR003' AND (branch_id IS NULL OR branch_id = 0)");
+    $pdo->exec("UPDATE users SET assigned_vehicle_id = 4 WHERE nik = 'CSR003' AND (assigned_vehicle_id IS NULL OR assigned_vehicle_id = 0)"); // Shafiqa -> D 2914 ABJ
 
     $pdo->exec("UPDATE users SET password = 'staff123' WHERE nik = 'STF001' AND (password IS NULL OR password = '')");
     $pdo->exec("UPDATE users SET pin = '000000' WHERE nik = 'STF001' AND (pin IS NULL OR pin = '')");
     $pdo->exec("UPDATE users SET branch_id = 1 WHERE nik = 'STF001' AND (branch_id IS NULL OR branch_id = 0)");
+    $pdo->exec("UPDATE users SET assigned_vehicle_id = 2 WHERE nik = 'STF001' AND (assigned_vehicle_id IS NULL OR assigned_vehicle_id = 0)"); // Keenan -> B 3192 SEB
 
     // 2. Ensure `products` columns exist
     $prodCols = array_column($pdo->query("PRAGMA table_info(products)")->fetchAll(), 'name');

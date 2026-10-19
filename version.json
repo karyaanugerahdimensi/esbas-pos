@@ -1,14 +1,22 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.8",
-  "build": "20261019-07",
+  "version": "1.2.9",
+  "build": "20261019-08",
   "release_date": "2026-10-19",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
     {
-      "version": "1.2.8",
+      "version": "1.2.9",
       "commit": "HEAD",
+      "date": "2026-10-19",
+      "title": "Otomatisasi & Penguncian Mutlak Kurir Pengirim Sesuai Kasir Login serta Penugasan Armada Dua Arah",
+      "description": "Mengotomatiskan dan mengunci mutlak seleksi kurir driver dan armada kendaraan pada layar penjualan POS kasir sehingga karyawan/kasir yang telah ditugaskan ke armada kurir otomatis terpilih dan dikunci (disabled/non-tamperable) tanpa bisa memilih kurir atau armada lain, mengeliminasi peran Super Admin dan Branch Manager dari daftar kurir, menambahkan integrasi penugasan armada kendaraan kurir dua arah (bi-directional sync) pada manajemen karyawan dan armada logistik, serta memastikan backend checkout_sale memvalidasi dan memaksakan kurir/armada terkunci tersebut.",
+      "rollback_command": "git checkout v1.2.8"
+    },
+    {
+      "version": "1.2.8",
+      "commit": "v1.2.8",
       "date": "2026-10-19",
       "title": "Perbaikan Kompatibilitas Sintaks MariaDB / MySQL Hosting pada Penyimpanan Harga Kontrak Khusus Mitra B2B",
       "description": "Memperbaiki galat SQLSTATE[42000] Syntax error 1064 ('OR REPLACE INTO') saat menyimpan harga kontrak khusus mitra B2B di MariaDB/MySQL hosting dengan mengonversi query ke pola ANSI cross-database terpadu (SELECT id ... lalu UPDATE atau INSERT), menggunakan parameterisasi waktu PHP ($now), serta melengkapi aturan adaptQuery AppPDO untuk mentranslasikan INSERT OR REPLACE INTO menjadi REPLACE INTO dan INSERT OR IGNORE INTO menjadi INSERT IGNORE INTO.",

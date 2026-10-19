@@ -508,13 +508,13 @@ $appVersionData = getAppVersionData();
                                     </div>
                                     <div class="grid grid-cols-2 gap-2">
                                         <div>
-                                            <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Nama Driver / Kurir:</label>
+                                            <label id="pos-driver-label" class="block text-[10px] font-bold text-slate-500 mb-0.5">Nama Driver / Kurir:</label>
                                             <select id="pos-driver-employee-select" onchange="onPosDriverEmployeeChange()" class="w-full bg-white border border-indigo-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800">
                                                 <!-- Populated from branch employees via JS -->
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Armada Kendaraan:</label>
+                                            <label id="pos-vehicle-label" class="block text-[10px] font-bold text-slate-500 mb-0.5">Armada Kendaraan:</label>
                                             <select id="pos-courier-select" class="w-full bg-white border border-indigo-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800">
                                                 <!-- Populated via JS -->
                                             </select>
@@ -4698,6 +4698,18 @@ $appVersionData = getAppVersionData();
                     </div>
                 </div>
 
+                <!-- Armada Kendaraan Kurir Terhubung (Pengiriman POS Kasir) -->
+                <div id="emp-courier-section" class="border-t border-slate-100 pt-3 space-y-1.5">
+                    <label class="block font-bold text-slate-700 mb-0.5 flex items-center justify-between">
+                        <span>Armada Kurir / Driver Terhubung:</span>
+                        <span class="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Pengiriman POS Kasir</span>
+                    </label>
+                    <select id="emp-assigned-vehicle" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium text-slate-800">
+                        <option value="">-- Tidak Terhubung ke Armada (Bukan Kurir) --</option>
+                    </select>
+                    <p class="text-[10px] text-slate-500">Jika diset, saat karyawan login sebagai kasir di POS, sistem otomatis mengunci kurir & armada pengiriman ke penugasan ini sehingga kasir tidak dapat memilih kurir lain.</p>
+                </div>
+
                 <div class="grid grid-cols-2 gap-2 pt-2">
                     <button type="button" onclick="closeEmployeeModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700">Batal</button>
                     <button type="submit" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow">Simpan Karyawan</button>
@@ -8421,24 +8433,115 @@ $appVersionData = getAppVersionData();
         function renderPosCourierSelect() {
             const vehicleSelect = document.getElementById('pos-courier-select');
             const driverSelect = document.getElementById('pos-driver-employee-select');
+            const driverLabel = document.getElementById('pos-driver-label');
+            const vehicleLabel = document.getElementById('pos-vehicle-label');
+            const noteEl = document.getElementById('pos-delivery-note');
             const branchId = state.currentBranch ? state.currentBranch.id : 1;
 
-            // 1. Ambil data karyawan sesuai lokasi cabang yang dimiliki oleh karyawan
-            const branchEmployees = (state.users || []).filter(u => (!u.branch_id || u.branch_id === branchId) && u.is_active != 0);
-            
+            // 1. Ambil data armada aktif di cabang
+            const branchVehicles = (state.vehicles || []).filter(v => (!v.branch_id || v.branch_id === branchId) && v.status === 'ACTIVE');
+
+            // 2. Filter staf operasional di cabang (Kecualikan level manajerial: Super Admin & Branch Manager)
+            const operationalEmployees = (state.users || []).filter(u => 
+                (!u.branch_id || u.branch_id === branchId) && 
+                u.is_active != 0 &&
+                !['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'].includes(u.role)
+            );
+
+            // 3. Identifikasi pengguna aktif yang login
+            const currentUser = state.loggedInUser || state.currentUser;
+            const isStaffOrCashier = currentUser && ['CASHIER', 'STAFF', 'OPERATOR'].includes(currentUser.role);
+
+            // Cari armada yang terhubung dengan akun kasir/staf ini
+            let linkedVehicle = null;
+            if (currentUser) {
+                // Prioritas 1: Penugasan eksplisit assigned_vehicle_id pada akun kasir
+                if (currentUser.assigned_vehicle_id) {
+                    linkedVehicle = branchVehicles.find(v => v.id === currentUser.assigned_vehicle_id) || (state.vehicles || []).find(v => v.id === currentUser.assigned_vehicle_id);
+                }
+                // Prioritas 2: Penugasan driver_user_id pada armada kendaraan
+                if (!linkedVehicle) {
+                    linkedVehicle = branchVehicles.find(v => v.driver_user_id === currentUser.id);
+                }
+            }
+
+            // Cari kurir resmi yang terhubung
+            let linkedDriver = null;
+            if (linkedVehicle && linkedVehicle.driver_user_id) {
+                linkedDriver = (state.users || []).find(u => u.id === linkedVehicle.driver_user_id);
+            }
+            if (!linkedDriver && currentUser && (linkedVehicle || isStaffOrCashier)) {
+                linkedDriver = currentUser;
+            }
+
+            // KASUS A: KASIR / STAF OPERASIONAL YANG TERHUBUNG KE KURIR & ARMADA
+            // Sesuai aturan: Kurir & armada dikunci secara mutlak (kasir tidak bisa memilih kurir atau kendaraan lainnya)
+            if (isStaffOrCashier && (linkedVehicle || linkedDriver)) {
+                const driverObj = linkedDriver || currentUser;
+                const driverName = driverObj.name;
+                const driverId = driverObj.id;
+
+                // Kunci Driver Select
+                if (driverSelect) {
+                    driverSelect.innerHTML = `<option value="${driverId}">🔒 ${driverName} (${driverObj.role || 'Kasir'}) - Kurir Otomatis</option>`;
+                    driverSelect.value = driverId;
+                    driverSelect.disabled = true;
+                    driverSelect.className = "w-full bg-slate-100 border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 cursor-not-allowed pointer-events-none";
+                }
+
+                // Kunci Vehicle Select
+                if (vehicleSelect) {
+                    if (linkedVehicle) {
+                        vehicleSelect.innerHTML = `<option value="${linkedVehicle.id}">🔒 ${linkedVehicle.plate_number} - ${linkedVehicle.vehicle_name}</option>`;
+                        vehicleSelect.value = linkedVehicle.id;
+                    } else if (branchVehicles.length > 0) {
+                        const fallbackVeh = branchVehicles[0];
+                        vehicleSelect.innerHTML = `<option value="${fallbackVeh.id}">🔒 ${fallbackVeh.plate_number} - ${fallbackVeh.vehicle_name}</option>`;
+                        vehicleSelect.value = fallbackVeh.id;
+                    } else {
+                        vehicleSelect.innerHTML = `<option value="">(Belum ada armada cabang)</option>`;
+                    }
+                    vehicleSelect.disabled = true;
+                    vehicleSelect.className = "w-full bg-slate-100 border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 cursor-not-allowed pointer-events-none";
+                }
+
+                // Tampilkan label locked
+                if (driverLabel) {
+                    driverLabel.innerHTML = `Nama Driver / Kurir: <span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 ml-0.5">🔒 Terkunci</span>`;
+                }
+                if (vehicleLabel) {
+                    vehicleLabel.innerHTML = `Armada Kendaraan: <span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 ml-0.5">🔒 Terkunci</span>`;
+                }
+
+                // Simpan parameter aktif di state agar saat submit checkout selalu akurat
+                state.currentPosDriverUserId = driverId;
+                state.currentPosDriverName = driverName;
+                state.currentPosVehicleId = linkedVehicle ? linkedVehicle.id : (vehicleSelect?.value ? parseInt(vehicleSelect.value) : null);
+
+                if (noteEl) {
+                    const vehName = linkedVehicle ? `${linkedVehicle.plate_number} (${linkedVehicle.vehicle_name})` : 'Armada Cabang';
+                    noteEl.innerHTML = `<span class="text-emerald-700 font-bold">✓ Kurir pengirim (<b>${driverName}</b>) & armada (<b>${vehName}</b>) terhubung otomatis dan terkunci untuk kasir <b>${currentUser.name}</b>. Kasir tidak dapat memilih kurir lain.</span>`;
+                }
+                return;
+            }
+
+            // KASUS B: SUPER ADMIN / BRANCH MANAGER (Dapat memilih kurir & armada fleksibel)
             if (driverSelect) {
-                if (branchEmployees.length === 0) {
+                driverSelect.disabled = false;
+                driverSelect.className = "w-full bg-white border border-indigo-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800";
+                const candidateDrivers = operationalEmployees.length > 0 ? operationalEmployees : (state.users || []).filter(u => (!u.branch_id || u.branch_id === branchId) && u.is_active != 0);
+                if (candidateDrivers.length === 0) {
                     driverSelect.innerHTML = '<option value="">(Tidak ada karyawan di cabang ini)</option>';
                 } else {
-                    driverSelect.innerHTML = branchEmployees.map(u => 
+                    driverSelect.innerHTML = candidateDrivers.map(u => 
                         `<option value="${u.id}">${u.name} (${u.role})</option>`
                     ).join('');
                 }
             }
 
-            // 2. Filter armada kendaraan kurir cabang
-            const branchVehicles = (state.vehicles || []).filter(v => (!v.branch_id || v.branch_id === branchId) && v.status === 'ACTIVE');
             if (vehicleSelect) {
+                vehicleSelect.disabled = false;
+                vehicleSelect.className = "w-full bg-white border border-indigo-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800";
                 if (branchVehicles.length === 0) {
                     vehicleSelect.innerHTML = '<option value="">(Tidak ada armada aktif - kurir rekanan)</option>';
                 } else {
@@ -8448,30 +8551,14 @@ $appVersionData = getAppVersionData();
                 }
             }
 
-            // 3. Khusus Level STAFF / CASHIER: Disesuaikan otomatis dengan access loginnya agar tidak perlu mengganti kurir dan kendaraannya
-            const currentUser = state.loggedInUser;
-            const isStaffOrCashier = currentUser && ['CASHIER', 'STAFF'].includes(currentUser.role);
+            if (driverLabel) driverLabel.innerHTML = `Nama Driver / Kurir:`;
+            if (vehicleLabel) vehicleLabel.innerHTML = `Armada Kendaraan:`;
 
-            if (currentUser && driverSelect) {
-                const userInBranch = branchEmployees.find(u => u.id === currentUser.id);
-                if (userInBranch) {
-                    driverSelect.value = currentUser.id;
-                }
-            }
+            // Sinkronkan kendaraan yang cocok jika driver dipilih
+            onPosDriverEmployeeChange();
 
-            if (currentUser && vehicleSelect && branchVehicles.length > 0) {
-                const matchedVehicle = branchVehicles.find(v => v.driver_user_id === currentUser.id);
-                if (matchedVehicle) {
-                    vehicleSelect.value = matchedVehicle.id;
-                } else {
-                    vehicleSelect.value = branchVehicles[0].id;
-                }
-            }
-
-            // Tampilkan pesan status otomatisasi kurir jika kasir/staff yang login
-            const noteEl = document.getElementById('pos-delivery-note');
-            if (noteEl && isStaffOrCashier && currentUser) {
-                noteEl.innerHTML = `<span class="text-emerald-700 font-bold">✓ Kurir & armada disesuaikan otomatis dengan akun login Anda (${currentUser.name} - ${currentUser.role}). Kasir tidak perlu mengganti kurir/kendaraan.</span>`;
+            if (noteEl) {
+                noteEl.innerHTML = `<span class="text-slate-500 font-medium">Pilih kurir dan armada pengantaran pesanan untuk cabang ini.</span>`;
             }
         }
 
@@ -8874,12 +8961,18 @@ $appVersionData = getAppVersionData();
             const isDelivery = document.getElementById('check-delivery-mode')?.checked || false;
             const deliveryFee = isDelivery ? (state.currentDeliveryFee || 0) : 0;
             const deliveryDistance = isDelivery ? (state.currentDeliveryDistance || 0) : 0;
-            const courierVehicleId = isDelivery ? (parseInt(document.getElementById('pos-courier-select')?.value) || null) : null;
+            const courierVehicleId = isDelivery ? (parseInt(document.getElementById('pos-courier-select')?.value) || state.currentPosVehicleId || null) : null;
             const driverSelect = document.getElementById('pos-driver-employee-select');
-            const driverUserId = isDelivery ? (parseInt(driverSelect?.value) || null) : null;
-            const driverName = (isDelivery && driverSelect && driverSelect.selectedIndex >= 0 && driverSelect.options[driverSelect.selectedIndex]) 
-                ? driverSelect.options[driverSelect.selectedIndex].text.replace(/\s*\([^)]*\)\s*$/, '').trim() 
-                : null;
+            const driverUserId = isDelivery ? (parseInt(driverSelect?.value) || state.currentPosDriverUserId || null) : null;
+            let driverName = null;
+            if (isDelivery) {
+                if (driverSelect && driverSelect.selectedIndex >= 0 && driverSelect.options[driverSelect.selectedIndex]) {
+                    driverName = driverSelect.options[driverSelect.selectedIndex].text.replace(/^[🔒\s]+/, '').replace(/\s*\([^)]*\)\s*$/, '').trim();
+                }
+                if (!driverName && state.currentPosDriverName) {
+                    driverName = state.currentPosDriverName;
+                }
+            }
             const isFreeItem = (c) => Number(c.is_delivery_included) === 1 || Number(c.is_delivery_required) === 2;
             const freeDeliveryItems = (state.cart || []).filter(isFreeItem);
             const chargeableItems = (state.cart || []).filter(c => !isFreeItem(c));
@@ -12678,8 +12771,12 @@ Manager / Supervisor: __________________
                 `<option value="${b.id}">${b.name}</option>`
             ).join('');
 
-            // Populate default shifts
+            // Populate default shifts & courier vehicles
             renderEmployeeModalShiftOptions();
+            renderEmployeeModalVehicleOptions(state.currentBranch ? state.currentBranch.id : 1);
+            document.getElementById('emp-branch').onchange = () => {
+                renderEmployeeModalVehicleOptions(document.getElementById('emp-branch').value);
+            };
 
             // Set role change listener
             const roleSelect = document.getElementById('emp-role');
@@ -12700,6 +12797,18 @@ Manager / Supervisor: __________________
                 options.push(`<option value="${ws.id}" ${ws.id == selectedId ? 'selected' : ''}>${ws.code} - ${ws.name} (${timeInfo})</option>`);
             });
             shiftSelect.innerHTML = options.join('');
+        }
+
+        function renderEmployeeModalVehicleOptions(branchId, selectedVehId = null) {
+            const vehSelect = document.getElementById('emp-assigned-vehicle');
+            if (!vehSelect) return;
+            const bId = branchId ? parseInt(branchId) : 1;
+            const branchVehs = (state.vehicles || []).filter(v => (!v.branch_id || v.branch_id === bId) && v.status === 'ACTIVE');
+            let opts = ['<option value="">-- Tidak Terhubung ke Armada (Bukan Kurir) --</option>'];
+            branchVehs.forEach(v => {
+                opts.push(`<option value="${v.id}" ${v.id == selectedVehId ? 'selected' : ''}>${v.plate_number} - ${v.vehicle_name} (${v.driver_name || 'Tanpa Driver'})</option>`);
+            });
+            vehSelect.innerHTML = opts.join('');
         }
 
         function handleEmployeeRoleChange() {
@@ -12741,6 +12850,7 @@ Manager / Supervisor: __________________
             document.getElementById('emp-modal-title').innerText = 'Edit Karyawan: ' + emp.name;
 
             renderEmployeeModalShiftOptions(emp.default_work_shift_id);
+            renderEmployeeModalVehicleOptions(emp.branch_id || 1, emp.assigned_vehicle_id);
             handleEmployeeRoleChange();
         }
 
@@ -12761,6 +12871,7 @@ Manager / Supervisor: __________________
             const role = document.getElementById('emp-role').value;
             const isExempt = ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'].includes(role);
             const defaultShiftId = (!isExempt && document.getElementById('emp-default-shift').value) ? parseInt(document.getElementById('emp-default-shift').value) : null;
+            const assignedVehicleId = document.getElementById('emp-assigned-vehicle')?.value ? parseInt(document.getElementById('emp-assigned-vehicle').value) : null;
 
             const payload = {
                 id: id ? parseInt(id) : null,
@@ -12773,7 +12884,8 @@ Manager / Supervisor: __________________
                 pin: document.getElementById('emp-pin').value,
                 password: document.getElementById('emp-password').value,
                 commission_rate: parseFloat(document.getElementById('emp-commission').value) / 100,
-                default_work_shift_id: defaultShiftId
+                default_work_shift_id: defaultShiftId,
+                assigned_vehicle_id: assignedVehicleId
             };
 
             const res = await fetch('api.php?action=save_employee', {
@@ -12786,6 +12898,8 @@ Manager / Supervisor: __________________
             if (data.success) {
                 closeEmployeeModal();
                 loadEmployees();
+                if (typeof loadLogisticsData === 'function') loadLogisticsData();
+                renderPosCourierSelect();
             }
         }
 

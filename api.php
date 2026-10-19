@@ -257,7 +257,7 @@ try {
                 FROM branches b
                 ORDER BY b.id ASC
             ")->fetchAll();
-            $users = $pdo->query("SELECT id, nik, name, role, branch_id, email, phone, commission_rate, is_active FROM users ORDER BY id ASC")->fetchAll();
+            $users = $pdo->query("SELECT id, nik, name, role, branch_id, email, phone, commission_rate, is_active, assigned_vehicle_id FROM users ORDER BY id ASC")->fetchAll();
 
             $stmtBranch = $pdo->prepare("SELECT * FROM branches WHERE id = ?");
             $stmtBranch->execute([$branchId]);
@@ -552,42 +552,54 @@ try {
                     SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.email, u.phone, u.commission_rate, u.is_active, u.pin,
                            u.base_salary, u.allowance, u.daily_transport,
                            u.default_work_shift_id,
+                           u.assigned_vehicle_id,
                            ws.name as default_shift_name, ws.code as default_shift_code, ws.start_time as default_shift_start, ws.end_time as default_shift_end, ws.color_tag as default_shift_color,
-                           b.name as branch_name
+                           b.name as branch_name,
+                           cv.plate_number as assigned_vehicle_plate, cv.vehicle_name as assigned_vehicle_name
                     FROM users u
                     LEFT JOIN branches b ON b.id = u.branch_id
                     LEFT JOIN work_shifts ws ON ws.id = u.default_work_shift_id
+                    LEFT JOIN courier_vehicles cv ON (cv.id = u.assigned_vehicle_id OR cv.driver_user_id = u.id) AND cv.is_active = 1
+                    GROUP BY u.id
                     ORDER BY u.id ASC
                 ");
                 echo json_encode(['success' => true, 'employees' => $stmt->fetchAll()]);
             } catch (Exception $e) {
-                // Auto-healing: Tambahkan kolom default_work_shift_id jika belum ada di database MySQL / SQLite
+                // Auto-healing: Tambahkan kolom default_work_shift_id & assigned_vehicle_id jika belum ada
                 try {
                     $pdo->exec("ALTER TABLE users ADD COLUMN default_work_shift_id INT DEFAULT NULL");
-                    $firstShiftId = $pdo->query("SELECT id FROM work_shifts WHERE is_day_off = 0 ORDER BY id ASC LIMIT 1")->fetchColumn();
-                    if ($firstShiftId) {
-                        $pdo->exec("UPDATE users SET default_work_shift_id = {$firstShiftId} WHERE role IN ('CASHIER', 'STAFF') AND default_work_shift_id IS NULL");
-                    }
+                } catch (Exception $eCol) {}
+                try {
+                    $pdo->exec("ALTER TABLE users ADD COLUMN assigned_vehicle_id INT DEFAULT NULL");
+                } catch (Exception $eCol) {}
+
+                try {
                     $stmt = $pdo->query("
                         SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.email, u.phone, u.commission_rate, u.is_active, u.pin,
                                u.base_salary, u.allowance, u.daily_transport,
                                u.default_work_shift_id,
+                               u.assigned_vehicle_id,
                                ws.name as default_shift_name, ws.code as default_shift_code, ws.start_time as default_shift_start, ws.end_time as default_shift_end, ws.color_tag as default_shift_color,
-                               b.name as branch_name
+                               b.name as branch_name,
+                               cv.plate_number as assigned_vehicle_plate, cv.vehicle_name as assigned_vehicle_name
                         FROM users u
                         LEFT JOIN branches b ON b.id = u.branch_id
                         LEFT JOIN work_shifts ws ON ws.id = u.default_work_shift_id
+                        LEFT JOIN courier_vehicles cv ON (cv.id = u.assigned_vehicle_id OR cv.driver_user_id = u.id) AND cv.is_active = 1
+                        GROUP BY u.id
                         ORDER BY u.id ASC
                     ");
                     echo json_encode(['success' => true, 'employees' => $stmt->fetchAll()]);
                 } catch (Exception $e2) {
-                    // Fallback query tanpa join shift agar data karyawan TETAP TAMPIL normal
+                    // Fallback query
                     $stmt = $pdo->query("
                         SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.email, u.phone, u.commission_rate, u.is_active, u.pin,
                                u.base_salary, u.allowance, u.daily_transport,
                                NULL as default_work_shift_id,
+                               NULL as assigned_vehicle_id,
                                NULL as default_shift_name, NULL as default_shift_code, NULL as default_shift_start, NULL as default_shift_end, NULL as default_shift_color,
-                               b.name as branch_name
+                               b.name as branch_name,
+                               NULL as assigned_vehicle_plate, NULL as assigned_vehicle_name
                         FROM users u
                         LEFT JOIN branches b ON b.id = u.branch_id
                         ORDER BY u.id ASC
@@ -618,6 +630,7 @@ try {
             // Role Super Admin & Branch Manager tidak dimapping ke shift kerja
             $isManagerialExempt = in_array(strtoupper($role), ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
             $defaultWorkShiftId = (!$isManagerialExempt && !empty($input['default_work_shift_id'])) ? (int)$input['default_work_shift_id'] : null;
+            $assignedVehicleId = !empty($input['assigned_vehicle_id']) ? (int)$input['assigned_vehicle_id'] : null;
 
             $baseSalary = isset($input['base_salary']) ? (float)$input['base_salary'] : 3000000;
             $allowance = isset($input['allowance']) ? (float)$input['allowance'] : 500000;
@@ -629,22 +642,33 @@ try {
                     UPDATE users 
                     SET nik = ?, name = ?, role = ?, branch_id = ?, email = ?, phone = ?, 
                         pin = ?, commission_rate = ?, is_active = ?, base_salary = ?, allowance = ?, daily_transport = ?,
-                        default_work_shift_id = ? " . (!empty($input['password']) ? ", password = ?" : "") . "
+                        default_work_shift_id = ?, assigned_vehicle_id = ? " . (!empty($input['password']) ? ", password = ?" : "") . "
                     WHERE id = ?
                 ");
-                $params = [$nik, $name, $role, $branchId, $email, $phone, $pin, $commRate, $isActive, $baseSalary, $allowance, $dailyTransport, $defaultWorkShiftId];
+                $params = [$nik, $name, $role, $branchId, $email, $phone, $pin, $commRate, $isActive, $baseSalary, $allowance, $dailyTransport, $defaultWorkShiftId, $assignedVehicleId];
                 if (!empty($input['password'])) $params[] = $password;
                 $params[] = $id;
                 $stmt->execute($params);
+                $savedUserId = $id;
                 $msg = "Karyawan '{$name}' berhasil diperbarui.";
             } else {
                 // Insert
                 $stmt = $pdo->prepare("
-                    INSERT INTO users (nik, name, role, branch_id, email, phone, password, pin, commission_rate, is_active, base_salary, allowance, daily_transport, default_work_shift_id)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO users (nik, name, role, branch_id, email, phone, password, pin, commission_rate, is_active, base_salary, allowance, daily_transport, default_work_shift_id, assigned_vehicle_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
-                $stmt->execute([$nik, $name, $role, $branchId, $email, $phone, $password, $pin, $commRate, $isActive, $baseSalary, $allowance, $dailyTransport, $defaultWorkShiftId]);
+                $stmt->execute([$nik, $name, $role, $branchId, $email, $phone, $password, $pin, $commRate, $isActive, $baseSalary, $allowance, $dailyTransport, $defaultWorkShiftId, $assignedVehicleId]);
+                $savedUserId = (int)$pdo->lastInsertId();
                 $msg = "Karyawan '{$name}' berhasil ditambahkan.";
+            }
+
+            // Sinkronisasi dua arah ke armada kurir (courier_vehicles)
+            if ($assignedVehicleId) {
+                $stmtVeh = $pdo->prepare("UPDATE courier_vehicles SET driver_user_id = ?, driver_name = ? WHERE id = ?");
+                $stmtVeh->execute([$savedUserId, $name, $assignedVehicleId]);
+            } else if ($id) {
+                $stmtUnlink = $pdo->prepare("UPDATE courier_vehicles SET driver_user_id = NULL, driver_name = 'Driver Cabang' WHERE driver_user_id = ?");
+                $stmtUnlink->execute([$id]);
             }
 
             echo json_encode(['success' => true, 'message' => $msg]);
@@ -4381,6 +4405,26 @@ try {
                 }
             }
 
+            // Otomatisasi penguncian kurir & armada untuk CASHIER & STAFF yang terhubung dengan armada kurir
+            $stmtRole = $pdo->prepare("SELECT role, assigned_vehicle_id FROM users WHERE id = ?");
+            $stmtRole->execute([$userId]);
+            $userRow = $stmtRole->fetch();
+            if ($userRow && in_array(strtoupper($userRow['role'] ?? ''), ['CASHIER', 'STAFF', 'OPERATOR'])) {
+                $stmtUserVeh = $pdo->prepare("
+                    SELECT id, driver_user_id, driver_name 
+                    FROM courier_vehicles 
+                    WHERE (id = ? OR driver_user_id = ?) AND branch_id = ? AND is_active = 1 
+                    LIMIT 1
+                ");
+                $stmtUserVeh->execute([(int)($userRow['assigned_vehicle_id'] ?? 0), $userId, $branchId]);
+                $matchedUserVeh = $stmtUserVeh->fetch();
+                if ($matchedUserVeh) {
+                    $courierVehicleId = (int)$matchedUserVeh['id'];
+                    $driverUserId = (int)($matchedUserVeh['driver_user_id'] ?: $userId);
+                    $driverName = $matchedUserVeh['driver_name'];
+                }
+            }
+
             $hasDelivery = ($deliveryFee > 0 || $courierVehicleId || $driverUserId || !empty($driverName) || $isDeliveryIncluded);
             $deliveryStatus = !empty($input['delivery_status']) ? trim($input['delivery_status']) : ($hasDelivery ? 'DELIVERED' : 'NONE');
 
@@ -7497,9 +7541,19 @@ try {
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
                 $stmt->execute([$branchId, $plateNumber, $vehicleName, $vehicleType, $driverUserId, $driverName, $currentOdometer, $fuelRatio, $fuelRatioUnit, $fuelType, $status, $notes, $isActive]);
-                $id = $pdo->lastInsertId();
                 $msg = "Kendaraan kurir baru '{$plateNumber}' berhasil ditambahkan ke armada.";
             }
+
+            if ($id && $driverUserId) {
+                // Lepaskan vehicle ini dari user lain jika sebelumnya dipakai
+                $pdo->prepare("UPDATE users SET assigned_vehicle_id = NULL WHERE assigned_vehicle_id = ? AND id != ?")->execute([$id, $driverUserId]);
+                // Set assigned_vehicle_id pada user baru
+                $pdo->prepare("UPDATE users SET assigned_vehicle_id = ? WHERE id = ?")->execute([$id, $driverUserId]);
+            } else if ($id && !$driverUserId) {
+                // Jika driver dikosongkan, unassign dari users
+                $pdo->prepare("UPDATE users SET assigned_vehicle_id = NULL WHERE assigned_vehicle_id = ?")->execute([$id]);
+            }
+
             echo json_encode(['success' => true, 'message' => $msg, 'vehicle_id' => $id]);
             break;
 
