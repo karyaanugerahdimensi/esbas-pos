@@ -9,11 +9,52 @@ if (!headers_sent()) {
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/version.php';
 
+// Konfigurasi Masa Aktif Session 12 Jam per Hari (12 jam = 43.200 detik)
+$sessionLifetimeSeconds = 43200; // 12 jam
+ini_set('session.gc_maxlifetime', $sessionLifetimeSeconds);
+ini_set('session.cookie_lifetime', $sessionLifetimeSeconds);
+
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+    session_set_cookie_params([
+        'lifetime' => $sessionLifetimeSeconds,
+        'path' => '/',
+        'domain' => '',
+        'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
     session_start();
 }
 
 $action = $_GET['action'] ?? '';
+
+// Pemeriksaan Batas Kedaluwarsa Sesi 12 Jam Harian
+if (!empty($_SESSION['user_id'])) {
+    $loginTime = (int)($_SESSION['login_time'] ?? 0);
+    if ($loginTime > 0 && (time() - $loginTime > $sessionLifetimeSeconds)) {
+        // Sesi telah melampaui batas 12 jam
+        $_SESSION = [];
+        if (ini_get("session.use_cookies")) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000,
+                $params["path"], $params["domain"],
+                $params["secure"], $params["httponly"]
+            );
+        }
+        session_destroy();
+
+        if ($action !== 'login') {
+            echo json_encode([
+                'success' => false,
+                'logged_in' => false,
+                'session_expired' => true,
+                'message' => 'Sesi login Anda telah berakhir (batas maksimal 12 jam per hari). Silakan isi kata sandi ulang untuk masuk kembali.'
+            ]);
+            exit;
+        }
+    }
+}
+
 // Close session write lock early to allow non-blocking concurrency
 if (!in_array($action, ['login', 'logout', 'switch_branch'])) {
     session_write_close();
@@ -112,9 +153,13 @@ try {
                 exit;
             }
 
+            $loginTime = time();
+            $maxSessionSeconds = 43200; // 12 jam
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['role'] = $user['role'];
             $_SESSION['branch_id'] = $user['branch_id'];
+            $_SESSION['login_time'] = $loginTime;
+            $_SESSION['expires_at'] = $loginTime + $maxSessionSeconds;
 
             // Hide password hash
             unset($user['password']);
@@ -123,6 +168,11 @@ try {
                 'success' => true,
                 'message' => 'Login berhasil! Selamat datang, ' . $user['name'],
                 'user' => $user,
+                'session_info' => [
+                    'login_time' => $loginTime,
+                    'expires_at' => $loginTime + $maxSessionSeconds,
+                    'duration_hours' => 12
+                ],
                 'app_version' => getAppVersionData()
             ]);
             break;
@@ -147,12 +197,45 @@ try {
                 exit;
             }
 
+            $loginTime = (int)($_SESSION['login_time'] ?? 0);
+            $maxSessionSeconds = 43200; // 12 jam
+            if ($loginTime > 0 && (time() - $loginTime > $maxSessionSeconds)) {
+                $_SESSION = [];
+                if (ini_get("session.use_cookies")) {
+                    $params = session_get_cookie_params();
+                    setcookie(session_name(), '', time() - 42000,
+                        $params["path"], $params["domain"],
+                        $params["secure"], $params["httponly"]
+                    );
+                }
+                session_destroy();
+                echo json_encode([
+                    'success' => false,
+                    'logged_in' => false,
+                    'session_expired' => true,
+                    'message' => 'Sesi login 12 jam harian telah berakhir. Silakan isi kata sandi ulang untuk masuk kembali.'
+                ]);
+                exit;
+            }
+
             $stmt = $pdo->prepare("SELECT u.*, b.name as branch_name FROM users u LEFT JOIN branches b ON b.id = u.branch_id WHERE u.id = ?");
             $stmt->execute([$userId]);
             $user = $stmt->fetch();
             if ($user) {
                 unset($user['password']);
-                echo json_encode(['success' => true, 'logged_in' => true, 'user' => $user]);
+                $effectiveLoginTime = $loginTime ?: time();
+                $remainingSeconds = max(0, $maxSessionSeconds - (time() - $effectiveLoginTime));
+                echo json_encode([
+                    'success' => true,
+                    'logged_in' => true,
+                    'user' => $user,
+                    'session_info' => [
+                        'login_time' => $effectiveLoginTime,
+                        'expires_at' => $effectiveLoginTime + $maxSessionSeconds,
+                        'remaining_seconds' => $remainingSeconds,
+                        'duration_hours' => 12
+                    ]
+                ]);
             } else {
                 echo json_encode(['success' => false, 'logged_in' => false]);
             }

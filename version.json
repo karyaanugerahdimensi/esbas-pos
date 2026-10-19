@@ -1,14 +1,22 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.2",
-  "build": "20261019-01",
+  "version": "1.2.3",
+  "build": "20261019-02",
   "release_date": "2026-10-19",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
     {
-      "version": "1.2.2",
+      "version": "1.2.3",
       "commit": "HEAD",
+      "date": "2026-10-19",
+      "title": "Kewajiban Pengisian Password Ulang Login & Durasi Sesi 12 Jam Harian",
+      "description": "Menghapus auto-fill kata sandi dan shortcut bypass login tanpa sandi demi keamanan operasional, serta memberlakukan batas waktu sesi login aktif selama maksimal 12 jam (43.200 detik) per hari dengan indikator countdown real-time di topbar dan pemutusan sesi otomatis yang mewajibkan input kata sandi ulang.",
+      "rollback_command": "git checkout v1.2.2"
+    },
+    {
+      "version": "1.2.2",
+      "commit": "v1.2.2",
       "date": "2026-10-19",
       "title": "Penetapan Ongkos Kirim Berdasarkan Jarak Map untuk Pesanan Campuran Produk Bebas Ongkir dan Kena Ongkir",
       "description": "Mengatur agar pesanan penjualan di kasir POS yang memuat produk gratis ongkir bersamaan dengan produk yang dikenakan ongkir otomatis dihitung biaya kirimnya sesuai jarak peta geospasial cabang dan pelanggan, dengan is_delivery_included = 0 dan notifikasi interaktif kepada kasir.",

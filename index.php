@@ -98,16 +98,20 @@ $appVersionData = getAppVersionData();
                     <label class="block text-xs font-bold text-slate-700 mb-1">NIK atau Email:</label>
                     <div class="relative">
                         <i data-lucide="user" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-                        <input type="text" id="login-username" value="CSR001" placeholder="Contoh: CSR001 atau siti@jkt.retail.com" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium" required>
+                        <input type="text" id="login-username" value="" autocomplete="username" placeholder="Contoh: CSR001 atau siti@jkt.retail.com" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium" required>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Kata Sandi atau PIN 6-Digit:</label>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-bold text-slate-700">Kata Sandi / PIN 6-Digit:</label>
+                        <span class="text-[10px] font-semibold text-rose-500">*Wajib diisi</span>
+                    </div>
                     <div class="relative">
                         <i data-lucide="lock" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-                        <input type="password" id="login-password" value="123456" placeholder="Masukkan password / PIN" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium" required>
+                        <input type="password" id="login-password" value="" autocomplete="new-password" placeholder="Ketik kata sandi / PIN Anda" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium" required>
                     </div>
+                    <p class="text-[10px] text-slate-400 mt-1">Demi keamanan, Anda diwajibkan memasukkan kata sandi setiap kali login.</p>
                 </div>
 
                 <button type="submit" id="btn-login-submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg transition-colors flex items-center justify-center space-x-2 text-sm">
@@ -116,25 +120,26 @@ $appVersionData = getAppVersionData();
                 </button>
             </form>
 
-            <!-- Quick Demo 1-Click Login Shortcuts -->
+            <!-- Quick Account Selection (Manual Password Required) -->
             <div class="pt-4 border-t border-slate-100">
-                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center mb-2.5">Atau Masuk Cepat (Akun Uji Coba):</p>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center mb-1">Pilih Cepat Akun (Tetap Wajib Isi Sandi):</p>
+                <p class="text-[10px] text-slate-500 text-center mb-2.5">Pilih profil NIK di bawah, lalu masukkan kata sandi / PIN Anda</p>
                 <div class="grid grid-cols-2 gap-2 text-xs">
-                    <button type="button" onclick="quickLogin('ADM001', 'admin123')" class="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-colors">
+                    <button type="button" onclick="selectQuickAccount('ADM001', 'Super Admin')" class="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-colors">
                         <p class="font-bold text-slate-800">👑 Super Admin</p>
-                        <p class="text-[10px] text-slate-400">Muhamad Ismail</p>
+                        <p class="text-[10px] text-slate-400">Muhamad Ismail (ADM001)</p>
                     </button>
-                    <button type="button" onclick="quickLogin('MGR001', 'manager123')" class="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-colors">
+                    <button type="button" onclick="selectQuickAccount('MGR001', 'Manager JKT')" class="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-colors">
                         <p class="font-bold text-slate-800">👔 Manager JKT</p>
-                        <p class="text-[10px] text-slate-400">Hendra Wijaya</p>
+                        <p class="text-[10px] text-slate-400">Hendra Wijaya (MGR001)</p>
                     </button>
-                    <button type="button" onclick="quickLogin('CSR001', '123456')" class="p-2.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl text-left transition-colors">
+                    <button type="button" onclick="selectQuickAccount('CSR001', 'Kasir JKT')" class="p-2.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl text-left transition-colors">
                         <p class="font-bold text-indigo-900">🛒 Kasir JKT</p>
-                        <p class="text-[10px] text-indigo-500">Siti Rahmawati</p>
+                        <p class="text-[10px] text-indigo-500">Siti Rahmawati (CSR001)</p>
                     </button>
-                    <button type="button" onclick="quickLogin('STF001', 'staff123')" class="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-colors">
+                    <button type="button" onclick="selectQuickAccount('STF001', 'Staf Gudang')" class="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-colors">
                         <p class="font-bold text-slate-800">📦 Staf Gudang</p>
-                        <p class="text-[10px] text-slate-400">Rian Kurniawan</p>
+                        <p class="text-[10px] text-slate-400">Rian Kurniawan (STF001)</p>
                     </button>
                 </div>
             </div>
@@ -352,6 +357,12 @@ $appVersionData = getAppVersionData();
                     <select id="branch-select" onchange="onBranchChange()" class="bg-transparent text-[11px] sm:text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer truncate w-full">
                         <!-- Populated via JS -->
                     </select>
+                </div>
+
+                <!-- 12-Hour Daily Session Lifetime Badge -->
+                <div id="topbar-session-badge" class="flex items-center space-x-1.5 bg-indigo-50 border border-indigo-200 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0" title="Batas aktif sesi login harian: 12 jam per hari">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 text-indigo-600 shrink-0"></i>
+                    <span id="topbar-session-text" class="text-[11px] sm:text-xs font-bold text-indigo-800 whitespace-nowrap">Sesi: 12j 00m</span>
                 </div>
 
                 <!-- Shift Status Pill -->
@@ -7275,6 +7286,8 @@ $appVersionData = getAppVersionData();
             currentTab: 'pos',
             sidebarCollapsed: false,
             loggedInUser: null,
+            sessionInfo: null,
+            sessionTimerInterval: null,
             branches: [],
             currentBranch: null,
             users: [],
@@ -7431,14 +7444,22 @@ $appVersionData = getAppVersionData();
         }
 
         // ==========================================
-        // AUTHENTICATION LOGIC
+        // AUTHENTICATION LOGIC (12-HOUR SESSION & PASSWORD MANDATORY)
         // ==========================================
         async function checkAuthSession() {
             try {
                 const res = await fetch('api.php?action=check_session');
                 const data = await res.json();
+                if (data.session_expired) {
+                    showLoginScreen(data.message || 'Sesi login 12 jam harian telah berakhir. Silakan isi kata sandi ulang.');
+                    return;
+                }
                 if (data.success && data.logged_in) {
                     state.loggedInUser = data.user;
+                    if (data.session_info) {
+                        state.sessionInfo = data.session_info;
+                        startSessionCountdownTimer();
+                    }
                     hideLoginScreen();
                     initApp();
                 } else {
@@ -7449,12 +7470,33 @@ $appVersionData = getAppVersionData();
             }
         }
 
-        function showLoginScreen() {
+        function showLoginScreen(message = null) {
             const screen = document.getElementById('login-screen');
             if (screen) {
                 screen.style.display = 'flex';
                 screen.classList.remove('hidden');
             }
+            // Selalu hapus password dari input setiap kali layar login ditampilkan
+            const pInput = document.getElementById('login-password');
+            if (pInput) {
+                pInput.value = '';
+                pInput.focus();
+            }
+            const errAlert = document.getElementById('login-error-alert');
+            const errText = document.getElementById('login-error-text');
+            if (message && errAlert && errText) {
+                errText.innerText = message;
+                errAlert.className = 'p-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-xl flex items-center space-x-2';
+                errAlert.style.display = 'flex';
+                if (window.lucide) lucide.createIcons();
+            } else if (errAlert && !message) {
+                errAlert.style.display = 'none';
+            }
+            if (state.sessionTimerInterval) {
+                clearInterval(state.sessionTimerInterval);
+                state.sessionTimerInterval = null;
+            }
+            updateSessionBadgeUI(null);
         }
 
         function hideLoginScreen() {
@@ -7462,6 +7504,59 @@ $appVersionData = getAppVersionData();
             if (screen) {
                 screen.style.display = 'none';
                 screen.classList.add('hidden');
+            }
+        }
+
+        function startSessionCountdownTimer() {
+            if (state.sessionTimerInterval) {
+                clearInterval(state.sessionTimerInterval);
+                state.sessionTimerInterval = null;
+            }
+
+            function tick() {
+                if (!state.sessionInfo || !state.sessionInfo.expires_at) {
+                    updateSessionBadgeUI(null);
+                    return;
+                }
+                const nowSec = Math.floor(Date.now() / 1000);
+                const remaining = Math.max(0, state.sessionInfo.expires_at - nowSec);
+
+                updateSessionBadgeUI(remaining);
+
+                if (remaining <= 0) {
+                    clearInterval(state.sessionTimerInterval);
+                    state.sessionTimerInterval = null;
+                    state.loggedInUser = null;
+                    showLoginScreen('Sesi login harian (12 jam) telah berakhir. Demi keamanan, silakan masukkan kembali kata sandi Anda.');
+                }
+            }
+
+            tick();
+            state.sessionTimerInterval = setInterval(tick, 10000); // perbarui badge tiap 10 detik
+        }
+
+        function updateSessionBadgeUI(remainingSec) {
+            const badgeText = document.getElementById('topbar-session-text');
+            const badgeEl = document.getElementById('topbar-session-badge');
+            if (!badgeText || !badgeEl) return;
+
+            if (remainingSec === null || remainingSec === undefined) {
+                badgeText.innerText = 'Sesi: 12j 00m';
+                return;
+            }
+
+            const hours = Math.floor(remainingSec / 3600);
+            const minutes = Math.floor((remainingSec % 3600) / 60);
+            const formatted = `${hours}j ${minutes < 10 ? '0' : ''}${minutes}m`;
+
+            badgeText.innerText = `Sesi: ${formatted}`;
+
+            if (remainingSec < 1800) { // kurang dari 30 menit
+                badgeEl.className = 'flex items-center space-x-1.5 bg-rose-50 border border-rose-300 text-rose-800 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0 animate-pulse';
+            } else if (remainingSec < 7200) { // kurang dari 2 jam
+                badgeEl.className = 'flex items-center space-x-1.5 bg-amber-50 border border-amber-300 text-amber-800 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0';
+            } else {
+                badgeEl.className = 'flex items-center space-x-1.5 bg-indigo-50 border border-indigo-200 text-indigo-800 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0';
             }
         }
 
@@ -7475,15 +7570,25 @@ $appVersionData = getAppVersionData();
             const errText = document.getElementById('login-error-text');
             const btnSubmit = document.getElementById('btn-login-submit');
 
-            if (!username || !password) {
-                const msg = 'Silakan isi NIK/Email dan Kata Sandi/PIN.';
+            if (!username) {
+                const msg = 'Silakan isi NIK atau Email login.';
                 if (errAlert && errText) {
                     errText.innerText = msg;
+                    errAlert.className = 'p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center space-x-2';
                     errAlert.style.display = 'flex';
-                    if (window.lucide) lucide.createIcons();
-                } else {
-                    alert(msg);
                 }
+                if (usernameInput) usernameInput.focus();
+                return;
+            }
+
+            if (!password) {
+                const msg = 'Kata sandi / PIN wajib diisi ulang untuk masuk ke sistem.';
+                if (errAlert && errText) {
+                    errText.innerText = msg;
+                    errAlert.className = 'p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center space-x-2';
+                    errAlert.style.display = 'flex';
+                }
+                if (passwordInput) passwordInput.focus();
                 return;
             }
 
@@ -7510,6 +7615,11 @@ $appVersionData = getAppVersionData();
 
                 if (data.success) {
                     state.loggedInUser = data.user;
+                    if (data.session_info) {
+                        state.sessionInfo = data.session_info;
+                        startSessionCountdownTimer();
+                    }
+                    if (passwordInput) passwordInput.value = ''; // Selalu kosongkan password setelah berhasil
                     hideLoginScreen();
                     try {
                         await initApp();
@@ -7520,9 +7630,14 @@ $appVersionData = getAppVersionData();
                     const errorMsg = data.message || data.error || 'Kredensial login tidak valid.';
                     if (errAlert && errText) {
                         errText.innerText = errorMsg;
+                        errAlert.className = 'p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center space-x-2';
                         errAlert.style.display = 'flex';
                     }
                     alert('Login Gagal: ' + errorMsg);
+                    if (passwordInput) {
+                        passwordInput.value = '';
+                        passwordInput.focus();
+                    }
                     if (window.lucide) lucide.createIcons();
                 }
             } catch (err) {
@@ -7533,6 +7648,7 @@ $appVersionData = getAppVersionData();
                 const errorMsg = 'Koneksi ke server gagal: ' + (err.message || 'Periksa server PHP');
                 if (errAlert && errText) {
                     errText.innerText = errorMsg;
+                    errAlert.className = 'p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center space-x-2';
                     errAlert.style.display = 'flex';
                 }
                 alert('Gagal Menghubungi Server: ' + errorMsg);
@@ -7540,19 +7656,39 @@ $appVersionData = getAppVersionData();
             }
         }
 
-        function quickLogin(username, password) {
+        function selectQuickAccount(username, roleLabel) {
             const uInput = document.getElementById('login-username');
             const pInput = document.getElementById('login-password');
             if (uInput) uInput.value = username;
-            if (pInput) pInput.value = password;
-            handleLogin(null);
+            if (pInput) {
+                pInput.value = '';
+                pInput.focus();
+            }
+            const errAlert = document.getElementById('login-error-alert');
+            const errText = document.getElementById('login-error-text');
+            if (errAlert && errText) {
+                errText.innerText = `Akun ${roleLabel} (${username}) dipilih. Silakan ketik kata sandi / PIN Anda untuk masuk.`;
+                errAlert.className = 'p-3 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs rounded-xl flex items-center space-x-2';
+                errAlert.style.display = 'flex';
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+
+        function quickLogin(username, password) {
+            // Pengalihan ramah: tidak melakukan login otomatis bypass sandi, arahkan ke pengisian kata sandi
+            selectQuickAccount(username, 'Pengguna');
         }
 
         async function handleLogout() {
             if (!confirm('Apakah Anda yakin ingin keluar dari sistem?')) return;
             await fetch('api.php?action=logout');
             state.loggedInUser = null;
-            showLoginScreen();
+            state.sessionInfo = null;
+            if (state.sessionTimerInterval) {
+                clearInterval(state.sessionTimerInterval);
+                state.sessionTimerInterval = null;
+            }
+            showLoginScreen('Anda telah keluar dari akun. Silakan masukkan kata sandi untuk login kembali.');
         }
 
         // ==========================================
@@ -19399,11 +19535,9 @@ Manager / Supervisor: __________________
         }
 
         async function loginAsSuperadminVoid() {
-            if (!confirm('Beralih ke akun Super Admin (Budi Santoso) sekarang?')) return;
-            quickLogin('ADM001', 'admin123');
-            setTimeout(() => {
-                switchTab('sale-cancellations');
-            }, 600);
+            if (!confirm('Beralih ke akun Super Admin sekarang? Anda wajib memasukkan kata sandi Super Admin untuk otorisasi.')) return;
+            showLoginScreen('Silakan masukkan kata sandi Super Admin untuk melanjutkan otorisasi.');
+            selectQuickAccount('ADM001', 'Super Admin');
         }
 
         // --- Fitur Hapus Seluruh Riwayat Penjualan (Super Admin Only) ---
