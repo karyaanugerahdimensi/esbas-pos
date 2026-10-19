@@ -37,6 +37,10 @@ class AppPDO extends PDO {
                 $tableName = trim($m[1], '`"\' ');
                 $sql = "SELECT COLUMN_NAME AS name, DATA_TYPE AS type FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$tableName}'";
             }
+            if (preg_match('/ON\s+CONFLICT\s*\([^)]*\)\s*DO\s+UPDATE\s+SET/i', $sql)) {
+                $sql = preg_replace('/ON\s+CONFLICT\s*\([^)]*\)\s*DO\s+UPDATE\s+SET/i', 'ON DUPLICATE KEY UPDATE', $sql);
+                $sql = preg_replace('/excluded\.([a-zA-Z0-9_]+)/i', 'VALUES($1)', $sql);
+            }
         }
         return $sql;
     }

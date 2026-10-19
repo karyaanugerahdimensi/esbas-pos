@@ -11,19 +11,20 @@ require_once __DIR__ . '/version.php';
 
 // Konfigurasi Masa Aktif Session 12 Jam per Hari (12 jam = 43.200 detik)
 $sessionLifetimeSeconds = 43200; // 12 jam
-ini_set('session.gc_maxlifetime', $sessionLifetimeSeconds);
-ini_set('session.cookie_lifetime', $sessionLifetimeSeconds);
-
-if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
-    session_set_cookie_params([
-        'lifetime' => $sessionLifetimeSeconds,
-        'path' => '/',
-        'domain' => '',
-        'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
-        'httponly' => true,
-        'samesite' => 'Lax'
-    ]);
-    session_start();
+if (!headers_sent()) {
+    @ini_set('session.gc_maxlifetime', $sessionLifetimeSeconds);
+    @ini_set('session.cookie_lifetime', $sessionLifetimeSeconds);
+    if (session_status() === PHP_SESSION_NONE) {
+        session_set_cookie_params([
+            'lifetime' => $sessionLifetimeSeconds,
+            'path' => '/',
+            'domain' => '',
+            'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+        session_start();
+    }
 }
 
 $action = $_GET['action'] ?? '';
@@ -2998,15 +2999,19 @@ try {
             $newShiftId = $pdo->lastInsertId();
 
             // Update branch_stocks to reflect verified morning physical stock (termasuk penambahan stok baru)
+            $stmtCheckBs = $pdo->prepare("SELECT id FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+            $stmtUpdBs = $pdo->prepare("UPDATE branch_stocks SET stock = ? WHERE branch_id = ? AND product_id = ?");
+            $stmtInsBs = $pdo->prepare("INSERT INTO branch_stocks (branch_id, product_id, stock, local_price, local_cogs) VALUES (?, ?, ?, 0, 0)");
+
             foreach ($openingMap as $pId => $openQty) {
                 $pId = (int)$pId;
                 if ($pId <= 0) continue;
-                $stmtUpdBs = $pdo->prepare("
-                    INSERT INTO branch_stocks (branch_id, product_id, stock, local_price, local_cogs)
-                    VALUES (?, ?, ?, 0, 0)
-                    ON CONFLICT(branch_id, product_id) DO UPDATE SET stock = excluded.stock
-                ");
-                $stmtUpdBs->execute([$branchId, $pId, $openQty]);
+                $stmtCheckBs->execute([$branchId, $pId]);
+                if ($stmtCheckBs->fetchColumn()) {
+                    $stmtUpdBs->execute([$openQty, $branchId, $pId]);
+                } else {
+                    $stmtInsBs->execute([$branchId, $pId, $openQty]);
+                }
             }
 
             $shift = $pdo->query("SELECT * FROM cashier_shifts WHERE id = $newShiftId")->fetch();
@@ -3457,15 +3462,19 @@ try {
                 ]);
 
                 // Update branch_stocks to reflect verified closing stock (sisa fisik malam hari)
+                $stmtCheckBs = $pdo->prepare("SELECT id FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                $stmtUpdBs = $pdo->prepare("UPDATE branch_stocks SET stock = ? WHERE branch_id = ? AND product_id = ?");
+                $stmtInsBs = $pdo->prepare("INSERT INTO branch_stocks (branch_id, product_id, stock, local_price, local_cogs) VALUES (?, ?, ?, 0, 0)");
+
                 foreach ($closingMap as $pId => $closeQty) {
                     $pId = (int)$pId;
                     if ($pId <= 0) continue;
-                    $stmtUpdBs = $pdo->prepare("
-                        INSERT INTO branch_stocks (branch_id, product_id, stock, local_price, local_cogs)
-                        VALUES (?, ?, ?, 0, 0)
-                        ON CONFLICT(branch_id, product_id) DO UPDATE SET stock = excluded.stock
-                    ");
-                    $stmtUpdBs->execute([$shift['branch_id'], $pId, $closeQty]);
+                    $stmtCheckBs->execute([$shift['branch_id'], $pId]);
+                    if ($stmtCheckBs->fetchColumn()) {
+                        $stmtUpdBs->execute([$closeQty, $shift['branch_id'], $pId]);
+                    } else {
+                        $stmtInsBs->execute([$shift['branch_id'], $pId, $closeQty]);
+                    }
                 }
 
                 $pdo->commit();
@@ -7074,18 +7083,28 @@ try {
             $freeDeliveryThreshold = (float)($input['free_delivery_threshold'] ?? 150000);
             $maxDistanceKm = (float)($input['max_distance_km'] ?? 35.0);
 
-            $stmt = $pdo->prepare("
-                INSERT INTO delivery_settings (branch_id, base_fee, base_distance_km, per_km_rate, free_delivery_threshold, max_distance_km, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
-                ON CONFLICT(branch_id) DO UPDATE SET
-                    base_fee = excluded.base_fee,
-                    base_distance_km = excluded.base_distance_km,
-                    per_km_rate = excluded.per_km_rate,
-                    free_delivery_threshold = excluded.free_delivery_threshold,
-                    max_distance_km = excluded.max_distance_km,
-                    updated_at = datetime('now', 'localtime')
-            ");
-            $stmt->execute([$branchId, $baseFee, $baseDistanceKm, $perKmRate, $freeDeliveryThreshold, $maxDistanceKm]);
+            // Cek apakah data pengaturan tarif cabang sudah ada (Universal untuk SQLite, MySQL & MariaDB)
+            $checkStmt = $pdo->prepare("SELECT id FROM delivery_settings WHERE branch_id = ?");
+            $checkStmt->execute([$branchId]);
+            if ($checkStmt->fetchColumn()) {
+                $stmt = $pdo->prepare("
+                    UPDATE delivery_settings SET
+                        base_fee = ?,
+                        base_distance_km = ?,
+                        per_km_rate = ?,
+                        free_delivery_threshold = ?,
+                        max_distance_km = ?,
+                        updated_at = datetime('now', 'localtime')
+                    WHERE branch_id = ?
+                ");
+                $stmt->execute([$baseFee, $baseDistanceKm, $perKmRate, $freeDeliveryThreshold, $maxDistanceKm, $branchId]);
+            } else {
+                $stmt = $pdo->prepare("
+                    INSERT INTO delivery_settings (branch_id, base_fee, base_distance_km, per_km_rate, free_delivery_threshold, max_distance_km, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+                ");
+                $stmt->execute([$branchId, $baseFee, $baseDistanceKm, $perKmRate, $freeDeliveryThreshold, $maxDistanceKm]);
+            }
             echo json_encode(['success' => true, 'message' => 'Konfigurasi tarif pengiriman dinamis berhasil disimpan!']);
             break;
 
@@ -8129,17 +8148,25 @@ try {
                     'message' => 'Konfigurasi global pusat berhasil disimpan dan diterapkan!'
                 ]);
             } else {
-                // Simpan ke Pengaturan Khusus Cabang (branch_settings)
+                // Simpan ke Pengaturan Khusus Cabang (branch_settings) - Universal untuk SQLite, MySQL & MariaDB
+                $stmtCheckBranch = $pdo->prepare("SELECT id FROM branch_settings WHERE branch_id = ? AND setting_key = ?");
                 $stmtBranchUp = $pdo->prepare("
-                    INSERT INTO branch_settings (branch_id, setting_key, setting_value, setting_group, description, updated_at)
+                    UPDATE branch_settings 
+                    SET setting_value = ?, updated_at = datetime('now', 'localtime') 
+                    WHERE branch_id = ? AND setting_key = ?
+                ");
+                $stmtBranchIn = $pdo->prepare("
+                    INSERT INTO branch_settings (branch_id, setting_key, setting_value, setting_group, description, updated_at) 
                     VALUES (?, ?, ?, 'BRANCH', 'Pengaturan Khusus Cabang', datetime('now', 'localtime'))
-                    ON CONFLICT(branch_id, setting_key) DO UPDATE SET
-                        setting_value = excluded.setting_value,
-                        updated_at = datetime('now', 'localtime')
                 ");
 
                 foreach ($settings as $key => $val) {
-                    $stmtBranchUp->execute([$targetBranchId, $key, $val]);
+                    $stmtCheckBranch->execute([$targetBranchId, $key]);
+                    if ($stmtCheckBranch->fetchColumn()) {
+                        $stmtBranchUp->execute([$val, $targetBranchId, $key]);
+                    } else {
+                        $stmtBranchIn->execute([$targetBranchId, $key, $val]);
+                    }
                 }
                 $pdo->commit();
 
@@ -8199,12 +8226,15 @@ try {
             }
 
             $pdo->beginTransaction();
+            $stmtCheck = $pdo->prepare("SELECT id FROM role_menu_permissions WHERE role = ? AND menu_key = ?");
             $stmtUp = $pdo->prepare("
-                INSERT INTO role_menu_permissions (role, menu_key, menu_title, can_access, updated_at)
+                UPDATE role_menu_permissions 
+                SET can_access = ?, menu_title = ?, updated_at = datetime('now', 'localtime') 
+                WHERE role = ? AND menu_key = ?
+            ");
+            $stmtIn = $pdo->prepare("
+                INSERT INTO role_menu_permissions (role, menu_key, menu_title, can_access, updated_at) 
                 VALUES (?, ?, ?, ?, datetime('now', 'localtime'))
-                ON CONFLICT(role, menu_key) DO UPDATE SET
-                    can_access = excluded.can_access,
-                    updated_at = datetime('now', 'localtime')
             ");
 
             $menuTitles = [
@@ -8230,7 +8260,12 @@ try {
                 foreach ($menus as $mKey => $can) {
                     $mTitle = $menuTitles[$mKey] ?? $mKey;
                     $canInt = $can ? 1 : 0;
-                    $stmtUp->execute([$role, $mKey, $mTitle, $canInt]);
+                    $stmtCheck->execute([$role, $mKey]);
+                    if ($stmtCheck->fetchColumn()) {
+                        $stmtUp->execute([$canInt, $mTitle, $role, $mKey]);
+                    } else {
+                        $stmtIn->execute([$role, $mKey, $mTitle, $canInt]);
+                    }
                 }
             }
             $pdo->commit();

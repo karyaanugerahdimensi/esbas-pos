@@ -1,14 +1,22 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.3",
-  "build": "20261019-02",
+  "version": "1.2.4",
+  "build": "20261019-03",
   "release_date": "2026-10-19",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
     {
-      "version": "1.2.3",
+      "version": "1.2.4",
       "commit": "HEAD",
+      "date": "2026-10-19",
+      "title": "Perbaikan Kompatibilitas Sintaks MariaDB / MySQL Hosting pada Tarif Kirim & Konfigurasi Nota",
+      "description": "Menghilangkan penggunaan klausul SQLite 'ON CONFLICT ... DO UPDATE SET' pada penyimpanan tarif pengiriman (delivery_settings), konfigurasi nota cabang (branch_settings), matriks izin role, dan update stok opening/closing shift yang menyebabkan galat SQLSTATE[42000] Syntax error 1064 di server MariaDB/MySQL hosting, serta menambahkan auto-translation di adaptQuery AppPDO.",
+      "rollback_command": "git checkout v1.2.3"
+    },
+    {
+      "version": "1.2.3",
+      "commit": "v1.2.3",
       "date": "2026-10-19",
       "title": "Kewajiban Pengisian Password Ulang Login & Durasi Sesi 12 Jam Harian",
       "description": "Menghapus auto-fill kata sandi dan shortcut bypass login tanpa sandi demi keamanan operasional, serta memberlakukan batas waktu sesi login aktif selama maksimal 12 jam (43.200 detik) per hari dengan indikator countdown real-time di topbar dan pemutusan sesi otomatis yang mewajibkan input kata sandi ulang.",
