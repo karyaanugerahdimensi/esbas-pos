@@ -542,16 +542,18 @@ $appVersionData = getAppVersionData();
                             <div id="cash-payment-section" class="space-y-1.5 pt-1">
                                 <div class="flex items-center justify-between text-xs">
                                     <span class="font-bold text-slate-600">Uang Diterima:</span>
-                                    <input type="number" id="input-cash-received" oninput="calculateChange()" placeholder="0" class="w-32 text-right py-1.5 px-2 text-xs font-extrabold bg-white border border-slate-300 rounded-lg">
+                                    <input type="number" id="input-cash-received" oninput="calculateChange()" placeholder="0" class="w-32 text-right py-1.5 px-2 text-xs font-extrabold bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
                                 </div>
-                                <div class="flex gap-1 justify-end">
-                                    <button onclick="setExactCash()" class="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded-md text-[11px] font-bold text-slate-700">Uang Pas</button>
-                                    <button onclick="addCash(50000)" class="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded-md text-[11px] font-bold text-slate-700">+50k</button>
-                                    <button onclick="addCash(100000)" class="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded-md text-[11px] font-bold text-slate-700">+100k</button>
+                                <div id="pos-cash-denominations-grid" class="grid grid-cols-5 gap-1.5 pt-0.5">
+                                    <button type="button" onclick="setExactCash()" class="cash-denom-btn py-1.5 px-1 text-xs font-bold rounded-lg border text-center transition-all bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-400 active:scale-95 shadow-sm">Uang Pas</button>
+                                    <button type="button" onclick="addCash(10000)" class="cash-denom-btn py-1.5 px-1 text-xs font-bold rounded-lg border text-center transition-all bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-400 active:scale-95 shadow-sm">10K</button>
+                                    <button type="button" onclick="addCash(20000)" class="cash-denom-btn py-1.5 px-1 text-xs font-bold rounded-lg border text-center transition-all bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-400 active:scale-95 shadow-sm">20K</button>
+                                    <button type="button" onclick="addCash(50000)" class="cash-denom-btn py-1.5 px-1 text-xs font-bold rounded-lg border text-center transition-all bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-400 active:scale-95 shadow-sm">50K</button>
+                                    <button type="button" onclick="addCash(100000)" class="cash-denom-btn py-1.5 px-1 text-xs font-bold rounded-lg border text-center transition-all bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-400 active:scale-95 shadow-sm">100K</button>
                                 </div>
-                                <div class="flex justify-between text-xs font-bold text-slate-700 pt-1">
+                                <div class="flex justify-between items-center text-xs font-bold text-slate-700 pt-1">
                                     <span>Kembalian:</span>
-                                    <span id="summary-cash-change" class="text-emerald-600 font-mono text-sm font-black">Rp 0</span>
+                                    <span id="summary-cash-change" class="text-emerald-600 font-mono text-sm sm:text-base font-black">Rp 0</span>
                                 </div>
                             </div>
 
@@ -3673,6 +3675,90 @@ $appVersionData = getAppVersionData();
                         </table>
                     </div>
                 </div>
+
+                <!-- Bagian 2: Manajemen Tombol Pecahan Uang Kasir (Cash Denominations) -->
+                <div class="mt-8 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm">
+                        <div>
+                            <h3 class="font-black text-slate-800 text-lg flex items-center space-x-2">
+                                <i data-lucide="banknote" class="w-5 h-5 text-emerald-600"></i>
+                                <span>Manajemen Tombol Pecahan Uang Kasir (Quick Cash Buttons)</span>
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Kelola tombol nominal pecahan uang kasir (Uang Pas, 10K, 20K, 50K, 100K) yang tampil presisi di layar penjualan POS.</p>
+                        </div>
+                        <button onclick="openCashDenominationModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-100 flex items-center space-x-2 transition-all">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                            <span>Tambah Tombol Pecahan</span>
+                        </button>
+                    </div>
+
+                    <!-- KPI Kartu Pecahan Uang -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                            <span class="p-3 bg-emerald-50 text-emerald-600 rounded-xl text-xl">💵</span>
+                            <div>
+                                <p class="text-[10px] font-bold uppercase text-slate-400">Total Tombol</p>
+                                <h4 id="cd-kpi-total" class="text-lg font-black text-slate-800">0</h4>
+                                <p class="text-[10px] text-slate-500">Pecahan Terdaftar</p>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                            <span class="p-3 bg-indigo-50 text-indigo-600 rounded-xl text-xl">⚡</span>
+                            <div>
+                                <p class="text-[10px] font-bold uppercase text-slate-400">Tombol Aktif</p>
+                                <h4 id="cd-kpi-active" class="text-lg font-black text-indigo-700">0</h4>
+                                <p class="text-[10px] text-slate-500">Tampil di Layar Kasir</p>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                            <span class="p-3 bg-blue-50 text-blue-600 rounded-xl text-xl">🎯</span>
+                            <div>
+                                <p class="text-[10px] font-bold uppercase text-slate-400">Tipe Uang Pas</p>
+                                <h4 id="cd-kpi-exact" class="text-lg font-black text-blue-700">0</h4>
+                                <p class="text-[10px] text-slate-500">Sesuai Total Tagihan</p>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                            <span class="p-3 bg-amber-50 text-amber-600 rounded-xl text-xl">🔢</span>
+                            <div>
+                                <p class="text-[10px] font-bold uppercase text-slate-400">Tipe Nominal</p>
+                                <h4 id="cd-kpi-nominal" class="text-lg font-black text-amber-700">0</h4>
+                                <p class="text-[10px] text-slate-500">Setel / Tambah Nilai</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Data Tombol Pecahan Uang -->
+                    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="layout-grid" class="w-4 h-4 text-slate-400"></i>
+                                <h4 class="font-bold text-xs text-slate-700 uppercase tracking-wider">Daftar Tombol Pecahan Uang Layar Penjualan</h4>
+                            </div>
+                            <span class="text-xs text-slate-400 font-medium">Urutan tombol menentukan tata letak horizontal di grid kasir POS</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-200/60">
+                                    <tr>
+                                        <th class="py-3 px-4 text-center">Urutan</th>
+                                        <th class="py-3 px-4">Label Tombol</th>
+                                        <th class="py-3 px-4">Tipe Aksi</th>
+                                        <th class="py-3 px-4">Nilai Nominal</th>
+                                        <th class="py-3 px-4 text-center">Preview Tombol POS</th>
+                                        <th class="py-3 px-4 text-center">Status</th>
+                                        <th class="py-3 px-4 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cash-denominations-table-body" class="divide-y divide-slate-100">
+                                    <tr>
+                                        <td colspan="7" class="text-center py-8 text-slate-400">Memuat pecahan uang kasir...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- ---------------------------------------------------- -->
@@ -5029,6 +5115,69 @@ $appVersionData = getAppVersionData();
                 <div class="grid grid-cols-2 gap-2 pt-2">
                     <button type="button" onclick="closePaymentMethodModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700">Batal</button>
                     <button type="submit" id="pm-modal-submit-btn" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow">Simpan Metode</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 3.4: Cash Denomination / Quick Cash Button CRUD Modal -->
+    <div id="cash-denomination-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 id="cash-denomination-modal-title" class="font-bold text-slate-800 text-base flex items-center space-x-2">
+                <i data-lucide="banknote" class="w-5 h-5 text-emerald-600"></i>
+                <span>Tambah Tombol Pecahan Uang</span>
+            </h3>
+            <p class="text-xs text-slate-500">Konfigurasi tombol cepat pecahan uang tunai yang tampil di terminal kasir POS.</p>
+            <form onsubmit="saveCashDenominationForm(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="cd-modal-id">
+                
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Label Tombol (Teks di Layar POS):</label>
+                    <input type="text" id="cd-modal-label" placeholder="Contoh: Uang Pas, 10K, 20K, 50K, 100K, +50K" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-slate-800" required>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Tipe Aksi Kasir:</label>
+                        <select id="cd-modal-action-type" onchange="onCdActionTypeChange()" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold">
+                            <option value="SET">SET (Isi Nominal Langsung)</option>
+                            <option value="EXACT">EXACT (Uang Pas Sesuai Tagihan)</option>
+                            <option value="ADD">ADD (Tambah Nilai ke Input)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Nilai Nominal (Rp):</label>
+                        <input type="number" id="cd-modal-amount" min="0" step="500" placeholder="50000" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono font-bold">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Urutan Tombol:</label>
+                        <input type="number" id="cd-modal-sort-order" min="0" placeholder="1" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Status Aktivasi:</label>
+                        <select id="cd-modal-is-active" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold">
+                            <option value="1">Aktif (Tampil di Layar Kasir)</option>
+                            <option value="0">Nonaktif (Sembunyikan)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70 text-[11px] text-slate-500 space-y-1">
+                    <p class="font-bold text-slate-700 flex items-center gap-1">
+                        <i data-lucide="info" class="w-3.5 h-3.5 text-indigo-600"></i>
+                        <span>Keterangan Tipe Aksi:</span>
+                    </p>
+                    <p>• <b>SET</b>: Menetapkan nilai uang diterima (misal 50K &rarr; kasir menerima Rp 50.000).</p>
+                    <p>• <b>EXACT</b>: Mengisi uang diterima persis sama dengan total tagihan belanja transaksi (Uang Pas).</p>
+                    <p>• <b>ADD</b>: Menambahkan nominal ke nilai yang sudah diketik (misal klik +50K bertambah 50.000).</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button type="button" onclick="closeCashDenominationModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700">Batal</button>
+                    <button type="submit" id="cd-modal-submit-btn" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow">Simpan Tombol</button>
                 </div>
             </form>
         </div>
@@ -7302,6 +7451,7 @@ $appVersionData = getAppVersionData();
             cart: [],
             paymentMethod: 'CASH',
             cashReceived: 0,
+            cashDenominations: [],
             simulatedInsideShop: true,
             // CRM & Pricing Tier Properties
             customers: [],
@@ -7756,6 +7906,7 @@ $appVersionData = getAppVersionData();
                 renderPosCustomerSelect();
                 renderPosCourierSelect();
                 renderPosPaymentButtons();
+                loadCashDenominations();
                 renderReportPaymentFilterOptions();
                 renderProducts();
                 renderShiftBanner();
@@ -7832,7 +7983,10 @@ $appVersionData = getAppVersionData();
                     setTimeout(() => { initBranchMap(); }, 150);
                 }
             }
-            if (tab === 'payments') loadPaymentMethods();
+            if (tab === 'payments') {
+                loadPaymentMethods();
+                loadCashDenominations();
+            }
             if (tab === 'sale-cancellations') loadSaleCancellations();
             if (tab === 'settings') loadAppSettingsModule();
 
@@ -8378,13 +8532,7 @@ $appVersionData = getAppVersionData();
                         feeEl.className = isPromoFree ? 'font-black text-emerald-600 font-mono' : 'font-black text-amber-700 font-mono';
                     }
                     if (noteEl) {
-                        if (freeDeliveryItems.length > 0 && chargeableItems.length > 0) {
-                            const freeNames = freeDeliveryItems.map(i => i.name).join(', ');
-                            const chargeNames = chargeableItems.map(i => i.name).join(', ');
-                            noteEl.innerHTML = `<span class="text-amber-800 font-bold">⚡ Perhatian: Pesanan memuat produk gratis ongkir (${freeNames}) dan produk dikenakan ongkir (${chargeNames}). Sesuai ketentuan, ongkos kirim berlaku sesuai jarak map (${data.distance_km} km).</span>`;
-                        } else {
-                            noteEl.innerText = data.rule_applied || (isPromoFree ? 'Memenuhi syarat gratis ongkir' : `Tarif dasar + KM`);
-                        }
+                        noteEl.innerText = data.rule_applied || (isPromoFree ? 'Memenuhi syarat gratis ongkir' : `Tarif dasar + KM`);
                     }
                 } else {
                     const baseFee = state.currentDeliverySetting?.base_fee || 10000;
@@ -8396,13 +8544,7 @@ $appVersionData = getAppVersionData();
                         feeEl.className = 'font-black text-amber-700 font-mono';
                     }
                     if (noteEl) {
-                        if (freeDeliveryItems.length > 0 && chargeableItems.length > 0) {
-                            const freeNames = freeDeliveryItems.map(i => i.name).join(', ');
-                            const chargeNames = chargeableItems.map(i => i.name).join(', ');
-                            noteEl.innerHTML = `<span class="text-amber-800 font-bold">⚡ Pesanan Campuran (${freeNames} + ${chargeNames}): Ongkos kirim berlaku. ⚠️ ${data.message || 'Koordinat belum diatur, diterapkan tarif flat dasar.'}</span>`;
-                        } else {
-                            noteEl.innerHTML = `<span class="text-amber-800 font-semibold">⚠️ ${data.message || 'Titik koordinat belum diatur. Tarif flat dasar diterapkan.'}</span>`;
-                        }
+                        noteEl.innerHTML = `<span class="text-amber-800 font-semibold">⚠️ ${data.message || 'Titik koordinat belum diatur. Tarif flat dasar diterapkan.'}</span>`;
                     }
                 }
             } catch (err) {
@@ -8484,6 +8626,76 @@ $appVersionData = getAppVersionData();
             }).join('');
 
             setPaymentMethod(state.paymentMethod);
+        }
+
+        function renderPosCashDenominations() {
+            const container = document.getElementById('pos-cash-denominations-grid');
+            if (!container) return;
+
+            let denoms = (state.cashDenominations || []).filter(cd => cd.is_active != 0);
+            if (denoms.length === 0) {
+                denoms = [
+                    { id: 1, label: 'Uang Pas', amount: 0, action_type: 'EXACT' },
+                    { id: 2, label: '10K', amount: 10000, action_type: 'SET' },
+                    { id: 3, label: '20K', amount: 20000, action_type: 'SET' },
+                    { id: 4, label: '50K', amount: 50000, action_type: 'SET' },
+                    { id: 5, label: '100K', amount: 100000, action_type: 'SET' }
+                ];
+            }
+
+            const colCount = Math.min(6, Math.max(2, denoms.length));
+            container.className = `grid grid-cols-${colCount} gap-1.5 pt-0.5`;
+
+            container.innerHTML = denoms.map((d, idx) => {
+                const title = d.action_type === 'EXACT' ? 'Uang Pas sesuai total tagihan belanja' : (d.action_type === 'ADD' ? `Tambah ${formatRupiah(d.amount)} ke uang diterima` : `Set uang diterima ${formatRupiah(d.amount)}`);
+                return `
+                    <button type="button" 
+                            onclick="applyCashDenomination(${idx})" 
+                            id="cash-denom-btn-${d.id || idx}" 
+                            title="${title}"
+                            class="cash-denom-btn py-1.5 px-1 text-xs font-bold rounded-lg border text-center transition-all bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-400 active:scale-95 shadow-sm">
+                        ${d.label}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function applyCashDenomination(idx) {
+            let denoms = (state.cashDenominations || []).filter(cd => cd.is_active != 0);
+            if (denoms.length === 0) {
+                denoms = [
+                    { id: 1, label: 'Uang Pas', amount: 0, action_type: 'EXACT' },
+                    { id: 2, label: '10K', amount: 10000, action_type: 'SET' },
+                    { id: 3, label: '20K', amount: 20000, action_type: 'SET' },
+                    { id: 4, label: '50K', amount: 50000, action_type: 'SET' },
+                    { id: 5, label: '100K', amount: 100000, action_type: 'SET' }
+                ];
+            }
+
+            const d = denoms[idx];
+            if (!d) return;
+
+            const inputEl = document.getElementById('input-cash-received');
+            if (d.action_type === 'EXACT') {
+                setExactCash();
+            } else if (d.action_type === 'ADD') {
+                const currentVal = parseFloat(inputEl.value) || 0;
+                inputEl.value = Math.round(currentVal + Number(d.amount));
+                calculateChange();
+            } else {
+                // SET
+                inputEl.value = Math.round(Number(d.amount));
+                calculateChange();
+            }
+
+            // Visual feedback - temporary active highlight
+            const btn = document.getElementById(`cash-denom-btn-${d.id || idx}`);
+            if (btn) {
+                btn.classList.add('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+                setTimeout(() => {
+                    btn.classList.remove('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+                }, 200);
+            }
         }
 
         function renderReportPaymentFilterOptions() {
@@ -19254,6 +19466,199 @@ Manager / Supervisor: __________________
                 alert('Gagal menghubungi server.');
             }
         }
+
+        // ==========================================
+        // 12.2 MANAJEMEN PECAHAN UANG KASIR (CRUD CASH DENOMINATIONS)
+        // ==========================================
+        async function loadCashDenominations() {
+            try {
+                const res = await fetch('api.php?action=get_cash_denominations');
+                const data = await res.json();
+                if (!data.success) return;
+
+                const denoms = data.cash_denominations || [];
+                state.cashDenominations = denoms;
+
+                // Update KPI Cards
+                const total = denoms.length;
+                const active = denoms.filter(d => d.is_active != 0).length;
+                const exact = denoms.filter(d => d.action_type === 'EXACT').length;
+                const nominal = denoms.filter(d => d.action_type !== 'EXACT').length;
+
+                const elTotal = document.getElementById('cd-kpi-total');
+                const elActive = document.getElementById('cd-kpi-active');
+                const elExact = document.getElementById('cd-kpi-exact');
+                const elNominal = document.getElementById('cd-kpi-nominal');
+
+                if (elTotal) elTotal.innerText = total;
+                if (elActive) elActive.innerText = active;
+                if (elExact) elExact.innerText = exact;
+                if (elNominal) elNominal.innerText = nominal;
+
+                // Render POS Buttons in terminal kasir
+                renderPosCashDenominations();
+
+                const tbody = document.getElementById('cash-denominations-table-body');
+                if (!tbody) return;
+
+                tbody.innerHTML = denoms.map(d => {
+                    const statusBadge = d.is_active != 0
+                        ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Aktif</span>'
+                        : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">Nonaktif</span>';
+
+                    let typeBadge = '';
+                    if (d.action_type === 'EXACT') {
+                        typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">Uang Pas (EXACT)</span>';
+                    } else if (d.action_type === 'ADD') {
+                        typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">Tambah Nilai (ADD)</span>';
+                    } else {
+                        typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800">Ganti Nilai (SET)</span>';
+                    }
+
+                    const displayAmount = d.action_type === 'EXACT' ? 'Mengikuti Tagihan' : formatRupiah(d.amount);
+
+                    return `
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="py-3 px-4 text-center font-bold text-slate-500">${d.sort_order || 0}</td>
+                            <td class="py-3 px-4 font-bold text-slate-800">${d.label}</td>
+                            <td class="py-3 px-4">${typeBadge}</td>
+                            <td class="py-3 px-4 font-mono font-bold text-slate-700">${displayAmount}</td>
+                            <td class="py-3 px-4 text-center">
+                                <button type="button" class="py-1 px-2.5 text-xs font-bold rounded-lg border text-center bg-white border-slate-200 text-slate-700 shadow-xs cursor-default">
+                                    ${d.label}
+                                </button>
+                            </td>
+                            <td class="py-3 px-4 text-center">${statusBadge}</td>
+                            <td class="py-3 px-4 text-center">
+                                <div class="flex items-center justify-center space-x-1.5">
+                                    <button onclick='editCashDenomination(${JSON.stringify(d).replace(/'/g, "&#39;")})' class="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg" title="Edit Tombol">
+                                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    <button onclick="deleteCashDenomination(${d.id}, '${d.label}')" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg" title="Hapus Tombol">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('') || `<tr><td colspan="7" class="text-center py-6 text-slate-400">Belum ada pecahan uang terdaftar.</td></tr>`;
+
+                lucide.createIcons();
+            } catch (err) {
+                console.error("loadCashDenominations Error:", err);
+            }
+        }
+
+        function onCdActionTypeChange() {
+            const type = document.getElementById('cd-modal-action-type').value;
+            const amountInput = document.getElementById('cd-modal-amount');
+            if (type === 'EXACT') {
+                amountInput.value = 0;
+                amountInput.disabled = true;
+            } else {
+                amountInput.disabled = false;
+                if (!amountInput.value || parseFloat(amountInput.value) === 0) {
+                    amountInput.value = 50000;
+                }
+            }
+        }
+
+        function openCashDenominationModal() {
+            document.getElementById('cd-modal-id').value = '';
+            document.getElementById('cd-modal-label').value = '';
+            document.getElementById('cd-modal-action-type').value = 'SET';
+            const amountInput = document.getElementById('cd-modal-amount');
+            amountInput.disabled = false;
+            amountInput.value = '';
+            document.getElementById('cd-modal-sort-order').value = (state.cashDenominations ? state.cashDenominations.length + 1 : 1);
+            document.getElementById('cd-modal-is-active').value = '1';
+
+            document.getElementById('cash-denomination-modal-title').innerHTML = '<i data-lucide="banknote" class="w-5 h-5 text-emerald-600"></i><span>Tambah Tombol Pecahan Uang</span>';
+            document.getElementById('cd-modal-submit-btn').innerText = 'Simpan Tombol';
+            document.getElementById('cash-denomination-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeCashDenominationModal() {
+            document.getElementById('cash-denomination-modal').classList.add('hidden');
+        }
+
+        function editCashDenomination(d) {
+            document.getElementById('cd-modal-id').value = d.id;
+            document.getElementById('cd-modal-label').value = d.label;
+            document.getElementById('cd-modal-action-type').value = d.action_type || 'SET';
+            const amountInput = document.getElementById('cd-modal-amount');
+            amountInput.value = Math.round(d.amount);
+            if (d.action_type === 'EXACT') {
+                amountInput.disabled = true;
+            } else {
+                amountInput.disabled = false;
+            }
+            document.getElementById('cd-modal-sort-order').value = d.sort_order || 0;
+            document.getElementById('cd-modal-is-active').value = d.is_active ? '1' : '0';
+
+            document.getElementById('cash-denomination-modal-title').innerHTML = `<i data-lucide="edit-3" class="w-5 h-5 text-amber-600"></i><span>Edit Tombol Pecahan: ${d.label}</span>`;
+            document.getElementById('cd-modal-submit-btn').innerText = 'Perbarui Tombol';
+            document.getElementById('cash-denomination-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        async function saveCashDenominationForm(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('cd-modal-submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Menyimpan...';
+
+            const payload = {
+                id: document.getElementById('cd-modal-id').value || null,
+                label: document.getElementById('cd-modal-label').value.trim(),
+                action_type: document.getElementById('cd-modal-action-type').value,
+                amount: parseFloat(document.getElementById('cd-modal-amount').value) || 0,
+                sort_order: parseInt(document.getElementById('cd-modal-sort-order').value) || 0,
+                is_active: parseInt(document.getElementById('cd-modal-is-active').value)
+            };
+
+            try {
+                const res = await fetch('api.php?action=save_cash_denomination', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                submitBtn.disabled = false;
+                submitBtn.innerText = payload.id ? 'Perbarui Tombol' : 'Simpan Tombol';
+
+                alert(data.message || data.error);
+                if (data.success) {
+                    closeCashDenominationModal();
+                    await loadCashDenominations();
+                }
+            } catch (err) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = payload.id ? 'Perbarui Tombol' : 'Simpan Tombol';
+                alert('Terjadi kesalahan koneksi server.');
+            }
+        }
+
+        async function deleteCashDenomination(cdId, cdLabel) {
+            if (!confirm(`Hapus tombol pecahan uang '${cdLabel}'?`)) return;
+
+            try {
+                const res = await fetch('api.php?action=delete_cash_denomination', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: cdId })
+                });
+                const data = await res.json();
+                alert(data.message || data.error);
+                if (data.success) {
+                    await loadCashDenominations();
+                }
+            } catch (err) {
+                alert('Gagal menghubungi server.');
+            }
+        }
+
         // ==========================================
         // 15. MODUL PEMBATALAN TRANSAKSI PENJUALAN (VOID SALES)
         // ==========================================

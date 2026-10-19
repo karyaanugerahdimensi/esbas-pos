@@ -637,6 +637,19 @@ function initDatabaseSchema($pdo) {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
 
+    // 25b. Cash Denominations (Pecahan Cepat Uang Kasir / Quick Cash POS Buttons)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS cash_denominations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        label TEXT NOT NULL,
+        amount REAL NOT NULL DEFAULT 0,
+        action_type TEXT NOT NULL DEFAULT 'SET', -- 'EXACT', 'SET', 'ADD'
+        color TEXT DEFAULT 'indigo',
+        sort_order INTEGER DEFAULT 0,
+        is_active INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
     // 26. Customer Receivables (Buku Pembantu Piutang Usaha Pelanggan / Accounts Receivable)
     $pdo->exec("CREATE TABLE IF NOT EXISTS customer_receivables (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1205,6 +1218,30 @@ function autoMigrateAndSync($pdo) {
                 ('PIUTANG', 'Piutang Cust', 'OTHER', '-', 'Pelanggan / Mitra', 'Metode pembayaran tempo / piutang usaha pelanggan', 0, 1, 5)
             ");
         }
+    }
+
+    // Ensure cash_denominations table exists & seed defaults
+    $pdo->exec("CREATE TABLE IF NOT EXISTS cash_denominations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        label TEXT NOT NULL,
+        amount REAL NOT NULL DEFAULT 0,
+        action_type TEXT NOT NULL DEFAULT 'SET',
+        color TEXT DEFAULT 'indigo',
+        sort_order INTEGER DEFAULT 0,
+        is_active INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $cdCount = $pdo->query("SELECT COUNT(*) FROM cash_denominations")->fetchColumn();
+    if ($cdCount == 0) {
+        $pdo->exec("INSERT INTO cash_denominations (id, label, amount, action_type, color, sort_order, is_active) VALUES
+            (1, 'Uang Pas', 0, 'EXACT', 'indigo', 1, 1),
+            (2, '10K', 10000, 'SET', 'indigo', 2, 1),
+            (3, '20K', 20000, 'SET', 'indigo', 3, 1),
+            (4, '50K', 50000, 'SET', 'indigo', 4, 1),
+            (5, '100K', 100000, 'SET', 'indigo', 5, 1)
+        ");
     }
 
     // 25. Ensure `sales.payment_status` & `sales.status` columns exist ('PAID' / 'UNPAID', 'COMPLETED' / 'CANCELLED')
@@ -1864,6 +1901,32 @@ function autoMigrateMysql($pdo) {
             `notes` TEXT,
             `recorded_at` DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    } catch (Exception $e) {}
+
+    // 4. Tabel cash_denominations pada MySQL jika belum ada & seed default
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `cash_denominations` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `label` VARCHAR(50) NOT NULL,
+            `amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
+            `action_type` VARCHAR(20) NOT NULL DEFAULT 'SET',
+            `color` VARCHAR(30) DEFAULT 'indigo',
+            `sort_order` INT DEFAULT 0,
+            `is_active` TINYINT(1) DEFAULT 1,
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $cdCount = $pdo->query("SELECT COUNT(*) FROM `cash_denominations`")->fetchColumn();
+        if ($cdCount == 0) {
+            $pdo->exec("INSERT INTO `cash_denominations` (`id`, `label`, `amount`, `action_type`, `color`, `sort_order`, `is_active`) VALUES
+                (1, 'Uang Pas', 0, 'EXACT', 'indigo', 1, 1),
+                (2, '10K', 10000, 'SET', 'indigo', 2, 1),
+                (3, '20K', 20000, 'SET', 'indigo', 3, 1),
+                (4, '50K', 50000, 'SET', 'indigo', 4, 1),
+                (5, '100K', 100000, 'SET', 'indigo', 5, 1)
+            ");
+        }
     } catch (Exception $e) {}
 }
 

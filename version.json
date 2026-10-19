@@ -1,14 +1,22 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.4",
-  "build": "20261019-03",
+  "version": "1.2.5",
+  "build": "20261019-04",
   "release_date": "2026-10-19",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
     {
-      "version": "1.2.4",
+      "version": "1.2.5",
       "commit": "HEAD",
+      "date": "2026-10-19",
+      "title": "CRUD Tombol Cepat Pecahan Uang Kasir (Cash Denominations) & Pembersihan Banner Ongkir Campuran",
+      "description": "Menyediakan modul CRUD lengkap untuk tombol pecahan uang tunai kasir (Uang Pas, 10K, 20K, 50K, 100K, dsb) di Menu Payment dengan opsi aksi SET/EXACT/ADD, menata tata letak tombol kasir secara presisi setara dengan tombol metode pembayaran (Tunai, QRIS, Transfer), serta menghapus teks peringatan banner ongkir campuran pada layar penjualan POS.",
+      "rollback_command": "git checkout v1.2.4"
+    },
+    {
+      "version": "1.2.4",
+      "commit": "v1.2.4",
       "date": "2026-10-19",
       "title": "Perbaikan Kompatibilitas Sintaks MariaDB / MySQL Hosting pada Tarif Kirim & Konfigurasi Nota",
       "description": "Menghilangkan penggunaan klausul SQLite 'ON CONFLICT ... DO UPDATE SET' pada penyimpanan tarif pengiriman (delivery_settings), konfigurasi nota cabang (branch_settings), matriks izin role, dan update stok opening/closing shift yang menyebabkan galat SQLSTATE[42000] Syntax error 1064 di server MariaDB/MySQL hosting, serta menambahkan auto-translation di adaptQuery AppPDO.",

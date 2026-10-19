@@ -2554,6 +2554,63 @@ try {
             break;
 
         // ==========================================
+        // 4.4 MANAJEMEN PECAHAN UANG KASIR (CRUD CASH DENOMINATIONS)
+        // ==========================================
+        case 'get_cash_denominations':
+            $stmt = $pdo->query("SELECT * FROM cash_denominations ORDER BY sort_order ASC, id ASC");
+            echo json_encode(['success' => true, 'cash_denominations' => $stmt->fetchAll()]);
+            break;
+
+        case 'save_cash_denomination':
+            $id = !empty($input['id']) ? (int)$input['id'] : null;
+            $label = trim($input['label'] ?? '');
+            $amount = isset($input['amount']) ? (float)$input['amount'] : 0;
+            $actionType = strtoupper(trim($input['action_type'] ?? 'SET'));
+            if (!in_array($actionType, ['EXACT', 'SET', 'ADD'])) {
+                $actionType = 'SET';
+            }
+            $color = trim($input['color'] ?? 'indigo');
+            $sortOrder = isset($input['sort_order']) ? (int)$input['sort_order'] : 0;
+            $isActive = isset($input['is_active']) ? (int)$input['is_active'] : 1;
+
+            if (empty($label)) {
+                echo json_encode(['success' => false, 'message' => 'Label tombol pecahan uang wajib diisi (misal: Uang Pas, 10K, 50K).']);
+                exit;
+            }
+
+            if ($id) {
+                $stmt = $pdo->prepare("
+                    UPDATE cash_denominations 
+                    SET label = ?, amount = ?, action_type = ?, color = ?, sort_order = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                ");
+                $stmt->execute([$label, $amount, $actionType, $color, $sortOrder, $isActive, $id]);
+                echo json_encode(['success' => true, 'message' => "Pecahan uang '{$label}' berhasil diperbarui."]);
+            } else {
+                $stmt = $pdo->prepare("
+                    INSERT INTO cash_denominations (label, amount, action_type, color, sort_order, is_active, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ");
+                $stmt->execute([$label, $amount, $actionType, $color, $sortOrder, $isActive]);
+                $newId = $pdo->lastInsertId();
+                echo json_encode(['success' => true, 'message' => "Pecahan uang baru '{$label}' berhasil ditambahkan.", 'id' => $newId]);
+            }
+            break;
+
+        case 'delete_cash_denomination':
+            $id = (int)($input['id'] ?? 0);
+            $stmt = $pdo->prepare("SELECT id, label FROM cash_denominations WHERE id = ?");
+            $stmt->execute([$id]);
+            $cd = $stmt->fetch();
+            if (!$cd) {
+                echo json_encode(['success' => false, 'message' => 'Data pecahan uang tidak ditemukan.']);
+                exit;
+            }
+            $pdo->prepare("DELETE FROM cash_denominations WHERE id = ?")->execute([$id]);
+            echo json_encode(['success' => true, 'message' => "Pecahan uang '{$cd['label']}' berhasil dihapus."]);
+            break;
+
+        // ==========================================
         // 5. STOK CRUD & STOCK MOVEMENT (KARTU STOK)
         // ==========================================
         case 'get_inventory_stocks':

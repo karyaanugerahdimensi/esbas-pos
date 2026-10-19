@@ -139,6 +139,30 @@ INSERT INTO `payment_methods` (`id`, `code`, `name`, `category`, `account_number
 (7, 'PIUTANG', 'Piutang Cust', 'OTHER', '', '', '', 0, 1, 5, '2026-10-11 00:54:49');
 
 -- --------------------------------------------------------
+-- Table structure for `cash_denominations`
+-- --------------------------------------------------------
+DROP TABLE IF EXISTS `cash_denominations`;
+CREATE TABLE `cash_denominations` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `label` VARCHAR(50) NOT NULL,
+    `amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
+    `action_type` VARCHAR(20) NOT NULL DEFAULT 'SET',
+    `color` VARCHAR(30) DEFAULT 'indigo',
+    `sort_order` INT DEFAULT 0,
+    `is_active` TINYINT(1) DEFAULT 1,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table `cash_denominations`
+INSERT INTO `cash_denominations` (`id`, `label`, `amount`, `action_type`, `color`, `sort_order`, `is_active`) VALUES
+(1, 'Uang Pas', 0.00, 'EXACT', 'indigo', 1, 1),
+(2, '10K', 10000.00, 'SET', 'indigo', 2, 1),
+(3, '20K', 20000.00, 'SET', 'indigo', 3, 1),
+(4, '50K', 50000.00, 'SET', 'indigo', 4, 1),
+(5, '100K', 100000.00, 'SET', 'indigo', 5, 1);
+
+-- --------------------------------------------------------
 -- Table structure for `work_shifts`
 -- --------------------------------------------------------
 DROP TABLE IF EXISTS `work_shifts`;
