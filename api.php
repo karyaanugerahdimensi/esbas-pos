@@ -2614,68 +2614,190 @@ try {
         // 5. STOK CRUD & STOCK MOVEMENT (KARTU STOK)
         // ==========================================
         case 'get_inventory_stocks':
-            $branchId = (int)($_GET['branch_id'] ?? 1);
+            $branchIdParam = isset($_GET['branch_id']) ? trim($_GET['branch_id']) : 'ALL';
             $typeFilter = $_GET['product_type'] ?? 'ALL';
+            $isGlobal = ($branchIdParam === 'ALL' || $branchIdParam === '0' || $branchIdParam === '');
 
-            $sql = "
-                SELECT p.id as product_id, p.sku, p.name, p.category, p.product_type, p.unit, p.image_emoji, p.reorder_point,
-                       p.is_delivery_required as base_is_delivery_required,
-                       p.is_delivery_included as base_is_delivery_included,
-                       bs.stock, bs.local_cogs, bs.local_price, bs.last_updated,
-                       COALESCE(bs.is_active, 1) as is_active,
-                       bs.is_delivery_required as branch_is_delivery_required,
-                       bs.is_delivery_included as branch_is_delivery_included,
-                       COALESCE(bs.is_delivery_required, p.is_delivery_required, 0) as is_delivery_required,
-                       COALESCE(bs.is_delivery_included, p.is_delivery_included, 0) as is_delivery_included
-                FROM products p
-                JOIN branch_stocks bs ON p.id = bs.product_id
-                WHERE bs.branch_id = ? AND p.is_active = 1
-            ";
-            $params = [$branchId];
+            if ($isGlobal) {
+                // Tampilan Global Konsolidasi: Menjumlahkan stok fisik seluruh cabang
+                $sql = "
+                    SELECT p.id as product_id, p.sku, p.name, p.category, p.product_type, p.unit, p.image_emoji, p.reorder_point,
+                           p.is_delivery_required as base_is_delivery_required,
+                           p.is_delivery_included as base_is_delivery_included,
+                           COALESCE(SUM(bs.stock), 0) as stock,
+                           COALESCE(AVG(bs.local_cogs), p.cogs, 0) as local_cogs,
+                           COALESCE(AVG(bs.local_price), p.price, 0) as local_price,
+                           MAX(bs.last_updated) as last_updated,
+                           1 as is_active,
+                           COALESCE(p.is_delivery_required, 0) as is_delivery_required,
+                           COALESCE(p.is_delivery_included, 0) as is_delivery_included,
+                           1 as is_global
+                    FROM products p
+                    LEFT JOIN branch_stocks bs ON p.id = bs.product_id
+                    WHERE p.is_active = 1
+                ";
+                $params = [];
 
-            if ($typeFilter !== 'ALL') {
-                $sql .= " AND p.product_type = ?";
-                $params[] = $typeFilter;
+                if ($typeFilter !== 'ALL') {
+                    $sql .= " AND p.product_type = ?";
+                    $params[] = $typeFilter;
+                }
+                $sql .= " GROUP BY p.id, p.sku, p.name, p.category, p.product_type, p.unit, p.image_emoji, p.reorder_point, p.is_delivery_required, p.is_delivery_included, p.cogs, p.price";
+                $sql .= " ORDER BY p.product_type ASC, p.name ASC";
+
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
+                $stocks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                // Ambil rincian stok per cabang untuk setiap produk
+                $stmtBranches = $pdo->query("
+                    SELECT bs.product_id, bs.branch_id, b.name as branch_name, b.code as branch_code, COALESCE(bs.stock, 0) as stock
+                    FROM branch_stocks bs
+                    JOIN branches b ON b.id = bs.branch_id
+                    ORDER BY b.id ASC
+                ");
+                $branchMap = [];
+                if ($stmtBranches) {
+                    while ($brow = $stmtBranches->fetch(PDO::FETCH_ASSOC)) {
+                        $branchMap[$brow['product_id']][] = [
+                            'branch_id' => (int)$brow['branch_id'],
+                            'branch_name' => $brow['branch_name'],
+                            'branch_code' => $brow['branch_code'],
+                            'stock' => (float)$brow['stock']
+                        ];
+                    }
+                }
+
+                foreach ($stocks as &$s) {
+                    $s['branch_breakdown'] = $branchMap[$s['product_id']] ?? [];
+                    $s['stock'] = (float)$s['stock'];
+                    $s['local_cogs'] = (float)$s['local_cogs'];
+                    $s['local_price'] = (float)$s['local_price'];
+                }
+                unset($s);
+
+                echo json_encode([
+                    'success' => true,
+                    'is_global' => true,
+                    'branch_id' => 'ALL',
+                    'stocks' => $stocks
+                ]);
+            } else {
+                $branchId = (int)$branchIdParam;
+                $sql = "
+                    SELECT p.id as product_id, p.sku, p.name, p.category, p.product_type, p.unit, p.image_emoji, p.reorder_point,
+                           p.is_delivery_required as base_is_delivery_required,
+                           p.is_delivery_included as base_is_delivery_included,
+                           COALESCE(bs.stock, 0) as stock,
+                           COALESCE(bs.local_cogs, p.cogs, 0) as local_cogs,
+                           COALESCE(bs.local_price, p.price, 0) as local_price,
+                           bs.last_updated,
+                           COALESCE(bs.is_active, 1) as is_active,
+                           bs.is_delivery_required as branch_is_delivery_required,
+                           bs.is_delivery_included as branch_is_delivery_included,
+                           COALESCE(bs.is_delivery_required, p.is_delivery_required, 0) as is_delivery_required,
+                           COALESCE(bs.is_delivery_included, p.is_delivery_included, 0) as is_delivery_included,
+                           0 as is_global
+                    FROM products p
+                    LEFT JOIN branch_stocks bs ON p.id = bs.product_id AND bs.branch_id = ?
+                    WHERE p.is_active = 1
+                ";
+                $params = [$branchId];
+
+                if ($typeFilter !== 'ALL') {
+                    $sql .= " AND p.product_type = ?";
+                    $params[] = $typeFilter;
+                }
+                $sql .= " ORDER BY p.product_type ASC, p.name ASC";
+
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
+                $stocks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                foreach ($stocks as &$s) {
+                    $s['stock'] = (float)$s['stock'];
+                    $s['local_cogs'] = (float)$s['local_cogs'];
+                    $s['local_price'] = (float)$s['local_price'];
+                }
+                unset($s);
+
+                echo json_encode([
+                    'success' => true,
+                    'is_global' => false,
+                    'branch_id' => $branchId,
+                    'stocks' => $stocks
+                ]);
             }
-            $sql .= " ORDER BY p.product_type ASC, p.name ASC";
-
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
-            echo json_encode(['success' => true, 'stocks' => $stmt->fetchAll()]);
             break;
 
         case 'adjust_stock':
             $branchId = (int)($input['branch_id'] ?? 1);
             $productId = (int)($input['product_id'] ?? 0);
-            $adjType = trim($input['adjustment_type'] ?? 'PURCHASE'); // PURCHASE, ADJUSTMENT_DAMAGE, ADJUSTMENT_OPNAME
+            $adjType = trim($input['adjustment_type'] ?? 'PURCHASE'); // PURCHASE, ADJUSTMENT_DAMAGE, ADJUSTMENT_OPNAME, INITIAL_STOCK
             $qtyChange = (float)($input['qty_change'] ?? 0); // positive to add, negative to deduct
-            $notes = trim($input['notes'] ?? 'Penyesuaian stok manual');
+            $exactStock = isset($input['exact_stock']) && $input['exact_stock'] !== '' ? (float)$input['exact_stock'] : null;
+            $notes = trim($input['notes'] ?? 'Penyesuaian stok');
             $userId = (int)($input['user_id'] ?? ($_SESSION['user_id'] ?? 1));
 
-            if ($qtyChange == 0) {
-                echo json_encode(['success' => false, 'message' => 'Kuantitas perubahan tidak boleh 0.']);
+            if ($branchId <= 0) {
+                echo json_encode(['success' => false, 'message' => 'Cabang target wajib dipilih.']);
+                exit;
+            }
+            if ($productId <= 0) {
+                echo json_encode(['success' => false, 'message' => 'Produk / item wajib dipilih.']);
                 exit;
             }
 
-            $pdo->beginTransaction();
+            // Ambil nama cabang dan produk untuk log mutasi
+            $stmtBName = $pdo->prepare("SELECT name FROM branches WHERE id = ?");
+            $stmtBName->execute([$branchId]);
+            $branchName = $stmtBName->fetchColumn() ?: "Cabang #{$branchId}";
+
+            $stmtPName = $pdo->prepare("SELECT name, unit FROM products WHERE id = ?");
+            $stmtPName->execute([$productId]);
+            $prodRow = $stmtPName->fetch(PDO::FETCH_ASSOC);
+            $prodName = $prodRow ? $prodRow['name'] : "Produk #{$productId}";
 
             $stmtCur = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
             $stmtCur->execute([$branchId, $productId]);
-            $currentStock = (float)$stmtCur->fetchColumn();
+            $curVal = $stmtCur->fetchColumn();
+            $currentStock = $curVal !== false ? (float)$curVal : 0;
 
-            $newStock = $currentStock + $qtyChange;
-            if ($newStock < 0) {
-                $pdo->rollBack();
-                echo json_encode(['success' => false, 'message' => 'Pengurangan melebihi stok yang tersedia saat ini.']);
-                exit;
+            if ($adjType === 'INITIAL_STOCK' || $exactStock !== null) {
+                $targetStock = $exactStock !== null ? $exactStock : (float)($input['exact_stock'] ?? $input['qty_change'] ?? 0);
+                if ($targetStock < 0) {
+                    echo json_encode(['success' => false, 'message' => 'Nilai stok awal tidak boleh bernilai negatif.']);
+                    exit;
+                }
+                $newStock = $targetStock;
+                $qtyChange = $newStock - $currentStock;
+            } else {
+                if ($qtyChange == 0) {
+                    echo json_encode(['success' => false, 'message' => 'Kuantitas perubahan tidak boleh 0.']);
+                    exit;
+                }
+                $newStock = $currentStock + $qtyChange;
+                if ($newStock < 0) {
+                    echo json_encode(['success' => false, 'message' => "Pengurangan melebihi stok yang tersedia saat ini di {$branchName} (Stok saat ini: {$currentStock})."]);
+                    exit;
+                }
             }
 
-            // Update Branch Stock
-            $stmtUp = $pdo->prepare("UPDATE branch_stocks SET stock = ?, last_updated = datetime('now', 'localtime') WHERE branch_id = ? AND product_id = ?");
-            $stmtUp->execute([$newStock, $branchId, $productId]);
+            $pdo->beginTransaction();
+            $now = date('Y-m-d H:i:s');
+
+            // Upsert branch_stocks (ANSI SQL cross-database)
+            if ($curVal === false) {
+                $stmtIns = $pdo->prepare("INSERT INTO branch_stocks (branch_id, product_id, stock, local_price, local_cogs, last_updated) VALUES (?, ?, ?, 0, 0, ?)");
+                $stmtIns->execute([$branchId, $productId, $newStock, $now]);
+            } else {
+                $stmtUp = $pdo->prepare("UPDATE branch_stocks SET stock = ?, last_updated = ? WHERE branch_id = ? AND product_id = ?");
+                $stmtUp->execute([$newStock, $now, $branchId, $productId]);
+            }
 
             // Insert Stock Movement Record
-            $refNo = "ADJ-" . date('Ymd-His');
+            $refPrefix = ($adjType === 'INITIAL_STOCK') ? 'INIT-' : 'ADJ-';
+            $refNo = $refPrefix . date('Ymd-His');
             $stmtLog = $pdo->prepare("
                 INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -2686,36 +2808,48 @@ try {
 
             echo json_encode([
                 'success' => true,
-                'message' => 'Stok berhasil diperbarui! Riwayat mutasi tercatat pada Kartu Pergerakan Stok.',
+                'message' => "Stok {$prodName} di {$branchName} berhasil diperbarui menjadi {$newStock} " . ($prodRow['unit'] ?? '') . "! Riwayat mutasi tercatat pada Kartu Pergerakan Stok.",
                 'stock_before' => $currentStock,
-                'stock_after' => $newStock
+                'stock_after' => $newStock,
+                'qty_change' => $qtyChange,
+                'branch_id' => $branchId,
+                'branch_name' => $branchName,
+                'product_id' => $productId
             ]);
             break;
 
         case 'get_stock_movements':
-            $branchId = (int)($_GET['branch_id'] ?? 1);
+            $branchIdParam = isset($_GET['branch_id']) ? trim($_GET['branch_id']) : 'ALL';
             $productId = !empty($_GET['product_id']) ? (int)$_GET['product_id'] : null;
+            $isGlobal = ($branchIdParam === 'ALL' || $branchIdParam === '0' || $branchIdParam === '');
 
             $sql = "
                 SELECT sm.*, p.name as product_name, p.sku as product_sku, p.unit, p.product_type,
-                       b.name as branch_name, u.name as user_name
+                       b.name as branch_name, b.code as branch_code, u.name as user_name
                 FROM stock_movements sm
                 JOIN products p ON p.id = sm.product_id
                 JOIN branches b ON b.id = sm.branch_id
                 LEFT JOIN users u ON u.id = sm.user_id
-                WHERE sm.branch_id = ?
             ";
-            $params = [$branchId];
-
-            if ($productId) {
-                $sql .= " AND sm.product_id = ?";
-                $params[] = $productId;
+            $params = [];
+            if (!$isGlobal) {
+                $sql .= " WHERE sm.branch_id = ?";
+                $params[] = (int)$branchIdParam;
+                if ($productId) {
+                    $sql .= " AND sm.product_id = ?";
+                    $params[] = $productId;
+                }
+            } else {
+                if ($productId) {
+                    $sql .= " WHERE sm.product_id = ?";
+                    $params[] = $productId;
+                }
             }
-            $sql .= " ORDER BY sm.id DESC LIMIT 100";
+            $sql .= " ORDER BY sm.id DESC LIMIT 150";
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
-            echo json_encode(['success' => true, 'movements' => $stmt->fetchAll()]);
+            echo json_encode(['success' => true, 'is_global' => $isGlobal, 'movements' => $stmt->fetchAll()]);
             break;
 
         // ==========================================

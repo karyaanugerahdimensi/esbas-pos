@@ -2162,12 +2162,22 @@ $appVersionData = getAppVersionData();
                             <i data-lucide="layers" class="w-5 h-5 text-indigo-600"></i>
                             <span>Manajemen Stok & Kartu Pergerakan (Stock Ledger)</span>
                         </h3>
-                        <p class="text-xs text-slate-500">Saldo persediaan cabang aktif & audit log mutasi (penjualan, konsumsi BOM, pembelian, penyesuaian).</p>
+                        <p class="text-xs text-slate-500">Saldo persediaan cabang aktif, konsolidasi stok gabungan seluruh cabang & audit log mutasi.</p>
                     </div>
-                    <button onclick="openStockAdjustModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-2">
-                        <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
-                        <span>Penyesuaian / Tambah Stok</span>
-                    </button>
+                    <div class="flex items-center space-x-2 flex-wrap gap-2">
+                        <!-- Branch Selector Filter -->
+                        <div class="flex items-center space-x-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 text-xs">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                            <label for="stock-branch-select" class="font-bold text-slate-700 shrink-0">Pilih Cabang:</label>
+                            <select id="stock-branch-select" onchange="onStockBranchChange()" class="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer">
+                                <option value="ALL">🌐 Semua Cabang (Konsolidasi Global)</option>
+                            </select>
+                        </div>
+                        <button onclick="openStockAdjustModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-2">
+                            <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
+                            <span>Penyesuaian / Tambah Stok</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Sub Navigation: Saldo Stok vs Kartu Pergerakan -->
@@ -2190,10 +2200,11 @@ $appVersionData = getAppVersionData();
                                     <th class="py-3 px-3">Nama Item</th>
                                     <th class="py-3 px-3">Jenis</th>
                                     <th class="py-3 px-3">Satuan</th>
-                                    <th class="py-3 px-3 text-right">Stok Fisik Cabang</th>
+                                    <th class="py-3 px-3 text-right" id="stock-col-header-balance">Stok Fisik Gabungan</th>
                                     <th class="py-3 px-3 text-right">Batas Min (Reorder)</th>
                                     <th class="py-3 px-3 text-right">HPP Pokok</th>
                                     <th class="py-3 px-3">Status</th>
+                                    <th class="py-3 px-3 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="stock-balance-table-body" class="divide-y divide-slate-100"></tbody>
@@ -2208,6 +2219,7 @@ $appVersionData = getAppVersionData();
                             <thead class="bg-slate-50 text-slate-500 font-bold border-b">
                                 <tr>
                                     <th class="py-3 px-3">Waktu</th>
+                                    <th class="py-3 px-3">Cabang</th>
                                     <th class="py-3 px-3">Nama Produk / Bahan</th>
                                     <th class="py-3 px-3">Tipe Pergerakan</th>
                                     <th class="py-3 px-3 text-right">Kuantitas</th>
@@ -5912,34 +5924,78 @@ $appVersionData = getAppVersionData();
     <!-- Modal 6: Penyesuaian Stok (Stock Adjustment) -->
     <div id="stock-adjust-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <h3 class="font-bold text-slate-800 text-base">Penyesuaian Stok & Mutasi</h3>
-            <p class="text-xs text-slate-500">Mutasi kuantitas akan tercatat pada Buku Kartu Pergerakan Stok.</p>
-            <form onsubmit="saveStockAdjustForm(event)" class="space-y-3 text-xs">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
+                    <i data-lucide="layers" class="w-5 h-5 text-indigo-600"></i>
+                    <span>Setel Stok Awal & Mutasi Cabang</span>
+                </h3>
+                <button type="button" onclick="closeStockAdjustModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-500">Pilih cabang tujuan untuk menyetel stok awal atau mencatat penyesuaian/mutasi kuantitas stok barang.</p>
+            <form onsubmit="saveStockAdjustForm(event)" class="space-y-3.5 text-xs">
+                <!-- 1. Target Branch Selection -->
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Pilih Item (Barang Jadi atau Bahan Baku):</label>
-                    <select id="adj-product-select" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium"></select>
+                    <label class="block font-bold text-slate-700 mb-1 flex items-center space-x-1.5">
+                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-600"></i>
+                        <span>Pilih Cabang Target:</span>
+                    </label>
+                    <select id="adj-branch-select" onchange="onStockAdjustBranchChange()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                        <!-- Populated dynamically via JS -->
+                    </select>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Jenis Pergerakan:</label>
-                        <select id="adj-type" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium">
-                            <option value="PURCHASE">Barang Masuk Pembelian (+)</option>
-                            <option value="ADJUSTMENT_DAMAGE">Penyesuaian Rusak / Hilang (-)</option>
-                            <option value="ADJUSTMENT_OPNAME">Koreksi Opname (+/-)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Jumlah Perubahan (+ / -):</label>
-                        <input type="number" step="1" id="adj-qty" placeholder="Contoh: 50 atau -5" class="w-full p-2.5 bg-slate-50 border rounded-xl font-black" required>
+
+                <!-- 2. Target Product Selection -->
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1 flex items-center space-x-1.5">
+                        <i data-lucide="package" class="w-3.5 h-3.5 text-indigo-600"></i>
+                        <span>Pilih Item (Barang Jadi atau Bahan Baku):</span>
+                    </label>
+                    <select id="adj-product-select" onchange="onStockAdjustProductChange()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                        <!-- Populated dynamically via JS -->
+                    </select>
+                </div>
+
+                <!-- 3. Current Stock Indicator -->
+                <div class="bg-indigo-50/80 border border-indigo-100 p-2.5 rounded-xl flex items-center justify-between text-xs">
+                    <span class="text-indigo-900 font-medium">Stok Saat Ini di Cabang Terpilih:</span>
+                    <span id="adj-current-stock-badge" class="font-black text-indigo-700 font-mono text-sm">0</span>
+                </div>
+
+                <!-- 4. Adjustment Mode -->
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Jenis Aksi / Pergerakan Stok:</label>
+                    <select id="adj-type" onchange="onStockAdjustTypeChange()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                        <option value="INITIAL_STOCK">🎯 Setel Stok Awal / Ubah Stok Menjadi (Nilai Pasti)</option>
+                        <option value="PURCHASE">📦 Barang Masuk Pembelian (+ Tambah Stok)</option>
+                        <option value="ADJUSTMENT_OPNAME">⚖️ Koreksi Selisih Opname (+ / -)</option>
+                        <option value="ADJUSTMENT_DAMAGE">⚠️ Penyesuaian Rusak / Hilang (- Kurangi Stok)</option>
+                    </select>
+                </div>
+
+                <!-- 5. Quantity & Interactive Preview -->
+                <div>
+                    <label id="adj-qty-label" class="block font-bold text-slate-700 mb-1">Nilai Stok Baru (Stok Awal Cabang):</label>
+                    <input type="number" step="any" id="adj-qty" oninput="updateStockAdjustPreview()" placeholder="Masukkan angka stok" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-black text-slate-800 text-sm focus:ring-2 focus:ring-indigo-500" required>
+                    <div id="adj-preview-calc" class="text-[11px] text-slate-500 mt-1 font-mono bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        Perhitungan: Stok saat ini 0 → Stok baru 0
                     </div>
                 </div>
+
+                <!-- 6. Reason / Notes -->
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">Alasan / Catatan Penyesuaian:</label>
-                    <input type="text" id="adj-notes" placeholder="Penerimaan PO / Koreksi opname fisik" class="w-full p-2.5 bg-slate-50 border rounded-xl" required>
+                    <input type="text" id="adj-notes" placeholder="Contoh: Stok awal buka cabang / Opname fisik" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-500" required>
                 </div>
+
+                <!-- 7. Action Buttons -->
                 <div class="grid grid-cols-2 gap-2 pt-2">
-                    <button type="button" onclick="closeStockAdjustModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700">Batal</button>
-                    <button type="submit" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow">Simpan Mutasi Stok</button>
+                    <button type="button" onclick="closeStockAdjustModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700 transition-colors">Batal</button>
+                    <button type="submit" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow transition-colors flex items-center justify-center space-x-1.5">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                        <span>Simpan Stok Cabang</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -7901,6 +7957,7 @@ $appVersionData = getAppVersionData();
                 applyRolePermissionsToSidebar();
 
                 renderBranchOptions();
+                initStockBranchSelector();
                 renderCategoryPills();
                 renderPosTierButtons();
                 renderPosCustomerSelect();
@@ -14901,33 +14958,102 @@ Manager / Supervisor: __________________
             }
         }
 
+        function initStockBranchSelector() {
+            const select = document.getElementById('stock-branch-select');
+            if (!select) return;
+            const curVal = select.value || 'ALL';
+            let html = '<option value="ALL">🌐 Semua Cabang (Konsolidasi Global)</option>';
+            if (Array.isArray(state.branches)) {
+                state.branches.forEach(b => {
+                    html += `<option value="${b.id}">📍 ${b.name} (${b.code || ''})</option>`;
+                });
+            }
+            select.innerHTML = html;
+            select.value = curVal;
+        }
+
+        function onStockBranchChange() {
+            loadStockInventory();
+            const viewMov = document.getElementById('stock-view-movements');
+            if (viewMov && !viewMov.classList.contains('hidden')) {
+                loadStockMovements();
+            }
+        }
+
         async function loadStockInventory() {
-            const bId = state.currentBranch ? state.currentBranch.id : 1;
+            initStockBranchSelector();
+            const branchSelect = document.getElementById('stock-branch-select');
+            const bId = branchSelect ? branchSelect.value : 'ALL';
+            const isGlobal = (bId === 'ALL' || bId === '0' || bId === '');
+
+            // Update Kolom Header
+            const headerCol = document.getElementById('stock-col-header-balance');
+            if (headerCol) {
+                if (isGlobal) {
+                    headerCol.innerHTML = `Stok Fisik Gabungan <span class="block text-[10px] text-indigo-600 font-semibold">(Semua Cabang)</span>`;
+                } else {
+                    const br = (state.branches || []).find(b => b.id == bId);
+                    const brName = br ? br.name : `Cabang #${bId}`;
+                    headerCol.innerHTML = `Stok Fisik Cabang <span class="block text-[10px] text-emerald-600 font-semibold">(${brName})</span>`;
+                }
+            }
+
             const res = await fetch(`api.php?action=get_inventory_stocks&branch_id=${bId}`);
             const data = await res.json();
             if (!data.success) return;
 
-            document.getElementById('stock-balance-table-body').innerHTML = data.stocks.map(s => `
-                <tr class="hover:bg-slate-50">
-                    <td class="py-2.5 px-3 font-mono font-bold text-indigo-700">${s.sku}</td>
-                    <td class="py-2.5 px-3 font-semibold text-slate-800">${s.image_emoji || ''} ${s.name}</td>
-                    <td class="py-2.5 px-3"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${s.product_type === 'FINISHED_GOODS' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${s.product_type}</span></td>
-                    <td class="py-2.5 px-3 text-slate-500 font-medium">${s.unit}</td>
-                    <td class="py-2.5 px-3 text-right font-black ${s.stock <= s.reorder_point ? 'text-rose-600' : 'text-slate-800'} text-sm font-mono">${s.stock}</td>
-                    <td class="py-2.5 px-3 text-right text-slate-500 font-mono">${s.reorder_point}</td>
-                    <td class="py-2.5 px-3 text-right text-slate-700 font-mono">${formatRupiah(s.local_cogs)}</td>
-                    <td class="py-2.5 px-3">
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${s.stock <= s.reorder_point ? 'bg-rose-100 text-rose-800 animate-pulse' : 'bg-emerald-100 text-emerald-800'}">
-                            ${s.stock <= s.reorder_point ? '⚠️ Menipis' : 'Aman'}
-                        </span>
-                    </td>
-                </tr>
-            `).join('');
+            document.getElementById('stock-balance-table-body').innerHTML = data.stocks.map(s => {
+                const stockVal = parseFloat(s.stock);
+                const reorderVal = parseFloat(s.reorder_point);
+                const isWarning = stockVal <= reorderVal;
+
+                // Breakdown cabang jika tampilan global
+                let breakdownHtml = '';
+                if (isGlobal && Array.isArray(s.branch_breakdown) && s.branch_breakdown.length > 0) {
+                    breakdownHtml = `
+                        <div class="flex flex-wrap gap-1 mt-1 justify-end">
+                            ${s.branch_breakdown.map(bb => `
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] bg-slate-100 text-slate-600 border border-slate-200 font-mono" title="${bb.branch_name}">
+                                    <span class="font-semibold text-slate-800 mr-1">${bb.branch_name.replace('Cabang ', '')}:</span> ${bb.stock}
+                                </span>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                return `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-2.5 px-3 font-mono font-bold text-indigo-700">${s.sku}</td>
+                        <td class="py-2.5 px-3 font-semibold text-slate-800">${s.image_emoji || ''} ${s.name}</td>
+                        <td class="py-2.5 px-3"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${s.product_type === 'FINISHED_GOODS' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${s.product_type}</span></td>
+                        <td class="py-2.5 px-3 text-slate-500 font-medium">${s.unit}</td>
+                        <td class="py-2.5 px-3 text-right">
+                            <span class="font-black text-sm font-mono ${isWarning ? 'text-rose-600' : 'text-slate-800'}">${s.stock}</span>
+                            ${breakdownHtml}
+                        </td>
+                        <td class="py-2.5 px-3 text-right text-slate-500 font-mono">${s.reorder_point}</td>
+                        <td class="py-2.5 px-3 text-right text-slate-700 font-mono">${formatRupiah(s.local_cogs)}</td>
+                        <td class="py-2.5 px-3">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isWarning ? 'bg-rose-100 text-rose-800 animate-pulse' : 'bg-emerald-100 text-emerald-800'}">
+                                ${isWarning ? '⚠️ Menipis' : 'Aman'}
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-3 text-center">
+                            <button onclick="openStockAdjustModal(${s.product_id}, ${isGlobal ? 'null' : bId})" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-[11px] font-bold shadow-sm transition-colors inline-flex items-center space-x-1" title="Atur / Setel Stok Awal Cabang">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                <span>Atur Stok</span>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
             lucide.createIcons();
         }
 
         async function loadStockMovements() {
-            const bId = state.currentBranch ? state.currentBranch.id : 1;
+            const branchSelect = document.getElementById('stock-branch-select');
+            const bId = branchSelect ? branchSelect.value : 'ALL';
+
             const res = await fetch(`api.php?action=get_stock_movements&branch_id=${bId}`);
             const data = await res.json();
             if (!data.success) return;
@@ -14937,13 +15063,20 @@ Manager / Supervisor: __________________
                 if (m.movement_type === 'BOM_DEDUCTION') badgeClass = 'bg-purple-100 text-purple-800 font-black';
                 else if (m.movement_type === 'STOCK_OUT_SALE') badgeClass = 'bg-rose-100 text-rose-800 font-bold';
                 else if (m.movement_type === 'PURCHASE') badgeClass = 'bg-emerald-100 text-emerald-800 font-bold';
+                else if (m.movement_type === 'INITIAL_STOCK') badgeClass = 'bg-indigo-100 text-indigo-800 font-black';
+                else if (m.movement_type === 'ADJUSTMENT_DAMAGE') badgeClass = 'bg-rose-100 text-rose-800 font-bold';
+                else if (m.movement_type === 'ADJUSTMENT_OPNAME') badgeClass = 'bg-amber-100 text-amber-800 font-bold';
 
+                const qtyVal = parseFloat(m.qty_change);
                 return `
-                    <tr class="hover:bg-slate-50">
-                        <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap text-[11px]">${m.created_at}</td>
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap text-[11px] font-mono">${m.created_at}</td>
+                        <td class="py-2.5 px-3 font-semibold text-indigo-900 text-[11px] whitespace-nowrap">
+                            <span class="px-2 py-0.5 bg-slate-100 rounded-md border border-slate-200">${m.branch_name || '-'}</span>
+                        </td>
                         <td class="py-2.5 px-3 font-semibold text-slate-800">${m.product_name} (${m.unit})</td>
                         <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] ${badgeClass}">${m.movement_type}</span></td>
-                        <td class="py-2.5 px-3 text-right font-black font-mono ${m.qty_change < 0 ? 'text-rose-600' : 'text-emerald-600'}">${m.qty_change > 0 ? '+' : ''}${m.qty_change}</td>
+                        <td class="py-2.5 px-3 text-right font-black font-mono ${qtyVal < 0 ? 'text-rose-600' : 'text-emerald-600'}">${qtyVal > 0 ? '+' : ''}${m.qty_change}</td>
                         <td class="py-2.5 px-3 text-right text-slate-400 font-mono">${m.stock_before}</td>
                         <td class="py-2.5 px-3 text-right text-slate-800 font-bold font-mono">${m.stock_after}</td>
                         <td class="py-2.5 px-3 font-mono text-[10px] text-indigo-700 font-bold">${m.reference_no || '-'}</td>
@@ -14951,19 +15084,136 @@ Manager / Supervisor: __________________
                         <td class="py-2.5 px-3 text-slate-500">${m.user_name || 'Admin'}</td>
                     </tr>
                 `;
-            }).join('');
+            }).join('') || `<tr><td colspan="10" class="py-8 text-center text-slate-400">Belum ada riwayat pergerakan stok untuk cabang terpilih.</td></tr>`;
             lucide.createIcons();
         }
 
-        function openStockAdjustModal() {
-            fetch(`api.php?action=get_inventory_stocks&branch_id=${state.currentBranch.id}`)
-                .then(r => r.json())
-                .then(d => {
-                    document.getElementById('adj-product-select').innerHTML = d.stocks.map(s => 
-                        `<option value="${s.product_id}">${s.name} (${s.sku}) - Stok: ${s.stock} ${s.unit}</option>`
-                    ).join('');
-                });
+        // Variabel penampung stok saat ini untuk kalkulasi modal
+        let currentModalBranchStocks = [];
+
+        async function openStockAdjustModal(targetProductId = null, targetBranchId = null) {
+            // 1. Populasi Dropdown Cabang
+            const branchSelect = document.getElementById('adj-branch-select');
+            if (branchSelect) {
+                branchSelect.innerHTML = (state.branches || []).map(b => 
+                    `<option value="${b.id}">📍 ${b.name} (${b.code || ''})</option>`
+                ).join('');
+
+                // Tentukan cabang default
+                if (targetBranchId) {
+                    branchSelect.value = targetBranchId;
+                } else {
+                    const pageBranch = document.getElementById('stock-branch-select')?.value;
+                    if (pageBranch && pageBranch !== 'ALL') {
+                        branchSelect.value = pageBranch;
+                    } else if (state.currentBranch) {
+                        branchSelect.value = state.currentBranch.id;
+                    }
+                }
+            }
+
+            // 2. Muat produk dan set stok awal
+            await loadStockAdjustProducts(targetProductId);
+
+            // 3. Setel default mode ke INITIAL_STOCK bila stok awal diedit
+            document.getElementById('adj-type').value = 'INITIAL_STOCK';
+            onStockAdjustTypeChange();
+
             document.getElementById('stock-adjust-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        async function loadStockAdjustProducts(selectedProductId = null) {
+            const bId = parseInt(document.getElementById('adj-branch-select')?.value || (state.currentBranch ? state.currentBranch.id : 1));
+            const res = await fetch(`api.php?action=get_inventory_stocks&branch_id=${bId}`);
+            const data = await res.json();
+            if (!data.success) return;
+
+            currentModalBranchStocks = data.stocks || [];
+            const prodSelect = document.getElementById('adj-product-select');
+            prodSelect.innerHTML = currentModalBranchStocks.map(s => 
+                `<option value="${s.product_id}" data-stock="${s.stock}" data-unit="${s.unit}">${s.name} (${s.sku}) - Stok Cabang Ini: ${s.stock} ${s.unit}</option>`
+            ).join('');
+
+            if (selectedProductId) {
+                prodSelect.value = selectedProductId;
+            }
+            onStockAdjustProductChange();
+        }
+
+        async function onStockAdjustBranchChange() {
+            const curPId = parseInt(document.getElementById('adj-product-select')?.value || 0);
+            await loadStockAdjustProducts(curPId);
+        }
+
+        function onStockAdjustProductChange() {
+            const prodSelect = document.getElementById('adj-product-select');
+            const selectedOpt = prodSelect ? prodSelect.options[prodSelect.selectedIndex] : null;
+            const curStock = selectedOpt ? parseFloat(selectedOpt.getAttribute('data-stock') || 0) : 0;
+            const curUnit = selectedOpt ? (selectedOpt.getAttribute('data-unit') || 'pcs') : 'pcs';
+
+            const badge = document.getElementById('adj-current-stock-badge');
+            if (badge) badge.innerText = `${curStock} ${curUnit}`;
+
+            updateStockAdjustPreview();
+        }
+
+        function onStockAdjustTypeChange() {
+            const adjType = document.getElementById('adj-type').value;
+            const labelEl = document.getElementById('adj-qty-label');
+            const inputEl = document.getElementById('adj-qty');
+            const notesEl = document.getElementById('adj-notes');
+
+            if (adjType === 'INITIAL_STOCK') {
+                labelEl.innerText = 'Nilai Stok Baru (Stok Awal Cabang):';
+                inputEl.placeholder = 'Contoh: 100 (Stok akan disetel persis ke nilai ini)';
+                if (!notesEl.value || notesEl.value.includes('Penerimaan') || notesEl.value.includes('Opname')) {
+                    notesEl.value = 'Setel stok awal cabang';
+                }
+            } else if (adjType === 'PURCHASE') {
+                labelEl.innerText = 'Jumlah Tambahan Stok Masuk (+):';
+                inputEl.placeholder = 'Contoh: 50 (Menambah stok)';
+                notesEl.value = 'Barang masuk pembelian / restock';
+            } else if (adjType === 'ADJUSTMENT_DAMAGE') {
+                labelEl.innerText = 'Jumlah Stok Berkurang / Rusak (-):';
+                inputEl.placeholder = 'Contoh: 5 (Mengurangi stok)';
+                notesEl.value = 'Barang rusak / bocor / kadaluwarsa';
+            } else {
+                labelEl.innerText = 'Selisih Kuantitas Opname (+ / -):';
+                inputEl.placeholder = 'Contoh: 10 atau -3';
+                notesEl.value = 'Koreksi penyesuaian stock opname fisik';
+            }
+            updateStockAdjustPreview();
+        }
+
+        function updateStockAdjustPreview() {
+            const prodSelect = document.getElementById('adj-product-select');
+            const selectedOpt = prodSelect ? prodSelect.options[prodSelect.selectedIndex] : null;
+            const curStock = selectedOpt ? parseFloat(selectedOpt.getAttribute('data-stock') || 0) : 0;
+            const curUnit = selectedOpt ? (selectedOpt.getAttribute('data-unit') || '') : '';
+
+            const adjType = document.getElementById('adj-type').value;
+            const inputVal = parseFloat(document.getElementById('adj-qty').value) || 0;
+            const previewEl = document.getElementById('adj-preview-calc');
+            if (!previewEl) return;
+
+            let newStock = curStock;
+            let diff = 0;
+
+            if (adjType === 'INITIAL_STOCK') {
+                newStock = inputVal;
+                diff = newStock - curStock;
+            } else if (adjType === 'ADJUSTMENT_DAMAGE') {
+                diff = -Math.abs(inputVal);
+                newStock = curStock + diff;
+            } else {
+                diff = inputVal;
+                newStock = curStock + diff;
+            }
+
+            const diffText = diff >= 0 ? `+${diff}` : `${diff}`;
+            const warnText = newStock < 0 ? '<span class="text-rose-600 font-bold ml-2">⚠️ Stok minus tidak diizinkan!</span>' : '';
+            previewEl.innerHTML = `Perhitungan: Stok saat ini <b>${curStock} ${curUnit}</b> → Stok baru <b>${newStock} ${curUnit}</b> (Perubahan: <b>${diffText}</b>)${warnText}`;
         }
 
         function closeStockAdjustModal() {
@@ -14972,28 +15222,44 @@ Manager / Supervisor: __________________
 
         async function saveStockAdjustForm(e) {
             e.preventDefault();
+            const branchId = parseInt(document.getElementById('adj-branch-select').value);
             const pId = parseInt(document.getElementById('adj-product-select').value);
             const adjType = document.getElementById('adj-type').value;
-            const qty = parseFloat(document.getElementById('adj-qty').value);
-            const notes = document.getElementById('adj-notes').value;
+            const inputVal = parseFloat(document.getElementById('adj-qty').value);
+            const notes = document.getElementById('adj-notes').value.trim();
+
+            if (isNaN(inputVal)) {
+                alert('Silakan masukkan angka kuantitas yang valid.');
+                return;
+            }
+
+            let payload = {
+                branch_id: branchId,
+                product_id: pId,
+                adjustment_type: adjType,
+                notes: notes,
+                user_id: state.currentUser ? state.currentUser.id : 1
+            };
+
+            if (adjType === 'INITIAL_STOCK') {
+                payload.exact_stock = inputVal;
+            } else if (adjType === 'ADJUSTMENT_DAMAGE') {
+                payload.qty_change = -Math.abs(inputVal);
+            } else {
+                payload.qty_change = inputVal;
+            }
 
             const res = await fetch('api.php?action=adjust_stock', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    branch_id: state.currentBranch.id,
-                    product_id: pId,
-                    adjustment_type: adjType,
-                    qty_change: qty,
-                    notes: notes,
-                    user_id: state.currentUser.id
-                })
+                body: JSON.stringify(payload)
             });
             const data = await res.json();
             alert(data.message || data.error);
             if (data.success) {
                 closeStockAdjustModal();
                 loadStockInventory();
+                loadStockMovements();
             }
         }
 
