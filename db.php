@@ -64,6 +64,12 @@ class AppPDO extends PDO {
                 $sql = preg_replace('/ON\s+CONFLICT\s*\([^)]*\)\s*DO\s+UPDATE\s+SET/i', 'ON DUPLICATE KEY UPDATE', $sql);
                 $sql = preg_replace('/excluded\.([a-zA-Z0-9_]+)/i', 'VALUES($1)', $sql);
             }
+
+            // 8. Replace SQLite INSERT OR REPLACE INTO with MySQL REPLACE INTO
+            $sql = preg_replace('/INSERT\s+OR\s+REPLACE\s+INTO/i', 'REPLACE INTO', $sql);
+
+            // 9. Replace SQLite INSERT OR IGNORE INTO with MySQL INSERT IGNORE INTO
+            $sql = preg_replace('/INSERT\s+OR\s+IGNORE\s+INTO/i', 'INSERT IGNORE INTO', $sql);
         }
         return $sql;
     }

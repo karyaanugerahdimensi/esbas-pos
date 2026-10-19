@@ -7244,11 +7244,25 @@ try {
                 exit;
             }
 
-            $stmt = $pdo->prepare("
-                INSERT OR REPLACE INTO mitra_custom_prices (customer_id, product_id, custom_price, notes, updated_at)
-                VALUES (?, ?, ?, ?, datetime('now', 'localtime'))
-            ");
-            $stmt->execute([$customerId, $productId, $customPrice, $notes]);
+            $now = date('Y-m-d H:i:s');
+            $stmtCheck = $pdo->prepare("SELECT id FROM mitra_custom_prices WHERE customer_id = ? AND product_id = ?");
+            $stmtCheck->execute([$customerId, $productId]);
+            $existingId = $stmtCheck->fetchColumn();
+
+            if ($existingId) {
+                $stmt = $pdo->prepare("
+                    UPDATE mitra_custom_prices 
+                    SET custom_price = ?, notes = ?, updated_at = ? 
+                    WHERE id = ?
+                ");
+                $stmt->execute([$customPrice, $notes, $now, $existingId]);
+            } else {
+                $stmt = $pdo->prepare("
+                    INSERT INTO mitra_custom_prices (customer_id, product_id, custom_price, notes, updated_at) 
+                    VALUES (?, ?, ?, ?, ?)
+                ");
+                $stmt->execute([$customerId, $productId, $customPrice, $notes, $now]);
+            }
             echo json_encode(['success' => true, 'message' => 'Harga jual khusus mitra berhasil disimpan!']);
             break;
 
