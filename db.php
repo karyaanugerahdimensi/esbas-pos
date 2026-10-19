@@ -16,11 +16,15 @@ $dbDriver = defined('DB_DRIVER') ? strtolower(DB_DRIVER) : 'sqlite';
  * Universal PDO Wrapper to bridge MySQL and SQLite syntax seamlessly
  */
 class AppPDO extends PDO {
-    private bool $isMysql = false;
+    protected bool $isMysql = false;
 
     public function __construct(string $dsn, ?string $username = null, ?string $password = null, ?array $options = null) {
         parent::__construct($dsn, $username, $password, $options ?? []);
         $this->isMysql = (strpos($dsn, 'mysql:') === 0);
+    }
+
+    public function setIsMysql(bool $val): void {
+        $this->isMysql = $val;
     }
 
     public function isMysql(): bool {
@@ -29,14 +33,33 @@ class AppPDO extends PDO {
 
     public function adaptQuery(string $sql): string {
         if ($this->isMysql) {
-            $sql = str_replace("datetime('now', 'localtime')", "NOW()", $sql);
-            $sql = str_replace("date('now')", "CURDATE()", $sql);
-            $sql = preg_replace("/strftime\('%Y-%m',\s*created_at\)\s*=\s*strftime\('%Y-%m',\s*'now'\)/", "DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(NOW(), '%Y-%m')", $sql);
-            $sql = preg_replace("/strftime\('%Y-%m',\s*([^)]+)\)/", "DATE_FORMAT($1, '%Y-%m')", $sql);
+            // 1. Replace SQLite datetime functions with MySQL NOW()
+            $sql = preg_replace("/datetime\s*\(\s*'now'\s*,\s*'localtime'\s*\)/i", "NOW()", $sql);
+            $sql = preg_replace("/datetime\s*\(\s*'now'\s*\)/i", "NOW()", $sql);
+
+            // 2. Replace SQLite date functions with MySQL CURDATE()
+            $sql = preg_replace("/date\s*\(\s*'now'\s*,\s*'localtime'\s*\)/i", "CURDATE()", $sql);
+            $sql = preg_replace("/date\s*\(\s*'now'\s*\)/i", "CURDATE()", $sql);
+
+            // 3. Replace SQLite time functions with MySQL CURTIME()
+            $sql = preg_replace("/time\s*\(\s*'now'\s*,\s*'localtime'\s*\)/i", "CURTIME()", $sql);
+            $sql = preg_replace("/time\s*\(\s*'now'\s*\)/i", "CURTIME()", $sql);
+
+            // 4. Replace strftime formatting
+            $sql = preg_replace("/strftime\('%Y-%m',\s*created_at\)\s*=\s*strftime\('%Y-%m',\s*'now'\)/i", "DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(NOW(), '%Y-%m')", $sql);
+            $sql = preg_replace("/strftime\('%Y-%m',\s*([^)]+)\)/i", "DATE_FORMAT($1, '%Y-%m')", $sql);
+
+            // 5. Replace julianday aging difference
+            $sql = preg_replace("/cast\s*\(\s*\(\s*julianday\s*\(\s*'now'(?:\s*,\s*'localtime')?\s*\)\s*-\s*julianday\s*\(\s*([^)]+)\s*\)\s*\)\s*as\s+integer\s*\)/i", "DATEDIFF(NOW(), $1)", $sql);
+            $sql = preg_replace("/julianday\s*\(\s*'now'(?:\s*,\s*'localtime')?\s*\)\s*-\s*julianday\s*\(\s*([^)]+)\s*\)/i", "DATEDIFF(NOW(), $1)", $sql);
+
+            // 6. Replace PRAGMA table_info
             if (preg_match('/PRAGMA\s+table_info\(([^)]+)\)/i', $sql, $m)) {
                 $tableName = trim($m[1], '`"\' ');
                 $sql = "SELECT COLUMN_NAME AS name, DATA_TYPE AS type FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$tableName}'";
             }
+
+            // 7. Replace ON CONFLICT ... DO UPDATE SET
             if (preg_match('/ON\s+CONFLICT\s*\([^)]*\)\s*DO\s+UPDATE\s+SET/i', $sql)) {
                 $sql = preg_replace('/ON\s+CONFLICT\s*\([^)]*\)\s*DO\s+UPDATE\s+SET/i', 'ON DUPLICATE KEY UPDATE', $sql);
                 $sql = preg_replace('/excluded\.([a-zA-Z0-9_]+)/i', 'VALUES($1)', $sql);

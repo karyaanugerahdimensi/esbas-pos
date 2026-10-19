@@ -2769,15 +2769,17 @@ try {
         case 'get_opening_shift_data':
             $branchId = (int)($_GET['branch_id'] ?? ($input['branch_id'] ?? 1));
 
+            $today = date('Y-m-d');
+
             // Deteksi seluruh shift hari ini di cabang yang dipilih
             $stmtTodayShifts = $pdo->prepare("
                 SELECT cs.*, u.name as cashier_name, u.nik as cashier_nik
                 FROM cashier_shifts cs
                 JOIN users u ON u.id = cs.user_id
-                WHERE cs.branch_id = ? AND date(cs.start_time) = date('now', 'localtime')
+                WHERE cs.branch_id = ? AND date(cs.start_time) = ?
                 ORDER BY cs.id ASC
             ");
-            $stmtTodayShifts->execute([$branchId]);
+            $stmtTodayShifts->execute([$branchId, $today]);
             $todayShifts = $stmtTodayShifts->fetchAll();
 
             $todayClosedCount = 0;
@@ -2819,10 +2821,10 @@ try {
                     SELECT cs.*, u.name as cashier_name, u.nik as cashier_nik
                     FROM cashier_shifts cs
                     JOIN users u ON u.id = cs.user_id
-                    WHERE cs.branch_id = ? AND date(cs.start_time) < date('now', 'localtime')
+                    WHERE cs.branch_id = ? AND date(cs.start_time) < ?
                     ORDER BY cs.id DESC LIMIT 1
                 ");
-                $stmtPrevDay->execute([$branchId]);
+                $stmtPrevDay->execute([$branchId, $today]);
                 $lastShift = $stmtPrevDay->fetch();
 
                 if (!$lastShift) {
@@ -2993,11 +2995,14 @@ try {
                 exit;
             }
 
+            $today = date('Y-m-d');
+            $now = date('Y-m-d H:i:s');
+
             // Tentukan nomor shift & nama shift hari ini
             $shiftNumber = (int)($input['shift_number'] ?? 0);
             if ($shiftNumber <= 0) {
-                $stmtCountToday = $pdo->prepare("SELECT COUNT(*) FROM cashier_shifts WHERE branch_id = ? AND date(start_time) = date('now', 'localtime')");
-                $stmtCountToday->execute([$branchId]);
+                $stmtCountToday = $pdo->prepare("SELECT COUNT(*) FROM cashier_shifts WHERE branch_id = ? AND date(start_time) = ?");
+                $stmtCountToday->execute([$branchId, $today]);
                 $shiftNumber = (int)$stmtCountToday->fetchColumn() + 1;
             }
 
@@ -3043,10 +3048,10 @@ try {
                     closing_night_mineral, closing_night_ro, closing_night_plastik,
                     shift_notes, opening_items_json,
                     shift_number, shift_name, shift_type, is_final_shift
-                ) VALUES (?, ?, datetime('now', 'localtime'), ?, 'OPEN', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+                ) VALUES (?, ?, ?, ?, 'OPEN', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
             ");
             $stmt->execute([
-                $branchId, $userId, $initialCash,
+                $branchId, $userId, $now, $initialCash,
                 $openingMineral, $openingRo, $openingPlastik,
                 $nightMineral, $nightRo, $nightPlastik,
                 $shiftNotes,
@@ -3336,14 +3341,17 @@ try {
 
             $pdo->beginTransaction();
             try {
+                $today = date('Y-m-d');
+                $now = date('Y-m-d H:i:s');
+
                 // A. Catat Biaya Beban Toko ke branch_expenses (Menu Beban Operasional / Laba Rugi)
                 foreach ($expensesList as $exp) {
                     $stmtExp = $pdo->prepare("
                         INSERT INTO branch_expenses (branch_id, category, amount, expense_date, source, shift_id, notes)
-                        VALUES (?, ?, ?, date('now', 'localtime'), 'SHIFT_EXPENSE', ?, ?)
+                        VALUES (?, ?, ?, ?, 'SHIFT_EXPENSE', ?, ?)
                     ");
                     $expNote = "Pengeluaran Kasir Shift #{$shift['shift_number']} ({$shift['shift_name']}) - " . ($exp['notes'] ?: $exp['category']);
-                    $stmtExp->execute([$shift['branch_id'], $exp['category'], $exp['amount'], $shiftId, $expNote]);
+                    $stmtExp->execute([$shift['branch_id'], $exp['category'], $exp['amount'], $today, $shiftId, $expNote]);
                 }
 
                 // B. Catat Kasbon Karyawan ke salary_loans (Menu Penggajian / Slip Gaji Potongan Kasbon)
@@ -3358,18 +3366,20 @@ try {
                             user_id, branch_id, loan_date, amount, reason, installment_months,
                             monthly_deduction, status, remaining_amount, approved_by, approved_at, shift_id, notes
                         ) VALUES (
-                            ?, ?, date('now', 'localtime'), ?, ?, 1,
-                            ?, 'ACTIVE', ?, ?, datetime('now', 'localtime'), ?, ?
+                            ?, ?, ?, ?, ?, 1,
+                            ?, 'ACTIVE', ?, ?, ?, ?, ?
                         )
                     ");
                     $stmtLoan->execute([
                         $loan['user_id'],
                         $shift['branch_id'],
+                        $today,
                         $loan['amount'],
                         $loanReason,
                         $loan['amount'],
                         $loan['amount'],
                         $shift['user_id'],
+                        $now,
                         $shiftId,
                         "Kasbon dicairkan tunai dari laci kasir pada shift #{$shiftId} ({$shift['shift_name']})"
                     ]);
@@ -3384,24 +3394,26 @@ try {
                     $mealNote = "Uang makan karyawan: {$empName} - " . ($meal['notes'] ?: 'Uang makan shift');
                     $stmtMeal = $pdo->prepare("
                         INSERT INTO employee_meal_allowances (shift_id, user_id, branch_id, amount, meal_date, notes)
-                        VALUES (?, ?, ?, ?, date('now', 'localtime'), ?)
+                        VALUES (?, ?, ?, ?, ?, ?)
                     ");
                     $stmtMeal->execute([
                         $shiftId,
                         $meal['user_id'],
                         $shift['branch_id'],
                         $meal['amount'],
+                        $today,
                         $mealNote
                     ]);
 
                     // Catat juga ke branch_expenses agar otomatis masuk laporan Laba Rugi
                     $stmtMealExp = $pdo->prepare("
                         INSERT INTO branch_expenses (branch_id, category, amount, expense_date, source, shift_id, notes)
-                        VALUES (?, 'Beban Uang Makan Karyawan', ?, date('now', 'localtime'), 'SHIFT_MEAL', ?, ?)
+                        VALUES (?, 'Beban Uang Makan Karyawan', ?, ?, 'SHIFT_MEAL', ?, ?)
                     ");
                     $stmtMealExp->execute([
                         $shift['branch_id'],
                         $meal['amount'],
+                        $today,
                         $shiftId,
                         $mealNote
                     ]);
@@ -3452,16 +3464,17 @@ try {
                             meter_adjustment, adjustment_type, adjustment_reason,
                             water_dispensed_galon, notes, created_at, updated_at
                         ) VALUES (
-                            ?, ?, ?, date('now', 'localtime'),
+                            ?, ?, ?, ?,
                             ?, ?, ?,
                             ?, ?, ?,
-                            ?, ?, datetime('now', 'localtime'), datetime('now', 'localtime')
+                            ?, ?, ?, ?
                         )
                     ");
                     $stmtWML->execute([
                         $shift['branch_id'],
                         $shiftId,
                         $shift['user_id'],
+                        $today,
                         $meterYesterday,
                         $meterToday,
                         $meterDiff,
@@ -3469,14 +3482,16 @@ try {
                         $adjustmentType,
                         $adjustmentReason ?: null,
                         $dispensedGalon,
-                        $shiftNotes ?: null
+                        $shiftNotes ?: null,
+                        $now,
+                        $now
                     ]);
                 }
 
                 // D. Update cashier_shifts
                 $stmtUpdate = $pdo->prepare("
                     UPDATE cashier_shifts
-                    SET end_time = datetime('now', 'localtime'),
+                    SET end_time = ?,
                         expected_cash = ?,
                         actual_cash = ?,
                         cash_difference = ?,
@@ -3501,6 +3516,7 @@ try {
                     WHERE id = ?
                 ");
                 $stmtUpdate->execute([
+                    $now,
                     $expectedCash, $actualCash, $diff,
                     $totalExpenses, $totalLoans, $totalMeals,
                     json_encode($disbursementsSummary),
@@ -3844,6 +3860,7 @@ try {
                 $dispensedGalon = round(($meterDiff + $meterAdjustment) / 782, 2);
             }
 
+            $now = date('Y-m-d H:i:s');
             $stmt = $pdo->prepare("
                 INSERT INTO water_meter_logs (
                     branch_id, shift_id, user_id, log_date,
@@ -3854,14 +3871,15 @@ try {
                     ?, NULL, ?, ?,
                     ?, ?, ?,
                     ?, ?, ?,
-                    ?, ?, datetime('now', 'localtime'), datetime('now', 'localtime')
+                    ?, ?, ?, ?
                 )
             ");
             $stmt->execute([
                 $branchId, $userId, $logDate,
                 $meterYesterday, $meterToday, $meterDiff,
                 $meterAdjustment, $adjustmentType, $adjustmentReason,
-                $dispensedGalon, $notes ?: null
+                $dispensedGalon, $notes ?: null,
+                $now, $now
             ]);
 
             echo json_encode([

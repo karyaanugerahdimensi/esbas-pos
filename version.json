@@ -1,14 +1,22 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.5",
-  "build": "20261019-04",
+  "version": "1.2.6",
+  "build": "20261019-05",
   "release_date": "2026-10-19",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
     {
-      "version": "1.2.5",
+      "version": "1.2.6",
       "commit": "HEAD",
+      "date": "2026-10-19",
+      "title": "Perbaikan Kompatibilitas Sintaks MariaDB / MySQL Hosting pada Penutupan Shift Kasir (Close Cashier Shift)",
+      "description": "Memperbaiki galat SQLSTATE[42000] Syntax error 1064 (' 'localtime') di MariaDB/MySQL hosting saat tutup shift kasir dengan memigrasikan seluruh klausul fungsi tanggal/waktu SQLite (date('now', 'localtime'), datetime('now', 'localtime')) pada branch_expenses, salary_loans, employee_meal_allowances, water_meter_logs, dan cashier_shifts ke parameterisasi ANSI SQL standar PDO ($today, $now) serta memperluas regex auto-translation pada adaptQuery AppPDO.",
+      "rollback_command": "git checkout v1.2.5"
+    },
+    {
+      "version": "1.2.5",
+      "commit": "v1.2.5",
       "date": "2026-10-19",
       "title": "CRUD Tombol Cepat Pecahan Uang Kasir (Cash Denominations) & Pembersihan Banner Ongkir Campuran",
       "description": "Menyediakan modul CRUD lengkap untuk tombol pecahan uang tunai kasir (Uang Pas, 10K, 20K, 50K, 100K, dsb) di Menu Payment dengan opsi aksi SET/EXACT/ADD, menata tata letak tombol kasir secara presisi setara dengan tombol metode pembayaran (Tunai, QRIS, Transfer), serta menghapus teks peringatan banner ongkir campuran pada layar penjualan POS.",
