@@ -7975,26 +7975,20 @@ $appVersionData = getAppVersionData();
         }
 
         function checkMandatoryDeliveryOnCart() {
-            const deliveryRequiredItems = (state.cart || []).filter(c => c.is_delivery_required === 1 && c.is_delivery_included !== 1);
-            const deliveryIncludedItems = (state.cart || []).filter(c => c.is_delivery_included === 1 || c.is_delivery_required === 2);
+            const isFreeItem = (c) => Number(c.is_delivery_included) === 1 || Number(c.is_delivery_required) === 2;
+            const freeDeliveryItems = (state.cart || []).filter(isFreeItem);
+            const chargeableItems = (state.cart || []).filter(c => !isFreeItem(c));
+            const mandatoryItems = (state.cart || []).filter(c => Number(c.is_delivery_required) === 1);
             const delivCheckbox = document.getElementById('check-delivery-mode');
             if (!delivCheckbox) return;
 
-            const needsDelivery = (deliveryRequiredItems.length > 0 || deliveryIncludedItems.length > 0);
+            const needsDelivery = (mandatoryItems.length > 0 || freeDeliveryItems.length > 0);
 
             if (needsDelivery && !delivCheckbox.checked) {
                 delivCheckbox.checked = true;
                 onDeliveryToggleChange();
-                const noteEl = document.getElementById('pos-delivery-note');
-                if (noteEl) {
-                    if (deliveryRequiredItems.length > 0) {
-                        const names = deliveryRequiredItems.map(i => i.name).join(', ');
-                        noteEl.innerHTML = `<span class="text-amber-800 font-bold">⚡ Layanan Antar diaktifkan otomatis! Produk wajib ongkir terdeteksi (${names}) agar kasir tidak lupa menginputkan ongkir.</span>`;
-                    } else {
-                        const names = deliveryIncludedItems.map(i => i.name).join(', ');
-                        noteEl.innerHTML = `<span class="text-emerald-700 font-bold">🎁 Layanan Antar diaktifkan otomatis! Produk (${names}) sudah termasuk ongkos kirim (Rp 0), wajib pilih kurir pengantar.</span>`;
-                    }
-                }
+            } else if (delivCheckbox.checked) {
+                calculateDeliveryFeeForPOS();
             }
         }
 
@@ -8022,6 +8016,10 @@ $appVersionData = getAppVersionData();
 
         function clearCart() {
             state.cart = [];
+            state.currentDeliveryFee = 0;
+            state.currentDeliveryDistance = 0;
+            const noteEl = document.getElementById('pos-delivery-note');
+            if (noteEl) noteEl.innerHTML = '';
             renderCart();
         }
 
@@ -8151,16 +8149,22 @@ $appVersionData = getAppVersionData();
             const box = document.getElementById('pos-delivery-box');
 
             // Proteksi agar kasir tidak sengaja menonaktifkan delivery saat produk pengiriman ada di keranjang
-            const deliveryRequiredItems = (state.cart || []).filter(c => c.is_delivery_required === 1 && c.is_delivery_included !== 1);
-            const deliveryIncludedItems = (state.cart || []).filter(c => c.is_delivery_included === 1 || c.is_delivery_required === 2);
+            const isFreeItem = (c) => Number(c.is_delivery_included) === 1 || Number(c.is_delivery_required) === 2;
+            const freeDeliveryItems = (state.cart || []).filter(isFreeItem);
+            const chargeableItems = (state.cart || []).filter(c => !isFreeItem(c));
+            const mandatoryItems = (state.cart || []).filter(c => Number(c.is_delivery_required) === 1);
 
-            if (!isChecked && (deliveryRequiredItems.length > 0 || deliveryIncludedItems.length > 0)) {
+            if (!isChecked && (mandatoryItems.length > 0 || freeDeliveryItems.length > 0)) {
                 let alertMsg = '';
-                if (deliveryRequiredItems.length > 0) {
-                    const names = deliveryRequiredItems.map(i => i.name).join(', ');
+                if (freeDeliveryItems.length > 0 && chargeableItems.length > 0) {
+                    const freeNames = freeDeliveryItems.map(i => i.name).join(', ');
+                    const chargeNames = chargeableItems.map(i => i.name).join(', ');
+                    alertMsg = `PERINGATAN PESANAN CAMPURAN:\nKeranjang memuat produk gratis ongkir (${freeNames}) dan produk yang dikenakan ongkir (${chargeNames}).\n\nJika layanan antar dimatikan, pesanan ini akan dicatat sebagai ambil di toko (tanpa kurir & tanpa ongkir).\nApakah kasir tetap ingin menonaktifkan layanan antar?`;
+                } else if (mandatoryItems.length > 0) {
+                    const names = mandatoryItems.map(i => i.name).join(', ');
                     alertMsg = `PERINGATAN ONGKIR:\nKeranjang memuat produk yang wajib dikenakan ongkos kirim (${names}).\n\nJika layanan antar dimatikan, pesanan ini tidak akan memiliki biaya ongkir.\nApakah kasir tetap ingin menonaktifkan layanan antar?`;
                 } else {
-                    const names = deliveryIncludedItems.map(i => i.name).join(', ');
+                    const names = freeDeliveryItems.map(i => i.name).join(', ');
                     alertMsg = `PERINGATAN PENGIRIMAN:\nKeranjang memuat produk yang sudah termasuk biaya kirim (${names}) dan memerlukan pencatatan kurir pengantar.\n\nApakah kasir yakin ingin menonaktifkan layanan antar (ambil di toko)?`;
                 }
                 const confirmOff = confirm(alertMsg);
@@ -8192,12 +8196,12 @@ $appVersionData = getAppVersionData();
             const noteEl = document.getElementById('pos-delivery-note');
             const distEl = document.getElementById('pos-delivery-distance');
 
-            // Cek jika seluruh item pengiriman adalah produk yang SUDAH TERMASUK BIAYA KIRIM
-            const deliveryRequiredItems = (state.cart || []).filter(c => c.is_delivery_required === 1 && c.is_delivery_included !== 1);
-            const deliveryIncludedItems = (state.cart || []).filter(c => c.is_delivery_included === 1 || c.is_delivery_required === 2);
+            const isFreeItem = (c) => Number(c.is_delivery_included) === 1 || Number(c.is_delivery_required) === 2;
+            const freeDeliveryItems = (state.cart || []).filter(isFreeItem);
+            const chargeableItems = (state.cart || []).filter(c => !isFreeItem(c));
 
-            if (deliveryIncludedItems.length > 0 && deliveryRequiredItems.length === 0) {
-                // Biaya kirim Rp 0 karena sudah include dalam harga jual produk
+            // Kasus 1: Seluruh item dalam keranjang adalah produk GRATIS ONGKIR (Termasuk harga produk)
+            if (freeDeliveryItems.length > 0 && chargeableItems.length === 0) {
                 state.currentDeliveryFee = 0;
                 state.currentDeliveryDistance = 0;
                 if (distEl) distEl.innerText = '0 km';
@@ -8206,12 +8210,15 @@ $appVersionData = getAppVersionData();
                     feeEl.className = 'font-black text-emerald-600 font-mono text-xs';
                 }
                 if (noteEl) {
-                    noteEl.innerHTML = `<span class="text-emerald-700 font-bold">🎁 Biaya kirim Rp 0 (Sudah Termasuk Harga Produk). Nama kurir & armada tetap wajib dicatat untuk bukti pengantaran.</span>`;
+                    const names = freeDeliveryItems.map(i => i.name).join(', ');
+                    noteEl.innerHTML = `<span class="text-emerald-700 font-bold">🎁 Seluruh produk dalam pesanan (${names}) sudah termasuk ongkos kirim (Rp 0). Nama kurir & armada tetap wajib dicatat untuk bukti pengantaran.</span>`;
                 }
                 calculateCartTotals();
                 return;
             }
 
+            // Kasus 2 & 3: Ada barang yang dikenakan ongkos kirim (Pesanan Campuran atau murni produk kena ongkir)
+            // Sesuai ketentuan, ongkos kirim berlaku sesuai dengan jarak mapnya!
             const subtotal = state.cart.reduce((acc, c) => acc + (c.price * c.qty), 0);
             const branchId = state.currentBranch ? state.currentBranch.id : 1;
             const cust = state.selectedCustomer;
@@ -8229,12 +8236,37 @@ $appVersionData = getAppVersionData();
                     state.currentDeliveryDistance = data.distance_km;
 
                     if (distEl) distEl.innerText = `${data.distance_km} km`;
+                    const isPromoFree = Boolean(data.is_free || data.is_free_delivery);
                     if (feeEl) {
-                        feeEl.innerText = data.is_free ? 'GRATIS (Promo Belanja)' : formatRupiah(data.delivery_fee);
-                        feeEl.className = data.is_free ? 'font-black text-emerald-600 font-mono' : 'font-black text-amber-700 font-mono';
+                        feeEl.innerText = isPromoFree ? 'GRATIS (Promo Belanja)' : formatRupiah(data.delivery_fee);
+                        feeEl.className = isPromoFree ? 'font-black text-emerald-600 font-mono' : 'font-black text-amber-700 font-mono';
                     }
                     if (noteEl) {
-                        noteEl.innerText = data.rule_applied || (data.is_free ? 'Memenuhi syarat gratis ongkir' : `Tarif dasar + KM`);
+                        if (freeDeliveryItems.length > 0 && chargeableItems.length > 0) {
+                            const freeNames = freeDeliveryItems.map(i => i.name).join(', ');
+                            const chargeNames = chargeableItems.map(i => i.name).join(', ');
+                            noteEl.innerHTML = `<span class="text-amber-800 font-bold">⚡ Perhatian: Pesanan memuat produk gratis ongkir (${freeNames}) dan produk dikenakan ongkir (${chargeNames}). Sesuai ketentuan, ongkos kirim berlaku sesuai jarak map (${data.distance_km} km).</span>`;
+                        } else {
+                            noteEl.innerText = data.rule_applied || (isPromoFree ? 'Memenuhi syarat gratis ongkir' : `Tarif dasar + KM`);
+                        }
+                    }
+                } else {
+                    const baseFee = state.currentDeliverySetting?.base_fee || 10000;
+                    state.currentDeliveryFee = baseFee;
+                    state.currentDeliveryDistance = 0;
+                    if (distEl) distEl.innerText = '-';
+                    if (feeEl) {
+                        feeEl.innerText = formatRupiah(baseFee);
+                        feeEl.className = 'font-black text-amber-700 font-mono';
+                    }
+                    if (noteEl) {
+                        if (freeDeliveryItems.length > 0 && chargeableItems.length > 0) {
+                            const freeNames = freeDeliveryItems.map(i => i.name).join(', ');
+                            const chargeNames = chargeableItems.map(i => i.name).join(', ');
+                            noteEl.innerHTML = `<span class="text-amber-800 font-bold">⚡ Pesanan Campuran (${freeNames} + ${chargeNames}): Ongkos kirim berlaku. ⚠️ ${data.message || 'Koordinat belum diatur, diterapkan tarif flat dasar.'}</span>`;
+                        } else {
+                            noteEl.innerHTML = `<span class="text-amber-800 font-semibold">⚠️ ${data.message || 'Titik koordinat belum diatur. Tarif flat dasar diterapkan.'}</span>`;
+                        }
                     }
                 }
             } catch (err) {
@@ -8443,7 +8475,10 @@ $appVersionData = getAppVersionData();
             const driverName = (isDelivery && driverSelect && driverSelect.selectedIndex >= 0 && driverSelect.options[driverSelect.selectedIndex]) 
                 ? driverSelect.options[driverSelect.selectedIndex].text.replace(/\s*\([^)]*\)\s*$/, '').trim() 
                 : null;
-            const hasDeliveryIncluded = (state.cart || []).some(c => c.is_delivery_included === 1 || c.is_delivery_required === 2);
+            const isFreeItem = (c) => Number(c.is_delivery_included) === 1 || Number(c.is_delivery_required) === 2;
+            const freeDeliveryItems = (state.cart || []).filter(isFreeItem);
+            const chargeableItems = (state.cart || []).filter(c => !isFreeItem(c));
+            const isEntirelyFreeDelivery = isDelivery && (freeDeliveryItems.length > 0 && chargeableItems.length === 0);
             
             // Hitung grand total berdasarkan per-item tax
             let currentTaxTotal = 0;
@@ -8498,7 +8533,7 @@ $appVersionData = getAppVersionData();
                 courier_vehicle_id: courierVehicleId,
                 driver_user_id: driverUserId,
                 driver_name: driverName,
-                is_delivery_included: hasDeliveryIncluded ? 1 : 0,
+                is_delivery_included: isEntirelyFreeDelivery ? 1 : 0,
                 delivery_status: isDelivery ? 'ASSIGNED' : 'NONE'
             };
 

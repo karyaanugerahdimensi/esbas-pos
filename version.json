@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.1",
-  "build": "20261015-14",
-  "release_date": "2026-10-16",
+  "version": "1.2.2",
+  "build": "20261019-01",
+  "release_date": "2026-10-19",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.2",
+      "commit": "HEAD",
+      "date": "2026-10-19",
+      "title": "Penetapan Ongkos Kirim Berdasarkan Jarak Map untuk Pesanan Campuran Produk Bebas Ongkir dan Kena Ongkir",
+      "description": "Mengatur agar pesanan penjualan di kasir POS yang memuat produk gratis ongkir bersamaan dengan produk yang dikenakan ongkir otomatis dihitung biaya kirimnya sesuai jarak peta geospasial cabang dan pelanggan, dengan is_delivery_included = 0 dan notifikasi interaktif kepada kasir.",
+      "rollback_command": "git checkout v1.2.1"
+    },
     {
       "version": "1.2.1",
       "commit": "HEAD",

@@ -3802,6 +3802,8 @@ try {
             $subtotal = 0;
             $totalCogs = 0;
             $processedItems = [];
+            $hasFreeDeliveryItem = false;
+            $hasChargeableItem = false;
 
             foreach ($items as $item) {
                 $pId = (int)$item['product_id'];
@@ -3813,6 +3815,8 @@ try {
                 $stmtCheck = $pdo->prepare("
                     SELECT p.name, p.has_bom, p.member_price, p.reseller_price, p.mitra_price,
                            p.is_taxable, p.tax_id, p.tax_percent,
+                           COALESCE(bs.is_delivery_required, p.is_delivery_required, 0) as is_delivery_required,
+                           COALESCE(bs.is_delivery_included, p.is_delivery_included, 0) as is_delivery_included,
                            bs.stock, bs.local_price, bs.local_cogs,
                            COALESCE(bs.is_active, 1) as branch_is_active
                     FROM branch_stocks bs
@@ -3919,6 +3923,14 @@ try {
                 $stmtDeduct->execute([$qty, $branchId, $pId]);
 
                 $dispItemName = $stockRow['name'] . ($variantName ? " [{$variantName}]" : "");
+
+                // Check delivery inclusion for this item
+                $isItemFreeDelivery = ((int)$stockRow['is_delivery_included'] === 1 || (int)$stockRow['is_delivery_required'] === 2);
+                if ($isItemFreeDelivery) {
+                    $hasFreeDeliveryItem = true;
+                } else {
+                    $hasChargeableItem = true;
+                }
 
                 // Record finished goods stock movement
                 $stmtMoveFG = $pdo->prepare("
@@ -4038,8 +4050,16 @@ try {
             $deliveryDistanceKm = (float)($input['delivery_distance_km'] ?? 0);
             $courierVehicleId = !empty($input['courier_vehicle_id']) ? (int)$input['courier_vehicle_id'] : null;
             $driverUserId = !empty($input['driver_user_id']) ? (int)$input['driver_user_id'] : null;
-            $driverName = trim($input['driver_name'] ?? '');
-            $isDeliveryIncluded = !empty($input['is_delivery_included']) ? (int)$input['is_delivery_included'] : 0;
+            // Kebijakan Ongkos Kirim Pesanan Campuran (Mixed Cart Delivery Policy):
+            // Ongkir Rp 0 (is_delivery_included = 1) HANYA berlaku jika SELURUH produk dalam keranjang adalah produk bebas ongkir.
+            // Jika terdapat produk yang dikenakan ongkos kirim (chargeable items), maka ongkos kirim berlaku sesuai jarak map dan is_delivery_included = 0.
+            if ($hasFreeDeliveryItem && $hasChargeableItem) {
+                $isDeliveryIncluded = 0;
+            } elseif ($hasFreeDeliveryItem && !$hasChargeableItem) {
+                $isDeliveryIncluded = 1;
+            } else {
+                $isDeliveryIncluded = 0;
+            }
 
             // Resolve driver name if driver_user_id given
             if ($driverUserId && empty($driverName)) {
@@ -7073,8 +7093,10 @@ try {
                 'distance_meters' => round($distMeters, 1),
                 'distance_km' => $distKm,
                 'delivery_fee' => (float)$deliveryFee,
+                'is_free' => $isFree,
                 'is_free_delivery' => $isFree,
                 'free_delivery_reason' => $freeReason,
+                'rule_applied' => $freeReason ?: ($distKm <= (float)$ds['base_distance_km'] ? "Tarif dasar (s.d {$ds['base_distance_km']} km)" : "Tarif dasar + tarif per KM"),
                 'settings_applied' => $ds
             ]);
             break;
