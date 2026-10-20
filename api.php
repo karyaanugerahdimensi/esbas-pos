@@ -275,21 +275,28 @@ try {
 
             // POS Products: Only FINISHED_GOODS for cashier sale with Multi-Tier Pricing & Per-Item Tax (Hanya produk yang aktif dijual di cabang ini)
             $stmtProducts = $pdo->prepare("
-                SELECT p.id, p.sku, p.barcode, p.name, p.category, p.product_type, p.unit, p.image_emoji, p.has_bom,
+                SELECT p.id, p.sku, p.barcode, p.name, p.category, p.category_id, p.product_type, p.unit, p.image_emoji, p.has_bom,
                        p.member_price, p.reseller_price, p.mitra_price, p.visible_categories,
                        p.is_taxable, p.tax_id, p.tax_percent,
                        COALESCE(bs.is_delivery_required, p.is_delivery_required, 0) as is_delivery_required,
                        COALESCE(bs.is_delivery_included, p.is_delivery_included, 0) as is_delivery_included,
                        bs.stock, bs.local_cogs as cogs, bs.local_price as selling_price,
-                       COALESCE(bs.is_active, 1) as branch_is_active
+                       COALESCE(bs.is_active, 1) as branch_is_active,
+                       COALESCE(p.is_stockable, 1) as is_stockable,
+                       COALESCE(c.is_stockable, 1) as cat_is_stockable
                 FROM products p
                 JOIN branch_stocks bs ON p.id = bs.product_id
+                LEFT JOIN categories c ON c.id = p.category_id
                 WHERE bs.branch_id = ? AND p.is_active = 1 AND p.product_type = 'FINISHED_GOODS'
                   AND COALESCE(bs.is_active, 1) = 1
                 ORDER BY p.category ASC, p.name ASC
             ");
             $stmtProducts->execute([$currentBranch['id']]);
             $products = $stmtProducts->fetchAll();
+            foreach ($products as &$pr) {
+                $pr['requires_stock'] = ((int)$pr['is_stockable'] === 1 && (int)$pr['cat_is_stockable'] === 1) ? 1 : 0;
+            }
+            unset($pr);
 
             // Fetch Product Variants and their Variant BOM Recipes
             $stmtVariants = $pdo->query("
@@ -923,7 +930,7 @@ try {
         case 'get_all_products':
             // Returns ALL products including RAW_MATERIAL and FINISHED_GOODS with Tax configuration
             $stmt = $pdo->query("
-                SELECT p.*, c.name as category_name, t.name as tax_name, t.rate_percent as tax_rate
+                SELECT p.*, c.name as category_name, COALESCE(c.is_stockable, 1) as cat_is_stockable, t.name as tax_name, t.rate_percent as tax_rate
                 FROM products p
                 LEFT JOIN categories c ON c.id = p.category_id
                 LEFT JOIN taxes t ON t.id = p.tax_id
@@ -941,7 +948,9 @@ try {
 
             foreach ($prods as &$p) {
                 $p['variants'] = $variantsByProd[$p['id']] ?? [];
+                $p['effective_is_stockable'] = ((int)($p['is_stockable'] ?? 1) === 1 && (int)($p['cat_is_stockable'] ?? 1) === 1) ? 1 : 0;
             }
+            unset($p);
 
             echo json_encode(['success' => true, 'products' => $prods]);
             break;
@@ -972,6 +981,13 @@ try {
                 $isDeliveryRequired = 2;
             }
             $isActive = isset($input['is_active']) ? (int)$input['is_active'] : null;
+
+            $isStockable = isset($input['is_stockable']) ? (int)$input['is_stockable'] : null;
+            if ($isStockable === null) {
+                // Default ke status kelola stok kategori
+                $catIsStockable = $pdo->query("SELECT is_stockable FROM categories WHERE id = $categoryId")->fetchColumn();
+                $isStockable = ($catIsStockable !== false) ? (int)$catIsStockable : 1;
+            }
 
             // Jika dalam mode edit (ada $id), pertahankan SKU atau Barcode jika input kosong
             if ($id) {
@@ -1045,14 +1061,14 @@ try {
                     UPDATE products 
                     SET sku = ?, barcode = ?, name = ?, category_id = ?, category = ?, product_type = ?, 
                         unit = ?, cogs = ?, selling_price = ?, member_price = ?, reseller_price = ?, mitra_price = ?, visible_categories = ?,
-                        image_emoji = ?, has_bom = ?, reorder_point = ?, is_taxable = ?, tax_id = ?, tax_percent = ?, is_delivery_required = ?, is_delivery_included = ?,
+                        image_emoji = ?, has_bom = ?, reorder_point = ?, is_stockable = ?, is_taxable = ?, tax_id = ?, tax_percent = ?, is_delivery_required = ?, is_delivery_included = ?,
                         is_active = COALESCE(?, is_active)
                     WHERE id = ?
                 ");
                 $stmt->execute([
                     $sku, $barcode, $name, $categoryId, $catName, $productType, 
                     $unit, $cogs, $sellingPrice, $memberPrice, $resellerPrice, $mitraPrice, $visibleCategories, 
-                    $imageEmoji, $hasBom, $reorderPoint, $isTaxable, $taxId, $taxPercent, $isDeliveryRequired, $isDeliveryIncluded, $isActive, $id
+                    $imageEmoji, $hasBom, $reorderPoint, $isStockable, $isTaxable, $taxId, $taxPercent, $isDeliveryRequired, $isDeliveryIncluded, $isActive, $id
                 ]);
                 
                 // Sinkronisasi ke branch_stocks agar harga langsung ter-update di form penjualan POS kasir
@@ -1080,13 +1096,13 @@ try {
                 $msg = "Produk '{$name}' dan konfigurasi ongkir berhasil diperbarui.";
             } else {
                 $stmt = $pdo->prepare("
-                    INSERT INTO products (sku, barcode, name, category_id, category, product_type, unit, cogs, selling_price, member_price, reseller_price, mitra_price, visible_categories, image_emoji, has_bom, reorder_point, is_taxable, tax_id, tax_percent, is_delivery_required, is_delivery_included)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO products (sku, barcode, name, category_id, category, product_type, unit, cogs, selling_price, member_price, reseller_price, mitra_price, visible_categories, image_emoji, has_bom, reorder_point, is_stockable, is_taxable, tax_id, tax_percent, is_delivery_required, is_delivery_included)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
                 $stmt->execute([
                     $sku, $barcode, $name, $categoryId, $catName, $productType, 
                     $unit, $cogs, $sellingPrice, $memberPrice, $resellerPrice, $mitraPrice, $visibleCategories, 
-                    $imageEmoji, $hasBom, $reorderPoint, $isTaxable, $taxId, $taxPercent, $isDeliveryRequired, $isDeliveryIncluded
+                    $imageEmoji, $hasBom, $reorderPoint, $isStockable, $isTaxable, $taxId, $taxPercent, $isDeliveryRequired, $isDeliveryIncluded
                 ]);
                 $id = $pdo->lastInsertId();
 
@@ -1501,6 +1517,7 @@ try {
                 if (empty($code)) $code = 'CAT' . time();
             }
             $iconEmoji = trim($input['icon_emoji'] ?? ($input['icon'] ?? '📁'));
+            $isStockable = isset($input['is_stockable']) ? (int)$input['is_stockable'] : 1;
 
             if (empty($code) || empty($name)) {
                 echo json_encode(['success' => false, 'message' => 'Nama Kategori wajib diisi.']);
@@ -1514,8 +1531,8 @@ try {
                     echo json_encode(['success' => false, 'message' => "Kode Kategori '{$code}' sudah digunakan oleh kategori lain."]);
                     exit;
                 }
-                $pdo->prepare("UPDATE categories SET code = ?, name = ?, icon_emoji = ? WHERE id = ?")
-                    ->execute([$code, $name, $iconEmoji, $id]);
+                $pdo->prepare("UPDATE categories SET code = ?, name = ?, icon_emoji = ?, is_stockable = ? WHERE id = ?")
+                    ->execute([$code, $name, $iconEmoji, $isStockable, $id]);
                 // Sync name to products
                 $pdo->prepare("UPDATE products SET category = ? WHERE category_id = ?")->execute([$name, $id]);
                 echo json_encode(['success' => true, 'message' => "Kategori '{$name}' berhasil diperbarui.", 'category_id' => $id]);
@@ -1526,11 +1543,22 @@ try {
                     echo json_encode(['success' => false, 'message' => "Kode Kategori '{$code}' sudah ada."]);
                     exit;
                 }
-                $pdo->prepare("INSERT INTO categories (code, name, icon_emoji) VALUES (?, ?, ?)")
-                    ->execute([$code, $name, $iconEmoji]);
+                $pdo->prepare("INSERT INTO categories (code, name, icon_emoji, is_stockable) VALUES (?, ?, ?, ?)")
+                    ->execute([$code, $name, $iconEmoji, $isStockable]);
                 $newId = $pdo->lastInsertId();
                 echo json_encode(['success' => true, 'message' => "Kategori baru '{$name}' berhasil ditambahkan.", 'category_id' => $newId]);
             }
+            break;
+
+        case 'toggle_category_stockable':
+            $id = (int)($input['id'] ?? 0);
+            $isStockable = isset($input['is_stockable']) ? (int)$input['is_stockable'] : 1;
+            if (!$id) {
+                echo json_encode(['success' => false, 'message' => 'ID Kategori tidak valid.']);
+                exit;
+            }
+            $pdo->prepare("UPDATE categories SET is_stockable = ? WHERE id = ?")->execute([$isStockable, $id]);
+            echo json_encode(['success' => true, 'message' => 'Status kelola stok kategori berhasil diperbarui.', 'is_stockable' => $isStockable]);
             break;
 
         case 'delete_category':
@@ -2655,9 +2683,12 @@ try {
                            1 as is_active,
                            COALESCE(p.is_delivery_required, 0) as is_delivery_required,
                            COALESCE(p.is_delivery_included, 0) as is_delivery_included,
+                           COALESCE(p.is_stockable, 1) as is_stockable,
+                           COALESCE(c.is_stockable, 1) as cat_is_stockable,
                            1 as is_global
                     FROM products p
                     LEFT JOIN branch_stocks bs ON p.id = bs.product_id
+                    LEFT JOIN categories c ON c.id = p.category_id
                     WHERE p.is_active = 1
                 ";
                 $params = [];
@@ -2666,7 +2697,7 @@ try {
                     $sql .= " AND p.product_type = ?";
                     $params[] = $typeFilter;
                 }
-                $sql .= " GROUP BY p.id, p.sku, p.name, p.category, p.product_type, p.unit, p.image_emoji, p.reorder_point, p.is_delivery_required, p.is_delivery_included, p.cogs, p.selling_price";
+                $sql .= " GROUP BY p.id, p.sku, p.name, p.category, p.product_type, p.unit, p.image_emoji, p.reorder_point, p.is_delivery_required, p.is_delivery_included, p.cogs, p.selling_price, p.is_stockable, c.is_stockable";
                 $sql .= " ORDER BY p.product_type ASC, p.name ASC";
 
                 $stmt = $pdo->prepare($sql);
@@ -2697,6 +2728,7 @@ try {
                     $s['stock'] = (float)$s['stock'];
                     $s['local_cogs'] = (float)$s['local_cogs'];
                     $s['local_price'] = (float)$s['local_price'];
+                    $s['requires_stock'] = ((int)($s['is_stockable'] ?? 1) === 1 && (int)($s['cat_is_stockable'] ?? 1) === 1) ? 1 : 0;
                 }
                 unset($s);
 
@@ -2721,9 +2753,12 @@ try {
                            bs.is_delivery_included as branch_is_delivery_included,
                            COALESCE(bs.is_delivery_required, p.is_delivery_required, 0) as is_delivery_required,
                            COALESCE(bs.is_delivery_included, p.is_delivery_included, 0) as is_delivery_included,
+                           COALESCE(p.is_stockable, 1) as is_stockable,
+                           COALESCE(c.is_stockable, 1) as cat_is_stockable,
                            0 as is_global
                     FROM products p
                     LEFT JOIN branch_stocks bs ON p.id = bs.product_id AND bs.branch_id = ?
+                    LEFT JOIN categories c ON c.id = p.category_id
                     WHERE p.is_active = 1
                 ";
                 $params = [$branchId];
@@ -2742,6 +2777,7 @@ try {
                     $s['stock'] = (float)$s['stock'];
                     $s['local_cogs'] = (float)$s['local_cogs'];
                     $s['local_price'] = (float)$s['local_price'];
+                    $s['requires_stock'] = ((int)($s['is_stockable'] ?? 1) === 1 && (int)($s['cat_is_stockable'] ?? 1) === 1) ? 1 : 0;
                 }
                 unset($s);
 
@@ -4140,12 +4176,15 @@ try {
                 $stmtCheck = $pdo->prepare("
                     SELECT p.name, p.has_bom, p.member_price, p.reseller_price, p.mitra_price,
                            p.is_taxable, p.tax_id, p.tax_percent,
+                           COALESCE(p.is_stockable, 1) as is_stockable,
+                           COALESCE(c.is_stockable, 1) as cat_is_stockable,
                            COALESCE(bs.is_delivery_required, p.is_delivery_required, 0) as is_delivery_required,
                            COALESCE(bs.is_delivery_included, p.is_delivery_included, 0) as is_delivery_included,
                            bs.stock, bs.local_price, bs.local_cogs,
                            COALESCE(bs.is_active, 1) as branch_is_active
                     FROM branch_stocks bs
                     JOIN products p ON p.id = bs.product_id
+                    LEFT JOIN categories c ON c.id = p.category_id
                     WHERE bs.branch_id = ? AND bs.product_id = ?
                 ");
                 $stmtCheck->execute([$branchId, $pId]);
@@ -4169,7 +4208,9 @@ try {
                     exit;
                 }
 
-                if ($stockRow['stock'] < $qty) {
+                $requiresStock = ((int)$stockRow['is_stockable'] === 1 && (int)$stockRow['cat_is_stockable'] === 1);
+
+                if ($requiresStock && $stockRow['stock'] < $qty) {
                     $pdo->rollBack();
                     echo json_encode([
                         'success' => false,
@@ -4243,10 +4284,6 @@ try {
                 $itemTaxRate = isset($stockRow['tax_percent']) ? (float)$stockRow['tax_percent'] : 11.0;
                 $itemTaxAmount = ($isItemTaxable === 1 && $itemTaxRate > 0) ? round(($itemSubtotal * $itemTaxRate) / 100, 2) : 0;
 
-                // Deduct finished goods stock
-                $stmtDeduct = $pdo->prepare("UPDATE branch_stocks SET stock = stock - ? WHERE branch_id = ? AND product_id = ?");
-                $stmtDeduct->execute([$qty, $branchId, $pId]);
-
                 $dispItemName = $stockRow['name'] . ($variantName ? " [{$variantName}]" : "");
 
                 // Check delivery inclusion for this item
@@ -4257,15 +4294,21 @@ try {
                     $hasChargeableItem = true;
                 }
 
-                // Record finished goods stock movement
-                $stmtMoveFG = $pdo->prepare("
-                    INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
-                    VALUES (?, ?, 'STOCK_OUT_SALE', ?, ?, ?, ?, ?, ?)
-                ");
-                $stmtMoveFG->execute([
-                    $branchId, $pId, -$qty, $stockRow['stock'], $stockRow['stock'] - $qty,
-                    $invoiceNumber, "Penjualan POS [{$customerCategory}] kpd {$customerName}" . ($variantName ? " ({$variantName})" : ""), $userId
-                ]);
+                // Deduct finished goods stock if item requires physical stock
+                if ($requiresStock) {
+                    $stmtDeduct = $pdo->prepare("UPDATE branch_stocks SET stock = stock - ? WHERE branch_id = ? AND product_id = ?");
+                    $stmtDeduct->execute([$qty, $branchId, $pId]);
+
+                    // Record finished goods stock movement
+                    $stmtMoveFG = $pdo->prepare("
+                        INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
+                        VALUES (?, ?, 'STOCK_OUT_SALE', ?, ?, ?, ?, ?, ?)
+                    ");
+                    $stmtMoveFG->execute([
+                        $branchId, $pId, -$qty, $stockRow['stock'], $stockRow['stock'] - $qty,
+                        $invoiceNumber, "Penjualan POS [{$customerCategory}] kpd {$customerName}" . ($variantName ? " ({$variantName})" : ""), $userId
+                    ]);
+                }
 
                 // ==========================================
                 // LAYER 1: BASE BOM AUTO DEDUCTION FOR RAW MATERIALS

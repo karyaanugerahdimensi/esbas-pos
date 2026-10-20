@@ -1,14 +1,22 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.10",
-  "build": "20261020-01",
+  "version": "1.2.11",
+  "build": "20261020-02",
   "release_date": "2026-10-20",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
     {
-      "version": "1.2.10",
+      "version": "1.2.11",
       "commit": "HEAD",
+      "date": "2026-10-20",
+      "title": "Dukungan Kategori & Produk Tanpa Stok Fisik (BOM On-Demand) dengan Auto-Deduction Bahan Baku",
+      "description": "Menambahkan opsi konfigurasi fleksibel is_stockable pada master kategori dan produk untuk membedakan barang yang wajib memiliki stok fisik vs barang on-demand tanpa stok. Produk tanpa stok (seperti Galon 15 Liter) dapat langsung dijual di POS kasir tanpa dibatasi sisa stok fisik jadi, dan sistem secara otomatis memotong stok bahan baku dari resep BOM (16L Air Baku, 1 pcs Tutup Galon, 1 pcs Tisu Galon) serta mencatat mutasi stok BOM_DEDUCTION secara transparan dan akurat.",
+      "rollback_command": "git checkout v1.2.10"
+    },
+    {
+      "version": "1.2.10",
+      "commit": "v1.2.10",
       "date": "2026-10-20",
       "title": "Perbaikan Pemuatan Daftar Item Barang pada Modal Setel Stok Awal & Koreksi Kolom Harga Katalog Produk",
       "description": "Memperbaiki galat basis data SQLSTATE[HY000] no such column: p.price pada kueri get_inventory_stocks di api.php dengan mengoreksi referensi kolom menjadi p.selling_price sesuai skema tabel products, memperkuat fungsi loadStockAdjustProducts pada index.php dengan visualisasi emoji tipe barang (Barang Jadi vs Bahan Baku), label informatif stok cabang saat ini, penanganan status loading, dan proteksi fallback data sehingga pilihan barang pada modal 'Setel Stok Awal & Mutasi Cabang' selalu tampil lengkap dan dapat dipilih secara interaktif.",

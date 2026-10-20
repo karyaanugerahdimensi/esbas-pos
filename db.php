@@ -178,7 +178,8 @@ function initDatabaseSchema($pdo) {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         code TEXT UNIQUE NOT NULL,
         name TEXT NOT NULL,
-        icon_emoji TEXT DEFAULT '📁'
+        icon_emoji TEXT DEFAULT '📁',
+        is_stockable INTEGER DEFAULT 1
     )");
 
     // 4. Products
@@ -196,6 +197,7 @@ function initDatabaseSchema($pdo) {
         image_emoji TEXT DEFAULT '📦',
         has_bom INTEGER DEFAULT 0,
         reorder_point INTEGER DEFAULT 10,
+        is_stockable INTEGER DEFAULT 1,
         is_taxable INTEGER DEFAULT 1,
         tax_id INTEGER DEFAULT 1,
         tax_percent REAL DEFAULT 11.0,
@@ -1904,6 +1906,37 @@ function autoMigrateAndSync($pdo) {
         FOREIGN KEY (shift_id) REFERENCES cashier_shifts(id),
         FOREIGN KEY (user_id) REFERENCES users(id)
     )");
+
+    // 46. Ensure `categories` has `is_stockable` column (Kelola Stok Fisik Produk Jadi: 1=Harus di Stok, 0=Tidak di Stok / On-Demand BOM)
+    $catCols = array_column($pdo->query("PRAGMA table_info(categories)")->fetchAll(), 'name');
+    if (!in_array('is_stockable', $catCols)) {
+        $pdo->exec("ALTER TABLE categories ADD COLUMN is_stockable INTEGER DEFAULT 1");
+    }
+
+    // 47. Ensure `products` has `is_stockable` column (Override Stok Fisik per Produk Jadi)
+    $prodCols = array_column($pdo->query("PRAGMA table_info(products)")->fetchAll(), 'name');
+    if (!in_array('is_stockable', $prodCols)) {
+        $pdo->exec("ALTER TABLE products ADD COLUMN is_stockable INTEGER DEFAULT 1");
+    }
+
+    // 48. Seed/Sinkronisasi Resep Galon 15 Liter (Air Baku 16L, Tutup Galon 1 pcs, Tisu Galon 1 pcs) & Set Non-Stok
+    try {
+        $g15 = $pdo->query("SELECT id FROM products WHERE sku = 'PRD-00003' OR name LIKE '%Galon 15 Liter%' LIMIT 1")->fetch();
+        if ($g15 && !empty($g15['id'])) {
+            $g15Id = (int)$g15['id'];
+            // Pastikan bahan baku Tutup Galon Mineral (ID 89) ada di resep jika belum ada
+            $tutupMin = $pdo->query("SELECT id FROM products WHERE sku = 'RAW-089' OR name LIKE '%Tutup Galon Mineral%' LIMIT 1")->fetch();
+            if ($tutupMin && !empty($tutupMin['id'])) {
+                $tutupId = (int)$tutupMin['id'];
+                $hasTutup = $pdo->query("SELECT COUNT(*) FROM product_recipes WHERE finished_product_id = {$g15Id} AND ingredient_product_id = {$tutupId}")->fetchColumn();
+                if ($hasTutup == 0) {
+                    $pdo->exec("INSERT INTO product_recipes (finished_product_id, ingredient_product_id, qty_needed, unit) VALUES ({$g15Id}, {$tutupId}, 1, 'pcs')");
+                }
+            }
+            // Set produk Galon 15 Liter sebagai contoh produk tidak di-stok (is_stockable = 0)
+            $pdo->exec("UPDATE products SET is_stockable = 0, has_bom = 1 WHERE id = {$g15Id}");
+        }
+    } catch (Exception $e) {}
 }
 
 function autoMigrateMysql($pdo) {
@@ -1966,6 +1999,21 @@ function autoMigrateMysql($pdo) {
                 (4, '50K', 50000, 'SET', 'indigo', 4, 1),
                 (5, '100K', 100000, 'SET', 'indigo', 5, 1)
             ");
+        }
+    } catch (Exception $e) {}
+
+    // 5. Kolom is_stockable pada categories dan products untuk MySQL
+    try {
+        $colsCat = $pdo->query("SHOW COLUMNS FROM `categories` LIKE 'is_stockable'")->fetchAll();
+        if (empty($colsCat)) {
+            $pdo->exec("ALTER TABLE `categories` ADD COLUMN `is_stockable` TINYINT(1) DEFAULT 1");
+        }
+    } catch (Exception $e) {}
+
+    try {
+        $colsProd = $pdo->query("SHOW COLUMNS FROM `products` LIKE 'is_stockable'")->fetchAll();
+        if (empty($colsProd)) {
+            $pdo->exec("ALTER TABLE `products` ADD COLUMN `is_stockable` TINYINT(1) DEFAULT 1");
         }
     } catch (Exception $e) {}
 }

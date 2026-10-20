@@ -1978,6 +1978,7 @@ $appVersionData = getAppVersionData();
                                         <th class="py-3 px-4">Icon</th>
                                         <th class="py-3 px-4">Nama Kategori</th>
                                         <th class="py-3 px-4">Jumlah Produk</th>
+                                        <th class="py-3 px-4 text-center">Pengelolaan Stok</th>
                                         <th class="py-3 px-4 text-center">Aksi</th>
                                     </tr>
                                 </thead>
@@ -5619,6 +5620,16 @@ $appVersionData = getAppVersionData();
                     <label class="block font-bold text-slate-700 mb-1">Icon Emoji:</label>
                     <input type="text" id="category-modal-icon" value="🏷️" placeholder="Misal: ☕, 🥤, 🍟..." class="w-full p-2.5 bg-slate-50 border rounded-xl text-center">
                 </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Pengelolaan Stok Fisik:</label>
+                    <select id="category-modal-is-stockable" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium">
+                        <option value="1">📦 Wajib Di-Stok (Default - Pantau sisa stok fisik)</option>
+                        <option value="0">⚡ Tidak Di-Stok (BOM On-Demand - Bebas stok, langsung potong resep bahan baku)</option>
+                    </select>
+                    <p class="text-[10px] text-slate-500 mt-1">
+                        Pilih <strong>Tidak Di-Stok</strong> jika produk dalam kategori ini diproduksi on-demand (misal: Galon 15L yang langsung potong air baku 16L, 1 tutup, dan 1 tisu).
+                    </p>
+                </div>
                 <div class="grid grid-cols-2 gap-2 pt-2">
                     <button type="button" onclick="closeCategoryModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700">Batal</button>
                     <button type="submit" id="category-modal-submit-btn" class="py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow">Simpan Kategori</button>
@@ -5837,6 +5848,21 @@ $appVersionData = getAppVersionData();
                     <input type="hidden" id="prod-is-delivery-required" value="0">
                     <p id="prod-delivery-desc-text" class="text-[11px] text-indigo-700/80">
                         Standar: Pelanggan dapat berbelanja langsung di outlet tanpa mewajibkan layanan pengantaran kasir.
+                    </p>
+                </div>
+                <div class="p-3 bg-violet-50/70 border border-violet-200/80 rounded-2xl space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
+                            <span>📦 Pengelolaan Stok Fisik Produk:</span>
+                        </label>
+                        <span id="prod-stockable-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">Wajib Stok</span>
+                    </div>
+                    <select id="prod-is-stockable" onchange="toggleProductStockableBadge()" class="w-full p-2.5 bg-white border border-violet-200 rounded-xl font-bold text-xs text-slate-800 focus:ring-2 focus:ring-violet-500">
+                        <option value="1">📦 Wajib Di-Stok (Fisik dihitung & dibatasi di kasir)</option>
+                        <option value="0">⚡ Tidak Di-Stok / On-Demand (Bisa dijual tanpa stok, otomatis potong resep BOM)</option>
+                    </select>
+                    <p id="prod-stockable-desc-text" class="text-[11px] text-violet-900/80">
+                        Jika diset <strong>Tidak Di-Stok</strong>, kasir dapat menjual produk ini tanpa dibatasi sisa stok fisik jadi, dan sistem akan langsung memotong stok bahan baku BOM terkait.
                     </p>
                 </div>
                 <div class="grid grid-cols-2 gap-2 pt-2">
@@ -8156,9 +8182,9 @@ $appVersionData = getAppVersionData();
                             <div class="flex items-center justify-between mb-1.5">
                                 <span class="text-3xl">${p.image_emoji || '📦'}</span>
                                 <div class="flex flex-col items-end">
-                                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${p.stock > 10 ? 'bg-slate-100 text-slate-600' : 'bg-rose-100 text-rose-600'}">
-                                        Stok: ${p.stock}
-                                    </span>
+                                    ${(p.requires_stock === 0 || p.is_stockable === 0 || p.cat_is_stockable === 0)
+                                        ? '<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-violet-100 text-violet-800 border border-violet-200">⚡ Tanpa Stok (BOM)</span>'
+                                        : `<span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${p.stock > 10 ? 'bg-slate-100 text-slate-600' : 'bg-rose-100 text-rose-600'}">Stok: ${p.stock}</span>`}
                                     ${p.has_bom ? '<span class="text-[9px] text-indigo-600 font-bold mt-0.5">🧪 Pakai Resep</span>' : ''}
                                     ${(Number(p.is_delivery_included) === 1 || Number(p.is_delivery_required) === 2) 
                                         ? '<span class="text-[9px] text-emerald-800 font-extrabold mt-0.5 bg-emerald-100 border border-emerald-300 px-1.5 py-0.2 rounded">🎁 Termasuk Kirim</span>' 
@@ -8203,7 +8229,8 @@ $appVersionData = getAppVersionData();
                     return;
                 }
             }
-            if (product.stock <= 0) {
+            const isProductReqStock = (product.requires_stock !== undefined) ? Number(product.requires_stock) === 1 : (Number(product.is_stockable ?? 1) === 1 && Number(product.cat_is_stockable ?? 1) === 1);
+            if (isProductReqStock && product.stock <= 0) {
                 alert(`Stok '${product.name}' habis di cabang ini!`);
                 return;
             }
@@ -8282,7 +8309,8 @@ $appVersionData = getAppVersionData();
                 }
             }
 
-            if (product.stock <= 0) {
+            const isProductReqStock = (product.requires_stock !== undefined) ? Number(product.requires_stock) === 1 : (Number(product.is_stockable ?? 1) === 1 && Number(product.cat_is_stockable ?? 1) === 1);
+            if (isProductReqStock && product.stock <= 0) {
                 alert(`Stok '${product.name}' habis di cabang ini!`);
                 return;
             }
@@ -8305,7 +8333,7 @@ $appVersionData = getAppVersionData();
             const existing = state.cart.find(c => c.item_key === itemKey);
 
             if (existing) {
-                if (existing.qty + 1 > product.stock) {
+                if (existing.requires_stock && existing.qty + 1 > product.stock) {
                     alert(`Tidak dapat melebihi stok yang tersedia (${product.stock} pcs).`);
                     return;
                 }
@@ -8320,7 +8348,8 @@ $appVersionData = getAppVersionData();
                     price: finalPrice,
                     cogs: finalCogs,
                     qty: 1,
-                    max_stock: product.stock,
+                    max_stock: isProductReqStock ? product.stock : 999999,
+                    requires_stock: isProductReqStock,
                     price_tag: basePriceInfo.tag,
                     is_taxable: (product.is_taxable !== undefined) ? Number(product.is_taxable) : 1,
                     tax_percent: (product.tax_percent !== undefined) ? Number(product.tax_percent) : 11.0,
@@ -8359,7 +8388,7 @@ $appVersionData = getAppVersionData();
                 removeFromCart(itemKey);
                 return;
             }
-            if (item.qty > item.max_stock) {
+            if (item.requires_stock && item.qty > item.max_stock) {
                 alert(`Maksimal stok tersedia adalah ${item.max_stock}.`);
                 item.qty = item.max_stock;
             }
@@ -8406,6 +8435,7 @@ $appVersionData = getAppVersionData();
                             ${(item.is_delivery_included === 1 || item.is_delivery_required === 2)
                                 ? `<span class="inline-block text-[9px] px-1.5 py-0.2 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded font-bold">🎁 Termasuk Kirim</span>`
                                 : (item.is_delivery_required === 1 ? `<span class="inline-block text-[9px] px-1.5 py-0.2 bg-amber-100 text-amber-800 border border-amber-300 rounded font-bold">🚚 Wajib Ongkir</span>` : '')}
+                            ${(!item.requires_stock || item.max_stock >= 999999) ? `<span class="inline-block text-[9px] px-1.5 py-0.2 bg-violet-100 text-violet-800 border border-violet-200 rounded font-bold">⚡ Tanpa Stok (BOM)</span>` : ''}
                         </div>
                         <div class="flex items-center space-x-1.5 mt-0.5">
                             <span class="text-[11px] text-slate-400 font-mono">${formatRupiah(item.price)} x ${item.qty}</span>
@@ -13228,7 +13258,7 @@ Manager / Supervisor: __________________
                     <tr class="hover:bg-slate-50">
                         <td class="py-2.5 px-3 font-mono font-bold text-indigo-700">${p.sku}<br><span class="text-[10px] text-slate-400">${p.barcode}</span></td>
                         <td class="py-2.5 px-3 font-semibold text-slate-800">
-                            <span class="mr-1.5">${p.image_emoji || '📦'}</span>${p.name}
+                            <span class="mr-1.5">${p.image_emoji || '📦'}</span>${p.name}${(p.effective_is_stockable === 0 || p.requires_stock === 0) ? ' <span class="inline-block text-[9px] px-1.5 py-0.2 bg-violet-100 text-violet-800 border border-violet-200 rounded font-bold">⚡ Tanpa Stok</span>' : ''}
                         </td>
                         <td class="py-2.5 px-3">${typeBadge}</td>
                         <td class="py-2.5 px-3 text-slate-600">${p.category}</td>
@@ -13448,6 +13478,10 @@ Manager / Supervisor: __________________
             document.getElementById('prod-is-delivery-required').value = '0';
             document.getElementById('prod-is-delivery-required').checked = false;
             toggleProductDeliveryBadge();
+            if (document.getElementById('prod-is-stockable')) {
+                document.getElementById('prod-is-stockable').value = '1';
+            }
+            toggleProductStockableBadge();
 
             // Generate otomatis SKU dan Barcode unik untuk produk baru (5 digit)
             await autoGenerateSkuBarcode();
@@ -13503,9 +13537,26 @@ Manager / Supervisor: __________________
             document.getElementById('prod-is-delivery-required').value = delivVal;
             document.getElementById('prod-is-delivery-required').checked = (delivVal === '1' || delivVal === '2');
             toggleProductDeliveryBadge();
+            if (document.getElementById('prod-is-stockable')) {
+                document.getElementById('prod-is-stockable').value = (p.is_stockable !== undefined && Number(p.is_stockable) === 0) ? '0' : '1';
+            }
+            toggleProductStockableBadge();
 
             document.getElementById('prod-modal-title').innerText = 'Edit Produk: ' + p.name;
             document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function toggleProductStockableBadge() {
+            const el = document.getElementById('prod-is-stockable');
+            const badge = document.getElementById('prod-stockable-status-badge');
+            if (!el || !badge) return;
+            if (el.value === '0') {
+                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black bg-violet-100 text-violet-800';
+                badge.innerText = '⚡ Tanpa Stok (BOM)';
+            } else {
+                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800';
+                badge.innerText = '📦 Wajib Stok';
+            }
         }
 
         function closeProductModal() {
@@ -13541,7 +13592,8 @@ Manager / Supervisor: __________________
                 is_taxable: isTaxable,
                 tax_id: taxId,
                 is_delivery_required: isDelivReq,
-                is_delivery_included: isDelivInc
+                is_delivery_included: isDelivInc,
+                is_stockable: document.getElementById('prod-is-stockable') ? (parseInt(document.getElementById('prod-is-stockable').value) === 0 ? 0 : 1) : 1
             };
 
             const res = await fetch('api.php?action=save_product', {
@@ -14074,12 +14126,22 @@ Manager / Supervisor: __________________
 
                 tbody.innerHTML = data.categories.map(c => {
                     const isProtected = Number(c.id) === 1;
+                    const isStockable = (c.is_stockable !== undefined) ? Number(c.is_stockable) === 1 : true;
                     return `
                         <tr class="hover:bg-slate-50 transition-colors">
                             <td class="py-3 px-4 font-mono font-bold text-slate-500">#${c.id}</td>
                             <td class="py-3 px-4 text-xl">${c.icon || '🏷️'}</td>
                             <td class="py-3 px-4 font-bold text-slate-800">${c.name}</td>
                             <td class="py-3 px-4 font-semibold text-slate-600">${c.product_count || 0} Produk Terkait</td>
+                            <td class="py-3 px-4 text-center">
+                                <div class="inline-flex flex-col items-center gap-1">
+                                    ${isStockable 
+                                        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">📦 Wajib Stok</span>
+                                           <button onclick="toggleCategoryStockable(${c.id}, 0)" class="text-[9px] text-slate-400 hover:text-indigo-600 underline">Ubah ke Tanpa Stok</button>`
+                                        : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-800 border border-violet-200">⚡ Tanpa Stok (BOM)</span>
+                                           <button onclick="toggleCategoryStockable(${c.id}, 1)" class="text-[9px] text-slate-400 hover:text-indigo-600 underline">Ubah ke Wajib Stok</button>`}
+                                </div>
+                            </td>
                             <td class="py-3 px-4 text-center space-x-1">
                                 <button onclick='editCategory(${JSON.stringify(c)})' class="px-2.5 py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg text-[11px] font-bold transition-colors">Edit</button>
                                 ${!isProtected ? `<button onclick="deleteCategory(${c.id}, '${c.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-[11px] font-bold transition-colors">Hapus</button>` : '<span class="text-[10px] text-slate-400 font-semibold px-2 py-0.5 bg-slate-100 rounded">Default</span>'}
@@ -14097,6 +14159,8 @@ Manager / Supervisor: __________________
             document.getElementById('category-modal-id').value = '';
             document.getElementById('category-modal-name').value = '';
             document.getElementById('category-modal-icon').value = '🏷️';
+            const stkEl = document.getElementById('category-modal-is-stockable');
+            if (stkEl) stkEl.value = '1';
             document.getElementById('category-modal-title').innerText = 'Tambah Kategori Baru';
             document.getElementById('category-modal').classList.remove('hidden');
         }
@@ -14106,7 +14170,29 @@ Manager / Supervisor: __________________
             document.getElementById('category-modal-id').value = c.id;
             document.getElementById('category-modal-name').value = c.name;
             document.getElementById('category-modal-icon').value = c.icon || '🏷️';
+            const stkEl = document.getElementById('category-modal-is-stockable');
+            if (stkEl) stkEl.value = (c.is_stockable !== undefined && Number(c.is_stockable) === 0) ? '0' : '1';
             document.getElementById('category-modal-title').innerText = 'Edit Kategori: ' + c.name;
+        }
+
+        async function toggleCategoryStockable(id, newStatus) {
+            try {
+                const res = await fetch('api.php?action=toggle_category_stockable', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id, is_stockable: newStatus })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await loadCategoriesTable();
+                    await initApp();
+                    if (typeof loadAllProducts === 'function') await loadAllProducts();
+                } else {
+                    alert(data.message || 'Gagal mengubah status stok kategori');
+                }
+            } catch (err) {
+                alert('Terjadi kesalahan jaringan saat mengubah status stok kategori.');
+            }
         }
 
         function closeCategoryModal() {
@@ -14116,10 +14202,13 @@ Manager / Supervisor: __________________
         async function saveCategoryForm(e) {
             e.preventDefault();
             const id = document.getElementById('category-modal-id').value;
+            const stkEl = document.getElementById('category-modal-is-stockable');
+            const isStockable = stkEl ? parseInt(stkEl.value) : 1;
             const payload = {
                 id: id ? parseInt(id) : null,
                 name: document.getElementById('category-modal-name').value.trim(),
-                icon: document.getElementById('category-modal-icon').value.trim() || '🏷️'
+                icon: document.getElementById('category-modal-icon').value.trim() || '🏷️',
+                is_stockable: isStockable
             };
 
             const btn = document.getElementById('category-modal-submit-btn');
@@ -14558,7 +14647,7 @@ Manager / Supervisor: __________________
                             <td class="py-3 px-4 text-center font-mono font-bold text-slate-500">${p.sort_order || (idx + 1)}</td>
                             <td class="py-3 px-4 font-mono font-bold text-indigo-700">${p.sku}</td>
                             <td class="py-3 px-4 font-black text-slate-800">
-                                <span class="mr-1.5">${p.image_emoji || '📦'}</span>${p.name}
+                                <span class="mr-1.5">${p.image_emoji || '📦'}</span>${p.name}${(p.effective_is_stockable === 0 || p.requires_stock === 0) ? ' <span class="inline-block text-[9px] px-1.5 py-0.2 bg-violet-100 text-violet-800 border border-violet-200 rounded font-bold">⚡ Tanpa Stok</span>' : ''}
                             </td>
                             <td class="py-3 px-4">
                                 <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${p.product_type === 'RAW_MATERIAL' ? 'bg-amber-100 text-amber-900' : 'bg-indigo-100 text-indigo-900'}">${p.product_type}</span>
