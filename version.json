@@ -1,14 +1,22 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.9",
-  "build": "20261019-08",
-  "release_date": "2026-10-19",
+  "version": "1.2.10",
+  "build": "20261020-01",
+  "release_date": "2026-10-20",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
     {
-      "version": "1.2.9",
+      "version": "1.2.10",
       "commit": "HEAD",
+      "date": "2026-10-20",
+      "title": "Perbaikan Pemuatan Daftar Item Barang pada Modal Setel Stok Awal & Koreksi Kolom Harga Katalog Produk",
+      "description": "Memperbaiki galat basis data SQLSTATE[HY000] no such column: p.price pada kueri get_inventory_stocks di api.php dengan mengoreksi referensi kolom menjadi p.selling_price sesuai skema tabel products, memperkuat fungsi loadStockAdjustProducts pada index.php dengan visualisasi emoji tipe barang (Barang Jadi vs Bahan Baku), label informatif stok cabang saat ini, penanganan status loading, dan proteksi fallback data sehingga pilihan barang pada modal 'Setel Stok Awal & Mutasi Cabang' selalu tampil lengkap dan dapat dipilih secara interaktif.",
+      "rollback_command": "git checkout v1.2.9"
+    },
+    {
+      "version": "1.2.9",
+      "commit": "v1.2.9",
       "date": "2026-10-19",
       "title": "Otomatisasi & Penguncian Mutlak Kurir Pengirim Sesuai Kasir Login serta Penugasan Armada Dua Arah",
       "description": "Mengotomatiskan dan mengunci mutlak seleksi kurir driver dan armada kendaraan pada layar penjualan POS kasir sehingga karyawan/kasir yang telah ditugaskan ke armada kurir otomatis terpilih dan dikunci (disabled/non-tamperable) tanpa bisa memilih kurir atau armada lain, mengeliminasi peran Super Admin dan Branch Manager dari daftar kurir, menambahkan integrasi penugasan armada kendaraan kurir dua arah (bi-directional sync) pada manajemen karyawan dan armada logistik, serta memastikan backend checkout_sale memvalidasi dan memaksakan kurir/armada terkunci tersebut.",

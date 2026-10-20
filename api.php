@@ -2650,7 +2650,7 @@ try {
                            p.is_delivery_included as base_is_delivery_included,
                            COALESCE(SUM(bs.stock), 0) as stock,
                            COALESCE(AVG(bs.local_cogs), p.cogs, 0) as local_cogs,
-                           COALESCE(AVG(bs.local_price), p.price, 0) as local_price,
+                           COALESCE(AVG(bs.local_price), p.selling_price, 0) as local_price,
                            MAX(bs.last_updated) as last_updated,
                            1 as is_active,
                            COALESCE(p.is_delivery_required, 0) as is_delivery_required,
@@ -2666,7 +2666,7 @@ try {
                     $sql .= " AND p.product_type = ?";
                     $params[] = $typeFilter;
                 }
-                $sql .= " GROUP BY p.id, p.sku, p.name, p.category, p.product_type, p.unit, p.image_emoji, p.reorder_point, p.is_delivery_required, p.is_delivery_included, p.cogs, p.price";
+                $sql .= " GROUP BY p.id, p.sku, p.name, p.category, p.product_type, p.unit, p.image_emoji, p.reorder_point, p.is_delivery_required, p.is_delivery_included, p.cogs, p.selling_price";
                 $sql .= " ORDER BY p.product_type ASC, p.name ASC";
 
                 $stmt = $pdo->prepare($sql);
@@ -2714,7 +2714,7 @@ try {
                            p.is_delivery_included as base_is_delivery_included,
                            COALESCE(bs.stock, 0) as stock,
                            COALESCE(bs.local_cogs, p.cogs, 0) as local_cogs,
-                           COALESCE(bs.local_price, p.price, 0) as local_price,
+                           COALESCE(bs.local_price, p.selling_price, 0) as local_price,
                            bs.last_updated,
                            COALESCE(bs.is_active, 1) as is_active,
                            bs.is_delivery_required as branch_is_delivery_required,

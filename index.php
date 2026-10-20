@@ -15239,15 +15239,43 @@ Manager / Supervisor: __________________
 
         async function loadStockAdjustProducts(selectedProductId = null) {
             const bId = parseInt(document.getElementById('adj-branch-select')?.value || (state.currentBranch ? state.currentBranch.id : 1));
-            const res = await fetch(`api.php?action=get_inventory_stocks&branch_id=${bId}`);
-            const data = await res.json();
-            if (!data.success) return;
-
-            currentModalBranchStocks = data.stocks || [];
             const prodSelect = document.getElementById('adj-product-select');
-            prodSelect.innerHTML = currentModalBranchStocks.map(s => 
-                `<option value="${s.product_id}" data-stock="${s.stock}" data-unit="${s.unit}">${s.name} (${s.sku}) - Stok Cabang Ini: ${s.stock} ${s.unit}</option>`
-            ).join('');
+            if (prodSelect && prodSelect.options.length === 0) {
+                prodSelect.innerHTML = '<option value="">⏳ Memuat daftar barang...</option>';
+            }
+
+            try {
+                const res = await fetch(`api.php?action=get_inventory_stocks&branch_id=${bId}`);
+                const data = await res.json();
+                if (data.success && Array.isArray(data.stocks) && data.stocks.length > 0) {
+                    currentModalBranchStocks = data.stocks;
+                    prodSelect.innerHTML = currentModalBranchStocks.map(s => {
+                        const icon = s.product_type === 'FINISHED_GOODS' ? '📦' : '🧪';
+                        const typeLabel = s.product_type === 'FINISHED_GOODS' ? 'Barang Jadi' : 'Bahan Baku';
+                        return `<option value="${s.product_id}" data-stock="${s.stock}" data-unit="${s.unit}">${icon} ${s.name} (${s.sku}) [${typeLabel}] - Stok Cabang Ini: ${s.stock} ${s.unit}</option>`;
+                    }).join('');
+                } else if (state.products && state.products.length > 0) {
+                    // Fallback to bootstrap products if stock query is empty
+                    prodSelect.innerHTML = state.products.map(p => {
+                        const icon = p.product_type === 'FINISHED_GOODS' ? '📦' : '🧪';
+                        const typeLabel = p.product_type === 'FINISHED_GOODS' ? 'Barang Jadi' : 'Bahan Baku';
+                        return `<option value="${p.id}" data-stock="0" data-unit="${p.unit || 'pcs'}">${icon} ${p.name} (${p.sku}) [${typeLabel}] - Stok Cabang Ini: 0 ${p.unit || 'pcs'}</option>`;
+                    }).join('');
+                } else {
+                    prodSelect.innerHTML = '<option value="">⚠️ Tidak ada data barang ditemukan</option>';
+                }
+            } catch (err) {
+                console.error("Gagal memuat barang stok modal:", err);
+                if (state.products && state.products.length > 0) {
+                    prodSelect.innerHTML = state.products.map(p => {
+                        const icon = p.product_type === 'FINISHED_GOODS' ? '📦' : '🧪';
+                        const typeLabel = p.product_type === 'FINISHED_GOODS' ? 'Barang Jadi' : 'Bahan Baku';
+                        return `<option value="${p.id}" data-stock="0" data-unit="${p.unit || 'pcs'}">${icon} ${p.name} (${p.sku}) [${typeLabel}] - Stok Cabang Ini: 0 ${p.unit || 'pcs'}</option>`;
+                    }).join('');
+                } else {
+                    prodSelect.innerHTML = '<option value="">⚠️ Gagal memuat barang</option>';
+                }
+            }
 
             if (selectedProductId) {
                 prodSelect.value = selectedProductId;
