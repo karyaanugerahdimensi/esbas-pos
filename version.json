@@ -1,14 +1,22 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.11",
-  "build": "20261020-02",
+  "version": "1.2.12",
+  "build": "20261020-03",
   "release_date": "2026-10-20",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
     {
-      "version": "1.2.11",
+      "version": "1.2.12",
       "commit": "HEAD",
+      "date": "2026-10-20",
+      "title": "Restrukturisasi Presisi Desain 2-Kolom (Kiri & Kanan) pada Modal Tambah/Edit Produk Master",
+      "description": "Mengatasi kendala modal produk yang terpotong pada layar beresolusi laptop dengan mentransformasikan tata letak vertikal sempit single-column menjadi layout 2-kolom presisi dan responsif (max-w-4xl, max-h-[92vh]). Sisi kiri menampung Identitas Produk (SKU, Barcode, Emoji, Nama, Jenis, Kategori, Satuan) serta Harga & Formula Resep (HPP Pokok, Harga Jual, Reorder Point, Checkbox BOM), sedangkan sisi kanan menampung Aturan Bisnis Khusus (Kenakan Pajak Produk, Mode Pengiriman & Ongkos Kirim, serta Pengelolaan Stok Fisik Produk). Header dilengkapi tombol silang (x) dan footer tombol aksi (Batal & Simpan Produk) tertata rapi serta selalu terlihat tanpa terpotong.",
+      "rollback_command": "git checkout v1.2.11"
+    },
+    {
+      "version": "1.2.11",
+      "commit": "v1.2.11",
       "date": "2026-10-20",
       "title": "Dukungan Kategori & Produk Tanpa Stok Fisik (BOM On-Demand) dengan Auto-Deduction Bahan Baku",
       "description": "Menambahkan opsi konfigurasi fleksibel is_stockable pada master kategori dan produk untuk membedakan barang yang wajib memiliki stok fisik vs barang on-demand tanpa stok. Produk tanpa stok (seperti Galon 15 Liter) dapat langsung dijual di POS kasir tanpa dibatasi sisa stok fisik jadi, dan sistem secara otomatis memotong stok bahan baku dari resep BOM (16L Air Baku, 1 pcs Tutup Galon, 1 pcs Tisu Galon) serta mencatat mutasi stok BOM_DEDUCTION secara transparan dan akurat.",

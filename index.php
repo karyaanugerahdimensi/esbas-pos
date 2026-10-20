@@ -5740,134 +5740,191 @@ $appVersionData = getAppVersionData();
         </div>
     </div>
 
-    <!-- Modal 4: Master Produk Modal -->
-    <div id="product-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <h3 id="prod-modal-title" class="font-bold text-slate-800 text-base">Tambah Produk Baru</h3>
-            <form onsubmit="saveProductForm(event)" class="space-y-3 text-xs">
+        <!-- Modal 4: Master Produk Modal (2-Kolom Presisi: Kiri & Kanan) -->
+    <div id="product-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5 hidden">
+        <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <span class="p-2 bg-indigo-100 text-indigo-700 rounded-xl text-lg font-bold">📦</span>
+                    <div>
+                        <h3 id="prod-modal-title" class="font-black text-slate-800 text-base">Tambah Produk Baru</h3>
+                        <p class="text-[11px] text-slate-400">Atur rincian identitas, harga jual, pajak, pengiriman, dan stok produk</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeProductModal()" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form (Scrollable) -->
+            <form onsubmit="saveProductForm(event)" class="flex-1 overflow-y-auto p-6 space-y-5 text-xs">
                 <input type="hidden" id="prod-id">
-                <div class="grid grid-cols-3 gap-2">
-                    <div>
-                        <div class="flex items-center justify-between mb-1">
-                            <label class="block font-bold text-slate-700">SKU:</label>
-                            <button type="button" onclick="autoGenerateSkuBarcode()" class="text-[9px] text-indigo-600 hover:text-indigo-800 font-bold bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200" title="Generate SKU & Barcode Otomatis">🎲 Auto</button>
+
+                <!-- 2-Kolom Grid: Kiri & Kanan -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+                    
+                    <!-- SISI KIRI: INFORMASI UTAMA, JENIS, SATUAN & HARGA -->
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-3">
+                            <h4 class="font-extrabold text-slate-700 text-xs flex items-center space-x-1.5 uppercase tracking-wider">
+                                <span>🏷️ Identitas Produk</span>
+                            </h4>
+
+                            <!-- SKU, Barcode, Emoji -->
+                            <div class="grid grid-cols-3 gap-2">
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label class="block font-bold text-slate-700">SKU:</label>
+                                        <button type="button" onclick="autoGenerateSkuBarcode()" class="text-[9px] text-indigo-600 hover:text-indigo-800 font-bold bg-indigo-50 px-1 py-0.5 rounded border border-indigo-200" title="Generate SKU Otomatis">🎲 Auto</button>
+                                    </div>
+                                    <input type="text" id="prod-sku" placeholder="PRD-007" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-mono text-xs focus:ring-2 focus:ring-indigo-500" required>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label class="block font-bold text-slate-700">Barcode:</label>
+                                        <button type="button" onclick="autoGenerateSkuBarcode()" class="text-[9px] text-indigo-600 hover:text-indigo-800 font-bold bg-indigo-50 px-1 py-0.5 rounded border border-indigo-200" title="Generate Barcode Otomatis">🎲 Auto</button>
+                                    </div>
+                                    <input type="text" id="prod-barcode" placeholder="8991007" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-mono text-xs focus:ring-2 focus:ring-indigo-500" required>
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Icon Emoji:</label>
+                                    <input type="text" id="prod-emoji" value="☕" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-center text-sm focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                            </div>
+
+                            <!-- Nama Produk -->
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">Nama Produk / Bahan:</label>
+                                <input type="text" id="prod-name" placeholder="Misal: Air Mineral Galon 15 Liter..." class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500" required>
+                            </div>
+
+                            <!-- Jenis, Kategori, Satuan -->
+                            <div class="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Jenis Produk:</label>
+                                    <select id="prod-type" onchange="onProductTypeChange()" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500">
+                                        <option value="FINISHED_GOODS">Barang Jadi (Dijual)</option>
+                                        <option value="RAW_MATERIAL">Bahan Baku (Resep)</option>
+                                        <option value="SERVICE">Jasa / Servis</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Kategori:</label>
+                                    <select id="prod-category" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500"></select>
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Satuan:</label>
+                                    <select id="prod-unit" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500"></select>
+                                </div>
+                            </div>
                         </div>
-                        <input type="text" id="prod-sku" placeholder="PRD-007" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono text-xs" required>
-                    </div>
-                    <div>
-                        <div class="flex items-center justify-between mb-1">
-                            <label class="block font-bold text-slate-700">Barcode:</label>
-                            <button type="button" onclick="autoGenerateSkuBarcode()" class="text-[9px] text-indigo-600 hover:text-indigo-800 font-bold bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200" title="Generate Barcode Otomatis">🎲 Auto</button>
-                        </div>
-                        <input type="text" id="prod-barcode" placeholder="8991007" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono text-xs" required>
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Icon Emoji:</label>
-                        <input type="text" id="prod-emoji" value="☕" class="w-full p-2.5 bg-slate-50 border rounded-xl text-center">
-                    </div>
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Nama Produk / Bahan:</label>
-                    <input type="text" id="prod-name" placeholder="Nama produk..." class="w-full p-2.5 bg-slate-50 border rounded-xl" required>
-                </div>
-                <div class="grid grid-cols-3 gap-2">
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Jenis Produk:</label>
-                        <select id="prod-type" onchange="onProductTypeChange()" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium">
-                            <option value="FINISHED_GOODS">Barang Jadi (Dijual)</option>
-                            <option value="RAW_MATERIAL">Bahan Baku (Resep)</option>
-                            <option value="SERVICE">Jasa / Servis</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Kategori:</label>
-                        <select id="prod-category" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium"></select>
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Satuan:</label>
-                        <select id="prod-unit" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium"></select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <div class="flex items-center justify-between mb-1">
-                            <label class="block font-bold text-slate-700">HPP Pokok (Modal Rp):</label>
-                            <button type="button" id="btn-fetch-bom-cogs" onclick="autoFillCogsFromBOM()" class="text-[9px] text-emerald-700 hover:text-emerald-900 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 hidden" title="Kalkulasi otomatis dari bahan baku BOM">🧪 Dari BOM</button>
-                        </div>
-                        <input type="number" id="prod-cogs" value="10000" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono">
-                        <p id="prod-cogs-hint" class="text-[10px] text-emerald-600 font-semibold mt-1 hidden"></p>
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Harga Jual (Rp):</label>
-                        <input type="number" id="prod-price" value="25000" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Batas Min. Stok (Reorder):</label>
-                        <input type="number" id="prod-reorder" value="10" class="w-full p-2.5 bg-slate-50 border rounded-xl">
-                    </div>
-                    <div class="flex items-center pt-5">
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" id="prod-has-bom" class="w-4 h-4 text-indigo-600 rounded-md">
-                            <span class="font-bold text-slate-700">Gunakan Formula Resep (BOM)</span>
-                        </label>
-                    </div>
-                </div>
-                <div class="p-3 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-2">
-                    <div class="flex items-center justify-between">
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" id="prod-is-taxable" onchange="toggleProductTaxSelect()" class="w-4 h-4 text-amber-600 rounded-md" checked>
-                            <span class="font-bold text-slate-800 text-xs">🏛️ Kenakan Pajak Produk (Taxable)</span>
-                        </label>
-                        <span id="prod-tax-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">Kena Pajak</span>
-                    </div>
-                    <div id="prod-tax-select-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
-                        <div>
-                            <label class="block font-bold text-slate-700 mb-1">Tarif Pajak (Tax):</label>
-                            <select id="prod-tax-id" class="w-full p-2 bg-white border border-amber-300 rounded-xl font-medium"></select>
-                        </div>
-                        <div class="flex items-center text-[11px] text-slate-500 pt-3">
-                            <p>Pajak hanya dihitung di POS jika produk aktif dikenakan pajak.</p>
+
+                        <!-- HPP, Harga Jual, Reorder, BOM -->
+                        <div class="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-3">
+                            <h4 class="font-extrabold text-slate-700 text-xs flex items-center space-x-1.5 uppercase tracking-wider">
+                                <span>💰 Harga & Formula Resep</span>
+                            </h4>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label class="block font-bold text-slate-700">HPP Pokok (Modal):</label>
+                                        <button type="button" id="btn-fetch-bom-cogs" onclick="autoFillCogsFromBOM()" class="text-[9px] text-emerald-700 hover:text-emerald-900 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 hidden" title="Kalkulasi otomatis dari bahan baku BOM">🧪 Dari BOM</button>
+                                    </div>
+                                    <input type="number" id="prod-cogs" value="10000" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-mono font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500">
+                                    <p id="prod-cogs-hint" class="text-[10px] text-emerald-600 font-semibold mt-1 hidden"></p>
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Harga Jual (Rp):</label>
+                                    <input type="number" id="prod-price" value="25000" class="w-full p-2.5 bg-white border border-indigo-200 rounded-xl font-mono font-black text-indigo-700 focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 items-center pt-1">
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Batas Min. Stok (Reorder):</label>
+                                    <input type="number" id="prod-reorder" value="10" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-mono text-xs focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                                <div class="pt-4">
+                                    <label class="flex items-center space-x-2 cursor-pointer bg-white p-2 border border-slate-200 rounded-xl hover:border-indigo-300 transition-colors">
+                                        <input type="checkbox" id="prod-has-bom" class="w-4 h-4 text-indigo-600 rounded">
+                                        <span class="font-bold text-slate-700 text-xs">🧪 Formula BOM</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="p-3 bg-indigo-50/70 border border-indigo-200/80 rounded-2xl space-y-2">
-                    <div class="flex items-center justify-between">
-                        <label class="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
-                            <span>🚚 Mode Pengiriman & Ongkos Kirim:</span>
-                        </label>
-                        <span id="prod-delivery-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-600">Standar</span>
+
+                    <!-- SISI KANAN: ATURAN BISNIS, PAJAK, ONGKOS KIRIM & PENGELOLAAN STOK -->
+                    <div class="space-y-3.5">
+                        <!-- BOX 1: PAJAK PRODUK -->
+                        <div class="p-3.5 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-2">
+                            <div class="flex items-center justify-between">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" id="prod-is-taxable" onchange="toggleProductTaxSelect()" class="w-4 h-4 text-amber-600 rounded" checked>
+                                    <span class="font-bold text-slate-800 text-xs">🏛️ Kenakan Pajak Produk (Taxable)</span>
+                                </label>
+                                <span id="prod-tax-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">Kena Pajak</span>
+                            </div>
+                            <div id="prod-tax-select-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Tarif Pajak (Tax):</label>
+                                    <select id="prod-tax-id" class="w-full p-2 bg-white border border-amber-300 rounded-xl font-medium focus:ring-2 focus:ring-amber-500"></select>
+                                </div>
+                                <div class="flex items-center text-[10px] text-slate-500 pt-2 leading-tight">
+                                    <p>Pajak otomatis dihitung di POS saat transaksi penjualan berlangsung.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BOX 2: MODE PENGIRIMAN & ONGKIR -->
+                        <div class="p-3.5 bg-indigo-50/70 border border-indigo-200/80 rounded-2xl space-y-2">
+                            <div class="flex items-center justify-between">
+                                <label class="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
+                                    <span>🚚 Mode Pengiriman & Ongkos Kirim:</span>
+                                </label>
+                                <span id="prod-delivery-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-600">Standar</span>
+                            </div>
+                            <select id="prod-delivery-mode" onchange="toggleProductDeliveryBadge()" class="w-full p-2.5 bg-white border border-indigo-200 rounded-xl font-bold text-xs text-slate-800 focus:ring-2 focus:ring-indigo-500">
+                                <option value="0">⚪ Standar / Ambil di Toko (Tanpa Wajib Kirim)</option>
+                                <option value="1">🚚 Wajib Ongkir Tambahan (Tarif Kirim Cabang)</option>
+                                <option value="2">🎁 Sudah Termasuk Biaya Kirim (Include Ongkir)</option>
+                            </select>
+                            <input type="hidden" id="prod-is-delivery-required" value="0">
+                            <p id="prod-delivery-desc-text" class="text-[11px] text-indigo-700/80 leading-relaxed">
+                                Standar: Pelanggan dapat berbelanja langsung di outlet tanpa mewajibkan layanan pengantaran kasir.
+                            </p>
+                        </div>
+
+                        <!-- BOX 3: PENGELOLAAN STOK FISIK (ON-DEMAND / BOM) -->
+                        <div class="p-3.5 bg-violet-50/70 border border-violet-200/80 rounded-2xl space-y-2">
+                            <div class="flex items-center justify-between">
+                                <label class="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
+                                    <span>📦 Pengelolaan Stok Fisik Produk:</span>
+                                </label>
+                                <span id="prod-stockable-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">Wajib Stok</span>
+                            </div>
+                            <select id="prod-is-stockable" onchange="toggleProductStockableBadge()" class="w-full p-2.5 bg-white border border-violet-200 rounded-xl font-bold text-xs text-slate-800 focus:ring-2 focus:ring-violet-500">
+                                <option value="1">📦 Wajib Di-Stok (Fisik dihitung & dibatasi di kasir)</option>
+                                <option value="0">⚡ Tidak Di-Stok / On-Demand (Otomatis potong resep BOM)</option>
+                            </select>
+                            <p id="prod-stockable-desc-text" class="text-[11px] text-violet-900/80 leading-relaxed">
+                                Jika diset <strong>Tidak Di-Stok</strong>, kasir dapat menjual produk ini tanpa dibatasi sisa stok fisik jadi, dan sistem akan langsung memotong stok bahan baku BOM terkait.
+                            </p>
+                        </div>
                     </div>
-                    <select id="prod-delivery-mode" onchange="toggleProductDeliveryBadge()" class="w-full p-2.5 bg-white border border-indigo-200 rounded-xl font-bold text-xs text-slate-800 focus:ring-2 focus:ring-indigo-500">
-                        <option value="0">⚪ Standar / Ambil di Toko (Tanpa Wajib Kirim)</option>
-                        <option value="1">🚚 Wajib Ongkir Tambahan (Dikenakan Tarif Kirim Cabang)</option>
-                        <option value="2">🎁 Sudah Termasuk Biaya Kirim (Include Ongkir - Tetap Catat Pengirim)</option>
-                    </select>
-                    <!-- Fallback hidden checkbox for backward compatibility -->
-                    <input type="hidden" id="prod-is-delivery-required" value="0">
-                    <p id="prod-delivery-desc-text" class="text-[11px] text-indigo-700/80">
-                        Standar: Pelanggan dapat berbelanja langsung di outlet tanpa mewajibkan layanan pengantaran kasir.
-                    </p>
                 </div>
-                <div class="p-3 bg-violet-50/70 border border-violet-200/80 rounded-2xl space-y-2">
-                    <div class="flex items-center justify-between">
-                        <label class="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
-                            <span>📦 Pengelolaan Stok Fisik Produk:</span>
-                        </label>
-                        <span id="prod-stockable-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">Wajib Stok</span>
-                    </div>
-                    <select id="prod-is-stockable" onchange="toggleProductStockableBadge()" class="w-full p-2.5 bg-white border border-violet-200 rounded-xl font-bold text-xs text-slate-800 focus:ring-2 focus:ring-violet-500">
-                        <option value="1">📦 Wajib Di-Stok (Fisik dihitung & dibatasi di kasir)</option>
-                        <option value="0">⚡ Tidak Di-Stok / On-Demand (Bisa dijual tanpa stok, otomatis potong resep BOM)</option>
-                    </select>
-                    <p id="prod-stockable-desc-text" class="text-[11px] text-violet-900/80">
-                        Jika diset <strong>Tidak Di-Stok</strong>, kasir dapat menjual produk ini tanpa dibatasi sisa stok fisik jadi, dan sistem akan langsung memotong stok bahan baku BOM terkait.
-                    </p>
-                </div>
-                <div class="grid grid-cols-2 gap-2 pt-2">
-                    <button type="button" onclick="closeProductModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700">Batal</button>
-                    <button type="submit" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow">Simpan Produk</button>
+
+                <!-- Footer Tombol Aksi (Sticky / Rapi di Bawah) -->
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-end space-x-2.5">
+                    <button type="button" onclick="closeProductModal()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all text-xs">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md hover:shadow-lg transition-all text-xs flex items-center space-x-1.5">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                        <span>Simpan Produk</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -13487,6 +13544,7 @@ Manager / Supervisor: __________________
             await autoGenerateSkuBarcode();
 
             document.getElementById('product-modal').classList.remove('hidden');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         async function editProduct(p) {
@@ -13544,6 +13602,7 @@ Manager / Supervisor: __________________
 
             document.getElementById('prod-modal-title').innerText = 'Edit Produk: ' + p.name;
             document.getElementById('product-modal').classList.remove('hidden');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function toggleProductStockableBadge() {
