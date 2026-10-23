@@ -2068,20 +2068,44 @@ function autoMigrateMysql($pdo) {
         }
     } catch (Exception $e) {}
 
-    // 8. Auto-seed missing branch_stocks & auto-heal is_active untuk produk jadi di MySQL
+    // 8. Deduplicate branch_stocks, add UNIQUE constraint, and sync branch menu activation in MySQL
     try {
-        $pdo->exec("INSERT IGNORE INTO `branch_stocks` (`branch_id`, `product_id`, `stock`, `local_cogs`, `local_price`, `is_active`)
+        // Step 8a: Hapus duplikat branch_stocks di MySQL dengan mempertahankan baris id tertinggi
+        $pdo->exec("
+            DELETE bs1 FROM `branch_stocks` bs1
+            INNER JOIN `branch_stocks` bs2 
+            WHERE bs1.branch_id = bs2.branch_id 
+              AND bs1.product_id = bs2.product_id 
+              AND bs1.id < bs2.id
+        ");
+
+        // Step 8b: Tambahkan UNIQUE KEY uq_branch_product agar duplikasi fisik dicegah permanen
+        $keys = $pdo->query("SHOW INDEX FROM `branch_stocks` WHERE Column_name = 'product_id' AND Non_unique = 0")->fetchAll();
+        if (empty($keys)) {
+            $pdo->exec("ALTER TABLE `branch_stocks` ADD UNIQUE KEY `uq_branch_product` (`branch_id`, `product_id`)");
+        }
+
+        // Step 8c: Seed kombinasi cabang & produk yang benar-benar belum ada di branch_stocks
+        $pdo->exec("
+            INSERT INTO `branch_stocks` (`branch_id`, `product_id`, `stock`, `local_cogs`, `local_price`, `is_active`)
             SELECT b.id, p.id, 0, COALESCE(p.cogs, 0), COALESCE(p.selling_price, 0), 1
             FROM `branches` b
             CROSS JOIN `products` p
             WHERE (p.is_active IS NULL OR p.is_active = 1)
+              AND NOT EXISTS (
+                  SELECT 1 FROM `branch_stocks` bs2 
+                  WHERE bs2.branch_id = b.id AND bs2.product_id = p.id
+              )
         ");
-        $pdo->exec("UPDATE `branch_stocks` bs
-            JOIN `products` p ON bs.product_id = p.id
-            SET bs.is_active = 1
-            WHERE (p.product_type IS NULL OR p.product_type = '' OR p.product_type = 'FINISHED_GOODS')
-              AND (p.is_active IS NULL OR p.is_active = 1)
-              AND bs.is_active = 0
+
+        // Step 8d: Sinkronkan status aktif/nonaktif menu cabang persis seperti di database lokal (respect branch-specific activation)
+        $pdo->exec("
+            UPDATE `branch_stocks` bs
+            JOIN `products` p ON p.id = bs.product_id
+            SET bs.is_active = 0
+            WHERE (bs.branch_id = 2 AND p.sku IN ('PRD-00003', 'PRD-00004', 'PRD-00005'))
+               OR (bs.branch_id = 3 AND p.sku IN ('PRD-00003', 'PRD-00004', 'PRD-00005', 'PRD-00007', 'PRD-00008'))
+               OR (bs.branch_id = 6 AND p.sku IN ('PRD-00002', 'PRD-00003', 'PRD-00004', 'PRD-00005', 'PRD-00006'))
         ");
     } catch (Exception $e) {}
 

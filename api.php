@@ -334,11 +334,16 @@ try {
                 ORDER BY category ASC, p.name ASC
             ");
             $stmtProducts->execute([$currentBranch['id']]);
-            $products = $stmtProducts->fetchAll();
-            foreach ($products as &$pr) {
+            $rawProducts = $stmtProducts->fetchAll();
+            $products = [];
+            $seenProductIds = [];
+            foreach ($rawProducts as $pr) {
+                $pid = (int)$pr['id'];
+                if (isset($seenProductIds[$pid])) continue;
+                $seenProductIds[$pid] = true;
                 $pr['requires_stock'] = ((int)$pr['is_stockable'] === 1 && (int)$pr['cat_is_stockable'] === 1) ? 1 : 0;
+                $products[] = $pr;
             }
-            unset($pr);
 
             // Fetch Product Variants and their Variant BOM Recipes
             $stmtVariants = $pdo->query("
@@ -2814,15 +2819,19 @@ try {
 
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($params);
-                $stocks = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-                foreach ($stocks as &$s) {
+                $rawStocks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $stocks = [];
+                $seenStockProdIds = [];
+                foreach ($rawStocks as $s) {
+                    $pid = (int)$s['product_id'];
+                    if (isset($seenStockProdIds[$pid])) continue;
+                    $seenStockProdIds[$pid] = true;
                     $s['stock'] = (float)$s['stock'];
                     $s['local_cogs'] = (float)$s['local_cogs'];
                     $s['local_price'] = (float)$s['local_price'];
                     $s['requires_stock'] = ((int)($s['is_stockable'] ?? 1) === 1 && (int)($s['cat_is_stockable'] ?? 1) === 1) ? 1 : 0;
+                    $stocks[] = $s;
                 }
-                unset($s);
 
                 echo json_encode([
                     'success' => true,
@@ -3105,7 +3114,15 @@ try {
                 ORDER BY osp.sort_order ASC, osp.id ASC
             ");
             $stmtTracked->execute([$branchId]);
-            $trackedRows = $stmtTracked->fetchAll();
+            $rawTracked = $stmtTracked->fetchAll();
+            $trackedRows = [];
+            $seenTrackedIds = [];
+            foreach ($rawTracked as $tr) {
+                $pid = (int)$tr['product_id'];
+                if (isset($seenTrackedIds[$pid])) continue;
+                $seenTrackedIds[$pid] = true;
+                $trackedRows[] = $tr;
+            }
 
             // Fallback default jika tabel konfigurasi kosong
             if (empty($trackedRows)) {
@@ -3119,7 +3136,13 @@ try {
                     ORDER BY p.id ASC
                 ");
                 $stmtFallback->execute([$branchId]);
-                $trackedRows = $stmtFallback->fetchAll();
+                $rawFallback = $stmtFallback->fetchAll();
+                foreach ($rawFallback as $fb) {
+                    $pid = (int)$fb['product_id'];
+                    if (isset($seenTrackedIds[$pid])) continue;
+                    $seenTrackedIds[$pid] = true;
+                    $trackedRows[] = $fb;
+                }
             }
 
             $dynamicItems = [];
@@ -3372,7 +3395,15 @@ try {
                 ORDER BY osp.sort_order ASC, osp.id ASC
             ");
             $stmtTracked->execute([$shift['branch_id']]);
-            $trackedRows = $stmtTracked->fetchAll();
+            $rawTracked = $stmtTracked->fetchAll();
+            $trackedRows = [];
+            $seenTrackedIds = [];
+            foreach ($rawTracked as $tr) {
+                $pid = (int)$tr['product_id'];
+                if (isset($seenTrackedIds[$pid])) continue;
+                $seenTrackedIds[$pid] = true;
+                $trackedRows[] = $tr;
+            }
 
             if (empty($trackedRows)) {
                 $stmtFallback = $pdo->prepare("
@@ -3385,7 +3416,13 @@ try {
                     ORDER BY p.id ASC
                 ");
                 $stmtFallback->execute([$shift['branch_id']]);
-                $trackedRows = $stmtFallback->fetchAll();
+                $rawFallback = $stmtFallback->fetchAll();
+                foreach ($rawFallback as $fb) {
+                    $pid = (int)$fb['product_id'];
+                    if (isset($seenTrackedIds[$pid])) continue;
+                    $seenTrackedIds[$pid] = true;
+                    $trackedRows[] = $fb;
+                }
             }
 
             $closingItems = [];

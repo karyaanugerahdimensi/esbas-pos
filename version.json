@@ -1,14 +1,22 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.15",
-  "build": "20261023-03",
+  "version": "1.2.16",
+  "build": "20261023-04",
   "release_date": "2026-10-23",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
     {
-      "version": "1.2.15",
+      "version": "1.2.16",
       "commit": "HEAD",
+      "date": "2026-10-23",
+      "title": "Eliminasi Duplikasi Produk POS & Sinkronisasi Presisi Menu Aktif Cabang pada Hosting MySQL",
+      "description": "Menyelesaikan kendala produk POS yang terduplikasi berulang kali dan tidak selarasnya status aktif/nonaktif menu cabang pada hosting MySQL/MariaDB. Menghapus auto-update yang memaksakan seluruh produk menjadi aktif, membersihkan duplikat baris branch_stocks di MySQL, menambahkan proteksi fisik UNIQUE KEY uq_branch_product (branch_id, product_id) pada tabel branch_stocks di skema MySQL dan migrasi otomatis, menyinkronkan data dump esbas_pos_mysql.sql persis dengan konfigurasi aktif/nonaktif lokal per-cabang, serta menambahkan deduplikasi berlapis (defense in depth) pada backend api.php dan frontend index.php.",
+      "rollback_command": "git checkout v1.2.15"
+    },
+    {
+      "version": "1.2.15",
+      "commit": "v1.2.15",
       "date": "2026-10-23",
       "title": "Perbaikan Kritis Script Parsing: Pemulihan Penuh Akses Login Admin & Kasir",
       "description": "Menyelesaikan galat tak terduga yang menyebabkan layar form login tidak merespon saat diklik oleh Admin maupun Kasir. Mengidentifikasi dan memperbaiki struktur blok try-catch yang tidak lengkap pada beberapa fungsi handler CRUD pengaturan (deleteCategory, deleteProductType, deleteProductUnit, deleteTax, saveOpeningShiftProductForm, toggleOpeningShiftProductStatus, deleteOpeningShiftProduct) serta menghapus blok catch yatim di index.php yang sempat memicu Uncaught SyntaxError pada browser engine. Seluruh fungsi autentikasi (handleLogin, checkAuthSession, renderEmployeeRoleOptions) telah diverifikasi berjalan 100% lancar melalui headless Edge browser engine dan tes otomatis.",

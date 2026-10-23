@@ -8083,7 +8083,12 @@ $appVersionData = getAppVersionData();
                 state.currentUser = data.current_user;
                 state.activeShift = data.active_shift;
                 state.userRoles = data.user_roles || [];
-                state.products = data.products;
+                const seenPids = new Set();
+                state.products = (data.products || []).filter(p => {
+                    if (seenPids.has(p.id)) return false;
+                    seenPids.add(p.id);
+                    return true;
+                });
                 state.categories = data.categories;
                 state.productTypes = data.product_types || [];
                 state.productUnits = data.product_units || [];
