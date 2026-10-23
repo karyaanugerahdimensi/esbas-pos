@@ -309,8 +309,15 @@ try {
             $stmtBranch->execute([$branchId]);
             $currentBranch = $stmtBranch->fetch() ?: ($branches[0] ?? ['id' => 1, 'name' => 'Cabang Utama', 'code' => 'PST01']);
 
-            // Active Shift
-            $stmtShift = $pdo->prepare("SELECT * FROM cashier_shifts WHERE branch_id = ? AND user_id = ? AND status = 'OPEN' ORDER BY id DESC LIMIT 1");
+            // Active Shift di cabang ini: Ambil shift yang berstatus OPEN di cabang ini (baik dibuka oleh user saat ini maupun kasir rekanan yang bertugas bersamaan)
+            $stmtShift = $pdo->prepare("
+                SELECT cs.*, u.name as opener_name, u.nik as opener_nik
+                FROM cashier_shifts cs
+                JOIN users u ON u.id = cs.user_id
+                WHERE cs.branch_id = ? AND cs.status = 'OPEN'
+                ORDER BY (CASE WHEN cs.user_id = ? THEN 1 ELSE 2 END) ASC, cs.id DESC
+                LIMIT 1
+            ");
             $stmtShift->execute([$currentBranch['id'], $currentUser['id']]);
             $activeShift = $stmtShift->fetch();
 
@@ -3038,6 +3045,28 @@ try {
                 }
             }
 
+            // Jika cabang ini sudah memiliki shift OPEN (misal dibuka oleh kasir rekanan), kembalikan data shift aktif langsung
+            if ($activeOpenShift) {
+                echo json_encode([
+                    'success' => true,
+                    'has_active_open_shift' => true,
+                    'active_open_shift' => [
+                        'id' => (int)$activeOpenShift['id'],
+                        'shift_number' => (int)($activeOpenShift['shift_number'] ?? 1),
+                        'shift_name' => $activeOpenShift['shift_name'] ?: 'Shift',
+                        'shift_type' => $activeOpenShift['shift_type'] ?? 'SHIFT_1',
+                        'cashier_name' => $activeOpenShift['cashier_name'] ?: 'Kasir',
+                        'opener_name' => $activeOpenShift['cashier_name'] ?: 'Kasir',
+                        'initial_cash' => (float)$activeOpenShift['initial_cash'],
+                        'start_time' => $activeOpenShift['start_time'],
+                        'status' => 'OPEN',
+                        'branch_id' => (int)$activeOpenShift['branch_id']
+                    ],
+                    'message' => 'Cabang ini sudah memiliki shift aktif yang dibuka oleh ' . ($activeOpenShift['cashier_name'] ?: 'Kasir') . ' (' . ($activeOpenShift['shift_name'] ?: 'Shift Aktif') . '). Anda otomatis tergabung dalam shift ini.'
+                ]);
+                break;
+            }
+
             $nextShiftNumber = $todayClosedCount + 1;
             $nextShiftName = ($nextShiftNumber == 1) ? 'Shift 1 (Pagi)' : (($nextShiftNumber == 2) ? 'Shift 2 (Siang/Malam)' : ('Shift ' . $nextShiftNumber));
             $nextShiftType = 'SHIFT_' . $nextShiftNumber;
@@ -3238,21 +3267,25 @@ try {
             $initialCash = (float)($input['initial_cash'] ?? 0);
 
             // Cegah buka shift jika masih ada shift yang berstatus OPEN di cabang ini (mencegah bentrok antar kasir)
+            // Jika cabang ini sudah memiliki shift OPEN (misal kasir masuk bersamaan atau dibuka oleh rekan kasir),
+            // pengguna langsung tergabung ke dalam shift aktif cabang tanpa perlu membuka shift baru!
             $stmtCheckBranch = $pdo->prepare("
-                SELECT cs.id, cs.shift_name, u.name as cashier_name
+                SELECT cs.*, u.name as opener_name, u.nik as opener_nik
                 FROM cashier_shifts cs
                 JOIN users u ON u.id = cs.user_id
                 WHERE cs.branch_id = ? AND cs.status = 'OPEN'
-                LIMIT 1
+                ORDER BY cs.id DESC LIMIT 1
             ");
             $stmtCheckBranch->execute([$branchId]);
             $existingOpen = $stmtCheckBranch->fetch();
             if ($existingOpen) {
                 echo json_encode([
-                    'success' => false,
-                    'message' => 'Cabang ini masih memiliki shift aktif yang belum ditutup (' . ($existingOpen['shift_name'] ?: 'Shift') . ' oleh ' . $existingOpen['cashier_name'] . '). Lakukan serah terima / closing shift terlebih dahulu.'
+                    'success' => true,
+                    'already_opened' => true,
+                    'message' => 'Shift di cabang ini sudah aktif dibuka oleh ' . ($existingOpen['opener_name'] ?: 'Kasir') . ' (' . ($existingOpen['shift_name'] ?: 'Shift Aktif') . '). Anda otomatis tergabung dalam operasional shift ini.',
+                    'shift' => $existingOpen
                 ]);
-                exit;
+                break;
             }
 
             $today = date('Y-m-d');
@@ -4498,6 +4531,7 @@ try {
             $deliveryDistanceKm = (float)($input['delivery_distance_km'] ?? 0);
             $courierVehicleId = !empty($input['courier_vehicle_id']) ? (int)$input['courier_vehicle_id'] : null;
             $driverUserId = !empty($input['driver_user_id']) ? (int)$input['driver_user_id'] : null;
+            $driverName = trim($input['driver_name'] ?? '');
             // Kebijakan Ongkos Kirim Pesanan Campuran (Mixed Cart Delivery Policy):
             // Ongkir Rp 0 (is_delivery_included = 1) HANYA berlaku jika SELURUH produk dalam keranjang adalah produk bebas ongkir.
             // Jika terdapat produk yang dikenakan ongkos kirim (chargeable items), maka ongkos kirim berlaku sesuai jarak map dan is_delivery_included = 0.

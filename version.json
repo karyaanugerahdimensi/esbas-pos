@@ -1,14 +1,22 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.16",
-  "build": "20261023-04",
+  "version": "1.2.17",
+  "build": "20261023-05",
   "release_date": "2026-10-23",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
     {
-      "version": "1.2.16",
+      "version": "1.2.17",
       "commit": "HEAD",
+      "date": "2026-10-23",
+      "title": "Dukungan Multi-Kasir Masuk Bersamaan: Otomatisasi Berbagi Shift Aktif Cabang Tanpa Perlu Buka Shift Ulang",
+      "description": "Menghilangkan kendala pemblokiran kasir/karyawan yang masuk bersamaan di cabang yang sama saat salah satu rekan telah membuka shift. Kueri active_shift pada bootstrap kini secara otomatis mengaitkan seluruh kasir/staf yang bertugas di cabang tersebut ke shift yang sedang berstatus OPEN. Rekan kasir tidak perlu dan tidak dipaksa mengisi modal opening shift ulang, dapat langsung memproses transaksi penjualan kasir (yang tercatat atomik atas nama kasir bersangkutan di bawah shift cabang yang aktif), serta endpoint open_shift secara otomatis menggabungkan kasir ke shift yang sudah berjalan dengan mengembalikan success: true dan already_opened: true.",
+      "rollback_command": "git checkout v1.2.16"
+    },
+    {
+      "version": "1.2.16",
+      "commit": "v1.2.16",
       "date": "2026-10-23",
       "title": "Eliminasi Duplikasi Produk POS & Sinkronisasi Presisi Menu Aktif Cabang pada Hosting MySQL",
       "description": "Menyelesaikan kendala produk POS yang terduplikasi berulang kali dan tidak selarasnya status aktif/nonaktif menu cabang pada hosting MySQL/MariaDB. Menghapus auto-update yang memaksakan seluruh produk menjadi aktif, membersihkan duplikat baris branch_stocks di MySQL, menambahkan proteksi fisik UNIQUE KEY uq_branch_product (branch_id, product_id) pada tabel branch_stocks di skema MySQL dan migrasi otomatis, menyinkronkan data dump esbas_pos_mysql.sql persis dengan konfigurasi aktif/nonaktif lokal per-cabang, serta menambahkan deduplikasi berlapis (defense in depth) pada backend api.php dan frontend index.php.",

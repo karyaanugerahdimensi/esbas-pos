@@ -9354,7 +9354,8 @@ $appVersionData = getAppVersionData();
                 indicator.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse';
                 statusText.innerText = `${shiftTitle.toUpperCase()} AKTIF (BUKA)`;
                 statusText.className = 'text-sm font-bold text-emerald-700';
-                detailsText.innerText = `${shiftTitle} • Kasir: ${state.currentUser?.name || 'Kasir'} • Modal: ${formatRupiah(state.activeShift.initial_cash)} • Mulai: ${state.activeShift.start_time}`;
+                const openerInfo = (state.activeShift.opener_name && state.activeShift.opener_name !== state.currentUser?.name) ? ` (dibuka oleh ${state.activeShift.opener_name})` : '';
+                detailsText.innerText = `${shiftTitle}${openerInfo} • Kasir: ${state.currentUser?.name || 'Kasir'} • Modal: ${formatRupiah(state.activeShift.initial_cash)} • Mulai: ${state.activeShift.start_time}`;
                 btnLabel.innerText = `Tutup ${shiftTitle}`;
 
                 topbarShiftBadge.className = 'cursor-pointer flex items-center space-x-1.5 bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 rounded-xl hover:bg-emerald-100 transition-colors';
@@ -9789,7 +9790,13 @@ $appVersionData = getAppVersionData();
                 try {
                     const res = await fetch(`api.php?action=get_opening_shift_data&branch_id=${branchId}`);
                     const data = await res.json();
-                    
+
+                    if (data.has_active_open_shift && data.active_open_shift) {
+                        state.activeShift = data.active_open_shift;
+                        renderShiftBanner();
+                        return openShiftModal();
+                    }
+
                     const nextNum = data.next_shift_number || 1;
                     const nextName = data.next_shift_name || (nextNum === 1 ? 'Shift 1 (Pagi)' : 'Shift 2 (Siang/Malam)');
                     const refTitle = data.shift_reference_title || 'STOK ACUAN MALAM (Terkunci 🔒)';
