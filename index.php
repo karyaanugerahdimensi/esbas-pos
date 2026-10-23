@@ -21393,9 +21393,6 @@ Manager / Supervisor: __________________
             roleSelect.innerHTML = roles.map(r => 
                 `<option value="${r.code}" ${r.code === selectedRole ? 'selected' : ''}>${getRoleBadgeEmoji(r.code)} ${r.name} (${r.code})</option>`
             ).join('');
-        } catch (err) {
-                alert('Terjadi kesalahan jaringan.');
-            }
         }
 
 
