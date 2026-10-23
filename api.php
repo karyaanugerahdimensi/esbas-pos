@@ -267,14 +267,47 @@ try {
                 unset($u);
             }
 
-            $stmtBranch = $pdo->prepare("SELECT * FROM branches WHERE id = ?");
-            $stmtBranch->execute([$branchId]);
-            $currentBranch = $stmtBranch->fetch() ?: ($branches[0] ?? ['id' => 1, 'name' => 'Cabang Utama', 'code' => 'PST01']);
+            try {
+                $stmtUserRoles = $pdo->query("SELECT * FROM user_roles ORDER BY is_system DESC, id ASC");
+                $userRoles = $stmtUserRoles ? $stmtUserRoles->fetchAll() : [];
+            } catch (Exception $e) {
+                $userRoles = [];
+            }
+            if (empty($userRoles)) {
+                $userRoles = [
+                    ['id' => 1, 'code' => 'SUPER_ADMIN', 'name' => 'Super Admin Pusat', 'description' => 'Akses penuh ke seluruh cabang dan 15 modul sistem', 'is_system' => 1, 'can_access_all_branches' => 1],
+                    ['id' => 2, 'code' => 'BRANCH_MANAGER', 'name' => 'Branch Manager', 'description' => 'Manajemen operasional dan laporan outlet cabang lokal', 'is_system' => 1, 'can_access_all_branches' => 0],
+                    ['id' => 3, 'code' => 'CASHIER', 'name' => 'Kasir (Cashier)', 'description' => 'Operasional kasir POS penjualan, buka/tutup shift, dan cetak nota', 'is_system' => 1, 'can_access_all_branches' => 0],
+                    ['id' => 4, 'code' => 'STAFF', 'name' => 'Staf Gudang / Toko', 'description' => 'Pengelolaan inventori barang, stok, dan resep produksi BOM', 'is_system' => 1, 'can_access_all_branches' => 0]
+                ];
+            }
 
             $stmtUser = $pdo->prepare("SELECT * FROM users WHERE id = ?");
             $stmtUser->execute([$userId]);
             $currentUser = $stmtUser->fetch() ?: ($users[0] ?? ['id' => 1, 'name' => 'Admin', 'role' => 'SUPER_ADMIN']);
             unset($currentUser['password']);
+
+            $curUserRole = $currentUser['role'] ?? 'CASHIER';
+            $normCurUserRole = str_replace('_', '', strtoupper($curUserRole));
+            $isSuper = in_array($normCurUserRole, ['SUPERADMIN']);
+            $roleMultiBranch = 0;
+            foreach ($userRoles as $ur) {
+                if ($ur['code'] === $curUserRole || str_replace('_', '', strtoupper($ur['code'])) === $normCurUserRole) {
+                    $roleMultiBranch = (int)($ur['can_access_all_branches'] ?? 0);
+                    break;
+                }
+            }
+            $canAccessAllBranches = ($isSuper || $roleMultiBranch === 1) ? 1 : 0;
+            $currentUser['can_access_all_branches'] = $canAccessAllBranches;
+
+            // Keterkaitan Lokasi: Jika bukan Super Admin / multi-cabang, kunci mutlak ke cabang penugasan karyawan!
+            if (!$canAccessAllBranches && !empty($currentUser['branch_id'])) {
+                $branchId = (int)$currentUser['branch_id'];
+            }
+
+            $stmtBranch = $pdo->prepare("SELECT * FROM branches WHERE id = ?");
+            $stmtBranch->execute([$branchId]);
+            $currentBranch = $stmtBranch->fetch() ?: ($branches[0] ?? ['id' => 1, 'name' => 'Cabang Utama', 'code' => 'PST01']);
 
             // Active Shift
             $stmtShift = $pdo->prepare("SELECT * FROM cashier_shifts WHERE branch_id = ? AND user_id = ? AND status = 'OPEN' ORDER BY id DESC LIMIT 1");
@@ -405,7 +438,7 @@ try {
 
             foreach ($rolePerms as $rp) {
                 $normRpRole = str_replace('_', '', strtoupper($rp['role']));
-                if ($normRpRole === $normCurRole) {
+                if ($normRpRole === $normCurRole || strtoupper($rp['role']) === strtoupper($curRole)) {
                     $userPerms[$rp['menu_key']] = (int)$rp['can_access'];
                 }
             }
@@ -423,6 +456,7 @@ try {
                 'current_branch' => $currentBranch,
                 'users' => $users,
                 'current_user' => $currentUser,
+                'user_roles' => $userRoles,
                 'active_shift' => $activeShift,
                 'products' => $products,
                 'variants' => $allVariants,
@@ -8530,17 +8564,198 @@ try {
             ]);
             break;
 
+        case 'get_user_roles':
+            try {
+                $stmt = $pdo->query("
+                    SELECT r.*, 
+                           (SELECT COUNT(*) FROM users u WHERE u.role = r.code) as user_count
+                    FROM user_roles r
+                    ORDER BY r.is_system DESC, r.id ASC
+                ");
+                $roles = $stmt->fetchAll();
+            } catch (Exception $e) {
+                $roles = [];
+            }
+            echo json_encode(['success' => true, 'roles' => $roles]);
+            break;
+
+        case 'save_user_role':
+            $id = !empty($input['id']) ? (int)$input['id'] : null;
+            $code = strtoupper(trim($input['code'] ?? ''));
+            $name = trim($input['name'] ?? '');
+            $description = trim($input['description'] ?? '');
+            $canAccessAllBranches = !empty($input['can_access_all_branches']) ? 1 : 0;
+            $templatePreset = trim($input['template_preset'] ?? 'CASHIER');
+
+            // Format code: allow alphanumeric and underscore
+            $code = preg_replace('/[^A-Z0-9_]/', '_', $code);
+            $code = trim($code, '_');
+
+            if (empty($code) || empty($name)) {
+                echo json_encode(['success' => false, 'message' => 'Kode Role dan Nama Role wajib diisi.']);
+                break;
+            }
+
+            $now = date('Y-m-d H:i:s');
+            if ($id) {
+                $stmtCheck = $pdo->prepare("SELECT id, code, is_system FROM user_roles WHERE id = ?");
+                $stmtCheck->execute([$id]);
+                $existing = $stmtCheck->fetch();
+                if (!$existing) {
+                    echo json_encode(['success' => false, 'message' => 'Role tidak ditemukan.']);
+                    break;
+                }
+                $oldCode = $existing['code'];
+                $isSystem = (int)$existing['is_system'];
+
+                $stmtDup = $pdo->prepare("SELECT id FROM user_roles WHERE code = ? AND id != ?");
+                $stmtDup->execute([$code, $id]);
+                if ($stmtDup->fetch()) {
+                    echo json_encode(['success' => false, 'message' => "Kode role '{$code}' sudah digunakan oleh role lain."]);
+                    break;
+                }
+
+                // If is_system, code cannot be changed
+                if ($isSystem && $code !== $oldCode) {
+                    $code = $oldCode;
+                }
+
+                $stmtUp = $pdo->prepare("UPDATE user_roles SET code = ?, name = ?, description = ?, can_access_all_branches = ?, updated_at = ? WHERE id = ?");
+                $stmtUp->execute([$code, $name, $description, $canAccessAllBranches, $now, $id]);
+
+                if ($code !== $oldCode) {
+                    $stmtCasUsers = $pdo->prepare("UPDATE users SET role = ? WHERE role = ?");
+                    $stmtCasUsers->execute([$code, $oldCode]);
+
+                    $stmtCasPerms = $pdo->prepare("UPDATE role_menu_permissions SET role = ? WHERE role = ?");
+                    $stmtCasPerms->execute([$code, $oldCode]);
+                }
+            } else {
+                $stmtDup = $pdo->prepare("SELECT id FROM user_roles WHERE code = ?");
+                $stmtDup->execute([$code]);
+                if ($stmtDup->fetch()) {
+                    echo json_encode(['success' => false, 'message' => "Kode role '{$code}' sudah terdaftar. Silakan gunakan kode lain."]);
+                    break;
+                }
+
+                $stmtIn = $pdo->prepare("INSERT INTO user_roles (code, name, description, is_system, can_access_all_branches, created_at, updated_at) VALUES (?, ?, ?, 0, ?, ?, ?)");
+                $stmtIn->execute([$code, $name, $description, $canAccessAllBranches, $now, $now]);
+                $id = (int)$pdo->lastInsertId();
+
+                // Auto-seed initial permissions for all 15 menus based on chosen template preset
+                $allMenus = [
+                    'pos' => '1. POS Penjualan Kasir',
+                    'reports' => '2. Laporan Penjualan & Piutang',
+                    'ess' => '3. Portal ESS Karyawan',
+                    'employees' => '4. Kelola Karyawan (CRUD)',
+                    'products' => '5. Master Produk & Varian',
+                    'bom' => '6. Resep / BOM Bahan',
+                    'stocks' => '7. Stok & Kartu Mutasi',
+                    'pnl' => '8. Laporan Laba Rugi',
+                    'expenses' => '9. Beban Operasional Cabang',
+                    'customers' => '10. Pelanggan & Mitra CRM',
+                    'logistics' => '11. Kurir & Biaya Kirim',
+                    'branches' => '12. Kelola Cabang (CRUD)',
+                    'payments' => '13. Metode Pembayaran',
+                    'sale-cancellations' => '14. Pembatalan Penjualan (Void)',
+                    'settings' => '15. Konfigurasi Sistem & Cetak'
+                ];
+
+                $presetMap = [
+                    'CASHIER' => ['pos', 'reports', 'ess'],
+                    'STAFF' => ['ess', 'stocks', 'logistics'],
+                    'MANAGER' => ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
+                    'EMPTY' => []
+                ];
+                $allowed = $presetMap[$templatePreset] ?? ['pos', 'reports', 'ess'];
+
+                $stmtPermCheck = $pdo->prepare("SELECT id FROM role_menu_permissions WHERE role = ? AND menu_key = ?");
+                $stmtPermIn = $pdo->prepare("INSERT INTO role_menu_permissions (role, menu_key, menu_title, can_access, updated_at) VALUES (?, ?, ?, ?, ?)");
+
+                foreach ($allMenus as $mKey => $mTitle) {
+                    $can = in_array($mKey, $allowed) ? 1 : 0;
+                    $stmtPermCheck->execute([$code, $mKey]);
+                    if (!$stmtPermCheck->fetch()) {
+                        $stmtPermIn->execute([$code, $mKey, $mTitle, $can, $now]);
+                    }
+                }
+            }
+
+            echo json_encode([
+                'success' => true,
+                'message' => "Role / Group '{$name}' ({$code}) berhasil disimpan!",
+                'role_id' => $id
+            ]);
+            break;
+
+        case 'delete_user_role':
+            $id = (int)($input['id'] ?? 0);
+            $stmt = $pdo->prepare("SELECT * FROM user_roles WHERE id = ?");
+            $stmt->execute([$id]);
+            $role = $stmt->fetch();
+
+            if (!$role) {
+                echo json_encode(['success' => false, 'message' => 'Role tidak ditemukan.']);
+                break;
+            }
+
+            if ((int)$role['is_system'] === 1) {
+                echo json_encode(['success' => false, 'message' => "Role sistem utama '{$role['name']}' tidak boleh dihapus."]);
+                break;
+            }
+
+            $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM users WHERE role = ?");
+            $stmtCount->execute([$role['code']]);
+            $userCount = (int)$stmtCount->fetchColumn();
+
+            if ($userCount > 0) {
+                echo json_encode(['success' => false, 'message' => "Role '{$role['name']}' tidak dapat dihapus karena masih digunakan oleh {$userCount} karyawan/user."]);
+                break;
+            }
+
+            $stmtDelPerms = $pdo->prepare("DELETE FROM role_menu_permissions WHERE role = ?");
+            $stmtDelPerms->execute([$role['code']]);
+
+            $stmtDel = $pdo->prepare("DELETE FROM user_roles WHERE id = ?");
+            $stmtDel->execute([$id]);
+
+            echo json_encode(['success' => true, 'message' => "Role '{$role['name']}' berhasil dihapus."]);
+            break;
+
         case 'get_role_permissions':
+            try {
+                $stmtRoles = $pdo->query("
+                    SELECT r.*, 
+                           (SELECT COUNT(*) FROM users u WHERE u.role = r.code) as user_count
+                    FROM user_roles r 
+                    ORDER BY r.is_system DESC, r.id ASC
+                ");
+                $roles = $stmtRoles ? $stmtRoles->fetchAll() : [];
+            } catch (Exception $e) {
+                $roles = [];
+            }
+            if (empty($roles)) {
+                $roles = [
+                    ['id' => 1, 'code' => 'SUPER_ADMIN', 'name' => 'Super Admin Pusat', 'description' => 'Akses penuh', 'is_system' => 1, 'can_access_all_branches' => 1, 'user_count' => 1],
+                    ['id' => 2, 'code' => 'BRANCH_MANAGER', 'name' => 'Branch Manager', 'description' => 'Manajer Cabang', 'is_system' => 1, 'can_access_all_branches' => 0, 'user_count' => 0],
+                    ['id' => 3, 'code' => 'CASHIER', 'name' => 'Kasir (Cashier)', 'description' => 'Kasir', 'is_system' => 1, 'can_access_all_branches' => 0, 'user_count' => 1],
+                    ['id' => 4, 'code' => 'STAFF', 'name' => 'Staf Gudang / Toko', 'description' => 'Staf', 'is_system' => 1, 'can_access_all_branches' => 0, 'user_count' => 1]
+                ];
+            }
+
             $stmt = $pdo->query("SELECT * FROM role_menu_permissions ORDER BY role ASC, id ASC");
             $allPerms = $stmt->fetchAll();
 
             $grouped = [];
             foreach ($allPerms as $p) {
                 $grouped[$p['role']][$p['menu_key']] = (int)$p['can_access'];
+                $normRole = str_replace('_', '', strtoupper($p['role']));
+                $grouped[$normRole][$p['menu_key']] = (int)$p['can_access'];
             }
 
             echo json_encode([
                 'success' => true,
+                'roles' => $roles,
                 'permissions' => $allPerms,
                 'grouped' => $grouped
             ]);
@@ -8548,22 +8763,22 @@ try {
 
         case 'save_role_permissions':
             $permissions = $input['permissions'] ?? [];
-            // Format diharapkan: [ 'ROLE' => [ 'menu_key' => 1/0, ... ], ... ]
             if (!is_array($permissions)) {
                 echo json_encode(['success' => false, 'message' => 'Format hak akses tidak valid.']);
                 break;
             }
 
             $pdo->beginTransaction();
+            $now = date('Y-m-d H:i:s');
             $stmtCheck = $pdo->prepare("SELECT id FROM role_menu_permissions WHERE role = ? AND menu_key = ?");
             $stmtUp = $pdo->prepare("
                 UPDATE role_menu_permissions 
-                SET can_access = ?, menu_title = ?, updated_at = datetime('now', 'localtime') 
+                SET can_access = ?, menu_title = ?, updated_at = ? 
                 WHERE role = ? AND menu_key = ?
             ");
             $stmtIn = $pdo->prepare("
                 INSERT INTO role_menu_permissions (role, menu_key, menu_title, can_access, updated_at) 
-                VALUES (?, ?, ?, ?, datetime('now', 'localtime'))
+                VALUES (?, ?, ?, ?, ?)
             ");
 
             $menuTitles = [
@@ -8586,14 +8801,23 @@ try {
 
             foreach ($permissions as $role => $menus) {
                 if (!is_array($menus)) continue;
-                foreach ($menus as $mKey => $can) {
-                    $mTitle = $menuTitles[$mKey] ?? $mKey;
-                    $canInt = $can ? 1 : 0;
-                    $stmtCheck->execute([$role, $mKey]);
-                    if ($stmtCheck->fetchColumn()) {
-                        $stmtUp->execute([$canInt, $mTitle, $role, $mKey]);
-                    } else {
-                        $stmtIn->execute([$role, $mKey, $mTitle, $canInt]);
+                // Sinkronkan alias nama role sistem agar kompatibel mundur
+                $aliases = [$role];
+                if ($role === 'SUPER_ADMIN') $aliases[] = 'SUPERADMIN';
+                if ($role === 'SUPERADMIN') $aliases[] = 'SUPER_ADMIN';
+                if ($role === 'BRANCH_MANAGER') $aliases[] = 'MANAGER';
+                if ($role === 'MANAGER') $aliases[] = 'BRANCH_MANAGER';
+
+                foreach ($aliases as $targetRole) {
+                    foreach ($menus as $mKey => $can) {
+                        $mTitle = $menuTitles[$mKey] ?? $mKey;
+                        $canInt = $can ? 1 : 0;
+                        $stmtCheck->execute([$targetRole, $mKey]);
+                        if ($stmtCheck->fetchColumn()) {
+                            $stmtUp->execute([$canInt, $mTitle, $now, $targetRole, $mKey]);
+                        } else {
+                            $stmtIn->execute([$targetRole, $mKey, $mTitle, $canInt, $now]);
+                        }
                     }
                 }
             }

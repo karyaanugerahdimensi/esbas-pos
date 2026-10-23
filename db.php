@@ -762,6 +762,18 @@ function initDatabaseSchema($pdo) {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(role, menu_key)
     )");
+
+    // 32. User Roles / Group Pengguna Terpadu
+    $pdo->exec("CREATE TABLE IF NOT EXISTS user_roles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        is_system INTEGER DEFAULT 0,
+        can_access_all_branches INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
 }
 
 /**
@@ -1823,6 +1835,29 @@ function autoMigrateAndSync($pdo) {
         $stmtSet->execute($ds);
     }
 
+    // 42. Ensure user_roles table exists and seed defaults
+    $pdo->exec("CREATE TABLE IF NOT EXISTS user_roles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        is_system INTEGER DEFAULT 0,
+        can_access_all_branches INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $defaultUserRoles = [
+        ['SUPER_ADMIN', 'Super Admin Pusat', 'Akses penuh ke seluruh cabang dan 15 modul sistem', 1, 1],
+        ['BRANCH_MANAGER', 'Branch Manager', 'Manajemen operasional dan laporan outlet cabang lokal', 1, 0],
+        ['CASHIER', 'Kasir (Cashier)', 'Operasional kasir POS penjualan, buka/tutup shift, dan cetak nota', 1, 0],
+        ['STAFF', 'Staf Gudang / Toko', 'Pengelolaan inventori barang, stok, dan resep produksi BOM', 1, 0]
+    ];
+    $stmtRoleInit = $pdo->prepare("INSERT OR IGNORE INTO user_roles (code, name, description, is_system, can_access_all_branches) VALUES (?, ?, ?, ?, ?)");
+    foreach ($defaultUserRoles as $ur) {
+        $stmtRoleInit->execute($ur);
+    }
+
     // 43. Ensure role_menu_permissions table exists and seed defaults
     $pdo->exec("CREATE TABLE IF NOT EXISTS role_menu_permissions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -2048,6 +2083,30 @@ function autoMigrateMysql($pdo) {
               AND (p.is_active IS NULL OR p.is_active = 1)
               AND bs.is_active = 0
         ");
+    } catch (Exception $e) {}
+
+    // 9. Tabel user_roles untuk MySQL & Seed Defaults
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `user_roles` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `code` VARCHAR(100) UNIQUE NOT NULL,
+            `name` VARCHAR(255) NOT NULL,
+            `description` TEXT,
+            `is_system` TINYINT(1) DEFAULT 0,
+            `can_access_all_branches` TINYINT(1) DEFAULT 0,
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $rc = $pdo->query("SELECT COUNT(*) FROM `user_roles`")->fetchColumn();
+        if ($rc == 0) {
+            $pdo->exec("INSERT INTO `user_roles` (`code`, `name`, `description`, `is_system`, `can_access_all_branches`) VALUES
+                ('SUPER_ADMIN', 'Super Admin Pusat', 'Akses penuh ke seluruh cabang dan 15 modul sistem', 1, 1),
+                ('BRANCH_MANAGER', 'Branch Manager', 'Manajemen operasional dan laporan outlet cabang lokal', 1, 0),
+                ('CASHIER', 'Kasir (Cashier)', 'Operasional kasir POS penjualan, buka/tutup shift, dan cetak nota', 1, 0),
+                ('STAFF', 'Staf Gudang / Toko', 'Pengelolaan inventori barang, stok, dan resep produksi BOM', 1, 0)
+            ");
+        }
     } catch (Exception $e) {}
 }
 

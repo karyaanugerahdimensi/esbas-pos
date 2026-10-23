@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.13",
-  "build": "20261023-01",
+  "version": "1.2.14",
+  "build": "20261023-02",
   "release_date": "2026-10-23",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.14",
+      "commit": "HEAD",
+      "date": "2026-10-23",
+      "title": "Manajemen Role Dinamis, Penambahan Group User Baru & Keterkaitan Hak Akses - User/Karyawan - Lokasi Cabang",
+      "description": "Menghilangkan pembatasan 4 role statis dengan mengimplementasikan arsitektur peran pengguna dinamis (tabel user_roles) terintegrasi CRUD role/group (save_user_role, delete_user_role). Matriks perizinan 15 menu aplikasi di Pengaturan kini merender seluruh role sistem dan kustom secara dinamis lengkap dengan preset hak akses. Menyempurnakan keterkaitan hak akses, karyawan, dan lokasi: karyawan operasional non-superadmin secara mutlak dikunci ke cabang penugasan (currentUser.branch_id), selektor cabang di topbar dikunci otomatis dengan badge 🔒 Terkunci, dropdown role pada form karyawan terisi dinamis, serta kueri bootstrap dan login secara ketat mengikat lokasi penempatan cabang karyawan.",
+      "rollback_command": "git checkout v1.2.13"
+    },
     {
       "version": "1.2.13",
       "commit": "HEAD",

@@ -4071,7 +4071,7 @@ $appVersionData = getAppVersionData();
                         <!-- Matriks Role x Menu -->
                         <div class="overflow-x-auto rounded-2xl border border-slate-200">
                             <table class="w-full text-xs text-left">
-                                <thead class="bg-slate-50 text-slate-700 font-bold uppercase tracking-wider border-b border-slate-200">
+                                <thead id="role-permissions-table-head" class="bg-slate-50 text-slate-700 font-bold uppercase tracking-wider border-b border-slate-200">
                                     <tr>
                                         <th class="py-3 px-4">Menu Aplikasi</th>
                                         <th class="py-3 px-4 text-center">👑 Super Admin</th>
@@ -4629,12 +4629,7 @@ $appVersionData = getAppVersionData();
                     </div>
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">Peran (Role):</label>
-                        <select id="emp-role" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium">
-                            <option value="CASHIER">Kasir (Cashier)</option>
-                            <option value="BRANCH_MANAGER">Branch Manager</option>
-                            <option value="STAFF">Staf Gudang / Toko</option>
-                            <option value="SUPER_ADMIN">Super Admin Pusat</option>
-                        </select>
+                        <select id="emp-role" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium"></select>
                     </div>
                 </div>
                 <div>
@@ -4720,6 +4715,65 @@ $appVersionData = getAppVersionData();
     </div>
 
     <!-- Modal 3.0b: Detail & Pemetaan Jadwal Shift Karyawan Modal -->
+        <!-- Modal 3.0c: Kelola Role / Group User Modal -->
+    <div id="role-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+                        <i data-lucide="shield" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 id="role-modal-title" class="font-bold text-slate-800 text-sm">Tambah Role / Group Pengguna Baru</h3>
+                        <p class="text-[11px] text-slate-500">Definisikan peran grup pengguna baru dalam sistem.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeRoleModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="saveRoleForm(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="role-id">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Kode Role (Singkat, Huruf Kapital & Underscore):</label>
+                    <input type="text" id="role-code" placeholder="Contoh: SUPERVISOR, KURIR, ADMIN_GUDANG" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono uppercase font-bold text-slate-800" required>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Digunakan sebagai identifier sistem. Format: <code>HURUF_KAPITAL</code></p>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Nama Role / Group:</label>
+                    <input type="text" id="role-name" placeholder="Contoh: Supervisor Outlet, Kurir Logistik" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-slate-800" required>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Deskripsi Tugas & Tanggung Jawab:</label>
+                    <textarea id="role-description" rows="2" placeholder="Keterangan singkat peran ini..." class="w-full p-2.5 bg-slate-50 border rounded-xl text-slate-700 font-medium"></textarea>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Lingkup Akses Cabang (Keterkaitan Lokasi):</label>
+                    <select id="role-branch-access" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium text-slate-800">
+                        <option value="0">🔒 Terkunci pada Cabang Penugasan Karyawan (Rekomendasi untuk Kasir, Staf, Kepala Toko)</option>
+                        <option value="1">🌐 Boleh Akses Seluruh Cabang (Multi-Cabang, seperti Direksi, Auditor, Super Admin)</option>
+                    </select>
+                </div>
+                <div id="role-template-preset-group">
+                    <label class="block font-bold text-slate-700 mb-1">Template Hak Akses Awal:</label>
+                    <select id="role-preset-template" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium text-slate-800">
+                        <option value="CASHIER">Salin Izin dari Kasir (POS Kasir, Laporan, Portal ESS)</option>
+                        <option value="STAFF">Salin Izin dari Staf Toko (Portal ESS, Stok & Mutasi, Logistik Kurir)</option>
+                        <option value="MANAGER">Salin Izin dari Branch Manager (Operasional Lengkap Cabang)</option>
+                        <option value="EMPTY">Kosongkan Semua Izin (Atur Manual Nanti)</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2 pt-3 border-t">
+                    <button type="button" onclick="closeRoleModal()" class="px-4 py-2 border rounded-xl text-slate-600 hover:bg-slate-50 font-bold">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold flex items-center space-x-1.5 shadow">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Simpan Role</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="employee-schedule-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
             <div class="flex items-center justify-between border-b pb-3">
@@ -7757,6 +7811,13 @@ $appVersionData = getAppVersionData();
                 }
                 if (data.success && data.logged_in) {
                     state.loggedInUser = data.user;
+                    // Keterkaitan Lokasi: setel cabang aktif ke cabang penempatan karyawan
+                    if (data.user && data.user.branch_id) {
+                        const targetBranch = (state.branches || []).find(b => b.id == data.user.branch_id);
+                        if (targetBranch) {
+                            state.currentBranch = targetBranch;
+                        }
+                    }
                     if (data.session_info) {
                         state.sessionInfo = data.session_info;
                         startSessionCountdownTimer();
@@ -7916,6 +7977,13 @@ $appVersionData = getAppVersionData();
 
                 if (data.success) {
                     state.loggedInUser = data.user;
+                    // Keterkaitan Lokasi: setel cabang aktif ke cabang penempatan karyawan
+                    if (data.user && data.user.branch_id) {
+                        const targetBranch = (state.branches || []).find(b => b.id == data.user.branch_id);
+                        if (targetBranch) {
+                            state.currentBranch = targetBranch;
+                        }
+                    }
                     if (data.session_info) {
                         state.sessionInfo = data.session_info;
                         startSessionCountdownTimer();
@@ -8014,6 +8082,7 @@ $appVersionData = getAppVersionData();
                 state.users = data.users;
                 state.currentUser = data.current_user;
                 state.activeShift = data.active_shift;
+                state.userRoles = data.user_roles || [];
                 state.products = data.products;
                 state.categories = data.categories;
                 state.productTypes = data.product_types || [];
@@ -8148,11 +8217,25 @@ $appVersionData = getAppVersionData();
             lucide.createIcons();
         }
 
-        function renderBranchOptions() {
+                function renderBranchOptions() {
             const select = document.getElementById('branch-select');
-            select.innerHTML = state.branches.map(b => 
-                `<option value="${b.id}" ${b.id === state.currentBranch.id ? 'selected' : ''}>${b.name}</option>`
-            ).join('');
+            if (!select) return;
+            const curUser = state.currentUser || state.loggedInUser;
+            const canSwitchBranch = curUser && (Number(curUser.can_access_all_branches) === 1 || ['SUPER_ADMIN', 'SUPERADMIN'].includes((curUser.role || '').toUpperCase().replace(/_/g, '')));
+
+            if (!canSwitchBranch) {
+                const uBId = curUser ? curUser.branch_id : (state.currentBranch ? state.currentBranch.id : 1);
+                const userBranch = (state.branches || []).find(b => b.id == uBId) || state.currentBranch;
+                select.innerHTML = `<option value="${userBranch.id}" selected>🔒 ${userBranch.name} (Terkunci)</option>`;
+                select.disabled = true;
+                select.title = "Lokasi operasional Anda terkunci pada cabang penugasan.";
+            } else {
+                select.disabled = false;
+                select.title = "Pilih cabang untuk memantau/mengelola operasional";
+                select.innerHTML = state.branches.map(b => 
+                    `<option value="${b.id}" ${b.id === state.currentBranch.id ? 'selected' : ''}>${b.name}</option>`
+                ).join('');
+            }
         }
 
         async function onBranchChange() {
@@ -12887,10 +12970,21 @@ Manager / Supervisor: __________________
             document.getElementById('emp-commission').value = '1.5';
             document.getElementById('emp-modal-title').innerText = 'Tambah Karyawan Baru';
 
-            document.getElementById('emp-branch').innerHTML = state.branches.map(b => 
-                `<option value="${b.id}">${b.name}</option>`
-            ).join('');
-
+                        const curUser = state.currentUser || state.loggedInUser;
+            const canSwitchBranch = curUser && (Number(curUser.can_access_all_branches) === 1 || ['SUPER_ADMIN', 'SUPERADMIN'].includes((curUser.role || '').toUpperCase().replace(/_/g, '')));
+            const branchSelect = document.getElementById('emp-branch');
+            if (!canSwitchBranch) {
+                const uBId = curUser ? curUser.branch_id : (state.currentBranch ? state.currentBranch.id : 1);
+                const uBranch = (state.branches || []).find(b => b.id == uBId) || state.currentBranch;
+                branchSelect.innerHTML = `<option value="${uBranch.id}" selected>${uBranch.name}</option>`;
+                branchSelect.disabled = true;
+                branchSelect.title = "Karyawan cabang hanya dapat menambahkan/mengedit staf pada cabang penempatan yang sama.";
+            } else {
+                branchSelect.disabled = false;
+                branchSelect.innerHTML = state.branches.map(b => 
+                    `<option value="${b.id}" ${b.id === (state.currentBranch ? state.currentBranch.id : 1) ? 'selected' : ''}>${b.name}</option>`
+                ).join('');
+            }
             // Populate default shifts & courier vehicles
             renderEmployeeModalShiftOptions();
             renderEmployeeModalVehicleOptions(state.currentBranch ? state.currentBranch.id : 1);
@@ -12962,7 +13056,12 @@ Manager / Supervisor: __________________
             document.getElementById('emp-nik').value = emp.nik;
             document.getElementById('emp-name').value = emp.name;
             document.getElementById('emp-role').value = emp.role;
-            document.getElementById('emp-branch').value = emp.branch_id || 1;
+                        document.getElementById('emp-branch').value = emp.branch_id || 1;
+            if (!canSwitchBranch) {
+                document.getElementById('emp-branch').disabled = true;
+            } else {
+                document.getElementById('emp-branch').disabled = false;
+            }
             document.getElementById('emp-email').value = emp.email || '';
             document.getElementById('emp-phone').value = emp.phone || '';
             document.getElementById('emp-pin').value = emp.pin || '123456';
@@ -20794,6 +20893,7 @@ Manager / Supervisor: __________________
                 const resRoles = await fetch('api.php?action=get_role_permissions');
                 const dataRoles = await resRoles.json();
                 if (dataRoles.success) {
+                    state.userRoles = dataRoles.roles || state.userRoles || [];
                     state.rolePermissions = dataRoles.permissions || [];
                     state.groupedRolePermissions = dataRoles.grouped || {};
                     renderRolePermissionsMatrix();
@@ -21050,66 +21150,127 @@ Manager / Supervisor: __________________
             }
         }
 
+                function getRoleBadgeEmoji(code) {
+            const c = (code || '').toUpperCase().replace(/_/g, '');
+            if (c === 'SUPERADMIN') return '👑';
+            if (c === 'BRANCHMANAGER' || c === 'MANAGER') return '👔';
+            if (c === 'CASHIER') return '🛒';
+            if (c === 'STAFF') return '📦';
+            if (c.includes('KURIR') || c.includes('DRIVER')) return '🛵';
+            if (c.includes('SUPERVISOR') || c.includes('SPV')) return '⭐';
+            if (c.includes('GUDANG')) return '🏭';
+            return '🛡️';
+        }
+
         function renderRolePermissionsMatrix() {
+            const thead = document.getElementById('role-permissions-table-head');
             const tbody = document.getElementById('role-permissions-table-body');
             if (!tbody) return;
 
             const allMenus = [
-                { key: 'pos', title: 'POS Penjualan Kasir' },
-                { key: 'reports', title: 'Laporan Penjualan & Piutang' },
-                { key: 'ess', title: 'Portal ESS Karyawan' },
-                { key: 'employees', title: 'Kelola Karyawan (CRUD)' },
-                { key: 'products', title: 'Master Produk & Varian' },
-                { key: 'bom', title: 'Resep / BOM Bahan' },
-                { key: 'stocks', title: 'Stok & Kartu Mutasi' },
-                { key: 'pnl', title: 'Laporan Laba Rugi' },
-                { key: 'expenses', title: 'Beban Operasional Cabang' },
-                { key: 'customers', title: 'Pelanggan & Mitra CRM' },
-                { key: 'logistics', title: 'Kurir & Biaya Kirim' },
-                { key: 'branches', title: 'Kelola Cabang (CRUD)' },
-                { key: 'payments', title: 'Metode Pembayaran' },
-                { key: 'sale-cancellations', title: 'Pembatalan Penjualan (Void)' },
-                { key: 'settings', title: 'Konfigurasi Sistem & Cetak' }
+                { key: 'pos', title: '1. POS Penjualan Kasir' },
+                { key: 'reports', title: '2. Laporan Penjualan & Piutang' },
+                { key: 'ess', title: '3. Portal ESS Karyawan' },
+                { key: 'employees', title: '4. Kelola Karyawan (CRUD)' },
+                { key: 'products', title: '5. Master Produk & Varian' },
+                { key: 'bom', title: '6. Resep / BOM Bahan' },
+                { key: 'stocks', title: '7. Stok & Kartu Mutasi' },
+                { key: 'pnl', title: '8. Laporan Laba Rugi' },
+                { key: 'expenses', title: '9. Beban Operasional Cabang' },
+                { key: 'customers', title: '10. Pelanggan & Mitra CRM' },
+                { key: 'logistics', title: '11. Kurir & Biaya Kirim' },
+                { key: 'branches', title: '12. Kelola Cabang (CRUD)' },
+                { key: 'payments', title: '13. Metode Pembayaran' },
+                { key: 'sale-cancellations', title: '14. Pembatalan Penjualan (Void)' },
+                { key: 'settings', title: '15. Konfigurasi Sistem & Cetak' }
+            ];
+
+            const roles = (state.userRoles && state.userRoles.length > 0) ? state.userRoles : [
+                { id: 1, code: 'SUPER_ADMIN', name: 'Super Admin Pusat', is_system: 1, can_access_all_branches: 1 },
+                { id: 2, code: 'BRANCH_MANAGER', name: 'Branch Manager', is_system: 1, can_access_all_branches: 0 },
+                { id: 3, code: 'CASHIER', name: 'Kasir (Cashier)', is_system: 1, can_access_all_branches: 0 },
+                { id: 4, code: 'STAFF', name: 'Staf Toko / Gudang', is_system: 1, can_access_all_branches: 0 }
             ];
 
             const grouped = state.groupedRolePermissions || {};
 
+            // Render Dynamic Head
+            if (thead) {
+                thead.innerHTML = `
+                    <tr>
+                        <th class="py-3 px-4 min-w-[220px]">Menu Aplikasi</th>
+                        ${roles.map(r => `
+                            <th class="py-3 px-4 text-center min-w-[140px] border-l border-slate-200/60">
+                                <div class="flex flex-col items-center justify-center space-y-1">
+                                    <span class="font-black text-xs text-slate-800">${getRoleBadgeEmoji(r.code)} ${r.name}</span>
+                                    <div class="flex items-center space-x-1">
+                                        <span class="font-mono text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded">${r.code}</span>
+                                        ${r.user_count !== undefined ? `<span class="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.2 rounded font-semibold" title="${r.user_count} karyawan">${r.user_count} staf</span>` : ''}
+                                    </div>
+                                    <span class="text-[9px] px-1.5 py-0.5 rounded font-bold ${r.can_access_all_branches ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}">
+                                        ${r.can_access_all_branches ? '🌐 Multi-Cabang' : '🔒 Cabang Lokal'}
+                                    </span>
+                                    ${!r.is_system ? `
+                                        <div class="flex items-center space-x-1 mt-1">
+                                            <button onclick='openEditRoleModal(${JSON.stringify(r).replace(/'/g, "&apos;")})' class="p-1 text-indigo-600 hover:bg-indigo-50 rounded" title="Edit Role"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                                            <button onclick='deleteUserRole(${r.id}, "${r.name.replace(/"/g, '&quot;')}")' class="p-1 text-rose-600 hover:bg-rose-50 rounded" title="Hapus Role"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </th>
+                        `).join('')}
+                    </tr>
+                `;
+            }
+
+            // Render Dynamic Body
             tbody.innerHTML = allMenus.map(m => {
-                const superVal = grouped['SUPERADMIN'] ? (grouped['SUPERADMIN'][m.key] !== 0) : true;
-                const mgrVal   = grouped['MANAGER'] ? (grouped['MANAGER'][m.key] == 1) : false;
-                const csrVal   = grouped['CASHIER'] ? (grouped['CASHIER'][m.key] == 1) : false;
-                const stfVal   = grouped['STAFF'] ? (grouped['STAFF'][m.key] == 1) : false;
+                const cells = roles.map(r => {
+                    const rCode = r.code;
+                    const isSuper = (rCode === 'SUPER_ADMIN' || rCode === 'SUPERADMIN');
+                    let val = false;
+                    if (isSuper) {
+                        val = true;
+                    } else if (grouped[rCode] && grouped[rCode][m.key] !== undefined) {
+                        val = (grouped[rCode][m.key] == 1);
+                    } else {
+                        const norm = rCode.replace(/_/g, '');
+                        if (grouped[norm] && grouped[norm][m.key] !== undefined) {
+                            val = (grouped[norm][m.key] == 1);
+                        }
+                    }
+
+                    return `
+                        <td class="py-3 px-4 text-center border-l border-slate-100">
+                            <input type="checkbox" id="perm-${rCode}-${m.key}" ${val ? 'checked' : ''} ${isSuper ? 'disabled title="Super Admin memiliki akses penuh mutlak"' : ''} class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                        </td>
+                    `;
+                }).join('');
 
                 return `
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="py-3 px-4 font-bold text-slate-800">${m.title}</td>
-                        <td class="py-3 px-4 text-center">
-                            <input type="checkbox" id="perm-SUPERADMIN-${m.key}" ${superVal ? 'checked' : ''} class="w-4 h-4 text-indigo-600 rounded">
-                        </td>
-                        <td class="py-3 px-4 text-center">
-                            <input type="checkbox" id="perm-MANAGER-${m.key}" ${mgrVal ? 'checked' : ''} class="w-4 h-4 text-indigo-600 rounded">
-                        </td>
-                        <td class="py-3 px-4 text-center">
-                            <input type="checkbox" id="perm-CASHIER-${m.key}" ${csrVal ? 'checked' : ''} class="w-4 h-4 text-indigo-600 rounded">
-                        </td>
-                        <td class="py-3 px-4 text-center">
-                            <input type="checkbox" id="perm-STAFF-${m.key}" ${stfVal ? 'checked' : ''} class="w-4 h-4 text-indigo-600 rounded">
-                        </td>
+                        ${cells}
                     </tr>
                 `;
             }).join('');
+
+            lucide.createIcons();
         }
 
         async function saveRolePermissionsMatrix() {
-            const roles = ['SUPERADMIN', 'MANAGER', 'CASHIER', 'STAFF'];
+            const roles = (state.userRoles && state.userRoles.length > 0) ? state.userRoles : [
+                { code: 'SUPER_ADMIN' }, { code: 'BRANCH_MANAGER' }, { code: 'CASHIER' }, { code: 'STAFF' }
+            ];
             const allMenus = ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
 
             const payloadPerms = {};
             roles.forEach(r => {
-                payloadPerms[r] = {};
+                const rCode = r.code;
+                payloadPerms[rCode] = {};
                 allMenus.forEach(m => {
-                    const cb = document.getElementById(`perm-${r}-${m}`);
-                    payloadPerms[r][m] = (cb && cb.checked) ? 1 : 0;
+                    const cb = document.getElementById(`perm-${rCode}-${m}`);
+                    payloadPerms[rCode][m] = (cb && cb.checked) ? 1 : 0;
                 });
             });
 
@@ -21123,8 +21284,116 @@ Manager / Supervisor: __________________
                 alert(data.message || 'Hak akses berhasil disimpan!');
                 if (data.success) {
                     await initApp();
+                    await loadAppSettingsModule();
                 }
             } catch (err) {
+                alert('Terjadi kesalahan jaringan.');
+            }
+        }
+
+        function openAddRoleModal() {
+            document.getElementById('role-id').value = '';
+            document.getElementById('role-code').value = '';
+            document.getElementById('role-code').disabled = false;
+            document.getElementById('role-name').value = '';
+            document.getElementById('role-description').value = '';
+            document.getElementById('role-branch-access').value = '0';
+            document.getElementById('role-preset-template').value = 'CASHIER';
+            document.getElementById('role-template-preset-group')?.classList.remove('hidden');
+            document.getElementById('role-modal-title').innerText = 'Tambah Role / Group Pengguna Baru';
+            document.getElementById('role-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function openEditRoleModal(role) {
+            document.getElementById('role-id').value = role.id;
+            document.getElementById('role-code').value = role.code;
+            document.getElementById('role-code').disabled = (role.is_system == 1);
+            document.getElementById('role-name').value = role.name;
+            document.getElementById('role-description').value = role.description || '';
+            document.getElementById('role-branch-access').value = role.can_access_all_branches ? '1' : '0';
+            document.getElementById('role-template-preset-group')?.classList.add('hidden');
+            document.getElementById('role-modal-title').innerText = 'Edit Role: ' + role.name;
+            document.getElementById('role-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeRoleModal() {
+            document.getElementById('role-modal').classList.add('hidden');
+        }
+
+        async function saveRoleForm(e) {
+            e.preventDefault();
+            const id = document.getElementById('role-id').value;
+            const code = document.getElementById('role-code').value.trim();
+            const name = document.getElementById('role-name').value.trim();
+            const description = document.getElementById('role-description').value.trim();
+            const canAccessAllBranches = parseInt(document.getElementById('role-branch-access').value);
+            const templatePreset = document.getElementById('role-preset-template')?.value || 'CASHIER';
+
+            if (!code || !name) {
+                alert('Kode dan Nama Role wajib diisi.');
+                return;
+            }
+
+            try {
+                const res = await fetch('api.php?action=save_user_role', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: id ? parseInt(id) : null,
+                        code: code,
+                        name: name,
+                        description: description,
+                        can_access_all_branches: canAccessAllBranches,
+                        template_preset: templatePreset
+                    })
+                });
+                const data = await res.json();
+                alert(data.message || (data.success ? 'Role berhasil disimpan!' : 'Gagal menyimpan role.'));
+                if (data.success) {
+                    closeRoleModal();
+                    await initApp();
+                    await loadAppSettingsModule();
+                }
+            } catch (err) {
+                alert('Gagal menghubungi server: ' + err.message);
+            }
+        }
+
+        async function deleteUserRole(id, name) {
+            if (!confirm(`Apakah Anda yakin ingin menghapus role '${name}'?\n\nRole hanya dapat dihapus jika tidak ada karyawan yang menggunakannya.`)) return;
+
+            try {
+                const res = await fetch('api.php?action=delete_user_role', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                });
+                const data = await res.json();
+                alert(data.message || (data.success ? 'Role berhasil dihapus!' : 'Gagal menghapus role.'));
+                if (data.success) {
+                    await initApp();
+                    await loadAppSettingsModule();
+                }
+            } catch (err) {
+                alert('Gagal menghubungi server: ' + err.message);
+            }
+        }
+
+        function renderEmployeeRoleOptions(selectedRole = 'CASHIER') {
+            const roleSelect = document.getElementById('emp-role');
+            if (!roleSelect) return;
+            const roles = (state.userRoles && state.userRoles.length > 0) ? state.userRoles : [
+                { code: 'SUPER_ADMIN', name: 'Super Admin Pusat' },
+                { code: 'BRANCH_MANAGER', name: 'Branch Manager' },
+                { code: 'CASHIER', name: 'Kasir (Cashier)' },
+                { code: 'STAFF', name: 'Staf Gudang / Toko' }
+            ];
+            roleSelect.innerHTML = roles.map(r => 
+                `<option value="${r.code}" ${r.code === selectedRole ? 'selected' : ''}>${getRoleBadgeEmoji(r.code)} ${r.name} (${r.code})</option>`
+            ).join('');
+        } catch (err) {
                 alert('Terjadi kesalahan jaringan.');
             }
         }

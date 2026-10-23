@@ -300,6 +300,28 @@ INSERT INTO `app_settings` (`id`, `setting_key`, `setting_value`, `setting_group
 (211, 'payslip_legal_footer_note', 'Dokumen ini dibuat otomatis dan sah tanpa tanda tangan basah.', 'GENERAL', 'Custom Setting', '2026-10-12 21:27:34');
 
 -- --------------------------------------------------------
+-- Table structure for `user_roles`
+-- --------------------------------------------------------
+DROP TABLE IF EXISTS `user_roles`;
+CREATE TABLE `user_roles` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `code` VARCHAR(100) UNIQUE NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
+    `description` TEXT,
+    `is_system` TINYINT(1) DEFAULT 0,
+    `can_access_all_branches` TINYINT(1) DEFAULT 0,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table `user_roles`
+INSERT INTO `user_roles` (`id`, `code`, `name`, `description`, `is_system`, `can_access_all_branches`) VALUES
+(1, 'SUPER_ADMIN', 'Super Admin Pusat', 'Akses penuh ke seluruh cabang dan 15 modul sistem', 1, 1),
+(2, 'BRANCH_MANAGER', 'Branch Manager', 'Manajemen operasional dan laporan outlet cabang lokal', 1, 0),
+(3, 'CASHIER', 'Kasir (Cashier)', 'Operasional kasir POS penjualan, buka/tutup shift, dan cetak nota', 1, 0),
+(4, 'STAFF', 'Staf Gudang / Toko', 'Pengelolaan inventori barang, stok, dan resep produksi BOM', 1, 0);
+
+-- --------------------------------------------------------
 -- Table structure for `role_menu_permissions`
 -- --------------------------------------------------------
 DROP TABLE IF EXISTS `role_menu_permissions`;
