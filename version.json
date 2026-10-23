@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.18",
-  "build": "20261023-06",
+  "version": "1.2.19",
+  "build": "20261023-07",
   "release_date": "2026-10-23",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.19",
+      "commit": "HEAD",
+      "date": "2026-10-23",
+      "title": "Formula Penambahan Stok Baru Opening Shift Kasir Pertama & Otomatisasi Modal Kasir Kasir Berikutnya",
+      "description": "Menyempurnakan alur operasional pergantian shift kasir toko: (1) Kasir pertama yang aktif (Shift 1 Pagi) kini hanya menginputkan penambahan stok baru saja dengan rumus Stok Awal = Input Tambahan + Stok Malam Kemarin. Default input tambahan adalah 0 (tidak mengubah stok dan tidak memunculkan peringatan selisih semu), kolom stok malam kemarin terkunci read-only sebagai dasar acuan, dan stok fisik di branch_stocks terupdate akurat. (2) Untuk kasir berikutnya (Shift 2 / Siang / Malam / Serah Terima), kasir hanya diwajibkan menginputkan uang modal awal saja di laci kasir; seluruh sisa stok fisik toko otomatis diteruskan dan diserahterimakan dari closing shift sebelumnya tanpa membebani kasir menginput stok ulang.",
+      "rollback_command": "git checkout v1.2.18"
+    },
     {
       "version": "1.2.18",
       "commit": "HEAD",

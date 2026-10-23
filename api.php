@@ -3309,14 +3309,24 @@ try {
             $dynamicItems = $input['items'] ?? [];
             $openingMap = [];
             $nightMap = [];
+            $addedMap = [];
 
             if (is_array($dynamicItems)) {
                 foreach ($dynamicItems as $k => $v) {
                     if (is_array($v)) {
                         $pId = (int)($v['product_id'] ?? 0);
                         if ($pId) {
-                            $openingMap[$pId] = (int)($v['opening_qty'] ?? 0);
-                            $nightMap[$pId] = (int)($v['night_qty'] ?? 0);
+                            $nightVal = (int)($v['night_qty'] ?? 0);
+                            $addedVal = isset($v['added_qty']) ? (int)$v['added_qty'] : null;
+                            if ($addedVal !== null) {
+                                // Rumus utama: Stok Awal = Stok Input Awal Shift (Tambahan Baru) + Stok Malam
+                                $openVal = $nightVal + $addedVal;
+                            } else {
+                                $openVal = (int)($v['opening_qty'] ?? $nightVal);
+                            }
+                            $openingMap[$pId] = $openVal;
+                            $nightMap[$pId] = $nightVal;
+                            $addedMap[$pId] = $addedVal !== null ? $addedVal : max(0, $openVal - $nightVal);
                         }
                     } else {
                         $openingMap[$k] = (int)$v;
@@ -3324,14 +3334,38 @@ try {
                 }
             }
 
-            // Legacy individual fields
-            $openingMineral = (int)($input['opening_raw_mineral'] ?? ($openingMap[89] ?? 0));
-            $openingRo = (int)($input['opening_raw_ro'] ?? ($openingMap[88] ?? 0));
-            $openingPlastik = (int)($input['opening_raw_plastik'] ?? ($openingMap[105] ?? 0));
+            // Jika kasir berikutnya (shift_number > 1) dan openingMap belum terisi, otomatis warisi sisa stok shift sebelumnya hari ini
+            if ($shiftNumber > 1 && empty($openingMap)) {
+                $stmtPrevShift = $pdo->prepare("
+                    SELECT closing_items_json, closing_raw_mineral, closing_raw_ro, closing_raw_plastik
+                    FROM cashier_shifts
+                    WHERE branch_id = ? AND date(start_time) = ? AND status = 'CLOSED'
+                    ORDER BY id DESC LIMIT 1
+                ");
+                $stmtPrevShift->execute([$branchId, $today]);
+                $prevClosing = $stmtPrevShift->fetch();
+                if ($prevClosing) {
+                    if (!empty($prevClosing['closing_items_json'])) {
+                        $decClose = json_decode($prevClosing['closing_items_json'], true);
+                        if (is_array($decClose)) {
+                            $openingMap = $decClose;
+                            $nightMap = $decClose;
+                        }
+                    }
+                    if ($prevClosing['closing_raw_mineral'] !== null) $openingMineral = (int)$prevClosing['closing_raw_mineral'];
+                    if ($prevClosing['closing_raw_ro'] !== null) $openingRo = (int)$prevClosing['closing_raw_ro'];
+                    if ($prevClosing['closing_raw_plastik'] !== null) $openingPlastik = (int)$prevClosing['closing_raw_plastik'];
+                }
+            }
 
-            $nightMineral = (int)($input['closing_night_mineral'] ?? ($nightMap[89] ?? 0));
-            $nightRo = (int)($input['closing_night_ro'] ?? ($nightMap[88] ?? 0));
-            $nightPlastik = (int)($input['closing_night_plastik'] ?? ($nightMap[105] ?? 0));
+            // Legacy individual fields
+            $openingMineral = (isset($input['opening_raw_mineral']) && $input['opening_raw_mineral'] !== '') ? (int)$input['opening_raw_mineral'] : ($openingMineral ?? ($openingMap[89] ?? 0));
+            $openingRo = (isset($input['opening_raw_ro']) && $input['opening_raw_ro'] !== '') ? (int)$input['opening_raw_ro'] : ($openingRo ?? ($openingMap[88] ?? 0));
+            $openingPlastik = (isset($input['opening_raw_plastik']) && $input['opening_raw_plastik'] !== '') ? (int)$input['opening_raw_plastik'] : ($openingPlastik ?? ($openingMap[105] ?? 0));
+
+            $nightMineral = (isset($input['closing_night_mineral']) && $input['closing_night_mineral'] !== '') ? (int)$input['closing_night_mineral'] : ($nightMineral ?? ($nightMap[89] ?? 0));
+            $nightRo = (isset($input['closing_night_ro']) && $input['closing_night_ro'] !== '') ? (int)$input['closing_night_ro'] : ($nightRo ?? ($nightMap[88] ?? 0));
+            $nightPlastik = (isset($input['closing_night_plastik']) && $input['closing_night_plastik'] !== '') ? (int)$input['closing_night_plastik'] : ($nightPlastik ?? ($nightMap[105] ?? 0));
             $shiftNotes = trim($input['shift_notes'] ?? '');
 
             $stmt = $pdo->prepare("

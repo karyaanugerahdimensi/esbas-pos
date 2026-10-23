@@ -9840,7 +9840,8 @@ $appVersionData = getAppVersionData();
                     let nightInputsHtml = '';
 
                     if (items.length > 0) {
-                        // Kolom Kiri: STOK AWAL (Fisik Pagi & Penambahan Stok Baru)
+                        // Kolom Kiri: PENAMBAHAN STOK PAGI (+) (Kasir Pertama Hari Ini)
+                        // Rumus: Stok Awal = Input Tambahan + Stok Malam
                         openingInputsHtml = items.map(item => {
                             let legacyId = '';
                             if (item.sku === 'RAW-089') legacyId = 'id="opening-raw-mineral"';
@@ -9851,23 +9852,29 @@ $appVersionData = getAppVersionData();
                             const itemUnit = escapeHtml(item.unit || 'pcs');
 
                             return `
-                                <div class="bg-white/90 p-2.5 sm:p-3 rounded-2xl border border-indigo-100/90 shadow-2xs flex items-center justify-between gap-2.5">
-                                    <div class="min-w-0 flex-1 pr-1">
-                                        <div class="flex items-center gap-1.5 flex-wrap">
-                                            <span class="text-xs font-black text-slate-800 uppercase leading-snug break-words">${itemName}</span>
-                                            <span class="text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded font-bold shrink-0">${itemUnit}</span>
+                                <div class="bg-white/95 p-3 rounded-2xl border border-emerald-100 shadow-2xs flex flex-col space-y-2">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="text-xs font-black text-slate-800 uppercase leading-snug break-words">${itemName}</span>
+                                                <span class="text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded font-bold">${itemUnit}</span>
+                                            </div>
+                                            <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${item.sku} • Stok Malam: <b class="text-slate-700">${item.night_stock}</b> ${itemUnit}</span>
                                         </div>
-                                        <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${item.sku}</span>
-                                        <div id="item-diff-badge-${item.product_id}" class="text-[10px] font-bold mt-0.5 transition-all"></div>
+                                        <div class="flex items-center space-x-1.5 shrink-0">
+                                            <span class="text-xs font-black text-emerald-600">+</span>
+                                            <input type="number" ${legacyId} data-product-id="${item.product_id}" data-sku="${item.sku}" data-product-name="${itemName}" data-unit="${itemUnit}" data-night-stock="${item.night_stock}" oninput="calculateOpeningShiftVariance()" value="0" min="0" placeholder="0" class="shift-added-item-input w-20 sm:w-24 text-center py-1.5 px-2 bg-emerald-50/50 border-2 border-emerald-300 rounded-xl font-black text-emerald-950 text-sm focus:ring-2 focus:ring-emerald-500 shadow-inner">
+                                        </div>
                                     </div>
-                                    <div class="w-24 sm:w-28 shrink-0">
-                                        <input type="number" ${legacyId} data-product-id="${item.product_id}" data-product-name="${itemName}" data-unit="${itemUnit}" oninput="calculateOpeningShiftVariance()" value="${item.opening_stock}" min="0" placeholder="0" class="shift-opening-item-input w-full text-center py-2 px-2.5 bg-indigo-50/40 border border-indigo-300 rounded-xl font-black text-indigo-950 text-sm focus:ring-2 focus:ring-indigo-500 shadow-inner">
+                                    <div id="item-calc-badge-${item.product_id}" class="text-[11px] pt-1.5 border-t border-slate-100 flex items-center justify-between text-slate-600 transition-all">
+                                        <span>Stok Awal: <b class="font-mono text-slate-900 font-black">${item.night_stock}</b> ${itemUnit}</span>
+                                        <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">✓ Stok Tetap</span>
                                     </div>
                                 </div>
                             `;
                         }).join('');
 
-                        // Kolom Kanan: STOK ACUAN (Shift Kemarin / Serah Terima Shift 1 - Terkunci 🔒 / Readonly)
+                        // Kolom Kanan: STOK ACUAN MALAM (Terkunci 🔒 / Readonly)
                         nightInputsHtml = items.map(item => {
                             let legacyIdNight = '';
                             if (item.sku === 'RAW-089') legacyIdNight = 'id="closing-night-mineral"';
@@ -9878,31 +9885,131 @@ $appVersionData = getAppVersionData();
                             const itemUnit = escapeHtml(item.unit || 'pcs');
 
                             return `
-                                <div class="bg-white/90 p-2.5 sm:p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2.5">
-                                    <div class="min-w-0 flex-1 pr-1">
-                                        <div class="flex items-center gap-1.5 flex-wrap">
-                                            <span class="text-xs font-black text-slate-700 uppercase leading-snug break-words">${itemName}</span>
-                                            <span class="text-[9px] px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded font-bold shrink-0">${itemUnit}</span>
+                                <div class="bg-white/90 p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col space-y-2">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="text-xs font-black text-slate-700 uppercase leading-snug break-words">${itemName}</span>
+                                                <span class="text-[9px] px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded font-bold">${itemUnit}</span>
+                                            </div>
+                                            <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${item.sku} • Sisa Closing Kemarin</span>
                                         </div>
-                                        <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${item.sku}</span>
-                                        <span class="block text-[10px] text-slate-500 font-semibold mt-0.5">${isContinuation ? 'Sisa Serah Terima Shift 1' : 'Sisa Closing Malam Kemarin'}</span>
+                                        <div class="w-20 sm:w-24 text-center py-1.5 px-2 bg-slate-100 border border-slate-300 rounded-xl font-black text-slate-700 text-sm shadow-inner relative">
+                                            <input type="hidden" ${legacyIdNight} data-product-id="${item.product_id}" value="${item.night_stock}" class="shift-night-item-input">
+                                            <span>${item.night_stock}</span>
+                                            <span class="absolute right-1.5 top-2 text-[10px] text-slate-400">🔒</span>
+                                        </div>
                                     </div>
-                                    <div class="w-24 sm:w-28 shrink-0 relative">
-                                        <input type="number" ${legacyIdNight} data-product-id="${item.product_id}" data-product-name="${itemName}" data-unit="${itemUnit}" value="${item.night_stock}" readonly="readonly" disabled class="shift-night-item-input w-full text-center py-2 px-2.5 bg-slate-100 border border-slate-300 rounded-xl font-black text-slate-700 text-sm cursor-not-allowed select-none shadow-inner opacity-90">
-                                        <span class="absolute right-2 top-2.5 text-xs text-slate-400 pointer-events-none">🔒</span>
+                                    <div class="text-[11px] pt-1.5 border-t border-slate-100 flex items-center justify-between text-slate-500">
+                                        <span>Total Stok Awal:</span>
+                                        <span id="item-night-total-${item.product_id}" class="font-mono font-black text-indigo-950">${item.night_stock} ${itemUnit}</span>
                                     </div>
                                 </div>
                             `;
                         }).join('');
                     } else {
                         openingInputsHtml = `
-                            <div class="p-4 text-center text-xs text-indigo-700 bg-white rounded-2xl border border-indigo-100">
+                            <div class="p-4 text-center text-xs text-emerald-700 bg-white rounded-2xl border border-emerald-100">
                                 Tidak ada produk pelacakan stok yang terdaftar untuk opening shift.
                             </div>
                         `;
                         nightInputsHtml = `
                             <div class="p-4 text-center text-xs text-slate-500 bg-white rounded-2xl border border-slate-200">
                                 Tidak ada produk pelacakan stok yang terdaftar untuk opening shift.
+                            </div>
+                        `;
+                    }
+
+                    // Tampilan Khusus Kasir Pertama (Shift 1) vs Kasir Berikutnya (Shift 2+)
+                    let shiftSpecificContent = '';
+                    if (nextNum === 1) {
+                        // KASIR PERTAMA (Shift 1 Pagi): Tampilkan input penambahan stok saja
+                        shiftSpecificContent = `
+                            <!-- 2. GRID 2 KOLOM: PENAMBAHAN STOK DI KIRI & STOK ACUAN DI KANAN -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                                <!-- Kolom Kiri: TAMBAH STOK BARU (+) -->
+                                <div class="bg-emerald-50/40 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border border-emerald-200/80 shadow-sm flex flex-col space-y-3">
+                                    <div>
+                                        <div class="flex items-center justify-between border-b border-emerald-100 pb-2">
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-xs sm:text-sm font-black text-emerald-950 uppercase tracking-wider">TAMBAH STOK BARU (+)</span>
+                                                <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-emerald-100 text-emerald-800">Kasir Pertama</span>
+                                            </div>
+                                            <span class="text-[10px] sm:text-[11px] text-emerald-700 font-bold">Input Tambahan Saja</span>
+                                        </div>
+                                        <p class="text-[10px] text-slate-500 italic mt-1 leading-snug">
+                                            Diisi hanya jika ada penambahan stok baru masuk pagi ini (default: 0). Rumus: <b>Stok Awal = Input Tambahan + Stok Malam</b>.
+                                        </p>
+                                    </div>
+                                    <div class="space-y-2.5">
+                                        ${openingInputsHtml}
+                                    </div>
+                                </div>
+
+                                <!-- Kolom Kanan: STOK ACUAN MALAM (Terkunci 🔒 / Readonly) -->
+                                <div class="bg-slate-50/80 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-sm flex flex-col space-y-3">
+                                    <div>
+                                        <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider">STOK MALAM KEMARIN</span>
+                                                <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-slate-200 text-slate-700 flex items-center space-x-1">
+                                                    <span>🔒</span><span>Terkunci</span>
+                                                </span>
+                                            </div>
+                                            <span class="text-[10px] sm:text-[11px] text-slate-500 font-bold">Laporan Kemarin</span>
+                                        </div>
+                                        <p class="text-[10px] text-slate-400 italic mt-1 leading-snug">
+                                            ${escapeHtml(refTitle)}. <b>Tidak perlu diinput ulang</b> dan otomatis menjadi dasar perhitungan.
+                                        </p>
+                                    </div>
+                                    <div class="space-y-2.5">
+                                        ${nightInputsHtml}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. Ringkasan Status & Perhitungan Stok Awal Pagi -->
+                            <div id="opening-variance-box" class="p-3.5 rounded-2xl text-xs font-bold transition-all bg-emerald-50 border border-emerald-200 text-emerald-800">
+                                ✓ Memuat analisis stok awal...
+                            </div>
+                        `;
+                    } else {
+                        // KASIR BERIKUTNYA (Shift 2 / Siang / Malam / Serah Terima):
+                        // Sesuai instruksi: Kasir berikutnya HANYA menginputkan uang modal awal saja!
+                        shiftSpecificContent = `
+                            <!-- KASIR BERIKUTNYA: STOK OTOMATIS DISERAH TERIMAKAN -->
+                            <div class="bg-gradient-to-br from-emerald-50 via-teal-50/40 to-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-emerald-200/90 shadow-sm space-y-3.5">
+                                <div class="flex items-center justify-between border-b border-emerald-100 pb-2 flex-wrap gap-2">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-base">🤝</span>
+                                        <span class="text-xs sm:text-sm font-black text-emerald-950 uppercase tracking-wider">Stok Toko Otomatis Diserahterimakan</span>
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">Tanpa Perlu Input Stok ✅</span>
+                                    </div>
+                                    <span class="text-[10px] text-emerald-700 font-bold bg-white px-2.5 py-0.5 rounded-lg border border-emerald-200">Shift ${nextNum - 1} Selesai</span>
+                                </div>
+                                <div class="p-3 bg-white/80 rounded-2xl border border-emerald-100 flex items-start space-x-2 text-xs text-emerald-950">
+                                    <span class="text-base leading-none">💡</span>
+                                    <span class="leading-relaxed">
+                                        <b>Kasir berikutnya hanya perlu menginputkan uang modal awal di atas.</b> Seluruh sisa stok fisik toko otomatis diteruskan dari closing shift sebelumnya dan siap untuk penjualan.
+                                    </span>
+                                </div>
+                                <div>
+                                    <div class="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Rincian Sisa Stok Fisik yang Diteruskan (Read-Only):</div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                                        ${items.map(it => `
+                                            <div class="shift-carried-item bg-white/95 p-2.5 rounded-xl border border-emerald-100/90 flex items-center justify-between shadow-2xs" data-product-id="${it.product_id}" data-stock="${it.night_stock}">
+                                                <div class="min-w-0 pr-2">
+                                                    <div class="text-[11px] font-black text-slate-800 truncate">${escapeHtml(it.name)}</div>
+                                                    <div class="text-[9px] text-slate-400 font-mono">${it.sku}</div>
+                                                </div>
+                                                <div class="text-right shrink-0">
+                                                    <span class="text-xs font-black text-emerald-950 font-mono">${it.night_stock}</span>
+                                                    <span class="text-[9px] text-slate-400 block">${it.unit} 🔒</span>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
                             </div>
                         `;
                     }
@@ -9925,55 +10032,11 @@ $appVersionData = getAppVersionData();
                             </div>
                         </div>
 
-                        <!-- 2. GRID 2 KOLOM: STOK AWAL DI KIRI & STOK ACUAN DI KANAN -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                            <!-- Kolom Kiri: STOK AWAL (Fisik Shift & Penambahan Baru) -->
-                            <div class="bg-indigo-50/40 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border border-indigo-200/80 shadow-sm flex flex-col space-y-3">
-                                <div>
-                                    <div class="flex items-center justify-between border-b border-indigo-100 pb-2">
-                                        <div class="flex items-center space-x-2">
-                                            <span class="text-xs sm:text-sm font-black text-indigo-950 uppercase tracking-wider">STOK AWAL</span>
-                                            <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-indigo-100 text-indigo-800">${nextNum === 1 ? 'Fisik Pagi' : 'Fisik Shift ' + nextNum}</span>
-                                        </div>
-                                        <span class="text-[10px] sm:text-[11px] text-indigo-600 font-bold">Input Fisik (+Stok Baru)</span>
-                                    </div>
-                                    <p class="text-[10px] text-slate-500 italic mt-1 leading-snug">
-                                        Diisi cek fisik shift ini. Nilai ini mencakup sisa stok acuan ditambah <b>penambahan stok baru</b> yang masuk.
-                                    </p>
-                                </div>
-                                <div class="space-y-2.5">
-                                    ${openingInputsHtml}
-                                </div>
-                            </div>
-
-                            <!-- Kolom Kanan: STOK ACUAN (Laporan Shift Terakhir - Terkunci / Readonly) -->
-                            <div class="bg-slate-50/80 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-sm flex flex-col space-y-3">
-                                <div>
-                                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-                                        <div class="flex items-center space-x-2">
-                                            <span class="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider">${isContinuation ? 'STOK SERAH TERIMA' : 'STOK MALAM'}</span>
-                                            <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-slate-200 text-slate-700 flex items-center space-x-1">
-                                                <span>🔒</span><span>Terkunci</span>
-                                            </span>
-                                        </div>
-                                        <span class="text-[10px] sm:text-[11px] text-slate-500 font-bold">${isContinuation ? 'Shift 1 Selesai' : 'Laporan Kemarin'}</span>
-                                    </div>
-                                    <p class="text-[10px] text-slate-400 italic mt-1 leading-snug">
-                                        ${escapeHtml(refTitle)}. <b>Tidak dapat diubah isiannya</b> untuk menjaga integritas rekonsiliasi.
-                                    </p>
-                                </div>
-                                <div class="space-y-2.5">
-                                    ${nightInputsHtml}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 3. Ringkasan Status Selisih & Logika Penambahan Stok -->
-                        <div id="opening-variance-box" class="p-3.5 rounded-2xl text-xs font-bold transition-all bg-emerald-50 border border-emerald-200 text-emerald-800">
-                            ✓ Memuat analisis serah terima stok...
-                        </div>
+                        ${shiftSpecificContent}
                     `;
-                    calculateOpeningShiftVariance();
+                    if (nextNum === 1) {
+                        calculateOpeningShiftVariance();
+                    }
                 } catch (e) {
                     console.error("Gagal load opening shift data:", e);
                     body.innerHTML = `
@@ -9988,71 +10051,53 @@ $appVersionData = getAppVersionData();
         }
 
         function calculateOpeningShiftVariance() {
-            const openingInputs = document.querySelectorAll('.shift-opening-item-input');
-            const nightInputs = document.querySelectorAll('.shift-night-item-input');
+            const addedInputs = document.querySelectorAll('.shift-added-item-input');
             const box = document.getElementById('opening-variance-box');
             if (!box) return;
 
-            const nightMap = {};
-            nightInputs.forEach(input => {
-                const pId = input.getAttribute('data-product-id');
-                if (pId) {
-                    nightMap[pId] = parseInt(input.value) || 0;
-                }
-            });
-
             let addedItems = [];
-            let reducedItems = [];
             let sameCount = 0;
 
-            openingInputs.forEach(input => {
+            addedInputs.forEach(input => {
                 const pId = input.getAttribute('data-product-id');
                 const pName = input.getAttribute('data-product-name') || 'Produk';
                 const unit = input.getAttribute('data-unit') || 'pcs';
-                const openVal = parseInt(input.value) || 0;
-                const nightVal = (pId && nightMap[pId] !== undefined) ? nightMap[pId] : 0;
-                const diff = openVal - nightVal;
+                const nightVal = parseInt(input.getAttribute('data-night-stock')) || 0;
+                const addedVal = Math.max(0, parseInt(input.value) || 0);
+                const totalOpeningVal = nightVal + addedVal;
 
-                const badge = document.getElementById(`item-diff-badge-${pId}`);
+                const badge = document.getElementById(`item-calc-badge-${pId}`);
+                const nightTotal = document.getElementById(`item-night-total-${pId}`);
+                if (nightTotal) {
+                    nightTotal.innerText = `${totalOpeningVal} ${unit}`;
+                }
+
                 if (badge) {
-                    if (diff > 0) {
-                        badge.className = 'text-[10px] font-bold text-emerald-700 mt-0.5 flex items-center space-x-1';
-                        badge.innerHTML = `<span>📥</span><span>+${diff} ${unit} Stok Baru Masuk</span>`;
-                    } else if (diff < 0) {
-                        badge.className = 'text-[10px] font-bold text-rose-600 mt-0.5 flex items-center space-x-1';
-                        badge.innerHTML = `<span>⚠️</span><span>${diff} ${unit} Selisih Berkurang</span>`;
+                    if (addedVal > 0) {
+                        badge.className = 'text-[11px] pt-1.5 border-t border-emerald-100 flex items-center justify-between text-emerald-800 transition-all';
+                        badge.innerHTML = `
+                            <span>Stok Awal: <b class="font-mono text-emerald-950 font-black">${totalOpeningVal}</b> ${unit} <span class="text-[10px] text-emerald-700 font-bold">(${nightVal} malam + ${addedVal} baru)</span></span>
+                            <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">📥 +${addedVal} Masuk</span>
+                        `;
                     } else {
-                        badge.className = 'text-[10px] font-semibold text-slate-400 mt-0.5';
-                        badge.innerHTML = `<span>✓ Sama dengan malam</span>`;
+                        badge.className = 'text-[11px] pt-1.5 border-t border-slate-100 flex items-center justify-between text-slate-600 transition-all';
+                        badge.innerHTML = `
+                            <span>Stok Awal: <b class="font-mono text-slate-900">${nightVal}</b> ${unit}</span>
+                            <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">✓ Stok Tetap</span>
+                        `;
                     }
                 }
 
-                if (diff > 0) {
-                    addedItems.push({ name: pName, diff: diff, night: nightVal, open: openVal, unit: unit });
-                } else if (diff < 0) {
-                    reducedItems.push({ name: pName, diff: diff, night: nightVal, open: openVal, unit: unit });
+                if (addedVal > 0) {
+                    addedItems.push({ name: pName, added: addedVal, night: nightVal, total: totalOpeningVal, unit: unit });
                 } else {
                     sameCount++;
                 }
             });
 
-            if (reducedItems.length > 0) {
-                box.className = 'p-3.5 rounded-2xl text-xs font-medium transition-all bg-amber-50 border border-amber-300 text-amber-900 space-y-1.5 shadow-sm';
-                let warnRows = reducedItems.map(it => `• <b>${it.name}</b>: Sisa malam ${it.night} ${it.unit} vs fisik pagi ${it.open} ${it.unit} (<b class="text-rose-700 font-mono">${it.diff} ${it.unit}</b>)`).join('<br>');
-                let addedRows = addedItems.length > 0 ? `<div class="pt-1.5 border-t border-amber-200/80 text-emerald-800"><b>📥 Penambahan Stok Baru Pagi:</b><br>${addedItems.map(it => `• <b>${it.name}</b>: +${it.diff} ${it.unit} (Malam ${it.night} + Baru ${it.diff} = Total Awal ${it.open})`).join('<br>')}</div>` : '';
-                box.innerHTML = `
-                    <div class="flex items-center space-x-2 font-black text-amber-950 text-sm">
-                        <span>⚠️</span>
-                        <span>Perhatian: Terdeteksi Selisih Stok Fisik Berkurang dari Laporan Malam:</span>
-                    </div>
-                    <div class="pl-6 text-[11px] leading-relaxed">
-                        ${warnRows}
-                    </div>
-                    ${addedRows}
-                `;
-            } else if (addedItems.length > 0) {
+            if (addedItems.length > 0) {
                 box.className = 'p-3.5 rounded-2xl text-xs font-medium transition-all bg-emerald-50 border border-emerald-300 text-emerald-900 space-y-1.5 shadow-sm';
-                let addedRows = addedItems.map(it => `• <b>${it.name}</b>: Sisa malam ${it.night} + <b class="text-emerald-700 font-black">+${it.diff} ${it.unit} Penambahan Baru</b> = <b>Total Stok Awal ${it.open} ${it.unit}</b>`).join('<br>');
+                let addedRows = addedItems.map(it => `• <b>${it.name}</b>: Sisa malam ${it.night} + <b class="text-emerald-700 font-black">+${it.added} ${it.unit} Tambahan Baru</b> = <b>Total Stok Awal ${it.total} ${it.unit}</b>`).join('<br>');
                 box.innerHTML = `
                     <div class="flex items-center space-x-2 font-black text-emerald-950 text-sm">
                         <span>📥</span>
@@ -10061,15 +10106,15 @@ $appVersionData = getAppVersionData();
                     <div class="pl-6 text-[11px] leading-relaxed">
                         ${addedRows}
                     </div>
-                    <p class="text-[10px] text-emerald-700 pl-6 italic">Stok awal fisik pagi telah mencakup penambahan stok baru yang siap untuk operasional penjualan hari ini.</p>
+                    <p class="text-[10px] text-emerald-700 pl-6 italic">Perhitungan: Stok Awal = Stok Input Awal Shift (+ Tambahan) + Stok Malam.</p>
                 `;
             } else {
                 box.className = 'p-3.5 rounded-2xl text-xs font-bold transition-all bg-slate-50 border border-slate-200 text-slate-700 flex items-center space-x-2.5';
                 box.innerHTML = `
                     <span class="p-1 bg-emerald-100 text-emerald-700 rounded-lg text-sm">✓</span>
                     <div>
-                        <span class="font-black text-slate-900">Stok Awal Pagi Sesuai dengan Laporan Malam Sebelumnya</span>
-                        <span class="block text-[10px] font-normal text-slate-500">Tidak ada penambahan stok baru masuk pagi ini (${sameCount} produk utuh).</span>
+                        <span class="font-black text-slate-900">Stok Awal Pagi = Stok Malam Hari Kemarin</span>
+                        <span class="block text-[10px] font-normal text-slate-500">Tidak ada penambahan stok baru masuk pagi ini (Stok Awal = 0 + Stok Malam). Seluruh ${sameCount} item siap dijual.</span>
                     </div>
                 `;
             }
@@ -10648,33 +10693,74 @@ $appVersionData = getAppVersionData();
                 const nextName = actionBtn?.getAttribute('data-next-shift-name') || ('Shift ' + nextNum);
 
                 const initCash = parseFloat(document.getElementById('shift-input-initial-cash')?.value) || 0;
-                const openMin = document.getElementById('opening-raw-mineral') ? parseInt(document.getElementById('opening-raw-mineral').value) : 0;
-                const openRo = document.getElementById('opening-raw-ro') ? parseInt(document.getElementById('opening-raw-ro').value) : 0;
-                const openPl = document.getElementById('opening-raw-plastik') ? parseInt(document.getElementById('opening-raw-plastik').value) : 0;
-
-                const nightMin = document.getElementById('closing-night-mineral') ? parseInt(document.getElementById('closing-night-mineral').value) : 0;
-                const nightRo = document.getElementById('closing-night-ro') ? parseInt(document.getElementById('closing-night-ro').value) : 0;
-                const nightPl = document.getElementById('closing-night-plastik') ? parseInt(document.getElementById('closing-night-plastik').value) : 0;
 
                 // Collect dynamic opening items
                 const dynamicOpeningItems = [];
-                const nightInputsMap = {};
-                document.querySelectorAll('.shift-night-item-input').forEach(input => {
-                    const pId = parseInt(input.getAttribute('data-product-id')) || 0;
-                    if (pId > 0) {
-                        nightInputsMap[pId] = parseInt(input.value) || 0;
-                    }
-                });
-                document.querySelectorAll('.shift-opening-item-input').forEach(input => {
-                    const pId = parseInt(input.getAttribute('data-product-id')) || 0;
-                    if (pId > 0) {
-                        dynamicOpeningItems.push({
-                            product_id: pId,
-                            opening_qty: parseInt(input.value) || 0,
-                            night_qty: nightInputsMap[pId] !== undefined ? nightInputsMap[pId] : 0
-                        });
-                    }
-                });
+                let openMin = null, openRo = null, openPl = null;
+                let nightMin = null, nightRo = null, nightPl = null;
+
+                if (nextNum === 1) {
+                    // Kasir Pertama (Shift 1):
+                    // Rumus: Stok Awal = Input Tambahan Baru + Stok Malam Kemarin
+                    const nightInputsMap = {};
+                    document.querySelectorAll('.shift-night-item-input').forEach(input => {
+                        const pId = parseInt(input.getAttribute('data-product-id')) || 0;
+                        if (pId > 0) {
+                            nightInputsMap[pId] = parseInt(input.value) || 0;
+                        }
+                    });
+
+                    document.querySelectorAll('.shift-added-item-input').forEach(input => {
+                        const pId = parseInt(input.getAttribute('data-product-id')) || 0;
+                        const sku = input.getAttribute('data-sku') || '';
+                        const nightStockAttr = input.getAttribute('data-night-stock');
+                        const nightStock = (nightStockAttr !== null && !isNaN(parseInt(nightStockAttr)))
+                            ? parseInt(nightStockAttr)
+                            : (nightInputsMap[pId] !== undefined ? nightInputsMap[pId] : 0);
+                        const addedQty = parseInt(input.value) || 0;
+                        const openingQty = nightStock + addedQty;
+
+                        if (pId > 0) {
+                            dynamicOpeningItems.push({
+                                product_id: pId,
+                                sku: sku,
+                                added_qty: addedQty,
+                                night_qty: nightStock,
+                                opening_qty: openingQty
+                            });
+
+                            if (sku === 'RAW-089' || pId === 89) {
+                                openMin = openingQty;
+                                nightMin = nightStock;
+                            } else if (sku === 'RAW-020' || pId === 88) {
+                                openRo = openingQty;
+                                nightRo = nightStock;
+                            } else if (sku === 'RAW-00092' || pId === 105) {
+                                openPl = openingQty;
+                                nightPl = nightStock;
+                            }
+                        }
+                    });
+                } else {
+                    // Kasir Berikutnya (Shift 2+):
+                    // Kasir hanya input uang modal awal! Stok otomatis diteruskan dari shift sebelumnya
+                    document.querySelectorAll('.shift-carried-item').forEach(el => {
+                        const pId = parseInt(el.getAttribute('data-product-id')) || 0;
+                        const stock = parseInt(el.getAttribute('data-stock')) || 0;
+                        if (pId > 0) {
+                            dynamicOpeningItems.push({
+                                product_id: pId,
+                                added_qty: 0,
+                                night_qty: stock,
+                                opening_qty: stock
+                            });
+
+                            if (pId === 89) { openMin = stock; nightMin = stock; }
+                            else if (pId === 88) { openRo = stock; nightRo = stock; }
+                            else if (pId === 105) { openPl = stock; nightPl = stock; }
+                        }
+                    });
+                }
 
                 const res = await fetch('api.php?action=open_shift', {
                     method: 'POST',
