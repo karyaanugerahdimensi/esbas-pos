@@ -38,14 +38,15 @@ CREATE TABLE `categories` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `code` VARCHAR(100) NOT NULL,
     `name` VARCHAR(255) NOT NULL,
-    `icon_emoji` VARCHAR(255) DEFAULT '📁'
+    `icon_emoji` VARCHAR(255) DEFAULT '📁',
+    `is_stockable` TINYINT(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table `categories`
-INSERT INTO `categories` (`id`, `code`, `name`, `icon_emoji`) VALUES
-(1, 'PRODUKJUAL', 'Produk Jual', '🏷️'),
-(4, 'CAT-RAW', 'Bahan Baku (Raw Material)', '🌾'),
-(8, 'KONSINYASI', 'Konsinyasi', '🏷️');
+INSERT INTO `categories` (`id`, `code`, `name`, `icon_emoji`, `is_stockable`) VALUES
+(1, 'PRODUKJUAL', 'Produk Jual', '🏷️', 1),
+(4, 'CAT-RAW', 'Bahan Baku (Raw Material)', '🌾', 1),
+(8, 'KONSINYASI', 'Konsinyasi', '🏷️', 1);
 
 -- --------------------------------------------------------
 -- Table structure for `product_types`
@@ -406,17 +407,18 @@ CREATE TABLE `users` (
     `base_salary` DECIMAL(15, 2) DEFAULT 3000000,
     `allowance` DECIMAL(15, 2) DEFAULT 500000,
     `daily_transport` DECIMAL(15, 2) DEFAULT 25000,
-    `default_work_shift_id` INT DEFAULT NULL
+    `default_work_shift_id` INT DEFAULT NULL,
+    `assigned_vehicle_id` INT DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table `users`
-INSERT INTO `users` (`id`, `nik`, `name`, `role`, `branch_id`, `email`, `phone`, `pin`, `commission_rate`, `password`, `is_active`, `base_salary`, `allowance`, `daily_transport`, `default_work_shift_id`) VALUES
-(1, 'ADM001', 'Muhamad Ismail', 'SUPER_ADMIN', 1, 'mailmamenster@gmail.com', '08111000111', '999999', 0, 'admin123', 1, 3000000, 500000, 25000, NULL),
-(2, 'MGR001', 'Nina Indrayani', 'SUPER_ADMIN', 1, 'hendra@jkt.retail.com', '08122000222', '888888', 0, 'manager123', 1, 3000000, 500000, 25000, NULL),
-(3, 'CSR001', 'Bima', 'CASHIER', 1, 'siti.kasir@jkt.retail.com', '08133000333', '123456', 0, 'kasir123', 1, 3000000, 500000, 25000, 1),
-(4, 'CSR002', 'Abdul Latif', 'CASHIER', 1, 'latif@esbas.com', '0822113344', '654321', 0, 'kasir123', 1, 3000000, 500000, 25000, 1),
-(5, 'CSR003', 'Shafiqa', 'CASHIER', 3, 'anisa@sby.retail.com', '08155000555', '112233', 0, 'kasir123', 1, 3000000, 500000, 25000, 1),
-(6, 'STF001', 'Keenan', 'STAFF', 3, 'rian@jkt.retail.com', '08166000666', '000000', 0, 'staff123', 1, 3000000, 500000, 25000, 1);
+INSERT INTO `users` (`id`, `nik`, `name`, `role`, `branch_id`, `email`, `phone`, `pin`, `commission_rate`, `password`, `is_active`, `base_salary`, `allowance`, `daily_transport`, `default_work_shift_id`, `assigned_vehicle_id`) VALUES
+(1, 'ADM001', 'Muhamad Ismail', 'SUPER_ADMIN', 1, 'mailmamenster@gmail.com', '08111000111', '999999', 0, 'admin123', 1, 3000000, 500000, 25000, NULL, NULL),
+(2, 'MGR001', 'Nina Indrayani', 'SUPER_ADMIN', 1, 'hendra@jkt.retail.com', '08122000222', '888888', 0, 'manager123', 1, 3000000, 500000, 25000, NULL, NULL),
+(3, 'CSR001', 'Bima', 'CASHIER', 1, 'siti.kasir@jkt.retail.com', '08133000333', '123456', 0, 'kasir123', 1, 3000000, 500000, 25000, 1, 1),
+(4, 'CSR002', 'Abdul Latif', 'CASHIER', 1, 'latif@esbas.com', '0822113344', '654321', 0, 'kasir123', 1, 3000000, 500000, 25000, 1, 3),
+(5, 'CSR003', 'Shafiqa', 'CASHIER', 3, 'anisa@sby.retail.com', '08155000555', '112233', 0, 'kasir123', 1, 3000000, 500000, 25000, 1, 4),
+(6, 'STF001', 'Keenan', 'STAFF', 3, 'rian@jkt.retail.com', '08166000666', '000000', 0, 'staff123', 1, 3000000, 500000, 25000, 1, 2);
 
 -- --------------------------------------------------------
 -- Table structure for `products`
@@ -445,7 +447,8 @@ CREATE TABLE `products` (
     `tax_id` INT DEFAULT 1,
     `tax_percent` DECIMAL(8, 4) DEFAULT 11.0,
     `is_delivery_required` TINYINT(1) DEFAULT 0,
-    `is_delivery_included` TINYINT(1) DEFAULT 0
+    `is_delivery_included` TINYINT(1) DEFAULT 0,
+    `is_stockable` TINYINT(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table `products`
@@ -568,19 +571,19 @@ INSERT INTO `branch_stocks` (`id`, `branch_id`, `product_id`, `stock`, `local_co
 (303, 2, 91, 50, 45, 0, NULL, 1, NULL, NULL),
 (316, 3, 98, 50, 985, 5000, '2026-10-11 22:36:49', 1, NULL, NULL),
 (317, 1, 98, 10, 985, 4500, '2026-10-12 15:03:39', 1, 2, 1),
-(318, 2, 98, 50, 985, 5000, '2026-10-11 22:54:50', 0, 0, NULL),
+(318, 2, 98, 50, 985, 5000, '2026-10-11 22:54:50', 1, 0, NULL),
 (319, 3, 99, 50, 985, 7000, '2026-10-11 11:59:37', 1, NULL, NULL),
 (320, 1, 99, 50, 985, 6500, '2026-10-12 15:03:53', 1, 2, 1),
 (321, 2, 99, 50, 985, 9000, '2026-10-11 11:59:20', 1, NULL, NULL),
-(322, 3, 100, 50, 805, 4500, '2026-10-11 22:36:44', 0, NULL, NULL),
+(322, 3, 100, 50, 805, 4500, '2026-10-11 22:36:44', 1, NULL, NULL),
 (323, 1, 100, 34, 805, 4500, '2026-10-12 15:03:29', 1, 2, 1),
-(324, 2, 100, 50, 805, 4500, '2026-10-11 22:36:07', 0, NULL, NULL),
-(325, 3, 101, 50, 805, 6500, '2026-10-11 22:36:52', 0, NULL, NULL),
+(324, 2, 100, 50, 805, 4500, '2026-10-11 22:36:07', 1, NULL, NULL),
+(325, 3, 101, 50, 805, 6500, '2026-10-11 22:36:52', 1, NULL, NULL),
 (326, 1, 101, 50, 805, 6500, '2026-10-12 15:03:46', 1, 2, 1),
-(327, 2, 101, 50, 805, 6500, '2026-10-11 22:36:22', 0, NULL, NULL),
-(328, 3, 102, 50, 24000, 25000, '2026-10-11 22:37:07', 0, NULL, NULL),
+(327, 2, 101, 50, 805, 6500, '2026-10-11 22:36:22', 1, NULL, NULL),
+(328, 3, 102, 50, 24000, 25000, '2026-10-11 22:37:07', 1, NULL, NULL),
 (329, 1, 102, 50, 24000, 25000, '2026-10-12 15:02:27', 1, 2, 1),
-(330, 2, 102, 50, 24000, 25000, '2026-10-11 22:36:35', 0, NULL, NULL),
+(330, 2, 102, 50, 24000, 25000, '2026-10-11 22:36:35', 1, NULL, NULL),
 (332, 3, 103, 50, 19700, 23500, NULL, 1, NULL, NULL),
 (333, 1, 103, 37, 19700, 23500, '2026-10-12 14:53:22', 1, 2, 1),
 (334, 2, 103, 50, 19700, 22000, '2026-10-11 21:50:20', 1, NULL, NULL),
@@ -588,13 +591,13 @@ INSERT INTO `branch_stocks` (`id`, `branch_id`, `product_id`, `stock`, `local_co
 (336, 6, 89, 50, 90, 0, NULL, 1, NULL, NULL),
 (337, 6, 90, 50, 85, 0, NULL, 1, NULL, NULL),
 (338, 6, 91, 50, 45, 0, NULL, 1, NULL, NULL),
-(339, 6, 98, 50, 985, 4500, '2026-10-11 23:26:45', 0, 0, NULL),
-(340, 6, 99, 50, 985, 6500, '2026-10-11 23:26:54', 0, 0, NULL),
-(341, 6, 100, 50, 805, 4500, '2026-10-11 23:26:41', 0, 0, NULL),
-(342, 6, 101, 50, 805, 6500, '2026-10-11 23:26:49', 0, 0, NULL),
-(343, 6, 102, 50, 24000, 25000, '2026-10-11 23:27:06', 0, 0, NULL),
-(344, 6, 103, 50, 19700, 23500, '2026-10-11 23:26:59', 0, 0, NULL),
-(345, 3, 104, 50, 1360, 6500, '2026-10-11 22:37:04', 0, NULL, NULL),
+(339, 6, 98, 50, 985, 4500, '2026-10-11 23:26:45', 1, 0, NULL),
+(340, 6, 99, 50, 985, 6500, '2026-10-11 23:26:54', 1, 0, NULL),
+(341, 6, 100, 50, 805, 4500, '2026-10-11 23:26:41', 1, 0, NULL),
+(342, 6, 101, 50, 805, 6500, '2026-10-11 23:26:49', 1, 0, NULL),
+(343, 6, 102, 50, 24000, 25000, '2026-10-11 23:27:06', 1, 0, NULL),
+(344, 6, 103, 50, 19700, 23500, '2026-10-11 23:26:59', 1, 0, NULL),
+(345, 3, 104, 50, 1360, 6500, '2026-10-11 22:37:04', 1, NULL, NULL),
 (346, 6, 104, 50, 1360, 6500, NULL, 1, NULL, NULL),
 (347, 1, 104, 40, 1360, 6500, '2026-10-11 13:21:10', 1, NULL, NULL),
 (348, 2, 104, 50, 1360, 7000, '2026-10-11 22:46:08', 1, 0, NULL),
@@ -602,7 +605,7 @@ INSERT INTO `branch_stocks` (`id`, `branch_id`, `product_id`, `stock`, `local_co
 (350, 6, 105, 50, 10000, 25000, NULL, 1, NULL, NULL),
 (351, 1, 105, 197, 1000, 0, '2026-10-11 13:19:33', 1, NULL, NULL),
 (352, 2, 105, 50, 10000, 25000, NULL, 1, NULL, NULL),
-(353, 3, 106, 50, 2675, 12000, '2026-10-11 22:37:01', 0, NULL, NULL),
+(353, 3, 106, 50, 2675, 12000, '2026-10-11 22:37:01', 1, NULL, NULL),
 (354, 6, 106, 50, 2675, 12000, NULL, 1, NULL, NULL),
 (355, 1, 106, 33, 2675, 12000, NULL, 1, NULL, NULL),
 (356, 2, 106, 50, 2675, 12000, '2026-10-11 22:46:14', 1, 0, NULL);

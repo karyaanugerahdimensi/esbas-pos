@@ -8004,7 +8004,10 @@ $appVersionData = getAppVersionData();
 
                 const res = await fetch(`api.php?action=bootstrap&branch_id=${bId}&user_id=${uId}`);
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 state.branches = data.branches;
                 state.currentBranch = data.current_branch;
@@ -8199,7 +8202,7 @@ $appVersionData = getAppVersionData();
             const activeCat = state.selectedCustomerCategory || (activeCust ? activeCust.category : 'REGULER');
 
             const filtered = state.products.filter(p => {
-                const matchCat = (state.selectedCategory === 'ALL' || p.category === state.selectedCategory);
+                const matchCat = (state.selectedCategory === 'ALL' || (p.category || '').toLowerCase() === (state.selectedCategory || '').toLowerCase());
                 const matchKeyword = (!state.searchKeyword || p.name.toLowerCase().includes(state.searchKeyword) || p.sku.toLowerCase().includes(state.searchKeyword));
                 
                 // Jika tier aktif adalah MITRA, produk HANYA dimunculkan jika status kontrak khusus mitra telah dibuat
@@ -10620,7 +10623,10 @@ $appVersionData = getAppVersionData();
 
             const res = await fetch(`api.php?action=sales_reports&branch_id=${branchId}&start_date=${start}&end_date=${end}&payment_method=${method}`);
             const data = await res.json();
-            if (!data.success) return;
+            if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
             document.getElementById('kpi-net-sales').innerText = formatRupiah(data.kpi.net_sales);
             document.getElementById('kpi-cogs').innerText = formatRupiah(data.kpi.total_cogs);
@@ -11334,7 +11340,10 @@ Manager / Supervisor: __________________
 
                 const res = await fetch(`api.php?action=get_receivables&branch_id=${branchId}&status=${status}&start_date=${start}&end_date=${end}&keyword=${keyword}`);
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 // 1. Update KPI Cards
                 const kpi = data.kpi || {};
@@ -11669,7 +11678,10 @@ Manager / Supervisor: __________________
 
             const res = await fetch(`api.php?action=ess_get_data&user_id=${uId}&branch_id=${bId}`);
             const data = await res.json();
-            if (!data.success) return;
+            if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
             document.getElementById('ess-emp-name').innerText = data.user.name;
             document.getElementById('ess-emp-role').innerText = `${data.user.role} • NIK: ${data.user.nik} • ${state.currentBranch.name}`;
@@ -11849,7 +11861,10 @@ Manager / Supervisor: __________________
 
                 const res = await fetch('api.php?action=get_work_shifts');
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
                 essWorkShiftsList = data.shifts || [];
 
                 const container = document.getElementById('ess-work-shifts-grid');
@@ -11998,7 +12013,10 @@ Manager / Supervisor: __________________
             try {
                 const res = await fetch(`api.php?action=get_monthly_schedules&branch_id=${bId}&month=${mVal}&user_id=${curUser.id}`);
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 const thead = document.getElementById('ess-roster-table-head');
                 const tbody = document.getElementById('ess-roster-table-body');
@@ -12215,7 +12233,10 @@ Manager / Supervisor: __________________
                 const bId = state.currentBranch ? state.currentBranch.id : 1;
                 const res = await fetch(`api.php?action=get_shift_swaps&branch_id=${bId}&user_id=${curUser.id}`);
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 const tbody = document.getElementById('ess-swaps-table-body');
                 if (!tbody) return;
@@ -12312,7 +12333,10 @@ Manager / Supervisor: __________________
                 const bId = state.currentBranch ? state.currentBranch.id : 1;
                 const res = await fetch(`api.php?action=get_leave_requests&branch_id=${bId}&user_id=${curUser.id}`);
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 const tbody = document.getElementById('ess-leaves-table-body');
                 if (!tbody) return;
@@ -12431,7 +12455,10 @@ Manager / Supervisor: __________________
             try {
                 const res = await fetch(`api.php?action=get_attendance_report&branch_id=${bId}&month=${mVal}&user_id=${curUser.id}&actor_id=${curUser.id}`);
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 const summary = data.summary || [];
                 const logs = data.logs || [];
@@ -12633,7 +12660,10 @@ Manager / Supervisor: __________________
                 // Load loans
                 const res = await fetch(`api.php?action=get_salary_loans&branch_id=${bId}&user_id=${curUserId}`);
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 const loans = data.loans || [];
 
@@ -12803,7 +12833,10 @@ Manager / Supervisor: __________________
             await ensureWorkShiftsLoaded();
             const res = await fetch('api.php?action=get_employees');
             const data = await res.json();
-            if (!data.success) return;
+            if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
             document.getElementById('employee-table-body').innerHTML = data.employees.map(e => {
                 const isExempt = ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'].includes(e.role);
@@ -13273,7 +13306,10 @@ Manager / Supervisor: __________________
         async function loadAllProducts() {
             const res = await fetch('api.php?action=get_all_products');
             const data = await res.json();
-            if (!data.success) return;
+            if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
             state.allProducts = data.products;
 
             document.getElementById('master-products-table-body').innerHTML = data.products.map(p => {
@@ -14177,7 +14213,10 @@ Manager / Supervisor: __________________
             try {
                 const res = await fetch('api.php?action=get_categories');
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
                 state.categories = data.categories;
 
                 const tbody = document.getElementById('categories-table-body');
@@ -14319,7 +14358,10 @@ Manager / Supervisor: __________________
             try {
                 const res = await fetch('api.php?action=get_product_types');
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
                 state.productTypes = data.product_types;
 
                 const tbody = document.getElementById('product-types-table-body');
@@ -14454,7 +14496,10 @@ Manager / Supervisor: __________________
             try {
                 const res = await fetch('api.php?action=get_product_units');
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
                 state.productUnits = data.product_units;
 
                 const tbody = document.getElementById('product-units-table-body');
@@ -14566,7 +14611,10 @@ Manager / Supervisor: __________________
             try {
                 const res = await fetch('api.php?action=get_taxes');
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
                 state.taxes = data.taxes;
 
                 const tbody = document.getElementById('taxes-table-body');
@@ -14685,7 +14733,10 @@ Manager / Supervisor: __________________
             try {
                 const res = await fetch('api.php?action=get_opening_shift_products');
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
                 state.openingShiftProducts = data.products || [];
 
                 const tbody = document.getElementById('opening-shift-products-table-body');
@@ -14821,7 +14872,10 @@ Manager / Supervisor: __________________
         async function loadBOMRecipes() {
             const res = await fetch('api.php?action=get_recipes');
             const data = await res.json();
-            if (!data.success) return;
+            if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
             state.recipesData = data;
 
             document.getElementById('bom-cards-grid').innerHTML = data.finished_goods.map(fg => `
@@ -14974,7 +15028,10 @@ Manager / Supervisor: __________________
             try {
                 const res = await fetch('api.php?action=get_variant_recipes');
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 state.variantRecipesData = data;
                 const container = document.getElementById('variant-bom-cards-grid');
@@ -15262,7 +15319,10 @@ Manager / Supervisor: __________________
 
             const res = await fetch(`api.php?action=get_inventory_stocks&branch_id=${bId}`);
             const data = await res.json();
-            if (!data.success) return;
+            if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
             document.getElementById('stock-balance-table-body').innerHTML = data.stocks.map(s => {
                 const stockVal = parseFloat(s.stock);
@@ -15318,7 +15378,10 @@ Manager / Supervisor: __________________
 
             const res = await fetch(`api.php?action=get_stock_movements&branch_id=${bId}`);
             const data = await res.json();
-            if (!data.success) return;
+            if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
             document.getElementById('stock-movements-table-body').innerHTML = data.movements.map(m => {
                 let badgeClass = 'bg-slate-100 text-slate-700 font-bold';
@@ -15560,7 +15623,10 @@ Manager / Supervisor: __________________
             const bId = state.currentBranch ? state.currentBranch.id : '';
             const res = await fetch(`api.php?action=profit_loss_report&branch_id=${bId}`);
             const data = await res.json();
-            if (!data.success) return;
+            if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
             const pnl = data.income_statement;
             const ar = pnl.receivables_analysis || {};
@@ -15717,7 +15783,10 @@ Manager / Supervisor: __________________
 
                 const res = await fetch(url);
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 const expenses = data.expenses || [];
                 const tbody = document.getElementById('branch-expenses-table-body');
@@ -15793,7 +15862,10 @@ Manager / Supervisor: __________________
             try {
                 const res = await fetch('api.php?action=get_expense_categories');
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 state.expenseCategories = data.expense_categories || [];
 
@@ -16471,7 +16543,10 @@ Manager / Supervisor: __________________
                 const kw = encodeURIComponent(state.custSearchKeyword || '');
                 const res = await fetch(`api.php?action=get_customers&category=${cat}&keyword=${kw}`);
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 const custs = data.customers || [];
                 state.customers = custs;
@@ -17587,7 +17662,10 @@ Manager / Supervisor: __________________
 
                 const res = await fetch(`api.php?action=get_inventory_stocks&branch_id=${currentBranchId}&product_type=FINISHED_GOODS`);
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 const stocks = data.stocks || [];
                 const tbody = document.getElementById('branch-pricing-table-body');
@@ -18246,7 +18324,10 @@ Manager / Supervisor: __________________
             try {
                 const res = await fetch('api.php?action=get_courier_vehicles');
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 state.vehicles = data.vehicles || [];
 
@@ -18513,7 +18594,10 @@ Manager / Supervisor: __________________
             try {
                 const res = await fetch('api.php?action=get_fuel_logs');
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 state.fuelLogs = data.fuel_logs || data.logs || [];
 
@@ -18693,7 +18777,10 @@ Manager / Supervisor: __________________
             try {
                 const res = await fetch('api.php?action=get_service_logs');
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 state.serviceLogs = data.service_logs || data.logs || [];
 
@@ -18824,7 +18911,10 @@ Manager / Supervisor: __________________
 
                 const res = await fetch(`api.php?action=get_delivery_settings&branch_id=${currentBranchId}`);
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 const s = data.setting;
                 document.getElementById('ds-base-fee').value = s.base_fee;
@@ -19083,7 +19173,10 @@ Manager / Supervisor: __________________
             try {
                 const res = await fetch('api.php?action=get_branches');
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 const branches = data.branches;
                 state.branches = branches;
@@ -19839,7 +19932,10 @@ Manager / Supervisor: __________________
             try {
                 const res = await fetch('api.php?action=get_payment_methods');
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 const methods = data.payment_methods;
                 state.paymentMethods = methods;
@@ -20030,7 +20126,10 @@ Manager / Supervisor: __________________
             try {
                 const res = await fetch('api.php?action=get_cash_denominations');
                 const data = await res.json();
-                if (!data.success) return;
+                if (!data.success) {
+                    console.error('Bootstrap failed:', data.error || 'Unknown error');
+                    return;
+                }
 
                 const denoms = data.cash_denominations || [];
                 state.cashDenominations = denoms;

@@ -2016,6 +2016,39 @@ function autoMigrateMysql($pdo) {
             $pdo->exec("ALTER TABLE `products` ADD COLUMN `is_stockable` TINYINT(1) DEFAULT 1");
         }
     } catch (Exception $e) {}
+
+    // 6. Kolom assigned_vehicle_id pada users
+    try {
+        $colsUserVeh = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'assigned_vehicle_id'")->fetchAll();
+        if (empty($colsUserVeh)) {
+            $pdo->exec("ALTER TABLE `users` ADD COLUMN `assigned_vehicle_id` INT DEFAULT NULL");
+        }
+    } catch (Exception $e) {}
+
+    // 7. Kolom driver_user_id pada courier_vehicles
+    try {
+        $colsVehDriver = $pdo->query("SHOW COLUMNS FROM `courier_vehicles` LIKE 'driver_user_id'")->fetchAll();
+        if (empty($colsVehDriver)) {
+            $pdo->exec("ALTER TABLE `courier_vehicles` ADD COLUMN `driver_user_id` INT DEFAULT NULL");
+        }
+    } catch (Exception $e) {}
+
+    // 8. Auto-seed missing branch_stocks & auto-heal is_active untuk produk jadi di MySQL
+    try {
+        $pdo->exec("INSERT IGNORE INTO `branch_stocks` (`branch_id`, `product_id`, `stock`, `local_cogs`, `local_price`, `is_active`)
+            SELECT b.id, p.id, 0, COALESCE(p.cogs, 0), COALESCE(p.selling_price, 0), 1
+            FROM `branches` b
+            CROSS JOIN `products` p
+            WHERE (p.is_active IS NULL OR p.is_active = 1)
+        ");
+        $pdo->exec("UPDATE `branch_stocks` bs
+            JOIN `products` p ON bs.product_id = p.id
+            SET bs.is_active = 1
+            WHERE (p.product_type IS NULL OR p.product_type = '' OR p.product_type = 'FINISHED_GOODS')
+              AND (p.is_active IS NULL OR p.is_active = 1)
+              AND bs.is_active = 0
+        ");
+    } catch (Exception $e) {}
 }
 
 if ($dbDriver === 'mysql') {

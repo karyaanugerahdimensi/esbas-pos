@@ -257,15 +257,23 @@ try {
                 FROM branches b
                 ORDER BY b.id ASC
             ")->fetchAll();
-            $users = $pdo->query("SELECT id, nik, name, role, branch_id, email, phone, commission_rate, is_active, assigned_vehicle_id FROM users ORDER BY id ASC")->fetchAll();
+            try {
+                $users = $pdo->query("SELECT id, nik, name, role, branch_id, email, phone, commission_rate, is_active, assigned_vehicle_id FROM users ORDER BY id ASC")->fetchAll();
+            } catch (Exception $e) {
+                $users = $pdo->query("SELECT id, nik, name, role, branch_id, email, phone, commission_rate, is_active FROM users ORDER BY id ASC")->fetchAll();
+                foreach ($users as &$u) {
+                    $u['assigned_vehicle_id'] = null;
+                }
+                unset($u);
+            }
 
             $stmtBranch = $pdo->prepare("SELECT * FROM branches WHERE id = ?");
             $stmtBranch->execute([$branchId]);
-            $currentBranch = $stmtBranch->fetch() ?: $branches[0];
+            $currentBranch = $stmtBranch->fetch() ?: ($branches[0] ?? ['id' => 1, 'name' => 'Cabang Utama', 'code' => 'PST01']);
 
             $stmtUser = $pdo->prepare("SELECT * FROM users WHERE id = ?");
             $stmtUser->execute([$userId]);
-            $currentUser = $stmtUser->fetch() ?: $users[0];
+            $currentUser = $stmtUser->fetch() ?: ($users[0] ?? ['id' => 1, 'name' => 'Admin', 'role' => 'SUPER_ADMIN']);
             unset($currentUser['password']);
 
             // Active Shift
@@ -275,21 +283,22 @@ try {
 
             // POS Products: Only FINISHED_GOODS for cashier sale with Multi-Tier Pricing & Per-Item Tax (Hanya produk yang aktif dijual di cabang ini)
             $stmtProducts = $pdo->prepare("
-                SELECT p.id, p.sku, p.barcode, p.name, p.category, p.category_id, p.product_type, p.unit, p.image_emoji, p.has_bom,
+                SELECT p.id, p.sku, p.barcode, p.name, COALESCE(c.name, p.category, 'Umum') as category, p.category_id, p.product_type, p.unit, p.image_emoji, p.has_bom,
                        p.member_price, p.reseller_price, p.mitra_price, p.visible_categories,
                        p.is_taxable, p.tax_id, p.tax_percent,
                        COALESCE(bs.is_delivery_required, p.is_delivery_required, 0) as is_delivery_required,
                        COALESCE(bs.is_delivery_included, p.is_delivery_included, 0) as is_delivery_included,
-                       bs.stock, bs.local_cogs as cogs, bs.local_price as selling_price,
+                       COALESCE(bs.stock, 0) as stock, COALESCE(bs.local_cogs, p.cogs, 0) as cogs, COALESCE(bs.local_price, p.selling_price, 0) as selling_price,
                        COALESCE(bs.is_active, 1) as branch_is_active,
                        COALESCE(p.is_stockable, 1) as is_stockable,
                        COALESCE(c.is_stockable, 1) as cat_is_stockable
                 FROM products p
-                JOIN branch_stocks bs ON p.id = bs.product_id
+                LEFT JOIN branch_stocks bs ON p.id = bs.product_id AND bs.branch_id = ?
                 LEFT JOIN categories c ON c.id = p.category_id
-                WHERE bs.branch_id = ? AND p.is_active = 1 AND p.product_type = 'FINISHED_GOODS'
-                  AND COALESCE(bs.is_active, 1) = 1
-                ORDER BY p.category ASC, p.name ASC
+                WHERE (p.is_active IS NULL OR p.is_active = 1) 
+                  AND (p.product_type IS NULL OR p.product_type = '' OR p.product_type = 'FINISHED_GOODS')
+                  AND (bs.is_active IS NULL OR bs.is_active = 1)
+                ORDER BY category ASC, p.name ASC
             ");
             $stmtProducts->execute([$currentBranch['id']]);
             $products = $stmtProducts->fetchAll();

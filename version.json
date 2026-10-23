@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.12",
-  "build": "20261020-03",
-  "release_date": "2026-10-20",
+  "version": "1.2.13",
+  "build": "20261023-01",
+  "release_date": "2026-10-23",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.13",
+      "commit": "HEAD",
+      "date": "2026-10-23",
+      "title": "Perbaikan Kompatibilitas Hosting MySQL/MariaDB: Katalog Produk POS Kasir Tampil Sempurna di Semua Cabang",
+      "description": "Menyelesaikan kendala katalog menu penjualan produk POS yang kosong pada hosting MySQL/MariaDB. Memperbaiki kueri bootstrap api.php agar tahan banting dengan try-catch fallback pada kolom users.assigned_vehicle_id, mengubah relasi branch_stocks menjadi LEFT JOIN dengan COALESCE fallback nilai harga dan stok default, menambahkan auto-migrasi kolom assigned_vehicle_id, driver_user_id, dan is_stockable pada autoMigrateMysql db.php, melakukan auto-seed branch_stocks lintas cabang dan auto-heal is_active = 1 untuk barang jadi, menyinkronkan skema esbas_pos_mysql.sql, serta menyempurnakan filter kategori case-insensitive pada renderProducts.",
+      "rollback_command": "git checkout v1.2.12"
+    },
     {
       "version": "1.2.12",
       "commit": "HEAD",
