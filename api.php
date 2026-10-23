@@ -3511,17 +3511,26 @@ try {
             }
 
             // Ambil data meteran air terakhir untuk acuan (Meteran Hari Kemarin)
-            $stmtLastMeter = $pdo->prepare("
-                SELECT meter_today, log_date, water_dispensed_galon 
-                FROM water_meter_logs 
-                WHERE branch_id = ? 
-                ORDER BY id DESC LIMIT 1
-            ");
-            $stmtLastMeter->execute([$shift['branch_id']]);
-            $lastMeterRow = $stmtLastMeter->fetch();
-            $meterYesterday = $lastMeterRow ? (float)$lastMeterRow['meter_today'] : 0;
-            $meterYesterdayDate = $lastMeterRow ? $lastMeterRow['log_date'] : null;
-            $lastDispensedGalon = $lastMeterRow ? (float)$lastMeterRow['water_dispensed_galon'] : 0;
+            $meterYesterday = 0;
+            $meterYesterdayDate = null;
+            $lastDispensedGalon = 0;
+            try {
+                $stmtLastMeter = $pdo->prepare("
+                    SELECT meter_today, log_date, water_dispensed_galon 
+                    FROM water_meter_logs 
+                    WHERE branch_id = ? 
+                    ORDER BY id DESC LIMIT 1
+                ");
+                $stmtLastMeter->execute([$shift['branch_id']]);
+                $lastMeterRow = $stmtLastMeter->fetch();
+                if ($lastMeterRow) {
+                    $meterYesterday = (float)($lastMeterRow['meter_today'] ?? 0);
+                    $meterYesterdayDate = $lastMeterRow['log_date'] ?? null;
+                    $lastDispensedGalon = (float)($lastMeterRow['water_dispensed_galon'] ?? 0);
+                }
+            } catch (Exception $eLastMeter) {
+                // Fail-safe jika tabel/kolom sedang disinkronisasi
+            }
 
             echo json_encode([
                 'success' => true,
@@ -3649,6 +3658,7 @@ try {
             $pdo->beginTransaction();
             try {
                 $today = date('Y-m-d');
+                $shiftDate = !empty($shift['start_time']) ? substr($shift['start_time'], 0, 10) : $today;
                 $now = date('Y-m-d H:i:s');
 
                 // A. Catat Biaya Beban Toko ke branch_expenses (Menu Beban Operasional / Laba Rugi)
@@ -3658,7 +3668,7 @@ try {
                         VALUES (?, ?, ?, ?, 'SHIFT_EXPENSE', ?, ?)
                     ");
                     $expNote = "Pengeluaran Kasir Shift #{$shift['shift_number']} ({$shift['shift_name']}) - " . ($exp['notes'] ?: $exp['category']);
-                    $stmtExp->execute([$shift['branch_id'], $exp['category'], $exp['amount'], $today, $shiftId, $expNote]);
+                    $stmtExp->execute([$shift['branch_id'], $exp['category'], $exp['amount'], $shiftDate, $shiftId, $expNote]);
                 }
 
                 // B. Catat Kasbon Karyawan ke salary_loans (Menu Penggajian / Slip Gaji Potongan Kasbon)
@@ -3680,7 +3690,7 @@ try {
                     $stmtLoan->execute([
                         $loan['user_id'],
                         $shift['branch_id'],
-                        $today,
+                        $shiftDate,
                         $loan['amount'],
                         $loanReason,
                         $loan['amount'],
@@ -3708,7 +3718,7 @@ try {
                         $meal['user_id'],
                         $shift['branch_id'],
                         $meal['amount'],
-                        $today,
+                        $shiftDate,
                         $mealNote
                     ]);
 
@@ -3720,7 +3730,7 @@ try {
                     $stmtMealExp->execute([
                         $shift['branch_id'],
                         $meal['amount'],
-                        $today,
+                        $shiftDate,
                         $shiftId,
                         $mealNote
                     ]);
@@ -3750,9 +3760,13 @@ try {
 
                 if ($meterToday !== null) {
                     if ($meterYesterday === null) {
-                        $stmtPrevM = $pdo->prepare("SELECT meter_today FROM water_meter_logs WHERE branch_id = ? ORDER BY id DESC LIMIT 1");
-                        $stmtPrevM->execute([$shift['branch_id']]);
-                        $meterYesterday = (float)($stmtPrevM->fetchColumn() ?: 0);
+                        try {
+                            $stmtPrevM = $pdo->prepare("SELECT meter_today FROM water_meter_logs WHERE branch_id = ? ORDER BY id DESC LIMIT 1");
+                            $stmtPrevM->execute([$shift['branch_id']]);
+                            $meterYesterday = (float)($stmtPrevM->fetchColumn() ?: 0);
+                        } catch (Exception $ePrevM) {
+                            $meterYesterday = 0;
+                        }
                     }
 
                     $meterDiff = $meterToday - $meterYesterday;
@@ -3764,35 +3778,39 @@ try {
                         $dispensedGalon = round(($meterDiff + $meterAdjustment) / 782, 2);
                     }
 
-                    $stmtWML = $pdo->prepare("
-                        INSERT INTO water_meter_logs (
-                            branch_id, shift_id, user_id, log_date,
-                            meter_yesterday, meter_today, meter_difference,
-                            meter_adjustment, adjustment_type, adjustment_reason,
-                            water_dispensed_galon, notes, created_at, updated_at
-                        ) VALUES (
-                            ?, ?, ?, ?,
-                            ?, ?, ?,
-                            ?, ?, ?,
-                            ?, ?, ?, ?
-                        )
-                    ");
-                    $stmtWML->execute([
-                        $shift['branch_id'],
-                        $shiftId,
-                        $shift['user_id'],
-                        $today,
-                        $meterYesterday,
-                        $meterToday,
-                        $meterDiff,
-                        $meterAdjustment,
-                        $adjustmentType,
-                        $adjustmentReason ?: null,
-                        $dispensedGalon,
-                        $shiftNotes ?: null,
-                        $now,
-                        $now
-                    ]);
+                    try {
+                        $stmtWML = $pdo->prepare("
+                            INSERT INTO water_meter_logs (
+                                branch_id, shift_id, user_id, log_date,
+                                meter_yesterday, meter_today, meter_difference,
+                                meter_adjustment, adjustment_type, adjustment_reason,
+                                water_dispensed_galon, notes, created_at, updated_at
+                            ) VALUES (
+                                ?, ?, ?, ?,
+                                ?, ?, ?,
+                                ?, ?, ?,
+                                ?, ?, ?, ?
+                            )
+                        ");
+                        $stmtWML->execute([
+                            $shift['branch_id'],
+                            $shiftId,
+                            $shift['user_id'],
+                            $shiftDate,
+                            $meterYesterday,
+                            $meterToday,
+                            $meterDiff,
+                            $meterAdjustment,
+                            $adjustmentType,
+                            $adjustmentReason ?: null,
+                            $dispensedGalon,
+                            $shiftNotes ?: null,
+                            $now,
+                            $now
+                        ]);
+                    } catch (Exception $eWml) {
+                        error_log("Gagal mencatat water_meter_logs pada closing shift #{$shiftId}: " . $eWml->getMessage());
+                    }
                 }
 
                 // D. Update cashier_shifts
@@ -4101,16 +4119,21 @@ try {
             }
 
             // Ambil log meteran air untuk tanggal tersebut jika ada
-            $stmtWaterLogs = $pdo->prepare("
-                SELECT wml.*, u.name as recorder_name, cs.shift_name
-                FROM water_meter_logs wml
-                JOIN users u ON u.id = wml.user_id
-                LEFT JOIN cashier_shifts cs ON cs.id = wml.shift_id
-                WHERE wml.branch_id = ? AND wml.log_date = ?
-                ORDER BY wml.id DESC
-            ");
-            $stmtWaterLogs->execute([$branchId, $reportDate]);
-            $waterMeterLogs = $stmtWaterLogs->fetchAll();
+            $waterMeterLogs = [];
+            try {
+                $stmtWaterLogs = $pdo->prepare("
+                    SELECT wml.*, u.name as recorder_name, cs.shift_name
+                    FROM water_meter_logs wml
+                    JOIN users u ON u.id = wml.user_id
+                    LEFT JOIN cashier_shifts cs ON cs.id = wml.shift_id
+                    WHERE wml.branch_id = ? AND wml.log_date = ?
+                    ORDER BY wml.id DESC
+                ");
+                $stmtWaterLogs->execute([$branchId, $reportDate]);
+                $waterMeterLogs = $stmtWaterLogs->fetchAll() ?: [];
+            } catch (Exception $eWmlQuery) {
+                $waterMeterLogs = [];
+            }
 
             echo json_encode([
                 'success' => true,
@@ -4126,17 +4149,22 @@ try {
             $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : 1;
             $limit = !empty($_GET['limit']) ? (int)$_GET['limit'] : 30;
 
-            $stmtLogs = $pdo->prepare("
-                SELECT wml.*, u.name as recorder_name, b.name as branch_name, cs.shift_name
-                FROM water_meter_logs wml
-                JOIN users u ON u.id = wml.user_id
-                JOIN branches b ON b.id = wml.branch_id
-                LEFT JOIN cashier_shifts cs ON cs.id = wml.shift_id
-                WHERE wml.branch_id = ?
-                ORDER BY wml.id DESC LIMIT ?
-            ");
-            $stmtLogs->execute([$branchId, $limit]);
-            $logs = $stmtLogs->fetchAll();
+            $logs = [];
+            try {
+                $stmtLogs = $pdo->prepare("
+                    SELECT wml.*, u.name as recorder_name, b.name as branch_name, cs.shift_name
+                    FROM water_meter_logs wml
+                    JOIN users u ON u.id = wml.user_id
+                    JOIN branches b ON b.id = wml.branch_id
+                    LEFT JOIN cashier_shifts cs ON cs.id = wml.shift_id
+                    WHERE wml.branch_id = ?
+                    ORDER BY wml.id DESC LIMIT ?
+                ");
+                $stmtLogs->execute([$branchId, $limit]);
+                $logs = $stmtLogs->fetchAll() ?: [];
+            } catch (Exception $eLogs) {
+                $logs = [];
+            }
 
             $latest = !empty($logs) ? $logs[0] : null;
 

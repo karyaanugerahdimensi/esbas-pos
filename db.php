@@ -1988,27 +1988,152 @@ function autoMigrateMysql($pdo) {
         }
     } catch (Exception $e) {}
 
-    // 2. Kolom water meter pada cashier_shifts
+    // 2. Kolom-kolom shift & water meter pada cashier_shifts di MySQL
     try {
-        $cols = $pdo->query("SHOW COLUMNS FROM `cashier_shifts` LIKE 'water_meter_start'")->fetchAll();
-        if (empty($cols)) {
-            $pdo->exec("ALTER TABLE `cashier_shifts` ADD COLUMN `water_meter_start` DECIMAL(12,2) DEFAULT NULL, ADD COLUMN `water_meter_end` DECIMAL(12,2) DEFAULT NULL");
+        $shiftCols = array_column($pdo->query("SHOW COLUMNS FROM `cashier_shifts`")->fetchAll(PDO::FETCH_ASSOC), 'Field');
+        $shiftColsMap = [
+            'shift_number' => "ALTER TABLE `cashier_shifts` ADD COLUMN `shift_number` INT DEFAULT 1",
+            'shift_name' => "ALTER TABLE `cashier_shifts` ADD COLUMN `shift_name` VARCHAR(100) DEFAULT 'Shift 1'",
+            'shift_type' => "ALTER TABLE `cashier_shifts` ADD COLUMN `shift_type` VARCHAR(100) DEFAULT 'SHIFT_1'",
+            'is_final_shift' => "ALTER TABLE `cashier_shifts` ADD COLUMN `is_final_shift` TINYINT(1) DEFAULT 0",
+            'total_expenses' => "ALTER TABLE `cashier_shifts` ADD COLUMN `total_expenses` DECIMAL(15,2) DEFAULT 0",
+            'total_kasbon' => "ALTER TABLE `cashier_shifts` ADD COLUMN `total_kasbon` DECIMAL(15,2) DEFAULT 0",
+            'total_meal_allowance' => "ALTER TABLE `cashier_shifts` ADD COLUMN `total_meal_allowance` DECIMAL(15,2) DEFAULT 0",
+            'shift_disbursements_json' => "ALTER TABLE `cashier_shifts` ADD COLUMN `shift_disbursements_json` TEXT DEFAULT NULL",
+            'shift_notes' => "ALTER TABLE `cashier_shifts` ADD COLUMN `shift_notes` TEXT DEFAULT NULL",
+            'opening_items_json' => "ALTER TABLE `cashier_shifts` ADD COLUMN `opening_items_json` TEXT DEFAULT NULL",
+            'closing_items_json' => "ALTER TABLE `cashier_shifts` ADD COLUMN `closing_items_json` TEXT DEFAULT NULL",
+            'closing_raw_mineral' => "ALTER TABLE `cashier_shifts` ADD COLUMN `closing_raw_mineral` DECIMAL(15,2) DEFAULT NULL",
+            'closing_raw_ro' => "ALTER TABLE `cashier_shifts` ADD COLUMN `closing_raw_ro` DECIMAL(15,2) DEFAULT NULL",
+            'closing_raw_plastik' => "ALTER TABLE `cashier_shifts` ADD COLUMN `closing_raw_plastik` DECIMAL(15,2) DEFAULT NULL",
+            'water_meter_yesterday' => "ALTER TABLE `cashier_shifts` ADD COLUMN `water_meter_yesterday` DECIMAL(15,2) DEFAULT NULL",
+            'water_meter_today' => "ALTER TABLE `cashier_shifts` ADD COLUMN `water_meter_today` DECIMAL(15,2) DEFAULT NULL",
+            'water_meter_difference' => "ALTER TABLE `cashier_shifts` ADD COLUMN `water_meter_difference` DECIMAL(15,2) DEFAULT NULL",
+            'water_meter_adjustment' => "ALTER TABLE `cashier_shifts` ADD COLUMN `water_meter_adjustment` DECIMAL(15,2) DEFAULT 0",
+            'water_meter_adjustment_type' => "ALTER TABLE `cashier_shifts` ADD COLUMN `water_meter_adjustment_type` VARCHAR(255) DEFAULT 'PULSE'",
+            'water_meter_adjustment_reason' => "ALTER TABLE `cashier_shifts` ADD COLUMN `water_meter_adjustment_reason` VARCHAR(255) DEFAULT NULL",
+            'water_meter_dispensed_galon' => "ALTER TABLE `cashier_shifts` ADD COLUMN `water_meter_dispensed_galon` DECIMAL(15,2) DEFAULT NULL",
+            'water_meter_start' => "ALTER TABLE `cashier_shifts` ADD COLUMN `water_meter_start` DECIMAL(12,2) DEFAULT NULL",
+            'water_meter_end' => "ALTER TABLE `cashier_shifts` ADD COLUMN `water_meter_end` DECIMAL(12,2) DEFAULT NULL"
+        ];
+        foreach ($shiftColsMap as $col => $alterSql) {
+            if (!in_array($col, $shiftCols)) {
+                try { $pdo->exec($alterSql); } catch (Exception $e) {}
+            }
         }
     } catch (Exception $e) {}
 
-    // 3. Tabel water_meter_logs jika belum ada
+    // 3. Tabel water_meter_logs pada MySQL & Sinkronisasi Seluruh Kolom
     try {
-        $pdo->exec("CREATE TABLE IF NOT EXISTS `water_meter_logs` (
+        $hasWml = $pdo->query("SHOW TABLES LIKE 'water_meter_logs'")->fetch();
+        if (!$hasWml) {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS `water_meter_logs` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `branch_id` INT NOT NULL,
+                `shift_id` INT DEFAULT NULL,
+                `user_id` INT NOT NULL,
+                `log_date` DATE DEFAULT NULL,
+                `meter_yesterday` DECIMAL(15, 2) NOT NULL DEFAULT 0,
+                `meter_today` DECIMAL(15, 2) NOT NULL DEFAULT 0,
+                `meter_difference` DECIMAL(15, 2) NOT NULL DEFAULT 0,
+                `meter_adjustment` DECIMAL(15, 2) NOT NULL DEFAULT 0,
+                `adjustment_type` VARCHAR(255) DEFAULT 'PULSE',
+                `adjustment_reason` VARCHAR(255) DEFAULT NULL,
+                `water_dispensed_galon` DECIMAL(15, 2) NOT NULL DEFAULT 0,
+                `notes` TEXT,
+                `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        } else {
+            $wmlCols = array_column($pdo->query("SHOW COLUMNS FROM `water_meter_logs`")->fetchAll(PDO::FETCH_ASSOC), 'Field');
+
+            if (!in_array('log_date', $wmlCols)) {
+                $pdo->exec("ALTER TABLE `water_meter_logs` ADD COLUMN `log_date` DATE DEFAULT NULL");
+                if (in_array('recorded_at', $wmlCols)) {
+                    $pdo->exec("UPDATE `water_meter_logs` SET `log_date` = DATE(`recorded_at`) WHERE `log_date` IS NULL");
+                } elseif (in_array('created_at', $wmlCols)) {
+                    $pdo->exec("UPDATE `water_meter_logs` SET `log_date` = DATE(`created_at`) WHERE `log_date` IS NULL");
+                }
+            }
+            if (!in_array('meter_yesterday', $wmlCols)) {
+                $pdo->exec("ALTER TABLE `water_meter_logs` ADD COLUMN `meter_yesterday` DECIMAL(15, 2) NOT NULL DEFAULT 0");
+            }
+            if (!in_array('meter_today', $wmlCols)) {
+                $pdo->exec("ALTER TABLE `water_meter_logs` ADD COLUMN `meter_today` DECIMAL(15, 2) NOT NULL DEFAULT 0");
+                if (in_array('meter_value', $wmlCols)) {
+                    $pdo->exec("UPDATE `water_meter_logs` SET `meter_today` = `meter_value` WHERE `meter_today` = 0");
+                }
+            }
+            if (!in_array('meter_difference', $wmlCols)) {
+                $pdo->exec("ALTER TABLE `water_meter_logs` ADD COLUMN `meter_difference` DECIMAL(15, 2) NOT NULL DEFAULT 0");
+            }
+            if (!in_array('meter_adjustment', $wmlCols)) {
+                $pdo->exec("ALTER TABLE `water_meter_logs` ADD COLUMN `meter_adjustment` DECIMAL(15, 2) NOT NULL DEFAULT 0");
+            }
+            if (!in_array('adjustment_type', $wmlCols)) {
+                $pdo->exec("ALTER TABLE `water_meter_logs` ADD COLUMN `adjustment_type` VARCHAR(255) DEFAULT 'PULSE'");
+            }
+            if (!in_array('adjustment_reason', $wmlCols)) {
+                $pdo->exec("ALTER TABLE `water_meter_logs` ADD COLUMN `adjustment_reason` VARCHAR(255) DEFAULT NULL");
+            }
+            if (!in_array('water_dispensed_galon', $wmlCols)) {
+                $pdo->exec("ALTER TABLE `water_meter_logs` ADD COLUMN `water_dispensed_galon` DECIMAL(15, 2) NOT NULL DEFAULT 0");
+            }
+            if (!in_array('notes', $wmlCols)) {
+                $pdo->exec("ALTER TABLE `water_meter_logs` ADD COLUMN `notes` TEXT DEFAULT NULL");
+            }
+            if (!in_array('created_at', $wmlCols)) {
+                $pdo->exec("ALTER TABLE `water_meter_logs` ADD COLUMN `created_at` DATETIME DEFAULT NULL");
+            }
+            if (!in_array('updated_at', $wmlCols)) {
+                $pdo->exec("ALTER TABLE `water_meter_logs` ADD COLUMN `updated_at` DATETIME DEFAULT NULL");
+            }
+
+            // Izinkan NULL untuk kolom skema lama agar INSERT skema baru tidak gagal pada MySQL STRICT_TRANS_TABLES
+            if (in_array('log_type', $wmlCols)) {
+                $pdo->exec("ALTER TABLE `water_meter_logs` MODIFY COLUMN `log_type` VARCHAR(50) DEFAULT NULL");
+            }
+            if (in_array('meter_value', $wmlCols)) {
+                $pdo->exec("ALTER TABLE `water_meter_logs` MODIFY COLUMN `meter_value` DECIMAL(12,2) DEFAULT NULL");
+            }
+        }
+    } catch (Exception $e) {}
+
+    // 3b. Pastikan tabel branch_expenses, salary_loans, dan employee_meal_allowances memiliki kolom shift
+    try {
+        $hasExp = $pdo->query("SHOW TABLES LIKE 'branch_expenses'")->fetch();
+        if ($hasExp) {
+            $expCols = array_column($pdo->query("SHOW COLUMNS FROM `branch_expenses`")->fetchAll(PDO::FETCH_ASSOC), 'Field');
+            if (!in_array('shift_id', $expCols)) {
+                $pdo->exec("ALTER TABLE `branch_expenses` ADD COLUMN `shift_id` INT DEFAULT NULL");
+            }
+            if (!in_array('source', $expCols)) {
+                $pdo->exec("ALTER TABLE `branch_expenses` ADD COLUMN `source` VARCHAR(255) DEFAULT 'MANUAL'");
+            }
+        }
+    } catch (Exception $e) {}
+
+    try {
+        $hasSalLoans = $pdo->query("SHOW TABLES LIKE 'salary_loans'")->fetch();
+        if ($hasSalLoans) {
+            $loanCols = array_column($pdo->query("SHOW COLUMNS FROM `salary_loans`")->fetchAll(PDO::FETCH_ASSOC), 'Field');
+            if (!in_array('shift_id', $loanCols)) {
+                $pdo->exec("ALTER TABLE `salary_loans` ADD COLUMN `shift_id` INT DEFAULT NULL");
+            }
+        }
+    } catch (Exception $e) {}
+
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `employee_meal_allowances` (
             `id` INT AUTO_INCREMENT PRIMARY KEY,
-            `branch_id` INT NOT NULL,
-            `shift_id` INT DEFAULT NULL,
+            `shift_id` INT NOT NULL,
             `user_id` INT NOT NULL,
-            `log_type` VARCHAR(20) NOT NULL,
-            `meter_value` DECIMAL(12,2) NOT NULL,
-            `photo_path` VARCHAR(255) DEFAULT NULL,
+            `branch_id` INT NOT NULL,
+            `amount` DECIMAL(15, 2) NOT NULL,
+            `meal_date` DATE NOT NULL,
             `notes` TEXT,
-            `recorded_at` DATETIME DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     } catch (Exception $e) {}
 
     // 4. Tabel cash_denominations pada MySQL jika belum ada & seed default

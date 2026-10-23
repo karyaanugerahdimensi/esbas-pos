@@ -1,14 +1,22 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.17",
-  "build": "20261023-05",
+  "version": "1.2.18",
+  "build": "20261023-06",
   "release_date": "2026-10-23",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
     {
-      "version": "1.2.17",
+      "version": "1.2.18",
       "commit": "HEAD",
+      "date": "2026-10-23",
+      "title": "Perbaikan Kompatibilitas Skema MySQL Hosting pada Penutupan Shift & Otomatisasi Log Meteran Air",
+      "description": "Menyelesaikan galat 'SQLSTATE[42S22]: Column not found: 1054 Unknown column log_date in INSERT INTO' saat kasir menutup shift (closing shift) yang telah lewat beberapa hari maupun shift aktif di hosting MySQL/MariaDB. Menyempurnakan autoMigrateMysql pada db.php untuk secara otomatis mendeteksi dan menambahkan kolom log_date, meter_yesterday, meter_today, meter_difference, meter_adjustment, adjustment_type, adjustment_reason, water_dispensed_galon, created_at, updated_at pada tabel water_meter_logs; memodifikasi kolom lama log_type dan meter_value agar menerima nilai NULL; memastikan seluruh kolom shift pada cashier_shifts, branch_expenses, dan salary_loans termigrasi otomatis; serta menyelaraskan tanggal pencatatan meteran dan pengeluaran kas laci (expense_date, loan_date, meal_date, log_date) persis ke tanggal shift awal untuk shift yang ditutup lintas hari dengan pembungkus try-catch fail-safe.",
+      "rollback_command": "git checkout v1.2.17"
+    },
+    {
+      "version": "1.2.17",
+      "commit": "v1.2.17",
       "date": "2026-10-23",
       "title": "Dukungan Multi-Kasir Masuk Bersamaan: Otomatisasi Berbagi Shift Aktif Cabang Tanpa Perlu Buka Shift Ulang",
       "description": "Menghilangkan kendala pemblokiran kasir/karyawan yang masuk bersamaan di cabang yang sama saat salah satu rekan telah membuka shift. Kueri active_shift pada bootstrap kini secara otomatis mengaitkan seluruh kasir/staf yang bertugas di cabang tersebut ke shift yang sedang berstatus OPEN. Rekan kasir tidak perlu dan tidak dipaksa mengisi modal opening shift ulang, dapat langsung memproses transaksi penjualan kasir (yang tercatat atomik atas nama kasir bersangkutan di bawah shift cabang yang aktif), serta endpoint open_shift secara otomatis menggabungkan kasir ke shift yang sudah berjalan dengan mengembalikan success: true dan already_opened: true.",
