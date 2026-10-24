@@ -22056,7 +22056,8 @@ Manager / Supervisor: __________________
                     const ver = (data.version_data && data.version_data.version) ? ` (v${data.version_data.version})` : '';
                     badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800';
                     badge.innerText = `Terhubung ${data.latency_ms}ms${ver}`;
-                    alert(`✅ Koneksi Berhasil!\n\nServer hosting terjangkau (${data.latency_ms} ms).\nVersi Hosting: ${data.version_data ? data.version_data.version : 'OK'}`);
+                    const supportNote = data.support_note ? `\nStatus Mode: ${data.support_note}` : '';
+                    alert(`✅ Koneksi Berhasil!\n\nServer hosting terjangkau (${data.latency_ms} ms).\nVersi Hosting: ${data.version_data ? data.version_data.version : 'OK'}${supportNote}`);
                 } else {
                     badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-700';
                     badge.innerText = 'Gagal Terhubung';

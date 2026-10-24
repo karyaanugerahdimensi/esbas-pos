@@ -191,16 +191,22 @@ try {
                 exit;
             }
 
-            $resJson = json_decode($response, true);
-            echo json_encode([
-                'success' => true,
-                'message' => 'Koneksi ke hosting berhasil.',
-                'http_code' => $httpCode,
-                'latency_ms' => $latencyMs,
-                'hosting_url' => $targetUrl,
-                'version_data' => $resJson['version_data'] ?? null
-            ]);
-            break;
+                $resJson = json_decode($response, true);
+                $versionStr = $resJson['version_data']['version'] ?? 'legacy';
+                $isFastSync = version_compare($versionStr, '1.2.27', '>=');
+                $supportNote = $isFastSync ? 'Mendukung Direct Fast Sync (v1.2.27+)' : 'Mendukung Smart Fallback Sync Otomatis';
+
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Koneksi ke hosting berhasil.',
+                    'http_code' => $httpCode,
+                    'latency_ms' => $latencyMs,
+                    'hosting_url' => $targetUrl,
+                    'version_data' => $resJson['version_data'] ?? null,
+                    'support_note' => $supportNote,
+                    'is_fast_sync' => $isFastSync
+                ]);
+                break;
 
         case 'export_master_data':
             $configuredSyncKey = defined('SYNC_SECRET_KEY') ? SYNC_SECRET_KEY : 'esbas_master_sync_2026_kadtech';
@@ -338,12 +344,92 @@ try {
                 if ($rawResult === false || $httpCode !== 200) {
                     echo json_encode([
                         'success' => false,
-                        'message' => 'Gagal mengunduh master data dari hosting: ' . ($curlErr ?: "HTTP Status {$httpCode}") . '. Silakan gunakan opsi unggah berkas jika koneksi internet terhalang.'
+                        'message' => 'Gagal mengunduh master data dari hosting: ' . ($curlErr ?: "HTTP Status {$httpCode}") . '. Silakan periksa URL hosting atau gunakan opsi unggah berkas jika koneksi internet terhalang.'
                     ]);
                     exit;
                 }
 
                 $incomingData = json_decode($rawResult, true);
+
+                // Smart Backward-Compatibility Fallback:
+                // Jika hosting mengembalikan respon bahwa action 'export_master_data' belum dikenal (misal api.php hosting masih versi < 1.2.27),
+                // lakukan fallback otomatis mengambil master data via endpoint bootstrap & get_recipes hosting yang sudah aktif!
+                if (!is_array($incomingData) || empty($incomingData['success']) || empty($incomingData['data']) || !is_array($incomingData['data'])) {
+                    $fallbackHelper = function($url) {
+                        $c = curl_init($url);
+                        curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($c, CURLOPT_TIMEOUT, 20);
+                        curl_setopt($c, CURLOPT_CONNECTTIMEOUT, 8);
+                        curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false);
+                        curl_setopt($c, CURLOPT_SSL_VERIFYHOST, false);
+                        curl_setopt($c, CURLOPT_USERAGENT, 'ESBAS-POS-Client/1.2.28');
+                        $r = curl_exec($c);
+                        curl_close($c);
+                        return json_decode($r, true) ?: [];
+                    };
+
+                    $boot = $fallbackHelper($hostingUrl . '/api.php?action=bootstrap');
+                    if (!empty($boot['success'])) {
+                        $assembled = [];
+                        if (!empty($boot['branches'])) $assembled['branches'] = $boot['branches'];
+                        if (!empty($boot['user_roles'])) $assembled['user_roles'] = $boot['user_roles'];
+                        if (!empty($boot['role_permissions'])) $assembled['role_menu_permissions'] = $boot['role_permissions'];
+                        if (!empty($boot['users'])) $assembled['users'] = $boot['users'];
+                        if (!empty($boot['categories'])) $assembled['categories'] = $boot['categories'];
+                        if (!empty($boot['product_types'])) $assembled['product_types'] = $boot['product_types'];
+                        if (!empty($boot['product_units'])) $assembled['product_units'] = $boot['product_units'];
+                        if (!empty($boot['products'])) $assembled['products'] = $boot['products'];
+                        if (!empty($boot['variants'])) $assembled['product_variants'] = $boot['variants'];
+                        if (!empty($boot['variant_recipes'])) $assembled['variant_recipes'] = $boot['variant_recipes'];
+                        if (!empty($boot['customer_categories'])) $assembled['customer_categories'] = $boot['customer_categories'];
+                        if (!empty($boot['customers'])) $assembled['customers'] = $boot['customers'];
+                        if (!empty($boot['mitra_prices'])) $assembled['mitra_custom_prices'] = $boot['mitra_prices'];
+                        if (!empty($boot['taxes'])) $assembled['taxes'] = $boot['taxes'];
+                        if (!empty($boot['payment_methods'])) $assembled['payment_methods'] = $boot['payment_methods'];
+                        if (!empty($boot['all_delivery_settings'])) $assembled['delivery_settings'] = $boot['all_delivery_settings'];
+                        if (!empty($boot['all_vehicles'])) $assembled['courier_vehicles'] = $boot['all_vehicles'];
+                        if (!empty($boot['raw_settings'])) $assembled['app_settings'] = $boot['raw_settings'];
+
+                        // Resep BOM
+                        $recipesRes = $fallbackHelper($hostingUrl . '/api.php?action=get_recipes');
+                        $productRecipes = [];
+                        if (!empty($recipesRes['finished_goods'])) {
+                            foreach ($recipesRes['finished_goods'] as $fg) {
+                                if (!empty($fg['ingredients'])) {
+                                    foreach ($fg['ingredients'] as $ing) {
+                                        $productRecipes[] = [
+                                            'id' => $ing['id'],
+                                            'finished_product_id' => $ing['finished_product_id'],
+                                            'ingredient_product_id' => $ing['ingredient_product_id'],
+                                            'qty_needed' => $ing['qty_needed'],
+                                            'unit' => $ing['unit']
+                                        ];
+                                    }
+                                }
+                            }
+                        }
+                        if (!empty($productRecipes)) $assembled['product_recipes'] = $productRecipes;
+
+                        // Produk Opening Shift
+                        $openProdsRes = $fallbackHelper($hostingUrl . '/api.php?action=get_opening_shift_products');
+                        if (!empty($openProdsRes['products'])) $assembled['opening_shift_products'] = $openProdsRes['products'];
+
+                        // Shift Kerja
+                        $shiftsRes = $fallbackHelper($hostingUrl . '/api.php?action=get_work_shifts');
+                        if (!empty($shiftsRes['shifts'])) $assembled['work_shifts'] = $shiftsRes['shifts'];
+
+                        // Pecahan Uang Kasir
+                        $denomsRes = $fallbackHelper($hostingUrl . '/api.php?action=get_cash_denominations');
+                        if (!empty($denomsRes['cash_denominations'])) $assembled['cash_denominations'] = $denomsRes['cash_denominations'];
+
+                        $incomingData = [
+                            'success' => true,
+                            'version' => ($boot['app_version']['version'] ?? 'legacy') . ' (Smart Fallback Compatibility)',
+                            'driver' => 'mysql',
+                            'data' => $assembled
+                        ];
+                    }
+                }
             } elseif ($mode === 'upload') {
                 if (empty($_FILES['master_file']['tmp_name']) || !is_uploaded_file($_FILES['master_file']['tmp_name'])) {
                     echo json_encode(['success' => false, 'message' => 'Berkas JSON master data tidak ditemukan dalam unggahan.']);
@@ -361,9 +447,13 @@ try {
             }
 
             if (!is_array($incomingData) || empty($incomingData['data']) || !is_array($incomingData['data'])) {
+                $errDetail = '';
+                if (is_array($incomingData) && !empty($incomingData['message'])) {
+                    $errDetail = ': ' . $incomingData['message'];
+                }
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Format berkas master data tidak valid atau kosong.'
+                    'message' => 'Format berkas master data tidak valid atau kosong' . $errDetail . '. Pastikan URL server hosting benar dan file api.php di hosting telah aktif.'
                 ]);
                 exit;
             }
@@ -466,10 +556,9 @@ try {
 
                 // Post-integrity: pastikan setiap produk di setiap cabang memiliki baris di branch_stocks
                 try {
-                    $now = date('Y-m-d H:i:s');
                     $pdo->exec("
-                        INSERT OR IGNORE INTO branch_stocks (branch_id, product_id, quantity, min_stock, max_stock, created_at, updated_at)
-                        SELECT b.id, p.id, 0, 5, 100, '{$now}', '{$now}'
+                        INSERT OR IGNORE INTO branch_stocks (branch_id, product_id, stock, local_cogs, local_price, is_active)
+                        SELECT b.id, p.id, 0, COALESCE(p.cogs, 0), COALESCE(p.selling_price, 0), 1
                         FROM branches b
                         CROSS JOIN products p
                         LEFT JOIN branch_stocks bs ON bs.branch_id = b.id AND bs.product_id = p.id

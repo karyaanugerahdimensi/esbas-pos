@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.28",
-  "build": "20261024-09",
+  "version": "1.2.29",
+  "build": "20261024-10",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.29",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Smart Backward-Compatibility Fallback Engine untuk Sinkronisasi Master Data Hosting ke Lokal",
+      "description": "Menyelesaikan kendala sinkronisasi master data dari hosting produksi ke database lokal yang memunculkan peringatan galat 'Format berkas master data tidak valid atau kosong': (1) Mengidentifikasi akar masalah di mana server hosting produksi (kadtech.my.id) masih menjalankan api.php versi sebelumnya (v1.2.19) sehingga belum memiliki endpoint aksi 'export_master_data' dan mengembalikan respon penolakan yang tidak tertangani. (2) Mengimplementasikan Smart Backward-Compatibility Fallback Engine pada endpoint api.php?action=sync_master_data yang secara otomatis mendeteksi jika aksi export_master_data belum aktif di hosting, lalu melakukan fallback cerdas dengan mengagregasi data master dari endpoint aktif hosting (bootstrap, get_recipes, get_opening_shift_products, get_work_shifts, get_cash_denominations) menjadi 22 tabel master data lengkap tanpa memerlukan pembaruan berkas di hosting terlebih dahulu. (3) Memperbaiki kueri post-integrity branch_stocks agar selaras dengan skema kolom resmi (stock, local_cogs, local_price, is_active). (4) Menyempurnakan pesan diagnosa galat jaringan dan respon status uji koneksi hosting (test_hosting_connection) dengan informasi mode sinkronisasi (Direct Fast Sync vs Smart Fallback).",
+      "rollback_command": "git checkout v1.2.28"
+    },
     {
       "version": "1.2.28",
       "commit": "HEAD",
