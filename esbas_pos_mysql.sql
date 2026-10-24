@@ -1,6 +1,6 @@
 -- ========================================================
 -- ESBAS POS Database Export (MySQL / MariaDB Compatible)
--- Generated: 2026-10-24 12:02:47
+-- Generated: 2026-10-24 12:20:39
 -- ========================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -479,18 +479,17 @@ INSERT INTO `products` (`id`, `sku`, `barcode`, `name`, `category`, `unit`, `cog
 (89, 'RAW-089', '899260000089', 'Tutup Galon Mineral', 'Bahan Baku (Raw Material)', 'pcs', 90, 0, '🔘', 'RAW_MATERIAL', 0, 4, 10, 1, 0, 0, 0, 'ALL', 0, 1, 11, 0, 0, 1),
 (90, 'RAW-090', '899260000090', 'Tisu Galon CC2', 'Bahan Baku (Raw Material)', 'pcs', 85, 0, '🧻', 'RAW_MATERIAL', 0, 4, 10, 1, 0, 0, 0, 'ALL', 0, 1, 11, 0, 0, 1),
 (91, 'RAW-091', '899260000091', 'Air Baku', 'Bahan Baku (Raw Material)', 'liter', 45, 0, '💧', 'RAW_MATERIAL', 0, 4, 10, 1, 0, 0, 0, 'ALL', 0, 1, 11, 0, 0, 1),
-(98, 'PRD-00001', '899260000092', 'Air Mineral Galon 19 Liter', 'Produk Jual', 'galon', 985, 4500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 4100, 3600, 3200, 'ALL', 0, 1, 11, 2, 1, 1),
-(99, 'PRD-00002', '899260000099', 'Air RO Galon 19 Liter', 'Produk Jual', 'galon', 985, 6500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 5900, 5200, 4700, 'ALL', 0, 1, 11, 2, 1, 1),
+(98, 'PRD-00001', '899260000092', 'Air Mineral Galon 19 Liter', 'Produk Jual', 'galon', 985, 4500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 4100, 3600, 3200, 'ALL', 0, 1, 11, 2, 1, 2),
+(99, 'PRD-00002', '899260000099', 'Air RO Galon 19 Liter', 'Produk Jual', 'galon', 985, 6500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 5900, 5200, 4700, 'ALL', 0, 1, 11, 2, 1, 2),
 (100, 'PRD-00003', '899260000100', 'Air Mineral Galon 15 Liter', 'Produk Jual', 'galon', 805, 4500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 4100, 3600, 3200, 'ALL', 0, 1, 11, 2, 1, 0),
-(101, 'PRD-00004', '899260000101', 'Air RO Galon 15 Liter', 'Produk Jual', 'galon', 805, 6500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 5900, 5200, 4700, 'ALL', 0, 1, 11, 2, 1, 1),
+(101, 'PRD-00004', '899260000101', 'Air RO Galon 15 Liter', 'Produk Jual', 'galon', 805, 6500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 5900, 5200, 4700, 'ALL', 0, 1, 11, 2, 1, 0),
 (102, 'PRD-00005', '899260000102', 'Gas 3 KG', 'Konsinyasi', 'tabung', 24000, 25000, '📦', 'FINISHED_GOODS', 0, 8, 10, 1, 22500, 20000, 18000, 'ALL', 0, 1, 11, 2, 1, 1),
 (103, 'PRD-00006', '899260000103', 'Aqua Refill 19 Liter', 'Konsinyasi', 'galon', 19700, 23500, '📦', 'FINISHED_GOODS', 0, 8, 10, 1, 21200, 18800, 16900, 'ALL', 0, 1, 11, 2, 1, 1),
-(104, 'PRD-00007', '899260000104', 'Es Kristal 5kg', 'Produk Jual', 'ball', 1360, 6500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 5900, 5200, 4700, 'ALL', 0, 1, 11, 1, 0, 1),
+(104, 'PRD-00007', '899260000104', 'Es Kristal 5kg', 'Produk Jual', 'ball', 1360, 6500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 5900, 5200, 4700, 'ALL', 0, 1, 11, 1, 0, 2),
 (105, 'RAW-00092', '899260000105', 'Plastik PE 40 X 60', 'Bahan Baku (Raw Material)', 'pcs', 1000, 0, '📦', 'RAW_MATERIAL', 0, 4, 10, 1, 0, 0, 0, 'ALL', 0, 1, 11, 0, 0, 1),
-(106, 'PRD-00008', '899260000106', 'Es Kristal 10 Kg', 'Produk Jual', 'ball', 2675, 12000, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 10800, 9600, 8600, 'ALL', 0, 1, 11, 1, 0, 1),
+(106, 'PRD-00008', '899260000106', 'Es Kristal 10 Kg', 'Produk Jual', 'ball', 2675, 12000, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 10800, 9600, 8600, 'ALL', 0, 1, 11, 1, 0, 0),
 (107, 'PRD-00009', '899260000107', 'Galon Kosong Aqua 19 L', 'Produk Jual', 'galon', 25000, 35000, '📦', 'FINISHED_GOODS', 0, 1, 1, 1, 31500, 28000, 25200, 'ALL', 0, 1, 11, 0, 0, 1),
-(108, 'PRD-00010', '899260000108', 'Galon Kosong Non Aqua', 'Produk Jual', 'galon', 15000, 25000, '📦', 'FINISHED_GOODS', 0, 1, 1, 1, 22500, 20000, 18000, 'ALL', 0, 1, 11, 0, 0, 1),
-(134, 'HIB-31679', 'HIB-31679', 'Test Galon Hibrida 1792831679', 'Produk Jual', 'galon', 800, 5000, '📦', 'FINISHED_GOODS', 0, 1, 10, 1, 4500, 4000, 3600, 'ALL', 0, 1, 11, 0, 0, 2);
+(108, 'PRD-00010', '899260000108', 'Galon Kosong Non Aqua', 'Produk Jual', 'galon', 15000, 25000, '📦', 'FINISHED_GOODS', 0, 1, 1, 1, 22500, 20000, 18000, 'ALL', 0, 1, 11, 0, 0, 1);
 
 -- --------------------------------------------------------
 -- Table structure for `product_variants`
@@ -530,9 +529,11 @@ CREATE TABLE `product_recipes` (
 
 -- Dumping data for table `product_recipes`
 INSERT INTO `product_recipes` (`id`, `finished_product_id`, `ingredient_product_id`, `qty_needed`, `unit`) VALUES
+(43, 98, 91, 20, 'liter'),
 (44, 99, 91, 20, 'liter'),
 (46, 100, 91, 16, 'liter'),
 (47, 100, 90, 1, 'pcs'),
+(48, 98, 90, 1, 'pcs'),
 (49, 101, 91, 16, 'liter'),
 (50, 101, 90, 1, 'pcs'),
 (51, 99, 90, 1, 'pcs'),
@@ -540,8 +541,7 @@ INSERT INTO `product_recipes` (`id`, `finished_product_id`, `ingredient_product_
 (53, 104, 105, 1, 'pcs'),
 (54, 106, 91, 15, 'liter'),
 (55, 106, 105, 2, 'pcs'),
-(61, 100, 89, 1, 'pcs'),
-(66, 98, 88, 1, 'pcs');
+(69, 100, 89, 1, 'pcs');
 
 -- --------------------------------------------------------
 -- Table structure for `variant_recipes`
@@ -587,20 +587,20 @@ INSERT INTO `branch_stocks` (`id`, `branch_id`, `product_id`, `stock`, `local_co
 (295, 3, 89, 0, 90, 0, NULL, 1, NULL, NULL),
 (297, 2, 89, 0, 90, 0, NULL, 1, NULL, NULL),
 (298, 3, 90, 0, 85, 0, NULL, 1, NULL, NULL),
-(299, 1, 90, 99980, 85, 0, '2026-10-24 10:23:00', 1, NULL, NULL),
+(299, 1, 90, 0, 85, 0, '2026-10-24 10:23:00', 1, NULL, NULL),
 (300, 2, 90, 0, 85, 0, NULL, 1, NULL, NULL),
 (301, 3, 91, 0, 45, 0, NULL, 1, NULL, NULL),
-(302, 1, 91, 99660, 45, 0, '2026-10-24 10:22:52', 1, NULL, NULL),
+(302, 1, 91, 0, 45, 0, '2026-10-24 10:22:52', 1, NULL, NULL),
 (303, 2, 91, 0, 45, 0, NULL, 1, NULL, NULL),
 (316, 3, 98, 0, 985, 5000, '2026-10-11 22:36:49', 1, NULL, NULL),
-(317, 1, 98, 5, 985, 4500, '2026-10-24 16:30:43', 1, 2, 1),
+(317, 1, 98, 0, 985, 4500, '2026-10-24 16:30:43', 1, 2, 1),
 (318, 2, 98, 0, 985, 5000, '2026-10-11 22:54:50', 1, 0, NULL),
 (319, 3, 99, 0, 985, 7000, '2026-10-11 11:59:37', 1, NULL, NULL),
-(320, 1, 99, 10, 985, 6500, '2026-10-24 16:30:52', 1, 2, 1),
+(320, 1, 99, 0, 985, 6500, '2026-10-24 16:30:52', 1, 2, 1),
 (321, 2, 99, 0, 985, 9000, '2026-10-11 11:59:20', 1, NULL, NULL),
-(322, 3, 100, 0, 895, 4500, '2026-10-24 08:55:06', 0, NULL, NULL),
-(323, 1, 100, 0, 895, 4500, '2026-10-20 05:59:29', 1, 2, 1),
-(324, 2, 100, 0, 895, 4500, '2026-10-11 22:36:07', 0, NULL, NULL),
+(322, 3, 100, 0, 805, 4500, '2026-10-24 08:55:06', 0, NULL, NULL),
+(323, 1, 100, 0, 805, 4500, '2026-10-20 05:59:29', 1, 2, 1),
+(324, 2, 100, 0, 805, 4500, '2026-10-11 22:36:07', 0, NULL, NULL),
 (325, 3, 101, 0, 805, 6500, '2026-10-11 22:36:52', 0, NULL, NULL),
 (326, 1, 101, 0, 805, 6500, '2026-10-20 13:45:56', 1, 2, 1),
 (327, 2, 101, 0, 805, 6500, '2026-10-11 22:36:22', 0, NULL, NULL),
@@ -616,36 +616,32 @@ INSERT INTO `branch_stocks` (`id`, `branch_id`, `product_id`, `stock`, `local_co
 (338, 6, 91, 0, 45, 0, NULL, 1, NULL, NULL),
 (339, 6, 98, 0, 985, 4500, '2026-10-11 23:26:45', 1, 0, NULL),
 (340, 6, 99, 0, 985, 6500, '2026-10-11 23:26:54', 0, 0, NULL),
-(341, 6, 100, 0, 895, 4500, '2026-10-24 08:54:57', 0, 0, NULL),
+(341, 6, 100, 0, 805, 4500, '2026-10-24 08:54:57', 0, 0, NULL),
 (342, 6, 101, 0, 805, 6500, '2026-10-11 23:26:49', 0, 0, NULL),
 (343, 6, 102, 0, 24000, 25000, '2026-10-11 23:27:06', 0, 0, NULL),
 (344, 6, 103, 0, 19700, 23500, '2026-10-11 23:26:59', 0, 0, NULL),
 (345, 3, 104, 0, 1360, 6500, '2026-10-11 22:37:04', 0, NULL, NULL),
 (346, 6, 104, 0, 1360, 6500, NULL, 1, NULL, NULL),
-(347, 1, 104, 10, 1360, 6500, '2026-10-24 16:31:06', 1, 1, 0),
+(347, 1, 104, 0, 1360, 6500, '2026-10-24 16:31:06', 1, 1, 0),
 (348, 2, 104, 0, 1360, 7000, '2026-10-11 22:46:08', 1, 0, NULL),
 (349, 3, 105, 0, 10000, 25000, NULL, 1, NULL, NULL),
 (350, 6, 105, 0, 10000, 25000, NULL, 1, NULL, NULL),
-(351, 1, 105, 10, 1000, 0, '2026-10-24 10:21:44', 1, NULL, NULL),
+(351, 1, 105, 0, 1000, 0, '2026-10-24 10:21:44', 1, NULL, NULL),
 (352, 2, 105, 0, 10000, 25000, NULL, 1, NULL, NULL),
 (353, 3, 106, 0, 2675, 12000, '2026-10-11 22:37:01', 0, NULL, NULL),
 (354, 6, 106, 0, 2675, 12000, NULL, 1, NULL, NULL),
 (355, 1, 106, 0, 2675, 12000, '2026-10-24 16:31:01', 1, 1, 0),
 (356, 2, 106, 0, 2675, 12000, '2026-10-11 22:46:14', 1, 0, NULL),
-(644, 1, 89, 45, 90, 0, '2026-10-24 16:32:31', 1, 0, 0),
-(783, 1, 88, 248, 90, 0, '2026-10-24 16:32:37', 1, 0, 0),
+(644, 1, 89, 0, 90, 0, '2026-10-24 16:32:31', 1, 0, 0),
+(783, 1, 88, 0, 90, 0, '2026-10-24 16:32:37', 1, 0, 0),
 (794, 2, 107, 0, 25000, 35000, NULL, 1, NULL, NULL),
 (795, 2, 108, 0, 15000, 25000, NULL, 1, NULL, NULL),
-(796, 2, 134, 0, 800, 5000, NULL, 1, NULL, NULL),
 (797, 3, 107, 0, 25000, 35000, NULL, 1, NULL, NULL),
 (798, 3, 108, 0, 15000, 25000, NULL, 1, NULL, NULL),
-(799, 3, 134, 0, 800, 5000, NULL, 1, NULL, NULL),
 (800, 6, 107, 0, 25000, 35000, NULL, 1, NULL, NULL),
 (801, 6, 108, 0, 15000, 25000, NULL, 1, NULL, NULL),
-(802, 6, 134, 0, 800, 5000, NULL, 1, NULL, NULL),
 (803, 1, 107, 0, 25000, 35000, NULL, 1, NULL, NULL),
-(804, 1, 108, 0, 15000, 25000, NULL, 1, NULL, NULL),
-(805, 1, 134, 0, 800, 5000, '2026-10-24 16:54:37', 1, 0, 0);
+(804, 1, 108, 0, 15000, 25000, NULL, 1, NULL, NULL);
 
 -- --------------------------------------------------------
 -- Table structure for `customers`
@@ -799,10 +795,6 @@ CREATE TABLE `cashier_shifts` (
     `water_meter_dispensed_galon` DECIMAL(15, 2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table `cashier_shifts`
-INSERT INTO `cashier_shifts` (`id`, `branch_id`, `user_id`, `start_time`, `end_time`, `initial_cash`, `expected_cash`, `actual_cash`, `cash_difference`, `status`, `opening_raw_mineral`, `opening_raw_ro`, `opening_raw_plastik`, `closing_night_mineral`, `closing_night_ro`, `closing_night_plastik`, `closing_raw_mineral`, `closing_raw_ro`, `closing_raw_plastik`, `shift_notes`, `opening_items_json`, `closing_items_json`, `shift_number`, `shift_name`, `shift_type`, `is_final_shift`, `total_expenses`, `total_kasbon`, `total_meal_allowance`, `shift_disbursements_json`, `water_meter_yesterday`, `water_meter_today`, `water_meter_difference`, `water_meter_adjustment`, `water_meter_adjustment_type`, `water_meter_adjustment_reason`, `water_meter_dispensed_galon`) VALUES
-(73, 1, 3, '2026-10-24 10:23:34', NULL, 300000, 0, 0, 0, 'OPEN', 50, 20, 10, 0, 0, 0, NULL, NULL, NULL, '', '{\"89\":50,\"88\":20,\"105\":10,\"103\":0,\"102\":0,\"91\":100000,\"98\":10,\"99\":10,\"104\":10,\"90\":100000}', NULL, 1, 'Shift 1 (Pagi)', 'SHIFT_1', 0, 0, 0, 0, NULL, NULL, NULL, NULL, 0, 'PULSE', NULL, NULL);
-
 -- --------------------------------------------------------
 -- Table structure for `water_meter_logs`
 -- --------------------------------------------------------
@@ -882,12 +874,6 @@ CREATE TABLE `sales` (
     `is_delivery_included` TINYINT(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table `sales`
-INSERT INTO `sales` (`id`, `invoice_number`, `branch_id`, `user_id`, `shift_id`, `subtotal`, `discount`, `tax`, `grand_total`, `total_cogs`, `payment_method`, `cash_received`, `cash_change`, `created_at`, `customer_id`, `customer_name`, `customer_category`, `sales_type`, `delivery_fee`, `delivery_distance_km`, `courier_vehicle_id`, `delivery_status`, `payment_status`, `status`, `cancellation_reason`, `cancelled_by`, `cancelled_at`, `driver_user_id`, `driver_name`, `is_delivery_included`) VALUES
-(8, 'INV/JKT-01/20261024/0001', 1, 3, 73, 22500, 0, 0, 22500, 4025, 'CASH', 22500, 0, '2026-10-24 15:23:59', 1, 'Teh Eni', 'REGULER', 'REGULER', 0, 0, 1, 'ASSIGNED', 'PAID', 'COMPLETED', NULL, NULL, NULL, 3, 'Bima', 1),
-(9, 'INV/JKT-01/20261024/0009', 1, 3, 73, 65000, 0, 0, 65000, 8050, 'CASH', 65000, 0, '2026-10-24 15:28:10', 1, 'Teh Eni', 'REGULER', 'REGULER', 0, 0, 1, 'ASSIGNED', 'PAID', 'COMPLETED', NULL, NULL, NULL, 3, 'Bima', 1),
-(10, 'INV/JKT-01/20261024/0010', 1, 3, 73, 22500, 0, 0, 22500, 4925, 'CASH', 22500, 0, '2026-10-24 15:40:59', 1, 'Bakso Suramadu', 'REGULER', 'REGULER', 0, 0, 1, 'ASSIGNED', 'PAID', 'COMPLETED', NULL, NULL, NULL, 3, 'Bima', 1);
-
 -- --------------------------------------------------------
 -- Table structure for `sale_items`
 -- --------------------------------------------------------
@@ -906,12 +892,6 @@ CREATE TABLE `sale_items` (
     `variant_id` INT DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table `sale_items`
-INSERT INTO `sale_items` (`id`, `sale_id`, `product_id`, `product_name`, `qty`, `unit_price`, `unit_cogs`, `subtotal_price`, `subtotal_cogs`, `variant_name`, `variant_id`) VALUES
-(8, 8, 100, 'Air Mineral Galon 15 Liter [Pakai Tutup Mineral]', 5, 4500, 805, 22500, 4025, 'Pakai Tutup Mineral', 35),
-(9, 9, 101, 'Air RO Galon 15 Liter [Pakai Tutup RO]', 10, 6500, 805, 65000, 8050, 'Pakai Tutup RO', 40),
-(10, 10, 98, 'Air Mineral Galon 19 Liter [Tanpa Tutup Mineral]', 5, 4500, 985, 22500, 4925, 'Tanpa Tutup Mineral', 20);
-
 -- --------------------------------------------------------
 -- Table structure for `stock_movements`
 -- --------------------------------------------------------
@@ -929,29 +909,6 @@ CREATE TABLE `stock_movements` (
     `user_id` INT,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Dumping data for table `stock_movements`
-INSERT INTO `stock_movements` (`id`, `branch_id`, `product_id`, `movement_type`, `qty_change`, `stock_before`, `stock_after`, `reference_no`, `notes`, `user_id`, `created_at`) VALUES
-(378, 1, 98, 'INITIAL_STOCK', 10, 0, 10, 'INIT-20261024-102226', 'Setel stok awal cabang', 1, '2026-10-24 08:22:26'),
-(379, 1, 99, 'INITIAL_STOCK', 10, 0, 10, 'INIT-20261024-102233', 'Setel stok awal cabang', 1, '2026-10-24 08:22:33'),
-(380, 1, 104, 'INITIAL_STOCK', 10, 0, 10, 'INIT-20261024-102240', 'Setel stok awal cabang', 1, '2026-10-24 08:22:40'),
-(381, 1, 91, 'INITIAL_STOCK', 100000, 0, 100000, 'INIT-20261024-102252', 'Setel stok awal cabang', 1, '2026-10-24 08:22:52'),
-(382, 1, 90, 'INITIAL_STOCK', 100000, 0, 100000, 'INIT-20261024-102300', 'Setel stok awal cabang', 1, '2026-10-24 08:23:00'),
-(383, 1, 91, 'BOM_DEDUCTION', -80, 100000, 99920, 'INV/JKT-01/20261024/0001', 'Konsumsi Base BOM untuk 5x Air Mineral Galon 15 Liter [Pakai Tutup Mineral]', 3, '2026-10-24 08:23:59'),
-(384, 1, 90, 'BOM_DEDUCTION', -5, 100000, 99995, 'INV/JKT-01/20261024/0001', 'Konsumsi Base BOM untuk 5x Air Mineral Galon 15 Liter [Pakai Tutup Mineral]', 3, '2026-10-24 08:23:59'),
-(385, 1, 89, 'BOM_DEDUCTION', -5, 50, 45, 'INV/JKT-01/20261024/0001', 'Konsumsi BOM Varian [Pakai Tutup Mineral] untuk 5x Air Mineral Galon 15 Liter', 3, '2026-10-24 08:23:59'),
-(386, 1, 91, 'BOM_DEDUCTION', -160, 99920, 99760, 'INV/JKT-01/20261024/0009', 'Konsumsi Base BOM untuk 10x Air RO Galon 15 Liter [Pakai Tutup RO]', 3, '2026-10-24 08:28:10'),
-(387, 1, 90, 'BOM_DEDUCTION', -10, 99995, 99985, 'INV/JKT-01/20261024/0009', 'Konsumsi Base BOM untuk 10x Air RO Galon 15 Liter [Pakai Tutup RO]', 3, '2026-10-24 08:28:10'),
-(388, 1, 88, 'BOM_DEDUCTION', -10, 20, 10, 'INV/JKT-01/20261024/0009', 'Konsumsi BOM Varian [Pakai Tutup RO] untuk 10x Air RO Galon 15 Liter', 3, '2026-10-24 08:28:10'),
-(389, 1, 98, 'STOCK_OUT_SALE', -5, 10, 5, 'INV/JKT-01/20261024/0010', 'Penjualan POS [REGULER] kpd Bakso Suramadu (Tanpa Tutup Mineral)', 3, '2026-10-24 08:40:59'),
-(390, 1, 91, 'BOM_DEDUCTION', -100, 99760, 99660, 'INV/JKT-01/20261024/0010', 'Konsumsi Base BOM untuk 5x Air Mineral Galon 19 Liter [Tanpa Tutup Mineral]', 3, '2026-10-24 08:40:59'),
-(391, 1, 90, 'BOM_DEDUCTION', -5, 99985, 99980, 'INV/JKT-01/20261024/0010', 'Konsumsi Base BOM untuk 5x Air Mineral Galon 19 Liter [Tanpa Tutup Mineral]', 3, '2026-10-24 08:40:59'),
-(392, 1, 134, 'STOCK_OUT_SALE', -1, 0, -1, 'INV/JKT-01/20261024/0011', 'Penjualan POS [REGULER] kpd Pelanggan Umum', 1, '2026-10-24 08:47:59'),
-(393, 1, 88, 'BOM_DEDUCTION', -10, 100, 90, 'INV/JKT-01/20261024/0011', 'Konsumsi Base BOM untuk 1x Test Galon Hibrida 1792831679', 1, '2026-10-24 08:47:59'),
-(395, 1, 88, 'BOM_DEDUCTION', -10, 100, 90, 'INV/JKT-01/20261024/0011', 'Konsumsi Base BOM untuk 1x Test Galon Hibrida 1792831693', 1, '2026-10-24 08:48:13'),
-(396, 1, 88, 'PURCHASE', 10, 90, 100, 'ADJ-20261024-110426', 'Kasir input barang masuk restock', 3, '2026-10-24 09:04:26'),
-(397, 1, 88, 'INITIAL_STOCK', 150, 100, 250, 'INIT-20261024-110427', 'Super Admin set stok awal', 1, '2026-10-24 09:04:27'),
-(398, 1, 88, 'ADJUSTMENT_DAMAGE', -2, 250, 248, 'ADJ-20261024-110428', 'Barang pecah opname', 1, '2026-10-24 09:04:28');
 
 -- --------------------------------------------------------
 -- Table structure for `attendance_logs`
@@ -1220,12 +1177,6 @@ CREATE TABLE `branch_expenses` (
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `shift_id` INT DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Dumping data for table `branch_expenses`
-INSERT INTO `branch_expenses` (`id`, `branch_id`, `category`, `amount`, `expense_date`, `source`, `notes`, `created_at`, `shift_id`) VALUES
-(63, 1, 'Listrik & Utilitas Toko', 750000, '2026-10-07', 'MANUAL', 'Tagihan PLN Token Toko Mingguan', '2026-10-24 08:48:21', NULL),
-(64, 2, 'Listrik & Utilitas Toko', 500000, '2026-10-06', 'MANUAL', 'Tagihan Listrik Cabang Surabaya', '2026-10-24 08:48:21', NULL),
-(65, 3, 'Beban Bahan Bakar (BBM) Kurir', 30000, '2026-10-10', 'VEHICLE_FUEL', 'Pembelian bensin 3L motor B 4821 KTZ', '2026-10-24 08:48:21', NULL);
 
 -- --------------------------------------------------------
 -- Table structure for `vehicle_fuel_logs`

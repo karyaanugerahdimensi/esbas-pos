@@ -897,6 +897,8 @@ try {
             $allVarRecipes = $stmtVarRecipes->fetchAll();
             $varRecipesByVariant = [];
             foreach ($allVarRecipes as $vr) {
+                $qty = (float)($vr['qty_needed'] ?? 0);
+                $vr['qty_needed'] = (floor($qty) == $qty) ? (int)$qty : round($qty, 2);
                 $varRecipesByVariant[$vr['variant_id']][] = $vr;
             }
 
@@ -2780,6 +2782,8 @@ try {
 
             $bomByProduct = [];
             foreach ($bomLines as $line) {
+                $qty = (float)($line['qty_needed'] ?? 0);
+                $line['qty_needed'] = (floor($qty) == $qty) ? (int)$qty : round($qty, 2);
                 $bomByProduct[$line['finished_product_id']][] = $line;
             }
 
@@ -2918,6 +2922,8 @@ try {
 
             $vrByVariant = [];
             foreach ($vrLines as $line) {
+                $qty = (float)($line['qty_needed'] ?? 0);
+                $line['qty_needed'] = (floor($qty) == $qty) ? (int)$qty : round($qty, 2);
                 $vrByVariant[$line['variant_id']][] = $line;
             }
 

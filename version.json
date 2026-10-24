@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.36",
-  "build": "20261024-17",
+  "version": "1.2.37",
+  "build": "20261024-18",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.37",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Pembersihan Tampilan Angka Satuan: Eliminasi Desimal Nol Trailing & Pembatasan Maksimal 2 Digit Pecahan",
+      "description": "Menyempurnakan seluruh format visualisasi kuantitas dan takaran bahan baku resep BOM, stok barang, serta pergerakan inventori: (1) Menghilangkan tampilan desimal trailing zeros pada bilangan satuan/bulat murni (misal '16.0000 liter' menjadi '16 liter', '1.0000 pcs' menjadi '1 pcs'). (2) Mengimplementasikan fungsi formatDecimal global pada frontend untuk membatasi tampilan nilai pecahan riil maksimal 2 digit desimal (contoh: 16.5 atau 0.25) tanpa angka nol berlebih di belakang koma. (3) Backend api.php pada get_recipes, get_variant_recipes, dan bootstrap secara otomatis membersihkan nilai qty_needed menjadi integer saat bulat atau float 2 desimal saat pecahan. (4) Tampilan rapi diaplikasikan menyeluruh pada kartu Base BOM (#tab-bom), kartu Variant BOM, modal opsi varian POS, kartu katalog produk POS, tabel saldo stok fisik, kartu mutasi stok, serta laporan rekonsiliasi shift.",
+      "rollback_command": "git checkout v1.2.36"
+    },
     {
       "version": "1.2.36",
       "commit": "HEAD",

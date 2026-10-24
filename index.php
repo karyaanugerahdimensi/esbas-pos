@@ -8427,6 +8427,16 @@ try {
             return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
         }
 
+        function formatDecimal(val, maxDecimals = 2) {
+            if (val === null || val === undefined || val === '') return '0';
+            const num = parseFloat(val);
+            if (isNaN(num)) return '0';
+            if (Math.round(num) === num) {
+                return String(Math.round(num));
+            }
+            return String(parseFloat(num.toFixed(maxDecimals)));
+        }
+
         function escapeHtml(str) {
             if (str === null || str === undefined) return '';
             return String(str)
@@ -9119,10 +9129,10 @@ try {
                                 <span class="text-3xl">${p.image_emoji || '📦'}</span>
                                 <div class="flex flex-col items-end">
                                     ${(Number(p.is_stockable) === 2)
-                                        ? `<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 border border-amber-300" title="Mode Hibrida: Fisik dihitung dan bebas jual On-Demand">🔄 Hibrida (Stok: ${p.stock})</span>`
+                                        ? `<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 border border-amber-300" title="Mode Hibrida: Fisik dihitung dan bebas jual On-Demand">🔄 Hibrida (Stok: ${formatDecimal(p.stock)})</span>`
                                         : ((p.requires_stock === 0 || p.is_stockable === 0 || p.cat_is_stockable === 0)
                                             ? '<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-violet-100 text-violet-800 border border-violet-200">⚡ Tanpa Stok (BOM)</span>'
-                                            : `<span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${p.stock > 10 ? 'bg-slate-100 text-slate-600' : 'bg-rose-100 text-rose-600'}">Stok: ${p.stock}</span>`)}
+                                            : `<span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${p.stock > 10 ? 'bg-slate-100 text-slate-600' : 'bg-rose-100 text-rose-600'}">Stok: ${formatDecimal(p.stock)}</span>`)}
                                     ${p.has_bom ? '<span class="text-[9px] text-indigo-600 font-bold mt-0.5">🧪 Pakai Resep</span>' : ''}
                                     ${(Number(p.is_delivery_included) === 1 || Number(p.is_delivery_required) === 2) 
                                         ? '<span class="text-[9px] text-emerald-800 font-extrabold mt-0.5 bg-emerald-100 border border-emerald-300 px-1.5 py-0.2 rounded">🎁 Termasuk Kirim</span>' 
@@ -9183,7 +9193,7 @@ try {
         function openVariantSelectModal(product) {
             document.getElementById('vsm-product-emoji').innerText = product.image_emoji || '📦';
             document.getElementById('vsm-product-name').innerText = product.name;
-            document.getElementById('vsm-product-sku').innerText = `${product.sku} • Stok: ${product.stock} ${product.unit}`;
+            document.getElementById('vsm-product-sku').innerText = `${product.sku} • Stok: ${formatDecimal(product.stock)} ${product.unit}`;
 
             const basePriceInfo = getEffectiveProductPrice(product);
 
@@ -9193,7 +9203,7 @@ try {
                 const finalVarPrice = basePriceInfo.price + addPrice;
                 const hasVarBOM = v.ingredients && v.ingredients.length > 0;
                 const bomDeductionSummary = hasVarBOM 
-                    ? v.ingredients.map(ing => `<span class="inline-block bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 rounded text-[10px] mr-1 mt-0.5 font-bold">🔻 Potong Stok: ${ing.qty_needed} ${ing.unit} ${ing.ingredient_name}</span>`).join('')
+                    ? v.ingredients.map(ing => `<span class="inline-block bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 rounded text-[10px] mr-1 mt-0.5 font-bold">🔻 Potong Stok: ${formatDecimal(ing.qty_needed)} ${ing.unit} ${ing.ingredient_name}</span>`).join('')
                     : `<span class="inline-block bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[10px] mr-1 mt-0.5 font-medium">🛡️ Tanpa potong stok bahan baku</span>`;
 
                 const priceBadge = addPrice > 0
@@ -10608,7 +10618,7 @@ try {
                                                 <span class="text-xs font-black text-slate-800 uppercase leading-snug break-words">${itemName}</span>
                                                 <span class="text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded font-bold">${itemUnit}</span>
                                             </div>
-                                            <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${item.sku} • Stok Malam: <b class="text-slate-700">${item.night_stock}</b> ${itemUnit}</span>
+                                            <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${item.sku} • Stok Malam: <b class="text-slate-700">${formatDecimal(item.night_stock)}</b> ${itemUnit}</span>
                                         </div>
                                         <div class="flex items-center space-x-1.5 shrink-0">
                                             <span class="text-xs font-black text-emerald-600">+</span>
@@ -10616,7 +10626,7 @@ try {
                                         </div>
                                     </div>
                                     <div id="item-calc-badge-${item.product_id}" class="text-[11px] pt-1.5 border-t border-slate-100 flex items-center justify-between text-slate-600 transition-all">
-                                        <span>Stok Awal: <b class="font-mono text-slate-900 font-black">${item.night_stock}</b> ${itemUnit}</span>
+                                        <span>Stok Awal: <b class="font-mono text-slate-900 font-black">${formatDecimal(item.night_stock)}</b> ${itemUnit}</span>
                                         <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">✓ Stok Tetap</span>
                                     </div>
                                 </div>
@@ -10645,7 +10655,7 @@ try {
                                         </div>
                                         <div class="w-20 sm:w-24 text-center py-1.5 px-2 bg-slate-100 border border-slate-300 rounded-xl font-black text-slate-700 text-sm shadow-inner relative">
                                             <input type="hidden" ${legacyIdNight} data-product-id="${item.product_id}" value="${item.night_stock}" class="shift-night-item-input">
-                                            <span>${item.night_stock}</span>
+                                            <span>${formatDecimal(item.night_stock)}</span>
                                             <span class="absolute right-1.5 top-2 text-[10px] text-slate-400">🔒</span>
                                         </div>
                                     </div>
@@ -10818,15 +10828,15 @@ try {
                 const badge = document.getElementById(`item-calc-badge-${pId}`);
                 const nightTotal = document.getElementById(`item-night-total-${pId}`);
                 if (nightTotal) {
-                    nightTotal.innerText = `${totalOpeningVal} ${unit}`;
+                    nightTotal.innerText = `${formatDecimal(totalOpeningVal)} ${unit}`;
                 }
 
                 if (badge) {
                     if (addedVal > 0) {
                         badge.className = 'text-[11px] pt-1.5 border-t border-emerald-100 flex items-center justify-between text-emerald-800 transition-all';
                         badge.innerHTML = `
-                            <span>Stok Awal: <b class="font-mono text-emerald-950 font-black">${totalOpeningVal}</b> ${unit} <span class="text-[10px] text-emerald-700 font-bold">(${nightVal} malam + ${addedVal} baru)</span></span>
-                            <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">📥 +${addedVal} Masuk</span>
+                            <span>Stok Awal: <b class="font-mono text-emerald-950 font-black">${formatDecimal(totalOpeningVal)}</b> ${unit} <span class="text-[10px] text-emerald-700 font-bold">(${formatDecimal(nightVal)} malam + ${formatDecimal(addedVal)} baru)</span></span>
+                            <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">📥 +${formatDecimal(addedVal)} Masuk</span>
                         `;
                     } else {
                         badge.className = 'text-[11px] pt-1.5 border-t border-slate-100 flex items-center justify-between text-slate-600 transition-all';
@@ -12230,9 +12240,9 @@ try {
                             <span>${item.image_emoji || '📦'}</span>
                             <span class="truncate">${escapeHtml(item.name)}</span>
                         </td>
-                        <td class="py-2 px-2 text-center font-mono text-slate-600">${item.opening_qty}</td>
-                        <td class="py-2 px-2 text-center font-bold text-indigo-700">${item.usage_qty}</td>
-                        <td class="py-2 px-2 text-center font-black text-slate-900 bg-slate-50">${item.closing_qty}</td>
+                        <td class="py-2 px-2 text-center font-mono text-slate-600">${formatDecimal(item.opening_qty)}</td>
+                        <td class="py-2 px-2 text-center font-bold text-indigo-700">${formatDecimal(item.usage_qty)}</td>
+                        <td class="py-2 px-2 text-center font-black text-slate-900 bg-slate-50">${formatDecimal(item.closing_qty)}</td>
                     </tr>
                 `).join('');
 
@@ -12423,10 +12433,10 @@ try {
                         </td>
                         <td class="py-3 px-4 font-mono text-slate-500 text-[11px]">${escapeHtml(item.sku)}</td>
                         <td class="py-3 px-4 text-center font-bold text-slate-600">${escapeHtml(item.unit || 'pcs')}</td>
-                        <td class="py-3 px-4 text-center font-semibold text-slate-700">${item.opening_qty}</td>
-                        <td class="py-3 px-4 text-center font-bold text-indigo-700">${totalUsed}</td>
+                        <td class="py-3 px-4 text-center font-semibold text-slate-700">${formatDecimal(item.opening_qty)}</td>
+                        <td class="py-3 px-4 text-center font-bold text-indigo-700">${formatDecimal(totalUsed)}</td>
                         <td class="py-3 px-4 text-center font-black text-indigo-950 bg-indigo-50/40 text-sm">
-                            ${item.closing_qty} <span class="text-[10px] text-slate-400 font-normal">${escapeHtml(item.unit || 'pcs')}</span>
+                            ${formatDecimal(item.closing_qty)} <span class="text-[10px] text-slate-400 font-normal">${escapeHtml(item.unit || 'pcs')}</span>
                         </td>
                         <td class="py-3 px-4 text-center">
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isClosed ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
@@ -16187,7 +16197,7 @@ Manager / Supervisor: __________________
                             <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">
                                 <div>
                                     <span class="font-bold text-slate-700">${ing.ingredient_name}</span>
-                                    <span class="text-[10px] text-slate-400 block">${ing.qty_needed} ${ing.unit} @ ${formatRupiah(ing.ingredient_cogs)}/${ing.unit}</span>
+                                    <span class="text-[10px] text-slate-400 block">${formatDecimal(ing.qty_needed)} ${ing.unit} @ ${formatRupiah(ing.ingredient_cogs)}/${ing.unit}</span>
                                 </div>
                                 <div class="flex items-center space-x-2">
                                     <span class="font-mono text-slate-700 font-bold">${formatRupiah(ing.subtotal_ingredient_cost)}</span>
@@ -16495,7 +16505,7 @@ Manager / Supervisor: __________________
                                             <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">
                                                 <div class="min-w-0 pr-2">
                                                     <span class="font-bold text-slate-700 block truncate">${ing.ingredient_name}</span>
-                                                    <span class="text-[10px] text-slate-400 block">${ing.qty_needed} ${ing.unit} @ ${formatRupiah(ing.ingredient_cogs)}/${ing.unit} ${ing.notes ? `• ${ing.notes}` : ''}</span>
+                                                    <span class="text-[10px] text-slate-400 block">${formatDecimal(ing.qty_needed)} ${ing.unit} @ ${formatRupiah(ing.ingredient_cogs)}/${ing.unit} ${ing.notes ? `• ${ing.notes}` : ''}</span>
                                                 </div>
                                                 <div class="flex items-center space-x-2 shrink-0">
                                                     <span class="font-mono text-slate-700 font-bold">${formatRupiah(ing.subtotal_ingredient_cost)}</span>
@@ -16733,7 +16743,7 @@ Manager / Supervisor: __________________
                         <div class="flex flex-wrap gap-1 mt-1 justify-end">
                             ${s.branch_breakdown.map(bb => `
                                 <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] bg-slate-100 text-slate-600 border border-slate-200 font-mono" title="${bb.branch_name}">
-                                    <span class="font-semibold text-slate-800 mr-1">${bb.branch_name.replace('Cabang ', '')}:</span> ${bb.stock}
+                                    <span class="font-semibold text-slate-800 mr-1">${bb.branch_name.replace('Cabang ', '')}:</span> ${formatDecimal(bb.stock)}
                                 </span>
                             `).join('')}
                         </div>
@@ -16759,10 +16769,10 @@ Manager / Supervisor: __________________
                         <td class="py-2.5 px-3"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${s.product_type === 'FINISHED_GOODS' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${s.product_type}</span></td>
                         <td class="py-2.5 px-3 text-slate-500 font-medium">${s.unit}</td>
                         <td class="py-2.5 px-3 text-right">
-                            <span class="font-black text-sm font-mono ${isWarning ? 'text-rose-600' : 'text-slate-800'}">${s.stock}</span>
+                            <span class="font-black text-sm font-mono ${isWarning ? 'text-rose-600' : 'text-slate-800'}">${formatDecimal(s.stock)}</span>
                             ${breakdownHtml}
                         </td>
-                        <td class="py-2.5 px-3 text-right text-slate-500 font-mono">${s.reorder_point}</td>
+                        <td class="py-2.5 px-3 text-right text-slate-500 font-mono">${formatDecimal(s.reorder_point)}</td>
                         <td class="py-2.5 px-3 text-right text-slate-700 font-mono">${formatRupiah(s.local_cogs)}</td>
                         <td class="py-2.5 px-3">
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isWarning ? 'bg-rose-100 text-rose-800 animate-pulse' : 'bg-emerald-100 text-emerald-800'}">
@@ -16809,9 +16819,9 @@ Manager / Supervisor: __________________
                         </td>
                         <td class="py-2.5 px-3 font-semibold text-slate-800">${m.product_name} (${m.unit})</td>
                         <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] ${badgeClass}">${m.movement_type}</span></td>
-                        <td class="py-2.5 px-3 text-right font-black font-mono ${qtyVal < 0 ? 'text-rose-600' : 'text-emerald-600'}">${qtyVal > 0 ? '+' : ''}${m.qty_change}</td>
-                        <td class="py-2.5 px-3 text-right text-slate-400 font-mono">${m.stock_before}</td>
-                        <td class="py-2.5 px-3 text-right text-slate-800 font-bold font-mono">${m.stock_after}</td>
+                        <td class="py-2.5 px-3 text-right font-black font-mono ${qtyVal < 0 ? 'text-rose-600' : 'text-emerald-600'}">${qtyVal > 0 ? '+' : ''}${formatDecimal(m.qty_change)}</td>
+                        <td class="py-2.5 px-3 text-right text-slate-400 font-mono">${formatDecimal(m.stock_before)}</td>
+                        <td class="py-2.5 px-3 text-right text-slate-800 font-bold font-mono">${formatDecimal(m.stock_after)}</td>
                         <td class="py-2.5 px-3 font-mono text-[10px] text-indigo-700 font-bold">${m.reference_no || '-'}</td>
                         <td class="py-2.5 px-3 text-slate-600 text-[11px]">${m.notes || '-'}</td>
                         <td class="py-2.5 px-3 text-slate-500">${m.user_name || 'Admin'}</td>
@@ -16993,7 +17003,7 @@ Manager / Supervisor: __________________
             const curUnit = selectedOpt ? (selectedOpt.getAttribute('data-unit') || 'pcs') : 'pcs';
 
             const badge = document.getElementById('adj-current-stock-badge');
-            if (badge) badge.innerText = `${curStock} ${curUnit}`;
+            if (badge) badge.innerText = `${formatDecimal(curStock)} ${curUnit}`;
 
             updateStockAdjustPreview();
         }
@@ -17051,9 +17061,9 @@ Manager / Supervisor: __________________
                 newStock = curStock + diff;
             }
 
-            const diffText = diff >= 0 ? `+${diff}` : `${diff}`;
+            const diffText = diff >= 0 ? `+${formatDecimal(diff)}` : `${formatDecimal(diff)}`;
             const warnText = newStock < 0 ? '<span class="text-rose-600 font-bold ml-2">⚠️ Stok minus tidak diizinkan!</span>' : '';
-            previewEl.innerHTML = `Perhitungan: Stok saat ini <b>${curStock} ${curUnit}</b> → Stok baru <b>${newStock} ${curUnit}</b> (Perubahan: <b>${diffText}</b>)${warnText}`;
+            previewEl.innerHTML = `Perhitungan: Stok saat ini <b>${formatDecimal(curStock)} ${curUnit}</b> → Stok baru <b>${formatDecimal(newStock)} ${curUnit}</b> (Perubahan: <b>${diffText}</b>)${warnText}`;
         }
 
         function closeStockAdjustModal() {
