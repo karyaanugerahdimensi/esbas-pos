@@ -10972,17 +10972,19 @@ try {
             const emptyNote = list.querySelector('.empty-loan-note');
             if (emptyNote) emptyNote.remove();
 
-            const employees = window.closingShiftState?.employees || [];
-            const empOptions = employees.map(e => `<option value="${e.id}">${escapeHtml(e.name)} (${escapeHtml(e.role || 'Karyawan')})</option>`).join('') || '<option value="0">Tidak ada karyawan</option>';
+            const curUser = state.currentUser || state.loggedInUser || (state.activeShift ? { id: state.activeShift.user_id, name: state.activeShift.user_name || 'Kasir', role: 'CASHIER' } : { id: 1, name: 'Kasir', role: 'CASHIER' });
+            const displayName = curUser.name || 'Kasir';
+            const displayRole = curUser.role || 'Karyawan';
 
             const div = document.createElement('div');
             div.className = 'closing-loan-row bg-slate-50/90 p-2 sm:p-2.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center';
             div.innerHTML = `
                 <div class="sm:col-span-4">
-                    <label class="block text-[9px] font-bold text-slate-500 uppercase">Karyawan Penerima</label>
-                    <select class="loan-user-input w-full p-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-1 focus:ring-amber-500">
-                        ${empOptions}
-                    </select>
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase">Karyawan Penerima (Login)</label>
+                    <div class="relative flex items-center">
+                        <input type="text" value="${escapeHtml(displayName)} (${escapeHtml(displayRole)})" readonly class="w-full p-1.5 bg-slate-100 border border-slate-300 rounded-lg text-xs font-bold text-slate-700 cursor-not-allowed select-none focus:outline-none">
+                        <input type="hidden" class="loan-user-input" value="${curUser.id}">
+                    </div>
                 </div>
                 <div class="sm:col-span-3">
                     <label class="block text-[9px] font-bold text-slate-500 uppercase">Nominal Kasbon (Rp)</label>
@@ -11006,17 +11008,19 @@ try {
             const emptyNote = list.querySelector('.empty-meal-note');
             if (emptyNote) emptyNote.remove();
 
-            const employees = window.closingShiftState?.employees || [];
-            const empOptions = employees.map(e => `<option value="${e.id}">${escapeHtml(e.name)} (${escapeHtml(e.role || 'Karyawan')})</option>`).join('') || '<option value="0">Tidak ada karyawan</option>';
+            const curUser = state.currentUser || state.loggedInUser || (state.activeShift ? { id: state.activeShift.user_id, name: state.activeShift.user_name || 'Kasir', role: 'CASHIER' } : { id: 1, name: 'Kasir', role: 'CASHIER' });
+            const displayName = curUser.name || 'Kasir';
+            const displayRole = curUser.role || 'Karyawan';
 
             const div = document.createElement('div');
             div.className = 'closing-meal-row bg-slate-50/90 p-2 sm:p-2.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center';
             div.innerHTML = `
                 <div class="sm:col-span-4">
-                    <label class="block text-[9px] font-bold text-slate-500 uppercase">Karyawan</label>
-                    <select class="meal-user-input w-full p-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-1 focus:ring-emerald-500">
-                        ${empOptions}
-                    </select>
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase">Karyawan (Login)</label>
+                    <div class="relative flex items-center">
+                        <input type="text" value="${escapeHtml(displayName)} (${escapeHtml(displayRole)})" readonly class="w-full p-1.5 bg-slate-100 border border-slate-300 rounded-lg text-xs font-bold text-slate-700 cursor-not-allowed select-none focus:outline-none">
+                        <input type="hidden" class="meal-user-input" value="${curUser.id}">
+                    </div>
                 </div>
                 <div class="sm:col-span-3">
                     <label class="block text-[9px] font-bold text-slate-500 uppercase">Uang Makan (Rp)</label>

@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.35",
-  "build": "20261024-16",
+  "version": "1.2.36",
+  "build": "20261024-17",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.36",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Otomatisasi & Penguncian Identitas Karyawan Penerima Kasbon & Uang Makan Closing Shift ke User Login",
+      "description": "Menyempurnakan kepatuhan identitas pengguna pada pencatatan pengeluaran kasir di modal Closing Shift (#shift-modal): (1) Pada bagian Kasbon Karyawan (addShiftLoanRow), elemen dropdown pemilihan karyawan bebas dihilangkan dan digantikan dengan tampilan read-only nama & peran karyawan yang sedang bertugas/login (currentUser), terkunci dengan hidden input loan-user-input berisikan ID user login sehingga kasir tidak dapat memilih karyawan lain. (2) Pada bagian Uang Makan Karyawan (addShiftMealRow), elemen dropdown pemilihan karyawan bebas dihilangkan dan digantikan dengan tampilan read-only nama & peran karyawan login, terkunci dengan hidden input meal-user-input berisikan ID user login. (3) Sisi backend api.php?action=close_shift menerapkan validasi otorisasi server-side berlapis: jika pengguna yang menutup shift bukan Super Admin / Branch Manager, parameter user_id pada seluruh baris loans dan meals secara otomatis dipaksakan dan dikunci ke user_id pemilik shift/login kasir untuk mencegah manipulasi data. (4) Audit formulir karyawan lain: formulir Slip Gaji Mandiri ESS (ess-payslip-user-select), pengajuan lembur, izin/cuti, dan pinjaman gaji dipastikan terkunci ke akun user login untuk staf/kasir biasa.",
+      "rollback_command": "git checkout v1.2.35"
+    },
     {
       "version": "1.2.35",
       "commit": "HEAD",

@@ -4334,6 +4334,12 @@ try {
             $stmtSales->execute([$shiftId]);
             $cashSales = (float)$stmtSales->fetchColumn();
 
+            // Cek role user shift untuk isolasi kasbon & uang makan
+            $stmtKasirRole = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+            $stmtKasirRole->execute([(int)$shift['user_id']]);
+            $kasirRole = strtoupper($stmtKasirRole->fetchColumn() ?: '');
+            $isManagerShift = in_array($kasirRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+
             // 1. Parse Biaya Beban Operasional Toko
             $rawExpenses = $input['expenses'] ?? [];
             $expensesList = [];
@@ -4354,7 +4360,7 @@ try {
                 }
             }
 
-            // 2. Parse Kasbon Karyawan
+            // 2. Parse Kasbon Karyawan (Default dan terkunci ke karyawan yang sedang login/shift)
             $rawLoans = $input['loans'] ?? [];
             $loansList = [];
             $totalLoans = 0;
@@ -4362,6 +4368,9 @@ try {
                 foreach ($rawLoans as $loan) {
                     $amt = (float)($loan['amount'] ?? 0);
                     $uId = (int)($loan['user_id'] ?? 0);
+                    if (!$isManagerShift || $uId <= 0) {
+                        $uId = (int)$shift['user_id'];
+                    }
                     if ($amt > 0 && $uId > 0) {
                         $notes = trim($loan['notes'] ?? '');
                         $loansList[] = [
@@ -4374,7 +4383,7 @@ try {
                 }
             }
 
-            // 3. Parse Uang Makan Karyawan
+            // 3. Parse Uang Makan Karyawan (Default dan terkunci ke karyawan yang sedang login/shift)
             $rawMeals = $input['meals'] ?? [];
             $mealsList = [];
             $totalMeals = 0;
@@ -4382,6 +4391,9 @@ try {
                 foreach ($rawMeals as $meal) {
                     $amt = (float)($meal['amount'] ?? 0);
                     $uId = (int)($meal['user_id'] ?? 0);
+                    if (!$isManagerShift || $uId <= 0) {
+                        $uId = (int)$shift['user_id'];
+                    }
                     if ($amt > 0 && $uId > 0) {
                         $notes = trim($meal['notes'] ?? '');
                         $mealsList[] = [

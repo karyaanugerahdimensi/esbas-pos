@@ -1,6 +1,6 @@
 -- ========================================================
 -- ESBAS POS Database Export (MySQL / MariaDB Compatible)
--- Generated: 2026-10-24 11:48:52
+-- Generated: 2026-10-24 12:02:47
 -- ========================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -490,7 +490,7 @@ INSERT INTO `products` (`id`, `sku`, `barcode`, `name`, `category`, `unit`, `cog
 (106, 'PRD-00008', '899260000106', 'Es Kristal 10 Kg', 'Produk Jual', 'ball', 2675, 12000, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 10800, 9600, 8600, 'ALL', 0, 1, 11, 1, 0, 1),
 (107, 'PRD-00009', '899260000107', 'Galon Kosong Aqua 19 L', 'Produk Jual', 'galon', 25000, 35000, '📦', 'FINISHED_GOODS', 0, 1, 1, 1, 31500, 28000, 25200, 'ALL', 0, 1, 11, 0, 0, 1),
 (108, 'PRD-00010', '899260000108', 'Galon Kosong Non Aqua', 'Produk Jual', 'galon', 15000, 25000, '📦', 'FINISHED_GOODS', 0, 1, 1, 1, 22500, 20000, 18000, 'ALL', 0, 1, 11, 0, 0, 1),
-(134, 'HIB-31679', 'HIB-31679', 'Test Galon Hibrida 1792831679', 'Produk Jual', 'galon', 800, 5000, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 4500, 4000, 3600, 'ALL', 0, 1, 11, 0, 0, 2);
+(134, 'HIB-31679', 'HIB-31679', 'Test Galon Hibrida 1792831679', 'Produk Jual', 'galon', 800, 5000, '📦', 'FINISHED_GOODS', 0, 1, 10, 1, 4500, 4000, 3600, 'ALL', 0, 1, 11, 0, 0, 2);
 
 -- --------------------------------------------------------
 -- Table structure for `product_variants`
@@ -645,7 +645,7 @@ INSERT INTO `branch_stocks` (`id`, `branch_id`, `product_id`, `stock`, `local_co
 (802, 6, 134, 0, 800, 5000, NULL, 1, NULL, NULL),
 (803, 1, 107, 0, 25000, 35000, NULL, 1, NULL, NULL),
 (804, 1, 108, 0, 15000, 25000, NULL, 1, NULL, NULL),
-(805, 1, 134, 0, 800, 5000, NULL, 1, NULL, NULL);
+(805, 1, 134, 0, 800, 5000, '2026-10-24 16:54:37', 1, 0, 0);
 
 -- --------------------------------------------------------
 -- Table structure for `customers`
