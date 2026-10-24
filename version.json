@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.30",
-  "build": "20261024-11",
+  "version": "1.2.31",
+  "build": "20261024-12",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.31",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Pembatasan Hak Akses Aksi Stok: Kasir & Staf Cabang Hanya Berwenang Menambah Stok Masuk",
+      "description": "Menerapkan pembatasan otoritas pergerakan stok berdasarkan peran pengguna (Role-Based Stock Control): (1) Tingkat pengguna non-Super Admin dan non-Branch Manager (Kasir, Staf Toko, Barista) hanya diizinkan untuk menjalankan aksi Tambah Stok Barang Masuk (+). (2) Pada Tab Manajemen Stok & Saldo Stok (#tab-stocks), tombol aksi baris tabel diubah tampilannya dari 'Atur Stok' (warna indigo) menjadi tombol '+ Tambah Stok' (warna emerald, ikon plus-circle). Tombol header juga disesuaikan menjadi '+ Tambah Stok Masuk'. (3) Pada Modal Penyesuaian Stok (#stock-adjust-modal), jika user login bukan Super Admin / Branch Manager: dropdown Jenis Aksi Stok (#adj-type) secara ketat mengunci opsi hanya pada '📦 Barang Masuk Pembelian (+ Tambah Stok)' dan menonaktifkan/menyembunyikan opsi Setel Stok Awal (INITIAL_STOCK), Opname Koreksi, dan Pengurangan Rusak (ADJUSTMENT_DAMAGE); judul modal disesuaikan menjadi '+ Tambah Stok Barang Masuk' dengan tombol submit '+ Simpan Tambah Stok'. (4) Sisi backend api.php?action=adjust_stock menegakkan validasi otorisasi server-side yang menolak segala bentuk setel saldo awal langsung, pengurangan kuantitas, atau mutasi opname yang dikirimkan oleh kasir/staf dengan pesan galat 'Akses Ditolak'. (5) Super Admin dan Branch Manager tetap memiliki hak akses penuh untuk melakukan penyetelan stok awal, opname fisik berkala, maupun pencatatan barang rusak/hilang.",
+      "rollback_command": "git checkout v1.2.30"
+    },
     {
       "version": "1.2.30",
       "commit": "HEAD",

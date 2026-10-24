@@ -2271,9 +2271,9 @@ try {
                             <i data-lucide="package-x" class="w-4 h-4 text-rose-600"></i>
                             <span id="btn-stock-reset-label">Reset Stok Cabang</span>
                         </button>
-                        <button onclick="openStockAdjustModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-2">
+                        <button id="btn-stock-adjust-header" onclick="openStockAdjustModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-2 transition-colors">
                             <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
-                            <span>Penyesuaian / Tambah Stok</span>
+                            <span id="btn-stock-adjust-header-text">Penyesuaian / Tambah Stok</span>
                         </button>
                     </div>
                 </div>
@@ -6773,14 +6773,14 @@ try {
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div class="flex items-center justify-between border-b pb-3">
                 <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
-                    <i data-lucide="layers" class="w-5 h-5 text-indigo-600"></i>
-                    <span>Setel Stok Awal & Mutasi Cabang</span>
+                    <i id="stock-adjust-modal-icon" data-lucide="layers" class="w-5 h-5 text-indigo-600"></i>
+                    <span id="stock-adjust-modal-title">Setel Stok Awal & Mutasi Cabang</span>
                 </h3>
                 <button type="button" onclick="closeStockAdjustModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            <p class="text-xs text-slate-500">Pilih cabang tujuan untuk menyetel stok awal atau mencatat penyesuaian/mutasi kuantitas stok barang.</p>
+            <p id="stock-adjust-modal-subtitle" class="text-xs text-slate-500">Pilih cabang tujuan untuk menyetel stok awal atau mencatat penyesuaian/mutasi kuantitas stok barang.</p>
             <form onsubmit="saveStockAdjustForm(event)" class="space-y-3.5 text-xs">
                 <!-- 1. Target Branch Selection -->
                 <div>
@@ -6839,9 +6839,9 @@ try {
                 <!-- 7. Action Buttons -->
                 <div class="grid grid-cols-2 gap-2 pt-2">
                     <button type="button" onclick="closeStockAdjustModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700 transition-colors">Batal</button>
-                    <button type="submit" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow transition-colors flex items-center justify-center space-x-1.5">
-                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                        <span>Simpan Stok Cabang</span>
+                    <button type="submit" id="stock-adjust-submit-btn" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow transition-colors flex items-center justify-center space-x-1.5">
+                        <i id="stock-adjust-submit-icon" data-lucide="check-circle-2" class="w-4 h-4"></i>
+                        <span id="stock-adjust-submit-text">Simpan Stok Cabang</span>
                     </button>
                 </div>
             </form>
@@ -16558,6 +16558,24 @@ Manager / Supervisor: __________________
                 }
             }
 
+            // Update Hak Akses Tombol Header Sesuai Peran Pengguna
+            const curUser = state.currentUser || state.loggedInUser;
+            const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
+
+            const btnHeaderAdjust = document.getElementById('btn-stock-adjust-header');
+            if (btnHeaderAdjust) {
+                if (isManagerOrAdmin) {
+                    btnHeaderAdjust.className = "px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-2 transition-colors";
+                    btnHeaderAdjust.innerHTML = `<i data-lucide="arrow-left-right" class="w-4 h-4"></i><span id="btn-stock-adjust-header-text">Penyesuaian / Tambah Stok</span>`;
+                    btnHeaderAdjust.title = "Penyesuaian stok awal, opname, kerusakan, atau penambahan stok";
+                } else {
+                    btnHeaderAdjust.className = "px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-2 transition-colors";
+                    btnHeaderAdjust.innerHTML = `<i data-lucide="plus-circle" class="w-4 h-4"></i><span id="btn-stock-adjust-header-text">+ Tambah Stok Masuk</span>`;
+                    btnHeaderAdjust.title = "Catat penambahan stok barang masuk cabang";
+                }
+            }
+
             // Update Label Tombol Reset Stok sesuai cabang yang sedang dilihat
             const btnResetLabel = document.getElementById('btn-stock-reset-label');
             if (btnResetLabel) {
@@ -16596,6 +16614,18 @@ Manager / Supervisor: __________________
                     `;
                 }
 
+                const actionBtnHtml = isManagerOrAdmin ? `
+                    <button onclick="openStockAdjustModal(${s.product_id}, ${isGlobal ? 'null' : bId})" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-[11px] font-bold shadow-sm transition-colors inline-flex items-center space-x-1" title="Atur / Setel Stok Awal Cabang">
+                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                        <span>Atur Stok</span>
+                    </button>
+                ` : `
+                    <button onclick="openStockAdjustModal(${s.product_id}, ${isGlobal ? 'null' : bId})" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[11px] font-bold shadow-sm transition-colors inline-flex items-center space-x-1" title="Tambah Stok Barang Masuk Cabang">
+                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                        <span>+ Tambah Stok</span>
+                    </button>
+                `;
+
                 return `
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="py-2.5 px-3 font-mono font-bold text-indigo-700">${s.sku}</td>
@@ -16614,10 +16644,7 @@ Manager / Supervisor: __________________
                             </span>
                         </td>
                         <td class="py-2.5 px-3 text-center">
-                            <button onclick="openStockAdjustModal(${s.product_id}, ${isGlobal ? 'null' : bId})" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-[11px] font-bold shadow-sm transition-colors inline-flex items-center space-x-1" title="Atur / Setel Stok Awal Cabang">
-                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                <span>Atur Stok</span>
-                            </button>
+                            ${actionBtnHtml}
                         </td>
                     </tr>
                 `;
@@ -16674,6 +16701,9 @@ Manager / Supervisor: __________________
         async function openStockAdjustModal(targetProductId = null, targetBranchId = null) {
             const canAccessAll = canUserAccessAllBranches();
             const userBranch = getUserAssignedBranch();
+            const curUser = state.currentUser || state.loggedInUser;
+            const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
 
             // 1. Populasi Dropdown Cabang
             const branchSelect = document.getElementById('adj-branch-select');
@@ -16706,8 +16736,73 @@ Manager / Supervisor: __________________
             // 2. Muat produk dan set stok awal
             await loadStockAdjustProducts(targetProductId);
 
-            // 3. Setel default mode ke INITIAL_STOCK bila stok awal diedit
-            document.getElementById('adj-type').value = 'INITIAL_STOCK';
+            // 3. Batasi Opsi Aksi Berdasarkan Peran Pengguna
+            const modalTitle = document.getElementById('stock-adjust-modal-title');
+            const modalSubtitle = document.getElementById('stock-adjust-modal-subtitle');
+            const modalIcon = document.getElementById('stock-adjust-modal-icon');
+            const adjTypeSelect = document.getElementById('adj-type');
+            const submitBtn = document.getElementById('stock-adjust-submit-btn');
+            const submitText = document.getElementById('stock-adjust-submit-text');
+            const submitIcon = document.getElementById('stock-adjust-submit-icon');
+
+            if (!isManagerOrAdmin) {
+                // Non Superadmin & Non Branch Manager (Kasir / Staf): HANYA BISA TAMBAH STOK
+                if (modalTitle) modalTitle.innerText = '+ Tambah Stok Barang Masuk';
+                if (modalSubtitle) modalSubtitle.innerText = 'Pencatatan persediaan barang masuk / restock cabang. Hak akses akun Anda dibatasi khusus untuk penambahan stok barang masuk.';
+                if (modalIcon) {
+                    modalIcon.setAttribute('data-lucide', 'plus-circle');
+                    modalIcon.className = 'w-5 h-5 text-emerald-600';
+                }
+                if (adjTypeSelect) {
+                    Array.from(adjTypeSelect.options).forEach(opt => {
+                        if (opt.value === 'PURCHASE') {
+                            opt.hidden = false;
+                            opt.disabled = false;
+                        } else {
+                            opt.hidden = true;
+                            opt.disabled = true;
+                        }
+                    });
+                    adjTypeSelect.value = 'PURCHASE';
+                    adjTypeSelect.disabled = true;
+                    adjTypeSelect.title = "Tingkat hak akses kasir/staf hanya diizinkan untuk menambah stok barang masuk.";
+                }
+                if (submitBtn) {
+                    submitBtn.className = "py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow transition-colors flex items-center justify-center space-x-1.5";
+                }
+                if (submitText) {
+                    submitText.innerText = "+ Simpan Tambah Stok";
+                }
+                if (submitIcon) {
+                    submitIcon.setAttribute('data-lucide', 'plus-circle');
+                }
+            } else {
+                // Super Admin & Branch Manager: Full Access
+                if (modalTitle) modalTitle.innerText = 'Setel Stok Awal & Mutasi Cabang';
+                if (modalSubtitle) modalSubtitle.innerText = 'Pilih cabang tujuan untuk menyetel stok awal atau mencatat penyesuaian/mutasi kuantitas stok barang.';
+                if (modalIcon) {
+                    modalIcon.setAttribute('data-lucide', 'layers');
+                    modalIcon.className = 'w-5 h-5 text-indigo-600';
+                }
+                if (adjTypeSelect) {
+                    Array.from(adjTypeSelect.options).forEach(opt => {
+                        opt.hidden = false;
+                        opt.disabled = false;
+                    });
+                    adjTypeSelect.disabled = false;
+                    adjTypeSelect.value = 'INITIAL_STOCK';
+                }
+                if (submitBtn) {
+                    submitBtn.className = "py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow transition-colors flex items-center justify-center space-x-1.5";
+                }
+                if (submitText) {
+                    submitText.innerText = "Simpan Stok Cabang";
+                }
+                if (submitIcon) {
+                    submitIcon.setAttribute('data-lucide', 'check-circle-2');
+                }
+            }
+
             onStockAdjustTypeChange();
 
             document.getElementById('stock-adjust-modal').classList.remove('hidden');
@@ -16841,9 +16936,14 @@ Manager / Supervisor: __________________
 
         async function saveStockAdjustForm(e) {
             e.preventDefault();
+            const curUser = state.currentUser || state.loggedInUser;
+            const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
+
             const branchId = parseInt(document.getElementById('adj-branch-select').value);
             const pId = parseInt(document.getElementById('adj-product-select').value);
-            const adjType = document.getElementById('adj-type').value;
+            const adjTypeSelect = document.getElementById('adj-type');
+            const adjType = (!isManagerOrAdmin) ? 'PURCHASE' : (adjTypeSelect ? adjTypeSelect.value : 'INITIAL_STOCK');
             const inputVal = parseFloat(document.getElementById('adj-qty').value);
             const notes = document.getElementById('adj-notes').value.trim();
 
@@ -16852,12 +16952,23 @@ Manager / Supervisor: __________________
                 return;
             }
 
+            if (!isManagerOrAdmin) {
+                if (adjType !== 'PURCHASE') {
+                    alert('Akses Ditolak: Staf / Kasir hanya berwenang melakukan aksi Tambah Stok Barang Masuk.');
+                    return;
+                }
+                if (inputVal <= 0) {
+                    alert('Kuantitas penambahan stok harus lebih besar dari 0.');
+                    return;
+                }
+            }
+
             let payload = {
                 branch_id: branchId,
                 product_id: pId,
                 adjustment_type: adjType,
                 notes: notes,
-                user_id: state.currentUser ? state.currentUser.id : 1
+                user_id: curUser ? curUser.id : 1
             };
 
             if (adjType === 'INITIAL_STOCK') {

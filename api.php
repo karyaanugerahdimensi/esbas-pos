@@ -3389,6 +3389,39 @@ try {
                 exit;
             }
 
+            // Role Authorization Enforcement:
+            // Non-SuperAdmin & Non-BranchManager hanya berwenang menambah stok (PURCHASE) dengan qty > 0
+            $userRole = '';
+            if ($userId > 0) {
+                $uStmt = $pdo->prepare("SELECT role, branch_id FROM users WHERE id = ?");
+                $uStmt->execute([$userId]);
+                $uData = $uStmt->fetch(PDO::FETCH_ASSOC);
+                if ($uData) {
+                    $userRole = strtoupper(trim((string)$uData['role']));
+                    $cleanRole = str_replace(['_', ' ', '-'], '', $userRole);
+                    $isManagerOrAdmin = in_array($cleanRole, ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER']);
+                    if (!$isManagerOrAdmin && !empty($uData['branch_id']) && (int)$uData['branch_id'] !== $branchId) {
+                        echo json_encode([
+                            'success' => false,
+                            'message' => 'Akses Ditolak: Anda hanya dapat menambah stok pada cabang penugasan Anda.'
+                        ]);
+                        exit;
+                    }
+                }
+            }
+            $cleanRole = str_replace(['_', ' ', '-'], '', $userRole);
+            $isManagerOrAdmin = in_array($cleanRole, ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER']);
+
+            if (!$isManagerOrAdmin) {
+                if ($adjType !== 'PURCHASE' || $exactStock !== null || (isset($input['qty_change']) && (float)$input['qty_change'] <= 0)) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Akses Ditolak: Level akun Anda hanya diizinkan untuk menjalankan aksi Tambah Stok Barang Masuk (+). Penyetelan stok awal, opname fisik, atau pengurangan barang rusak hanya dapat dilakukan oleh Branch Manager atau Super Admin.'
+                    ]);
+                    exit;
+                }
+            }
+
             // Ambil nama cabang dan produk untuk log mutasi
             $stmtBName = $pdo->prepare("SELECT name FROM branches WHERE id = ?");
             $stmtBName->execute([$branchId]);

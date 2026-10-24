@@ -1,6 +1,6 @@
 -- ========================================================
 -- ESBAS POS Database Export (MySQL / MariaDB Compatible)
--- Generated: 2026-10-24 10:48:39
+-- Generated: 2026-10-24 11:06:35
 -- ========================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -639,7 +639,7 @@ INSERT INTO `branch_stocks` (`id`, `branch_id`, `product_id`, `stock`, `local_co
 (644, 1, 89, 45, 0, 0, '2026-10-24 07:00:03', 1, NULL, NULL),
 (776, 1, 132, 0, 800, 5000, NULL, 1, NULL, NULL),
 (778, 1, 133, 0, 800, 5000, NULL, 1, NULL, NULL),
-(783, 1, 88, 90, 50, 0, NULL, 1, NULL, NULL),
+(783, 1, 88, 248, 50, 0, '2026-10-24 11:04:28', 1, NULL, NULL),
 (784, 2, 132, 0, 800, 5000, NULL, 1, NULL, NULL),
 (785, 2, 133, 0, 800, 5000, NULL, 1, NULL, NULL),
 (786, 2, 134, 0, 800, 5000, NULL, 1, NULL, NULL),
@@ -952,7 +952,10 @@ INSERT INTO `stock_movements` (`id`, `branch_id`, `product_id`, `movement_type`,
 (391, 1, 90, 'BOM_DEDUCTION', -5, 99985, 99980, 'INV/JKT-01/20261024/0010', 'Konsumsi Base BOM untuk 5x Air Mineral Galon 19 Liter [Tanpa Tutup Mineral]', 3, '2026-10-24 08:40:59'),
 (392, 1, 134, 'STOCK_OUT_SALE', -1, 0, -1, 'INV/JKT-01/20261024/0011', 'Penjualan POS [REGULER] kpd Pelanggan Umum', 1, '2026-10-24 08:47:59'),
 (393, 1, 88, 'BOM_DEDUCTION', -10, 100, 90, 'INV/JKT-01/20261024/0011', 'Konsumsi Base BOM untuk 1x Test Galon Hibrida 1792831679', 1, '2026-10-24 08:47:59'),
-(395, 1, 88, 'BOM_DEDUCTION', -10, 100, 90, 'INV/JKT-01/20261024/0011', 'Konsumsi Base BOM untuk 1x Test Galon Hibrida 1792831693', 1, '2026-10-24 08:48:13');
+(395, 1, 88, 'BOM_DEDUCTION', -10, 100, 90, 'INV/JKT-01/20261024/0011', 'Konsumsi Base BOM untuk 1x Test Galon Hibrida 1792831693', 1, '2026-10-24 08:48:13'),
+(396, 1, 88, 'PURCHASE', 10, 90, 100, 'ADJ-20261024-110426', 'Kasir input barang masuk restock', 3, '2026-10-24 09:04:26'),
+(397, 1, 88, 'INITIAL_STOCK', 150, 100, 250, 'INIT-20261024-110427', 'Super Admin set stok awal', 1, '2026-10-24 09:04:27'),
+(398, 1, 88, 'ADJUSTMENT_DAMAGE', -2, 250, 248, 'ADJ-20261024-110428', 'Barang pecah opname', 1, '2026-10-24 09:04:28');
 
 -- --------------------------------------------------------
 -- Table structure for `attendance_logs`
