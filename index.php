@@ -16750,7 +16750,12 @@ Manager / Supervisor: __________________
                 }
 
             document.getElementById('stock-balance-table-body').innerHTML = data.stocks.map(s => {
-                const stockVal = parseFloat(s.stock);
+                let stockVal = parseFloat(s.stock) || 0;
+                // Produk Jadi (FINISHED_GOODS) tidak boleh bernilai minus, jika minus dinormalkan ke 0
+                if (s.product_type === 'FINISHED_GOODS' && stockVal < 0) {
+                    stockVal = 0;
+                    s.stock = 0;
+                }
                 const reorderVal = parseFloat(s.reorder_point);
                 const isWarning = stockVal <= reorderVal;
 

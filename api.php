@@ -876,6 +876,9 @@ try {
                 if (isset($seenProductIds[$pid])) continue;
                 $seenProductIds[$pid] = true;
                 $pr['requires_stock'] = ((int)$pr['is_stockable'] === 1 && (int)$pr['cat_is_stockable'] === 1) ? 1 : 0;
+                if ((float)($pr['stock'] ?? 0) < 0) {
+                    $pr['stock'] = 0;
+                }
                 $products[] = $pr;
             }
 
@@ -3528,7 +3531,7 @@ try {
 
                 foreach ($stocks as &$s) {
                     $s['branch_breakdown'] = $branchMap[$s['product_id']] ?? [];
-                    $s['stock'] = (float)$s['stock'];
+                    $s['stock'] = (($s['product_type'] ?? '') === 'FINISHED_GOODS' && (float)$s['stock'] < 0) ? 0 : (float)$s['stock'];
                     $s['local_cogs'] = (float)$s['local_cogs'];
                     $s['local_price'] = (float)$s['local_price'];
                     $s['requires_stock'] = ((int)($s['is_stockable'] ?? 1) === 1 && (int)($s['cat_is_stockable'] ?? 1) === 1) ? 1 : 0;
@@ -3581,7 +3584,7 @@ try {
                     $pid = (int)$s['product_id'];
                     if (isset($seenStockProdIds[$pid])) continue;
                     $seenStockProdIds[$pid] = true;
-                    $s['stock'] = (float)$s['stock'];
+                    $s['stock'] = (($s['product_type'] ?? '') === 'FINISHED_GOODS' && (float)$s['stock'] < 0) ? 0 : (float)$s['stock'];
                     $s['local_cogs'] = (float)$s['local_cogs'];
                     $s['local_price'] = (float)$s['local_price'];
                     $s['requires_stock'] = ((int)($s['is_stockable'] ?? 1) === 1 && (int)($s['cat_is_stockable'] ?? 1) === 1) ? 1 : 0;
@@ -5422,8 +5425,13 @@ try {
 
                 // Deduct finished goods stock if item tracks physical stock (Mode 1 Wajib Di-Stok atau Mode 2 Hibrida)
                 if ($tracksPhysicalStock) {
-                    $stmtDeduct = $pdo->prepare("UPDATE branch_stocks SET stock = stock - ? WHERE branch_id = ? AND product_id = ?");
-                    $stmtDeduct->execute([$qty, $branchId, $pId]);
+                    $currentStock = (float)$stockRow['stock'];
+                    // Sesuai aturan kombinasi stok on-demand: jika penjualan melebihi stok yang ada,
+                    // stok akhir produk jadi tidak menjadi minus, melainkan tetap di-0 kan.
+                    $newStock = max(0, $currentStock - $qty);
+
+                    $stmtDeduct = $pdo->prepare("UPDATE branch_stocks SET stock = ? WHERE branch_id = ? AND product_id = ?");
+                    $stmtDeduct->execute([$newStock, $branchId, $pId]);
 
                     // Record finished goods stock movement
                     $stmtMoveFG = $pdo->prepare("
@@ -5431,7 +5439,7 @@ try {
                         VALUES (?, ?, 'STOCK_OUT_SALE', ?, ?, ?, ?, ?, ?)
                     ");
                     $stmtMoveFG->execute([
-                        $branchId, $pId, -$qty, $stockRow['stock'], $stockRow['stock'] - $qty,
+                        $branchId, $pId, -$qty, $currentStock, $newStock,
                         $invoiceNumber, "Penjualan POS [{$customerCategory}] kpd {$customerName}" . ($variantName ? " ({$variantName})" : ""), $userId
                     ]);
                 }

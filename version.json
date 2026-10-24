@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.38",
-  "build": "20261024-19",
+  "version": "1.2.39",
+  "build": "20261024-20",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.39",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Pencegahan Stok Minus Produk Jadi pada Transaksi Kombinasi Stok & Pemenuhan On-Demand",
+      "description": "Menyempurnakan algoritma pemotongan stok barang jadi (Finished Goods) pada saat checkout penjualan POS kasir: (1) Pada transaksi kombinasi stok (misal produk mode Hibrida atau penjualan yang melebihi saldo stok fisik di etalase toko), nilai stok akhir produk jadi tidak pernah dibiarkan menjadi minus, melainkan di-clamp otomatis menjadi 0 (max(0, currentStock - qty)). (2) Log kartu pergerakan stok (stock_movements) mencatat stock_after persis pada angka 0 saat kuantitas penjualan melampaui sisa stok fisik. (3) Backend api.php pada get_inventory_stocks dan bootstrap mengimplementasikan proteksi fallback otomatis yang mengonversi nilai stok minus pada produk jadi menjadi 0. (4) Antarmuka index.php pada loadStockInventory menormalkan nilai stok produk jadi agar tidak lagi memunculkan angka negatif berwarna merah pada tabel Saldo Stok Cabang (#stock-balance-table-body). (5) Database SQLite dinormalkan sehingga seluruh saldo barang jadi yang sebelumnya minus dikoreksi menjadi 0.",
+      "rollback_command": "git checkout v1.2.38"
+    },
     {
       "version": "1.2.38",
       "commit": "HEAD",
