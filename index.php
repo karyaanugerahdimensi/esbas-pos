@@ -631,9 +631,9 @@ $appVersionData = getAppVersionData();
                                 <i data-lucide="download" class="w-4 h-4"></i>
                                 <span>Export Excel Detail</span>
                             </button>
-                            <button onclick="openPurgeSalesModal()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-1.5" title="Hapus seluruh riwayat transaksi penjualan dari database (Superadmin Only)">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                <span>Hapus Semua Transaksi</span>
+                            <button onclick="openMasterResetModal({ sales: true })" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-1.5" title="Reset atau bersihkan data penjualan, stok, pemakaian, atau shift toko (Superadmin Only)">
+                                <i data-lucide="refresh-ccw" class="w-4 h-4"></i>
+                                <span>Reset Data Toko</span>
                             </button>
                         </div>
                     </div>
@@ -901,6 +901,10 @@ $appVersionData = getAppVersionData();
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
+                            <button onclick="openMasterResetModal({ shifts: true })" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all" title="Reset atau hapus riwayat shift kasir cabang (Superadmin Only)">
+                                <i data-lucide="clock" class="w-4 h-4 text-rose-600"></i>
+                                <span>Reset Shift</span>
+                            </button>
                             <button onclick="openWaterMeterModal()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-2 transition-all">
                                 <i data-lucide="gauge" class="w-4 h-4"></i>
                                 <span>Meteran Air & Koreksi</span>
@@ -2212,6 +2216,10 @@ $appVersionData = getAppVersionData();
                                 <option value="ALL">🌐 Semua Cabang (Konsolidasi Global)</option>
                             </select>
                         </div>
+                        <button onclick="openMasterResetModal({ stocks: true })" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-2xs transition-colors" title="Reset seluruh persediaan stok fisik menjadi 0 (Superadmin Only)">
+                            <i data-lucide="package-x" class="w-4 h-4 text-rose-600"></i>
+                            <span>Reset Stok Cabang</span>
+                        </button>
                         <button onclick="openStockAdjustModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-2">
                             <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
                             <span>Penyesuaian / Tambah Stok</span>
@@ -3436,6 +3444,10 @@ $appVersionData = getAppVersionData();
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
+                            <button onclick="openMasterResetModal({ bom: true })" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all" title="Reset atau bersihkan riwayat pemakaian bahan baku BOM (Superadmin Only)">
+                                <i data-lucide="trash-2" class="w-4 h-4 text-rose-600"></i>
+                                <span>Reset Pemakaian</span>
+                            </button>
                             <button onclick="loadBomUsageReport()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-2">
                                 <i data-lucide="filter" class="w-4 h-4"></i>
                                 <span>Terapkan Filter</span>
@@ -4103,6 +4115,10 @@ $appVersionData = getAppVersionData();
                         </p>
                     </div>
                     <div class="flex items-center space-x-2">
+                        <button onclick="openMasterResetModal()" class="px-4 py-2.5 bg-rose-600/90 hover:bg-rose-600 text-white rounded-2xl text-xs font-bold flex items-center space-x-2 shadow-lg transition-all" title="Buka menu pusat reset & pembersihan data cabang (Superadmin Only)">
+                            <i data-lucide="refresh-ccw" class="w-4 h-4"></i>
+                            <span>Reset Data Toko</span>
+                        </button>
                         <button onclick="saveAllAppSettings()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-emerald-900/40 flex items-center space-x-2 transition-all">
                             <i data-lucide="save" class="w-4 h-4"></i>
                             <span>Simpan Konfigurasi</span>
@@ -5751,91 +5767,154 @@ $appVersionData = getAppVersionData();
     </div>
 
     <!-- Modal 17: Pembersihan / Penghapusan Massal Seluruh Data Penjualan (Superadmin Only) -->
-    <div id="purge-sales-modal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto border-2 border-rose-500/30">
+        <!-- ============================================================== -->
+    <!-- MODAL MASTER RESET & PEMBERSIHAN DATA CABANG (GRANULAR PURGE)  -->
+    <!-- ============================================================== -->
+    <div id="master-reset-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[94vh] overflow-y-auto border-2 border-rose-500/30">
+            <!-- Modal Header -->
             <div class="flex items-center justify-between border-b pb-3 border-slate-100">
-                <div class="flex items-center space-x-2.5">
-                    <div class="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                <div class="flex items-center space-x-3">
+                    <div class="w-11 h-11 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
+                        <i data-lucide="refresh-ccw" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h3 class="font-black text-rose-800 text-base">Hapus Seluruh Data Penjualan</h3>
-                        <p class="text-xs text-rose-600 font-semibold">Tindakan Destruktif & Permanen (Super Admin Only)</p>
+                        <h3 class="font-black text-rose-900 text-base flex items-center gap-2">
+                            <span>Pusat Reset & Pembersihan Data Toko</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] bg-rose-100 text-rose-800 font-bold">Super Admin</span>
+                        </h3>
+                        <p class="text-xs text-rose-600 font-medium">Reset granular seluruh cabang atau cabang spesifik terpilih</p>
                     </div>
                 </div>
-                <button type="button" onclick="closePurgeSalesModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl transition-colors">
+                <button type="button" onclick="closeMasterResetModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <!-- Warning Callout Box -->
-            <div class="bg-rose-50 border-2 border-rose-200 p-4 rounded-2xl text-xs text-rose-900 space-y-2">
-                <p class="font-bold flex items-center space-x-1.5 text-rose-800">
-                    <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-600"></i>
-                    <span>PERINGATAN TINGKAT TINGGI:</span>
-                </p>
-                <p>Tindakan ini akan <strong>menghapus seluruh riwayat transaksi penjualan (sales) dan rincian item (sale_items)</strong> secara permanen dari database sistem.</p>
-                <p>Data piutang pelanggan (AR) dan histori log mutasi penjualan terkait juga akan dibersihkan.</p>
-                <p class="text-[11px] text-rose-700 bg-rose-100/70 p-2 rounded-xl font-medium">
-                    ⚠️ Tindakan ini <strong>TIDAK DAPAT DIBATALKAN</strong> (Irreversible). Pastikan Anda telah melakukan backup database jika data transaksi masih diperlukan.
-                </p>
-            </div>
-
-            <form onsubmit="submitPurgeSalesForm(event)" class="space-y-4 text-xs">
-                <!-- Pilihan Lingkup Cabang -->
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Lingkup Cabang yang Dihapus:</label>
-                    <select id="purge-sales-branch-select" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500">
-                        <option value="ALL">🌐 SEMUA CABANG (Global Wipe - Seluruh Database)</option>
+            <!-- Form Reset -->
+            <form onsubmit="submitMasterResetForm(event)" class="space-y-4 text-xs">
+                
+                <!-- 1. Pilihan Lingkup Cabang -->
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="font-bold text-slate-800 flex items-center gap-1.5">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-indigo-600"></i>
+                            <span>Pilih Cabang Target Reset:</span>
+                        </label>
+                        <span id="reset-scope-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800">Global (Semua Cabang)</span>
+                    </div>
+                    <select id="master-reset-branch-select" onchange="updateResetScopeInfo()" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500">
+                        <option value="ALL">🌐 SEMUA CABANG (Global Reset - Seluruh Database)</option>
                     </select>
-                    <p class="text-[10px] text-slate-500 mt-1">Pilih "SEMUA CABANG" untuk reset total, atau pilih cabang tertentu saja.</p>
+                    <p id="reset-scope-desc" class="text-[11px] text-slate-500">Operasi akan mengeksekusi reset pada <b>seluruh cabang toko</b> tanpa kecuali.</p>
                 </div>
 
-                <!-- Checkbox Opsi Kembalikan Stok -->
-                <div class="bg-indigo-50/70 border border-indigo-200 p-3 rounded-2xl">
-                    <label class="flex items-start space-x-2.5 cursor-pointer">
-                        <input type="checkbox" id="purge-sales-restore-stock" class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" checked>
-                        <div>
-                            <span class="font-bold text-indigo-900 block">Kembalikan Stok Produk & Bahan Baku BOM (Restock)</span>
-                            <span class="text-[11px] text-indigo-700 block mt-0.5">Jika dicentang, stok produk jadi dan bahan baku resep BOM yang sebelumnya terpotong oleh penjualan akan otomatis dikembalikan ke inventaris cabang. (Disarankan jika Anda ingin mereset stok ke kondisi semula).</span>
+                <!-- 2. Pilihan Opsi Data yang Direset (4 Checkboxes) -->
+                <div class="space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-800 flex items-center gap-1.5">
+                            <i data-lucide="check-square" class="w-4 h-4 text-rose-600"></i>
+                            <span>Pilih Data yang Ingin Dihapus / Direset:</span>
+                        </span>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" onclick="toggleSelectAllResetOptions(true)" class="text-[11px] font-bold text-indigo-600 hover:underline">Pilih Semua</button>
+                            <span class="text-slate-300">•</span>
+                            <button type="button" onclick="toggleSelectAllResetOptions(false)" class="text-[11px] font-bold text-slate-500 hover:underline">Batal Semua</button>
+                        </div>
+                    </div>
+
+                    <!-- Option 1: Hapus Stok Seluruh Data -->
+                    <label class="flex items-start space-x-3 p-3 rounded-2xl border border-slate-200 bg-white hover:bg-rose-50/40 transition-colors cursor-pointer group">
+                        <input type="checkbox" id="reset-opt-stocks" class="mt-1 w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
+                        <div class="space-y-0.5">
+                            <span class="font-bold text-slate-800 group-hover:text-rose-900 block flex items-center gap-1.5">
+                                <span>📦 1. Hapus Stok Seluruh Data</span>
+                                <span class="px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-semibold">Stok = 0</span>
+                            </span>
+                            <span class="text-[11px] text-slate-500 block leading-snug">
+                                Mengosongkan saldo stok fisik seluruh produk (barang jadi & bahan baku) menjadi 0 pada cabang terpilih / semua cabang, serta membersihkan seluruh riwayat kartu mutasi stok fisik.
+                            </span>
+                        </div>
+                    </label>
+
+                    <!-- Option 2: Hapus Data Penjualan -->
+                    <label class="flex items-start space-x-3 p-3 rounded-2xl border border-slate-200 bg-white hover:bg-rose-50/40 transition-colors cursor-pointer group">
+                        <input type="checkbox" id="reset-opt-sales" class="mt-1 w-4 h-4 rounded text-rose-600 focus:ring-rose-500" checked>
+                        <div class="space-y-0.5">
+                            <span class="font-bold text-slate-800 group-hover:text-rose-900 block flex items-center gap-1.5">
+                                <span>💰 2. Hapus Data Penjualan</span>
+                                <span class="px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-semibold">Faktur & Omzet</span>
+                            </span>
+                            <span class="text-[11px] text-slate-500 block leading-snug">
+                                Menghapus seluruh riwayat transaksi kasir (sales), rincian produk (sale_items), data piutang pelanggan (receivables), dan log pembayaran cicilan pada cabang terpilih / semua cabang.
+                            </span>
+                        </div>
+                    </label>
+
+                    <!-- Option 3: Hapus Pemakaian Bahan Baku (BOM) -->
+                    <label class="flex items-start space-x-3 p-3 rounded-2xl border border-slate-200 bg-white hover:bg-rose-50/40 transition-colors cursor-pointer group">
+                        <input type="checkbox" id="reset-opt-bom" class="mt-1 w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
+                        <div class="space-y-0.5">
+                            <span class="font-bold text-slate-800 group-hover:text-rose-900 block flex items-center gap-1.5">
+                                <span>🧪 3. Hapus Pemakaian Bahan Baku (BOM)</span>
+                                <span class="px-1.5 py-0.2 rounded text-[9px] bg-amber-100 text-amber-800 font-semibold">BOM Usage Logs</span>
+                            </span>
+                            <span class="text-[11px] text-slate-500 block leading-snug">
+                                Membersihkan seluruh log mutasi pemotongan bahan baku BOM (air baku, tutup galon, tisu galon, plastik seal) yang terpotong dari penjualan produk olahan/galon.
+                            </span>
+                        </div>
+                    </label>
+
+                    <!-- Option 4: Hapus Laporan & Riwayat Shift -->
+                    <label class="flex items-start space-x-3 p-3 rounded-2xl border border-slate-200 bg-white hover:bg-rose-50/40 transition-colors cursor-pointer group">
+                        <input type="checkbox" id="reset-opt-shifts" class="mt-1 w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
+                        <div class="space-y-0.5">
+                            <span class="font-bold text-slate-800 group-hover:text-rose-900 block flex items-center gap-1.5">
+                                <span>⏱️ 4. Hapus Laporan & Riwayat Shift</span>
+                                <span class="px-1.5 py-0.2 rounded text-[9px] bg-indigo-100 text-indigo-800 font-semibold">Shifts & Meteran</span>
+                            </span>
+                            <span class="text-[11px] text-slate-500 block leading-snug">
+                                Menghapus riwayat shift harian kasir (cashier_shifts), rekaman log meteran air mesin RO/mineral, serta pengeluaran kas laci toko (beban & uang makan shift) pada cabang terpilih / semua cabang.
+                            </span>
                         </div>
                     </label>
                 </div>
 
-                <!-- Verifikasi PIN / Password Super Admin -->
+                <!-- 3. Verifikasi PIN & Password Super Admin -->
                 <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
                     <div class="flex items-center justify-between">
                         <label class="font-bold text-slate-800 flex items-center space-x-1.5">
                             <i data-lucide="shield-alert" class="w-4 h-4 text-rose-600"></i>
-                            <span>Otorisasi Super Admin <span class="text-rose-500">*</span></span>
+                            <span>Otorisasi Kredensial Super Admin <span class="text-rose-500">*</span></span>
                         </label>
-                        <span class="text-[10px] text-slate-500 font-mono">Verifikasi Kredensial</span>
+                        <span class="text-[10px] text-slate-500 font-mono">Keamanan Sistem</span>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <input type="password" id="purge-sales-admin-pin" placeholder="PIN Superadmin (999999)" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-mono text-center text-xs focus:outline-none focus:ring-2 focus:ring-rose-500">
+                            <input type="password" id="master-reset-admin-pin" placeholder="PIN Superadmin (999999)" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-mono text-center text-xs focus:outline-none focus:ring-2 focus:ring-rose-500">
                         </div>
                         <div>
-                            <input type="password" id="purge-sales-admin-password" placeholder="Atau Sandi (admin123)" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-rose-500">
+                            <input type="password" id="master-reset-admin-password" placeholder="Atau Sandi (admin123)" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-rose-500">
                         </div>
                     </div>
-                    <p class="text-[10px] text-slate-500">Masukkan PIN Super Admin (default: <code>999999</code>) atau Password (default: <code>admin123</code>).</p>
+                    <p class="text-[10px] text-slate-500">Masukkan PIN Super Admin (default: <code>999999</code>) atau Kata Sandi (default: <code>admin123</code>).</p>
                 </div>
 
-                <!-- Double Confirmation Text Input -->
+                <!-- 4. Konfirmasi Teks -->
                 <div class="p-3.5 bg-rose-50 border border-rose-300 rounded-2xl space-y-2">
                     <label class="block font-black text-rose-900">
-                        Ketik Teks Konfirmasi Berikut: <code class="bg-rose-200 px-1.5 py-0.5 rounded text-rose-950 select-all font-mono">HAPUS PENJUALAN</code>
+                        Ketik Teks Konfirmasi Berikut: <code class="bg-rose-200 px-1.5 py-0.5 rounded text-rose-950 select-all font-mono">RESET DATA</code>
                     </label>
-                    <input type="text" id="purge-sales-confirm-text" placeholder="Ketik persis HAPUS PENJUALAN..." autocomplete="off" class="w-full p-2.5 bg-white border-2 border-rose-400 rounded-xl font-black text-rose-800 placeholder-rose-300 text-xs focus:outline-none focus:ring-2 focus:ring-rose-600 uppercase" required>
-                    <p class="text-[10px] text-rose-700">Untuk mencegah penghapusan data tidak sengaja, Anda wajib mengetik teks di atas persis sama.</p>
+                    <input type="text" id="master-reset-confirm-text" placeholder="Ketik persis: RESET DATA" autocomplete="off" class="w-full p-2.5 bg-white border-2 border-rose-400 rounded-xl font-black text-rose-800 placeholder-rose-300 text-xs focus:outline-none focus:ring-2 focus:ring-rose-600 uppercase" required>
+                    <p class="text-[10px] text-rose-700">Tindakan ini <b>PERMANEN & TIDAK DAPAT DIBATALKAN</b>. Ketik teks di atas untuk mengonfirmasi.</p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
-                    <button type="button" onclick="closePurgeSalesModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700 transition-colors">Batal</button>
-                    <button type="submit" id="purge-sales-submit-btn" class="py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-black shadow-md transition-colors flex items-center justify-center space-x-1.5">
+                <!-- Footer Buttons -->
+                <div class="grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-100">
+                    <button type="button" onclick="closeMasterResetModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700 transition-colors">Batal</button>
+                    <button type="submit" id="master-reset-submit-btn" class="py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-black shadow-md transition-colors flex items-center justify-center space-x-1.5">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        <span>Konfirmasi & Hapus Permanen</span>
+                        <span>Eksekusi Reset Sekarang</span>
                     </button>
                 </div>
             </form>
@@ -21192,75 +21271,158 @@ Manager / Supervisor: __________________
         }
 
         // --- Fitur Hapus Seluruh Riwayat Penjualan (Super Admin Only) ---
-        function openPurgeSalesModal() {
+        // ==============================================================
+        // MASTER RESET & PEMBERSIHAN DATA CABANG (GRANULAR DATA PURGE)
+        // ==============================================================
+        function openMasterResetModal(preselectOpts = {}) {
             // Populate branch dropdown
-            const branchSelect = document.getElementById('purge-sales-branch-select');
+            const branchSelect = document.getElementById('master-reset-branch-select');
             if (branchSelect) {
-                let html = '<option value="ALL">🌐 SEMUA CABANG (Global Wipe - Seluruh Database)</option>';
+                let html = '<option value="ALL">🌐 SEMUA CABANG (Global Reset - Seluruh Database)</option>';
                 if (state.branches && state.branches.length > 0) {
                     state.branches.forEach(b => {
-                        html += `<option value="${b.id}">📍 Cabang: ${b.name} (${b.code || ''})</option>`;
+                        const isCurrent = (state.currentBranch && state.currentBranch.id == b.id) ? 'selected' : '';
+                        html += `<option value="${b.id}" ${isCurrent}>📍 Cabang: ${b.name} (${b.code || ''})</option>`;
                     });
                 }
                 branchSelect.innerHTML = html;
             }
 
-            // Auto fill credentials if Superadmin
-            if (state.loggedInUser && ['SUPER_ADMIN', 'SUPERADMIN'].includes(state.loggedInUser.role)) {
-                document.getElementById('purge-sales-admin-pin').value = state.loggedInUser.pin || '999999';
-                document.getElementById('purge-sales-admin-password').value = 'admin123';
+            // Set checkboxes based on preselectOpts
+            const optStocks = document.getElementById('reset-opt-stocks');
+            const optSales = document.getElementById('reset-opt-sales');
+            const optBom = document.getElementById('reset-opt-bom');
+            const optShifts = document.getElementById('reset-opt-shifts');
+
+            if (Object.keys(preselectOpts).length === 0) {
+                if (optStocks) optStocks.checked = false;
+                if (optSales) optSales.checked = true;
+                if (optBom) optBom.checked = false;
+                if (optShifts) optShifts.checked = false;
             } else {
-                document.getElementById('purge-sales-admin-pin').value = '';
-                document.getElementById('purge-sales-admin-password').value = '';
+                if (optStocks) optStocks.checked = !!preselectOpts.stocks;
+                if (optSales) optSales.checked = !!preselectOpts.sales;
+                if (optBom) optBom.checked = !!preselectOpts.bom;
+                if (optShifts) optShifts.checked = !!preselectOpts.shifts;
             }
 
-            // Reset confirmation input
-            document.getElementById('purge-sales-confirm-text').value = '';
-            document.getElementById('purge-sales-restore-stock').checked = true;
+            // Auto-fill credentials if Superadmin
+            if (state.loggedInUser && ['SUPER_ADMIN', 'SUPERADMIN'].includes(state.loggedInUser.role)) {
+                document.getElementById('master-reset-admin-pin').value = state.loggedInUser.pin || '999999';
+                document.getElementById('master-reset-admin-password').value = 'admin123';
+            } else {
+                document.getElementById('master-reset-admin-pin').value = '';
+                document.getElementById('master-reset-admin-password').value = '';
+            }
 
-            document.getElementById('purge-sales-modal').classList.remove('hidden');
+            // Reset confirmation text
+            const confirmInput = document.getElementById('master-reset-confirm-text');
+            if (confirmInput) confirmInput.value = '';
+
+            updateResetScopeInfo();
+
+            const modal = document.getElementById('master-reset-modal');
+            if (modal) modal.classList.remove('hidden');
             lucide.createIcons();
         }
 
-        function closePurgeSalesModal() {
-            document.getElementById('purge-sales-modal').classList.add('hidden');
+        function closeMasterResetModal() {
+            const modal = document.getElementById('master-reset-modal');
+            if (modal) modal.classList.add('hidden');
         }
 
-        async function submitPurgeSalesForm(e) {
-            e.preventDefault();
-            const submitBtn = document.getElementById('purge-sales-submit-btn');
-            const branchId = document.getElementById('purge-sales-branch-select').value;
-            const restoreStock = document.getElementById('purge-sales-restore-stock').checked;
-            const adminPin = document.getElementById('purge-sales-admin-pin').value.trim();
-            const adminPassword = document.getElementById('purge-sales-admin-password').value.trim();
-            const confirmText = document.getElementById('purge-sales-confirm-text').value.trim();
+        // Backward compatibility alias
+        function openPurgeSalesModal() {
+            openMasterResetModal({ sales: true });
+        }
+        function closePurgeSalesModal() {
+            closeMasterResetModal();
+        }
 
-            if (confirmText !== 'HAPUS PENJUALAN') {
-                alert('Teks konfirmasi salah! Anda wajib mengetik "HAPUS PENJUALAN" dengan huruf besar.');
+        function toggleSelectAllResetOptions(checked) {
+            const optStocks = document.getElementById('reset-opt-stocks');
+            const optSales = document.getElementById('reset-opt-sales');
+            const optBom = document.getElementById('reset-opt-bom');
+            const optShifts = document.getElementById('reset-opt-shifts');
+
+            if (optStocks) optStocks.checked = checked;
+            if (optSales) optSales.checked = checked;
+            if (optBom) optBom.checked = checked;
+            if (optShifts) optShifts.checked = checked;
+        }
+
+        function updateResetScopeInfo() {
+            const select = document.getElementById('master-reset-branch-select');
+            const badge = document.getElementById('reset-scope-badge');
+            const desc = document.getElementById('reset-scope-desc');
+            if (!select || !badge || !desc) return;
+
+            const val = select.value;
+            if (val === 'ALL') {
+                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800';
+                badge.innerText = 'Global (Semua Cabang)';
+                desc.innerHTML = 'Operasi akan mengeksekusi reset pada <b>seluruh cabang toko</b> di seluruh database secara simultan.';
+            } else {
+                const text = select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : `Cabang #${val}`;
+                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800';
+                badge.innerText = 'Spesifik: ' + text.replace('📍 Cabang: ', '');
+                desc.innerHTML = `Operasi reset <b>HANYA</b> akan berdampak pada <b>${text}</b>. Cabang lainnya tetap utuh dan aman.`;
+            }
+        }
+
+        async function submitMasterResetForm(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('master-reset-submit-btn');
+            const branchId = document.getElementById('master-reset-branch-select').value;
+            
+            const purgeStocks = document.getElementById('reset-opt-stocks').checked;
+            const purgeSales = document.getElementById('reset-opt-sales').checked;
+            const purgeBom = document.getElementById('reset-opt-bom').checked;
+            const purgeShifts = document.getElementById('reset-opt-shifts').checked;
+
+            if (!purgeStocks && !purgeSales && !purgeBom && !purgeShifts) {
+                alert('Pilih minimal salah satu opsi data yang ingin direset!');
+                return;
+            }
+
+            const adminPin = document.getElementById('master-reset-admin-pin').value.trim();
+            const adminPassword = document.getElementById('master-reset-admin-password').value.trim();
+            const confirmText = document.getElementById('master-reset-confirm-text').value.trim().toUpperCase();
+
+            if (!['RESET DATA', 'RESET', 'HAPUS', 'HAPUS DATA', 'HAPUS PENJUALAN'].includes(confirmText)) {
+                alert('Teks konfirmasi salah! Anda wajib mengetik "RESET DATA".');
                 return;
             }
 
             if (!adminPin && !adminPassword && (!state.loggedInUser || !['SUPER_ADMIN', 'SUPERADMIN'].includes(state.loggedInUser.role))) {
-                alert('Masukkan PIN atau Kata Sandi Super Admin untuk otorisasi penghapusan massal!');
+                alert('Masukkan PIN atau Kata Sandi Super Admin untuk otorisasi reset data!');
                 return;
             }
 
-            const branchLabel = branchId === 'ALL' ? 'SEMUA CABANG (GLOBAL)' : `Cabang ID #${branchId}`;
-            const stockNotice = restoreStock ? 'Stok produk & bahan baku BOM AKAN DIKEMBALIKAN ke gudang/cabang.' : 'Stok produk & bahan baku BOM TIDAK dikembalikan.';
+            const branchLabel = branchId === 'ALL' ? 'SEMUA CABANG (GLOBAL WIPE)' : (document.getElementById('master-reset-branch-select').selectedOptions[0]?.text || `Cabang #${branchId}`);
+            
+            const selectedItems = [];
+            if (purgeStocks) selectedItems.push('1. Stok Seluruh Produk (Set ke 0)');
+            if (purgeSales) selectedItems.push('2. Riwayat Transaksi Penjualan & Piutang');
+            if (purgeBom) selectedItems.push('3. Log Pemakaian Bahan Baku (BOM)');
+            if (purgeShifts) selectedItems.push('4. Riwayat Laporan Shift & Meteran Air');
 
-            const finalConfirm = confirm(`⚠️ PERINGATAN TERAKHIR!\n\nAnda akan MENGHAPUS SEMUA DATA TRANSAKSI PENJUALAN untuk ${branchLabel}.\n${stockNotice}\n\nOperasi ini bersifat PERMANEN dan TIDAK DAPAT DIBATALKAN!\n\nApakah Anda benar-benar yakin ingin melanjutkan?`);
+            const finalConfirm = confirm(`⚠️ PERINGATAN TINGKAT TINGGI!\n\nAnda akan MENGHAPUS / MERESET:\n• ${selectedItems.join('\n• ')}\n\nLingkup Target: ${branchLabel}\n\nOperasi ini bersifat PERMANEN dan TIDAK DAPAT DIBATALKAN!\n\nApakah Anda benar-benar yakin ingin mengeksekusi reset?`);
             if (!finalConfirm) return;
 
             submitBtn.disabled = true;
-            submitBtn.innerHTML = `<span>Menghapus Data...</span>`;
+            submitBtn.innerHTML = `<span>Mengeksekusi Reset...</span>`;
 
             try {
-                const res = await fetch('api.php?action=purge_all_sales', {
+                const res = await fetch('api.php?action=master_reset_data', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         branch_id: branchId,
-                        restore_stock: restoreStock,
+                        purge_stocks: purgeStocks,
+                        purge_sales: purgeSales,
+                        purge_bom: purgeBom,
+                        purge_shifts: purgeShifts,
                         confirm_text: confirmText,
                         admin_pin: adminPin || '999999',
                         admin_password: adminPassword || 'admin123',
@@ -21269,24 +21431,35 @@ Manager / Supervisor: __________________
                 });
 
                 const data = await res.json();
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `<i data-lucide="trash-2" class="w-4 h-4"></i><span>Konfirmasi & Hapus Permanen</span>`;
-
                 if (data.success) {
-                    alert(`✅ BERHASIL!\n${data.message}\nTotal Faktur Dihapus: ${data.deleted_count || 0}`);
-                    closePurgeSalesModal();
-                    await loadSaleCancellations();
+                    alert(`✅ ${data.message}`);
+                    closeMasterResetModal();
+
+                    // Refresh relevant tables and views
                     if (typeof loadSalesReports === 'function') loadSalesReports();
-                    if (typeof loadStockInventory === 'function') loadStockInventory();
-                    if (typeof loadDashboard === 'function') loadDashboard();
+                    if (typeof loadBomUsageReport === 'function') loadBomUsageReport();
+                    if (typeof loadShiftReports === 'function') loadShiftReports();
+                    if (typeof loadInventoryStocks === 'function') loadInventoryStocks();
+                    if (typeof loadStockMovements === 'function') loadStockMovements();
+                    if (typeof loadReceivablesReport === 'function') loadReceivablesReport();
+                    if (typeof loadSaleCancellations === 'function') loadSaleCancellations();
+                    if (typeof bootstrapApp === 'function') bootstrapApp();
                 } else {
-                    alert('❌ GAGAL: ' + (data.message || data.error));
+                    alert(`❌ GAGAL: ${data.message || 'Terjadi kesalahan sistem'}`);
                 }
             } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan koneksi saat mereset data.');
+            } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = `<i data-lucide="trash-2" class="w-4 h-4"></i><span>Konfirmasi & Hapus Permanen</span>`;
-                alert('Terjadi kesalahan jaringan saat menghapus data penjualan: ' + err.message);
+                submitBtn.innerHTML = `<i data-lucide="trash-2" class="w-4 h-4"></i><span>Eksekusi Reset Sekarang</span>`;
+                lucide.createIcons();
             }
+        }
+
+        // Backward compatibility
+        async function submitPurgeSalesForm(e) {
+            submitMasterResetForm(e);
         }
 
         // ==========================================

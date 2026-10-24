@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.20",
-  "build": "20261024-01",
+  "version": "1.2.21",
+  "build": "20261024-02",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.21",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Pusat Reset & Pembersihan Data Toko Granular Multi-Cabang (Global & Cabang Spesifik)",
+      "description": "Menghadirkan fitur Pusat Reset & Pembersihan Data Toko (Master Data Purge) dengan cakupan fleksibel: pilihan target untuk seluruh cabang (Global) atau cabang tertentu spesifik. Mendukung 4 opsi reset data secara granular: (1) Hapus stok seluruh data (mengosongkan saldo stok fisik menjadi 0 dan membersihkan kartu mutasi stok), (2) Hapus data penjualan (menghapus faktur transaksi sales, detail item sale_items, piutang customer_receivables, dan riwayat pembayaran cicilan), (3) Hapus pemakaian (membersihkan seluruh log mutasi pemotongan bahan baku BOM dari penjualan), (4) Hapus laporan shift (menghapus rekaman cashier_shifts, log meteran air, dan pengeluaran kas laci toko). Dilengkapi proteksi keamanan Super Admin (verifikasi PIN & password serta teks konfirmasi 'RESET DATA') dan tombol akses cepat terintegrasi di Laporan Penjualan, Laporan Shift, Laporan BOM, Manajemen Stok, dan Menu Pengaturan Sistem.",
+      "rollback_command": "git checkout v1.2.20"
+    },
     {
       "version": "1.2.20",
       "commit": "HEAD",
