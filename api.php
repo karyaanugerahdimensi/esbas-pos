@@ -1004,6 +1004,19 @@ try {
             $stmtHasClosed->execute([$currentUser['id'], $todayDate, $todayDate]);
             $hasClosedShiftToday = ((int)$stmtHasClosed->fetchColumn()) > 0;
 
+            // Cek apakah cabang ini sudah melakukan closing final (Tutup Toko Hari Ini)
+            $stmtBranchFinalClosed = $pdo->prepare("
+                SELECT cs.*, u.name as closer_name 
+                FROM cashier_shifts cs
+                JOIN users u ON u.id = cs.user_id
+                WHERE cs.branch_id = ? AND cs.status = 'CLOSED' AND cs.is_final_shift = 1
+                  AND (date(cs.start_time) = ? OR (cs.end_time IS NOT NULL AND date(cs.end_time) = ?))
+                ORDER BY cs.id DESC LIMIT 1
+            ");
+            $stmtBranchFinalClosed->execute([$currentBranch['id'], $todayDate, $todayDate]);
+            $finalClosedShiftToday = $stmtBranchFinalClosed->fetch();
+            $isBranchClosedToday = !empty($finalClosedShiftToday);
+
             echo json_encode([
                 'success' => true,
                 'branches' => $branches,
@@ -1013,6 +1026,8 @@ try {
                 'user_roles' => $userRoles,
                 'active_shift' => $activeShift,
                 'has_closed_shift' => $hasClosedShiftToday,
+                'branch_closed_today' => $isBranchClosedToday,
+                'final_closed_shift' => $finalClosedShiftToday ?: null,
                 'products' => $products,
                 'variants' => $allVariants,
                 'variant_recipes' => $allVarRecipes,
@@ -3808,6 +3823,7 @@ try {
 
         case 'get_opening_shift_data':
             $branchId = (int)($_GET['branch_id'] ?? ($input['branch_id'] ?? 1));
+            $forceOverride = !empty($_GET['force_override']) || !empty($input['force_override']);
 
             $today = date('Y-m-d');
 
@@ -3824,11 +3840,15 @@ try {
 
             $todayClosedCount = 0;
             $activeOpenShift = null;
+            $todayFinalShift = null;
             foreach ($todayShifts as $ts) {
                 if ($ts['status'] === 'OPEN') {
                     $activeOpenShift = $ts;
                 } else {
                     $todayClosedCount++;
+                    if (!empty($ts['is_final_shift'])) {
+                        $todayFinalShift = $ts;
+                    }
                 }
             }
 
@@ -3854,18 +3874,60 @@ try {
                 break;
             }
 
-            $nextShiftNumber = $todayClosedCount + 1;
-            $nextShiftName = ($nextShiftNumber == 1) ? 'Shift 1 (Pagi)' : (($nextShiftNumber == 2) ? 'Shift 2 (Siang/Malam)' : ('Shift ' . $nextShiftNumber));
-            $nextShiftType = 'SHIFT_' . $nextShiftNumber;
+            // CEK APAKAH HARI INI CABANG SUDAH TUTUP TOKO (Closing Harian / is_final_shift = 1):
+            // Jika sudah Tutup Toko, tidak boleh membuka shift berikutnya di hari yang sama!
+            if ($todayFinalShift && !$forceOverride) {
+                echo json_encode([
+                    'success' => true,
+                    'branch_closed_today' => true,
+                    'final_shift_info' => [
+                        'id' => (int)$todayFinalShift['id'],
+                        'shift_number' => (int)($todayFinalShift['shift_number'] ?? 1),
+                        'shift_name' => $todayFinalShift['shift_name'] ?: 'Shift 1 (Pagi)',
+                        'cashier_name' => $todayFinalShift['cashier_name'] ?: 'Kasir',
+                        'start_time' => $todayFinalShift['start_time'],
+                        'end_time' => $todayFinalShift['end_time']
+                    ],
+                    'message' => 'Toko cabang ini sudah ditutup untuk hari ini (Closing Harian telah diselesaikan oleh ' . ($todayFinalShift['cashier_name'] ?: 'Kasir') . '). Operasional kasir baru tidak dapat dibuka lagi hari ini dan akan kembali dimulai dari Shift 1 (Pagi) pada hari esok.'
+                ]);
+                break;
+            }
 
-            // Penentuan Shift Acuan Stok:
-            // Jika hari ini sudah ada shift yang selesai (Shift 1 -> Shift 2), stok acuan mengambil hasil closing fisik Shift 1 hari ini!
-            // Jika shift pertama hari ini (Shift 1), stok acuan mengambil hasil closing malam hari kemarin.
-            $lastShift = null;
-            $shiftReferenceTitle = '';
-            $isContinuation = false;
+            // Penentuan Nomor Shift & Nama Shift:
+            // Aturan Bisnis SOP:
+            // 1. Jika shift sebelumnya yang closed adalah Final Shift (Tutup Toko), siklus harian selesai!
+            //    Maka shift berikutnya PASTI KEMBALI KE SHIFT 1 (PAGI)!
+            // 2. Jika shift sebelumnya BUKAN Final Shift (misal serah terima Shift 1 ke Shift 2 di hari yang sama),
+            //    maka barulah nomor shift bertambah (Shift 2: Siang/Malam).
 
-            if ($nextShiftNumber > 1 && !empty($todayShifts)) {
+            // Cari shift terakhir yang ditutup (baik hari ini maupun hari sebelumnya)
+            $stmtLastClosedAny = $pdo->prepare("
+                SELECT cs.*, u.name as cashier_name, u.nik as cashier_nik
+                FROM cashier_shifts cs
+                JOIN users u ON u.id = cs.user_id
+                WHERE cs.branch_id = ? AND cs.status = 'CLOSED'
+                ORDER BY cs.id DESC LIMIT 1
+            ");
+            $stmtLastClosedAny->execute([$branchId]);
+            $lastAnyClosed = $stmtLastClosedAny->fetch();
+
+            $isLastFinal = $lastAnyClosed ? (int)($lastAnyClosed['is_final_shift'] ?? 0) : 0;
+
+            if ($isLastFinal == 1 || $todayClosedCount == 0 || $forceOverride) {
+                // Siklus Baru / Hari Baru: KEMBALI KE SHIFT 1 (PAGI)
+                $nextShiftNumber = 1;
+                $nextShiftName = 'Shift 1 (Pagi)';
+                $nextShiftType = 'SHIFT_1';
+                $isContinuation = false;
+                $shiftReferenceTitle = "Stok Acuan Tutup Toko Kemarin (Malam 🔒)";
+                $lastShift = $lastAnyClosed;
+            } else {
+                // Serah terima antar kasir di hari yang sama (Shift 1 -> Shift 2)
+                $nextShiftNumber = $todayClosedCount + 1;
+                $nextShiftName = ($nextShiftNumber == 2) ? 'Shift 2 (Siang/Malam)' : ('Shift ' . $nextShiftNumber);
+                $nextShiftType = 'SHIFT_' . $nextShiftNumber;
+                $isContinuation = true;
+
                 // Ambil shift terakhir yang sudah ditutup hari ini
                 for ($i = count($todayShifts) - 1; $i >= 0; $i--) {
                     if ($todayShifts[$i]['status'] === 'CLOSED') {
@@ -3876,33 +3938,18 @@ try {
                 if (!$lastShift) $lastShift = end($todayShifts);
 
                 $shiftReferenceTitle = "Serah Terima dari " . ($lastShift['cashier_name'] ?? 'Kasir') . " (" . ($lastShift['shift_name'] ?: 'Shift ' . ($nextShiftNumber - 1)) . ")";
-                $isContinuation = true;
-            } else {
-                // Ambil closing shift malam kemarin / sebelum hari ini
-                $stmtPrevDay = $pdo->prepare("
+            }
+
+            if (!$lastShift) {
+                $stmtFallbackLast = $pdo->prepare("
                     SELECT cs.*, u.name as cashier_name, u.nik as cashier_nik
                     FROM cashier_shifts cs
                     JOIN users u ON u.id = cs.user_id
-                    WHERE cs.branch_id = ? AND date(cs.start_time) < ?
+                    WHERE cs.branch_id = ?
                     ORDER BY cs.id DESC LIMIT 1
                 ");
-                $stmtPrevDay->execute([$branchId, $today]);
-                $lastShift = $stmtPrevDay->fetch();
-
-                if (!$lastShift) {
-                    $stmtFallbackLast = $pdo->prepare("
-                        SELECT cs.*, u.name as cashier_name, u.nik as cashier_nik
-                        FROM cashier_shifts cs
-                        JOIN users u ON u.id = cs.user_id
-                        WHERE cs.branch_id = ?
-                        ORDER BY cs.id DESC LIMIT 1
-                    ");
-                    $stmtFallbackLast->execute([$branchId]);
-                    $lastShift = $stmtFallbackLast->fetch();
-                }
-
-                $shiftReferenceTitle = "Stok Acuan Tutup Toko Kemarin (Malam 🔒)";
-                $isContinuation = false;
+                $stmtFallbackLast->execute([$branchId]);
+                $lastShift = $stmtFallbackLast->fetch();
             }
 
             $lastClosingItems = [];
@@ -4110,20 +4157,59 @@ try {
 
             $today = date('Y-m-d');
             $now = date('Y-m-d H:i:s');
+            $forceOverride = !empty($input['force_override']);
 
-            // Tentukan nomor shift & nama shift hari ini
+            // 1. Cek apakah cabang ini sudah ditutup hari ini (is_final_shift = 1)
+            $stmtCheckFinalToday = $pdo->prepare("
+                SELECT cs.*, u.name as closer_name
+                FROM cashier_shifts cs
+                JOIN users u ON u.id = cs.user_id
+                WHERE cs.branch_id = ? AND date(cs.start_time) = ? AND cs.status = 'CLOSED' AND cs.is_final_shift = 1
+                ORDER BY cs.id DESC LIMIT 1
+            ");
+            $stmtCheckFinalToday->execute([$branchId, $today]);
+            $closedToday = $stmtCheckFinalToday->fetch();
+
+            if ($closedToday && !$forceOverride) {
+                echo json_encode([
+                    'success' => false,
+                    'branch_closed_today' => true,
+                    'message' => 'Toko cabang ini sudah ditutup untuk hari ini (Closing Harian telah diselesaikan oleh ' . ($closedToday['closer_name'] ?: 'Kasir') . ' pada ' . ($closedToday['end_time'] ?: '') . '). Operasional kasir baru tidak dapat dibuka lagi hari ini dan akan kembali dimulai dari Shift 1 (Pagi) pada hari esok.'
+                ]);
+                break;
+            }
+
+            // 2. Tentukan nomor shift & nama shift:
+            // Cek apakah shift terakhir yang closed adalah final shift (is_final_shift = 1)
+            $stmtLastClosedAny = $pdo->prepare("
+                SELECT is_final_shift FROM cashier_shifts
+                WHERE branch_id = ? AND status = 'CLOSED'
+                ORDER BY id DESC LIMIT 1
+            ");
+            $stmtLastClosedAny->execute([$branchId]);
+            $lastWasFinal = (int)($stmtLastClosedAny->fetchColumn() ?? 0);
+
+            $stmtCountToday = $pdo->prepare("SELECT COUNT(*) FROM cashier_shifts WHERE branch_id = ? AND date(start_time) = ?");
+            $stmtCountToday->execute([$branchId, $today]);
+            $todayCount = (int)$stmtCountToday->fetchColumn();
+
             $shiftNumber = (int)($input['shift_number'] ?? 0);
-            if ($shiftNumber <= 0) {
-                $stmtCountToday = $pdo->prepare("SELECT COUNT(*) FROM cashier_shifts WHERE branch_id = ? AND date(start_time) = ?");
-                $stmtCountToday->execute([$branchId, $today]);
-                $shiftNumber = (int)$stmtCountToday->fetchColumn() + 1;
+            if ($shiftNumber <= 0 || $lastWasFinal == 1 || $forceOverride) {
+                if ($lastWasFinal == 1 || $todayCount == 0 || $forceOverride) {
+                    $shiftNumber = 1; // Kembali ke shift awal (Shift 1)
+                } else {
+                    $shiftNumber = $todayCount + 1;
+                }
             }
 
             $shiftName = trim($input['shift_name'] ?? '');
-            if (empty($shiftName)) {
+            if (empty($shiftName) || $shiftNumber == 1) {
                 $shiftName = ($shiftNumber == 1) ? 'Shift 1 (Pagi)' : (($shiftNumber == 2) ? 'Shift 2 (Siang/Malam)' : ('Shift ' . $shiftNumber));
             }
             $shiftType = trim($input['shift_type'] ?? ('SHIFT_' . $shiftNumber));
+            if ($shiftNumber == 1) {
+                $shiftType = 'SHIFT_1';
+            }
 
             // Dynamic items payload from frontend
             $dynamicItems = $input['items'] ?? [];

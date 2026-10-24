@@ -8845,6 +8845,8 @@ try {
                 state.activeShift = data.active_shift;
                 state.currentUserHasClosedShift = (data.has_closed_shift === true);
                 window.userHasClosedShift = (data.has_closed_shift === true);
+                state.branchClosedToday = (data.branch_closed_today === true);
+                state.finalClosedShift = data.final_closed_shift || null;
                 state.userRoles = data.user_roles || [];
                 const seenPids = new Set();
                 state.products = (data.products || []).filter(p => {
@@ -10162,25 +10164,43 @@ try {
                 topbarShiftText.innerText = `${shiftTitle}: ${state.currentUser?.name || 'Buka'}`;
                 topbarShiftText.className = 'text-xs font-bold text-emerald-800';
             } else {
-                indicator.className = 'w-3.5 h-3.5 rounded-full bg-rose-500';
-                statusText.innerText = 'SHIFT BELUM DIBUKA';
-                statusText.className = 'text-sm font-bold text-rose-700';
-                detailsText.innerText = 'Buka sesi kasir untuk mencatat modal kas.';
-                btnLabel.innerText = 'Buka Shift Baru';
+                if (state.branchClosedToday) {
+                    const closerName = escapeHtml(state.finalClosedShift?.closer_name || state.finalClosedShift?.cashier_name || 'Kasir');
+                    const closeTime = escapeHtml(state.finalClosedShift?.end_time || '');
+                    indicator.className = 'w-3.5 h-3.5 rounded-full bg-slate-500';
+                    statusText.innerText = 'TOKO TUTUP (CLOSING HARIAN SELESAI) 🌙';
+                    statusText.className = 'text-sm font-bold text-slate-700';
+                    detailsText.innerText = `Operasional hari ini telah ditutup oleh ${closerName}${closeTime ? ' (' + closeTime + ')' : ''}. Buka shift kembali esok hari sebagai Shift 1 (Pagi).`;
+                    btnLabel.innerText = 'Status: Toko Tutup 🌙';
 
-                topbarShiftBadge.className = 'cursor-pointer flex items-center space-x-1.5 bg-rose-50 border border-rose-200 px-2.5 py-1.5 rounded-xl hover:bg-rose-100 transition-colors';
-                topbarShiftText.innerText = 'Shift Tutup';
-                topbarShiftText.className = 'text-xs font-bold text-rose-800';
+                    topbarShiftBadge.className = 'cursor-pointer flex items-center space-x-1.5 bg-slate-100 border border-slate-300 px-2.5 py-1.5 rounded-xl hover:bg-slate-200 transition-colors';
+                    topbarShiftText.innerText = 'Toko Tutup 🌙';
+                    topbarShiftText.className = 'text-xs font-bold text-slate-700';
+                } else {
+                    indicator.className = 'w-3.5 h-3.5 rounded-full bg-rose-500';
+                    statusText.innerText = 'SHIFT BELUM DIBUKA';
+                    statusText.className = 'text-sm font-bold text-rose-700';
+                    detailsText.innerText = 'Buka sesi kasir untuk mencatat modal kas.';
+                    btnLabel.innerText = 'Buka Shift Baru';
+
+                    topbarShiftBadge.className = 'cursor-pointer flex items-center space-x-1.5 bg-rose-50 border border-rose-200 px-2.5 py-1.5 rounded-xl hover:bg-rose-100 transition-colors';
+                    topbarShiftText.innerText = 'Shift Tutup';
+                    topbarShiftText.className = 'text-xs font-bold text-rose-800';
+                }
             }
         }
 
-        async function openShiftModal() {
+        async function openShiftModal(forceOverride = false) {
             const isShiftOpen = state.activeShift && state.activeShift.status === 'OPEN';
             const title = document.getElementById('shift-modal-title');
             const desc = document.getElementById('shift-modal-desc');
             const body = document.getElementById('shift-modal-body');
             const btn = document.getElementById('shift-modal-action-btn');
             const branchId = state.currentBranch ? state.currentBranch.id : 1;
+
+            if (forceOverride) {
+                window._forceShiftOverride = true;
+            }
 
             if (isShiftOpen) {
                 // ==========================================
@@ -10594,13 +10614,87 @@ try {
                 document.getElementById('shift-modal').classList.remove('hidden');
 
                 try {
-                    const res = await fetch(`api.php?action=get_opening_shift_data&branch_id=${branchId}`);
+                    const overrideParam = (forceOverride || window._forceShiftOverride) ? '&force_override=1' : '';
+                    const res = await fetch(`api.php?action=get_opening_shift_data&branch_id=${branchId}${overrideParam}`);
                     const data = await res.json();
 
                     if (data.has_active_open_shift && data.active_open_shift) {
                         state.activeShift = data.active_open_shift;
                         renderShiftBanner();
                         return openShiftModal();
+                    }
+
+                    if (data.branch_closed_today) {
+                        state.branchClosedToday = true;
+                        state.finalClosedShift = data.final_shift_info || state.finalClosedShift;
+                        renderShiftBanner();
+
+                        const finalInfo = data.final_shift_info || {};
+                        const closerName = escapeHtml(finalInfo.cashier_name || 'Kasir');
+                        const closeTime = escapeHtml(finalInfo.end_time || '-');
+                        const isSuperAdmin = (state.currentUser?.role === 'SUPER_ADMIN');
+
+                        title.innerHTML = `
+                            <div class="flex items-center space-x-2 flex-wrap">
+                                <span>Toko Hari Ini Sudah Ditutup</span>
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-slate-800 text-amber-300 uppercase tracking-wider">
+                                    🌙 Operasional Selesai
+                                </span>
+                            </div>
+                        `;
+                        desc.innerText = `Cabang: ${state.currentBranch?.name || 'Cabang'} • Status: Closing Harian Telah Selesai`;
+
+                        btn.innerText = 'TUTUP (KEMBALI)';
+                        btn.className = 'py-3 px-5 bg-slate-200 hover:bg-slate-300 rounded-2xl text-xs font-bold text-slate-700 transition-all uppercase tracking-wider';
+                        btn.onclick = () => closeShiftModal();
+
+                        body.innerHTML = `
+                            <div class="space-y-4 py-2">
+                                <div class="p-4 sm:p-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl shadow-md border border-slate-700 space-y-3">
+                                    <div class="flex items-start space-x-3.5">
+                                        <div class="w-10 h-10 rounded-xl bg-slate-700/80 flex items-center justify-center text-2xl shrink-0">
+                                            🌙
+                                        </div>
+                                        <div class="space-y-1">
+                                            <div class="text-sm font-black text-amber-300">Operasional Hari Ini Telah Ditutup (Closing Akhir Selesai)</div>
+                                            <p class="text-xs text-slate-300 leading-relaxed">
+                                                Toko cabang ini telah menyelesaikan operasional harian dan ditutup oleh <b class="text-white">${closerName}</b> pada <b class="text-white">${closeTime}</b>.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-slate-700/80 text-xs">
+                                        <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700 flex items-center space-x-2 text-slate-300">
+                                            <span class="text-emerald-400 font-bold">✓</span>
+                                            <span>Sisa tutup galon telah diretur ke gudang (stok 0)</span>
+                                        </div>
+                                        <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700 flex items-center space-x-2 text-slate-300">
+                                            <span class="text-emerald-400 font-bold">✓</span>
+                                            <span>10 Galon produk jadi standby siap buka esok</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 flex items-start space-x-3 text-xs text-amber-900">
+                                    <span class="text-xl shrink-0">ℹ️</span>
+                                    <div class="space-y-1">
+                                        <div class="font-bold">Ketentuan SOP Shift Kasir:</div>
+                                        <p class="text-amber-800 leading-relaxed">
+                                            Sesuai SOP, setelah penutupan toko (closing harian) tidak diperkenankan membuka shift lanjutan di hari yang sama.
+                                            Operasional kasir baru akan <b>kembali dibuka dari Shift 1 (Pagi) pada hari esok</b>.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                ${isSuperAdmin ? `
+                                    <div class="pt-2 flex justify-end">
+                                        <button type="button" onclick="confirmSuperAdminForceReopen()" class="text-[11px] text-rose-600 hover:text-rose-800 font-bold underline flex items-center space-x-1 cursor-pointer">
+                                            <span>⚠️ Buka Shift Darurat (Super Admin Override)</span>
+                                        </button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                        return;
                     }
 
                     const nextNum = data.next_shift_number || 1;
@@ -10620,6 +10714,7 @@ try {
                     desc.innerText = `Cabang: ${state.currentBranch?.name || 'Cabang'} • Kasir: ${state.currentUser?.name || 'Kasir'}`;
                     btn.innerText = `BUKA ${nextName.toUpperCase()}`;
                     btn.className = 'py-3.5 px-5 bg-emerald-600 hover:bg-emerald-700 rounded-2xl text-xs font-black text-white shadow-lg shadow-emerald-200 transition-all uppercase tracking-wider';
+                    btn.onclick = () => executeShiftAction();
                     btn.setAttribute('data-next-shift-number', nextNum);
                     btn.setAttribute('data-next-shift-name', nextName);
 
@@ -11491,6 +11586,13 @@ try {
 
                     if (data.is_final_shift) {
                         alert(`Penutupan Toko Malam Selesai (Closing Akhir Terkunci)!\n\nShift: ${data.summary?.shift_name || 'Shift Akhir'}\nUang Fisik Aktual: ${formatRupiah(data.summary.actual_cash)}\nEkspektasi Sistem: ${formatRupiah(data.summary.expected_cash)}\nSelisih Kas: ${formatRupiah(data.summary.cash_difference)}${disbInfo}${meterInfo}\n\nLaporan pengeluaran telah otomatis tersinkronisasi ke Beban Operasional, Kasbon, dan Slip Gaji!`);
+                        state.branchClosedToday = true;
+                        state.finalClosedShift = {
+                            id: data.summary?.shift_id,
+                            shift_name: data.summary?.shift_name || 'Shift Akhir',
+                            cashier_name: state.currentUser?.name || 'Kasir',
+                            end_time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                        };
                     } else {
                         alert(`Shift Berhasil Ditutup (Serah Terima Kasir Selesai)!\n\nShift: ${data.summary?.shift_name || 'Shift 1'}\nUang Fisik Aktual: ${formatRupiah(data.summary.actual_cash)}\nEkspektasi Sistem: ${formatRupiah(data.summary.expected_cash)}\nSelisih Kas: ${formatRupiah(data.summary.cash_difference)}${disbInfo}${meterInfo}\n\nSisa stok fisik & saldo kas otomatis siap diserahterimakan ke Shift berikutnya.`);
                     }
@@ -11588,6 +11690,7 @@ try {
                         shift_number: nextNum,
                         shift_name: nextName,
                         initial_cash: initCash,
+                        force_override: window._forceShiftOverride ? 1 : 0,
                         items: dynamicOpeningItems,
                         opening_raw_mineral: openMin,
                         opening_raw_ro: openRo,
@@ -11600,6 +11703,8 @@ try {
                 const data = await res.json();
                 if (data.success) {
                     alert(data.message);
+                    window._forceShiftOverride = false;
+                    state.branchClosedToday = false;
                     state.activeShift = data.shift;
                     renderShiftBanner();
                     closeShiftModal();
@@ -11609,6 +11714,11 @@ try {
                 } else alert(data.message || data.error);
             }
         }
+
+        window.confirmSuperAdminForceReopen = function() {
+            if (!confirm("Peringatan: Toko hari ini sudah ditutup harian (Closing Akhir).\n\nApakah Anda yakin ingin membuka shift baru secara darurat (Override)?\nSistem akan membuka shift sebagai Shift 1 (Pagi).")) return;
+            openShiftModal(true);
+        };
 
         // ==========================================
         // 2. LAPORAN PENJUALAN
