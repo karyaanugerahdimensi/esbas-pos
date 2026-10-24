@@ -682,10 +682,20 @@ try {
             // Hide password hash
             unset($user['password']);
 
+            $todayDate = date('Y-m-d');
+            $stmtHasClosed = $pdo->prepare("
+                SELECT COUNT(*) FROM cashier_shifts
+                WHERE user_id = ? AND status = 'CLOSED' 
+                  AND (date(start_time) = ? OR (end_time IS NOT NULL AND date(end_time) = ?))
+            ");
+            $stmtHasClosed->execute([$user['id'], $todayDate, $todayDate]);
+            $hasClosedShiftToday = ((int)$stmtHasClosed->fetchColumn()) > 0;
+
             echo json_encode([
                 'success' => true,
                 'message' => 'Login berhasil! Selamat datang, ' . $user['name'],
                 'user' => $user,
+                'has_closed_shift' => $hasClosedShiftToday,
                 'session_info' => [
                     'login_time' => $loginTime,
                     'expires_at' => $loginTime + $maxSessionSeconds,
@@ -979,6 +989,16 @@ try {
                 }
             }
 
+            // Cek apakah user saat ini sudah pernah melakukan closing shift pada hari ini
+            $todayDate = date('Y-m-d');
+            $stmtHasClosed = $pdo->prepare("
+                SELECT COUNT(*) FROM cashier_shifts
+                WHERE user_id = ? AND status = 'CLOSED' 
+                  AND (date(start_time) = ? OR (end_time IS NOT NULL AND date(end_time) = ?))
+            ");
+            $stmtHasClosed->execute([$currentUser['id'], $todayDate, $todayDate]);
+            $hasClosedShiftToday = ((int)$stmtHasClosed->fetchColumn()) > 0;
+
             echo json_encode([
                 'success' => true,
                 'branches' => $branches,
@@ -987,6 +1007,7 @@ try {
                 'current_user' => $currentUser,
                 'user_roles' => $userRoles,
                 'active_shift' => $activeShift,
+                'has_closed_shift' => $hasClosedShiftToday,
                 'products' => $products,
                 'variants' => $allVariants,
                 'variant_recipes' => $allVarRecipes,
@@ -4564,6 +4585,7 @@ try {
 
             echo json_encode([
                 'success' => true,
+                'has_closed_shift' => true,
                 'message' => ($isFinalShift ? 'Tutup toko & closing akhir malam berhasil disimpan.' : 'Closing shift & serah terima kasir berhasil disimpan.'),
                 'is_final_shift' => $isFinalShift,
                 'summary' => [
@@ -4589,16 +4611,73 @@ try {
             $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : 1;
             $reportDate = !empty($_GET['date']) ? trim($_GET['date']) : date('Y-m-d');
 
-            // Ambil seluruh shift pada tanggal dan cabang tersebut
-            $stmtShifts = $pdo->prepare("
-                SELECT cs.*, u.name as cashier_name, u.nik as cashier_nik, b.name as branch_name
-                FROM cashier_shifts cs
-                JOIN users u ON u.id = cs.user_id
-                JOIN branches b ON b.id = cs.branch_id
-                WHERE cs.branch_id = ? AND date(cs.start_time) = ?
-                ORDER BY cs.id ASC
-            ");
-            $stmtShifts->execute([$branchId, $reportDate]);
+            // Deteksi Role & User Pemohon
+            $reqUserId = (int)($_SESSION['user_id'] ?? ($_GET['user_id'] ?? $sessionUserId));
+            $reqUserRole = '';
+            if ($reqUserId > 0) {
+                $uStmt = $pdo->prepare("SELECT role, branch_id FROM users WHERE id = ?");
+                $uStmt->execute([$reqUserId]);
+                $uData = $uStmt->fetch();
+                if ($uData) {
+                    $reqUserRole = strtoupper(trim((string)$uData['role']));
+                }
+            }
+            $cleanRole = str_replace(['_', ' ', '-'], '', $reqUserRole);
+            $isManagerOrAdmin = in_array($cleanRole, ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER']);
+
+            // Jika bukan Super Admin / Branch Manager:
+            // 1. Kunci cabang ke cabang penugasan
+            if (!$isManagerOrAdmin && $sessionBranchId > 0) {
+                $branchId = $sessionBranchId;
+            }
+
+            // 2. Cek apakah user telah melakukan closing shift pada tanggal ini atau hari ini
+            $hasClosedShiftForUser = false;
+            if ($reqUserId > 0) {
+                $chkClosedStmt = $pdo->prepare("
+                    SELECT COUNT(*) FROM cashier_shifts 
+                    WHERE user_id = ? AND branch_id = ? AND status = 'CLOSED' 
+                      AND (date(start_time) = ? OR (end_time IS NOT NULL AND date(end_time) = ?))
+                ");
+                $chkClosedStmt->execute([$reqUserId, $branchId, $reportDate, $reportDate]);
+                $hasClosedShiftForUser = ((int)$chkClosedStmt->fetchColumn()) > 0;
+            }
+
+            // Aturan Bisnis: Level selain Super Admin dan Branch Manager TIDAK BISA mengakses laporan shift sebelum proses tutup shift
+            if (!$isManagerOrAdmin && !$hasClosedShiftForUser) {
+                echo json_encode([
+                    'success' => false,
+                    'can_view' => false,
+                    'has_closed_shift' => false,
+                    'message' => 'Laporan Shift Kasir & Tutup Toko belum dapat diakses sebelum Anda menyelesaikan proses tutup shift (Closing Shift).'
+                ]);
+                exit;
+            }
+
+            // 3. Kueri shift:
+            // Jika bukan manajer/admin: HANYA berdasarkan usernya saja (WHERE cs.user_id = ?)
+            // Jika manajer/admin: seluruh shift cabang
+            if (!$isManagerOrAdmin) {
+                $stmtShifts = $pdo->prepare("
+                    SELECT cs.*, u.name as cashier_name, u.nik as cashier_nik, b.name as branch_name
+                    FROM cashier_shifts cs
+                    JOIN users u ON u.id = cs.user_id
+                    JOIN branches b ON b.id = cs.branch_id
+                    WHERE cs.branch_id = ? AND (date(cs.start_time) = ? OR (cs.end_time IS NOT NULL AND date(cs.end_time) = ?)) AND cs.user_id = ?
+                    ORDER BY cs.id ASC
+                ");
+                $stmtShifts->execute([$branchId, $reportDate, $reportDate, $reqUserId]);
+            } else {
+                $stmtShifts = $pdo->prepare("
+                    SELECT cs.*, u.name as cashier_name, u.nik as cashier_nik, b.name as branch_name
+                    FROM cashier_shifts cs
+                    JOIN users u ON u.id = cs.user_id
+                    JOIN branches b ON b.id = cs.branch_id
+                    WHERE cs.branch_id = ? AND (date(cs.start_time) = ? OR (cs.end_time IS NOT NULL AND date(cs.end_time) = ?))
+                    ORDER BY cs.id ASC
+                ");
+                $stmtShifts->execute([$branchId, $reportDate, $reportDate]);
+            }
             $shifts = $stmtShifts->fetchAll();
 
             // Produk-produk yang dilacak
@@ -4819,7 +4898,10 @@ try {
                 'report_date' => $reportDate,
                 'shifts' => $shiftSummaries,
                 'daily_summary' => $dailyTotals,
-                'water_meter_logs' => $waterMeterLogs
+                'water_meter_logs' => $waterMeterLogs,
+                'is_user_isolated' => !$isManagerOrAdmin,
+                'has_closed_shift' => true,
+                'can_view' => true
             ]);
             break;
 

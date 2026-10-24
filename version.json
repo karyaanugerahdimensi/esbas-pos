@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.32",
-  "build": "20261024-13",
+  "version": "1.2.33",
+  "build": "20261024-14",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.33",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Sembunyikan Sub Menu Laporan Shift Kasir Sebelum Closing Shift & Isolasi Tampilan Per-User Kasir",
+      "description": "Menyempurnakan hak akses dan visibilitas Sub-Menu Laporan Shift Kasir & Tutup Toko (#report-subtab-btn-shifts) pada Tab Laporan Penjualan (#tab-reports) sesuai peran pengguna (Role-Based Shift Visibility & Data Isolation): (1) Bagi pengguna non-Super Admin dan non-Branch Manager (Kasir, Staf Toko), tombol sub-menu 'Laporan Shift Kasir & Tutup Toko' disembunyikan secara default (hidden) dan baru muncul secara dinamis setelah user kasir yang bersangkutan sukses menyelesaikan proses penutupan shift (Closing Shift). (2) Jika kasir mencoba mengakses sub-tab shifts secara langsung sebelum closing shift, sistem secara otomatis mengalihkan tampilan ke sub-tab 'sales' (Laporan Penjualan & Omzet) disertai notifikasi informatif. (3) Isolasi Tampilan Data Kasir: Setelah closing shift, tampilan laporan shift kasir terisolasi 100% hanya menyajikan riwayat shift milik kasir bersangkutan (AND cs.user_id = ?); ringkasan konsolidasi berubah menjadi 'REKAPITULASI SHIFT SAYA (Nama Kasir)' dengan metrik 'Total Omzet Shift Saya', dan rincian kartu shift kasir lain disembunyikan. (4) Tombol manajerial 'Reset Shift' (#btn-shift-report-reset) disembunyikan secara permanen untuk kasir dan staf. (5) Sisi backend api.php?action=get_shift_reports menegakkan pengamanan otorisasi server-side dengan respon can_view: false jika kasir belum closing shift, serta memfilter data transaksi kasir secara ketat. (6) Super Admin dan Branch Manager tetap memiliki hak akses penuh untuk melihat sub-menu kapan saja (sebelum maupun sesudah shift ditutup) serta memantau konsolidasi seluruh shift kasir di cabang.",
+      "rollback_command": "git checkout v1.2.32"
+    },
     {
       "version": "1.2.32",
       "commit": "HEAD",

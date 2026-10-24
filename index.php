@@ -942,7 +942,7 @@ try {
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <button onclick="openMasterResetModal({ shifts: true })" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all" title="Reset atau hapus riwayat shift kasir cabang (Superadmin Only)">
+                            <button id="btn-shift-report-reset" onclick="openMasterResetModal({ shifts: true })" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all" title="Reset atau hapus riwayat shift kasir cabang (Superadmin Only)">
                                 <i data-lucide="clock" class="w-4 h-4 text-rose-600"></i>
                                 <span>Reset Shift</span>
                             </button>
@@ -970,7 +970,7 @@ try {
                                 </div>
                                 <div>
                                     <div class="flex items-center space-x-2">
-                                        <h3 class="font-black text-sm sm:text-base tracking-wide text-white uppercase">Rekapitulasi Penutupan Toko Harian</h3>
+                                        <h3 id="daily-closing-summary-title" class="font-black text-sm sm:text-base tracking-wide text-white uppercase">Rekapitulasi Penutupan Toko Harian</h3>
                                         <span id="daily-store-status-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Memuat...</span>
                                     </div>
                                     <p id="daily-store-desc" class="text-xs text-indigo-200/80 mt-0.5">Konsolidasi seluruh transaksi shift & rekonsiliasi kas laci toko.</p>
@@ -985,7 +985,7 @@ try {
                         <!-- KPI Grid Konsolidasi -->
                         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                             <div class="bg-white/5 p-3 rounded-2xl border border-white/10">
-                                <span class="text-[10px] text-indigo-200/70 font-bold uppercase block">Total Omzet (Semua Shift)</span>
+                                <span id="daily-kpi-revenue-label" class="text-[10px] text-indigo-200/70 font-bold uppercase block">Total Omzet (Semua Shift)</span>
                                 <span id="daily-kpi-total-revenue" class="text-sm sm:text-base font-black text-emerald-300 mt-1 block">Rp 0</span>
                             </div>
                             <div class="bg-white/5 p-3 rounded-2xl border border-white/10">
@@ -1016,7 +1016,7 @@ try {
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-2">
                                 <i data-lucide="users" class="w-4 h-4 text-indigo-600"></i>
-                                <h4 class="font-black text-xs sm:text-sm text-slate-800 uppercase tracking-wider">Rincian Laporan Kasir Per-Shift (Data Terisolasi)</h4>
+                                <h4 id="shift-reports-section-title" class="font-black text-xs sm:text-sm text-slate-800 uppercase tracking-wider">Rincian Laporan Kasir Per-Shift (Data Terisolasi)</h4>
                             </div>
                             <span class="text-[11px] text-slate-400 font-medium">Transaksi dan rekonsiliasi kas tidak bercampur antar kasir</span>
                         </div>
@@ -8716,6 +8716,10 @@ try {
 
                 if (data.success) {
                     state.loggedInUser = data.user;
+                    if (data.has_closed_shift !== undefined) {
+                        state.currentUserHasClosedShift = (data.has_closed_shift === true);
+                        window.userHasClosedShift = (data.has_closed_shift === true);
+                    }
                     // Keterkaitan Lokasi: setel cabang aktif ke cabang penempatan karyawan
                     if (data.user && data.user.branch_id) {
                         const targetBranch = (state.branches || []).find(b => b.id == data.user.branch_id);
@@ -8821,6 +8825,8 @@ try {
                 state.users = data.users;
                 state.currentUser = data.current_user;
                 state.activeShift = data.active_shift;
+                state.currentUserHasClosedShift = (data.has_closed_shift === true);
+                window.userHasClosedShift = (data.has_closed_shift === true);
                 state.userRoles = data.user_roles || [];
                 const seenPids = new Set();
                 state.products = (data.products || []).filter(p => {
@@ -8866,6 +8872,7 @@ try {
 
                 // Terapkan filter hak akses menu sidebar berdasarkan role login
                 applyRolePermissionsToSidebar();
+                updateShiftReportSubtabVisibility();
 
                 renderBranchOptions();
                 initStockBranchSelector();
@@ -8925,8 +8932,21 @@ try {
             }
 
             if (tab === 'reports') {
+                updateShiftReportSubtabVisibility();
                 if (state.reportActiveSubtab === 'receivables') {
                     loadReceivablesReport();
+                } else if (state.reportActiveSubtab === 'shifts') {
+                    const curUser = state.currentUser || state.loggedInUser;
+                    const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+                    const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
+                    const hasClosed = (state.currentUserHasClosedShift === true) || (window.userHasClosedShift === true);
+                    if (isManagerOrAdmin || hasClosed) {
+                        loadShiftReports();
+                    } else {
+                        setReportSubtab('sales');
+                    }
+                } else if (state.reportActiveSubtab === 'bom') {
+                    loadBomUsageReport();
                 } else {
                     loadSalesReports();
                 }
@@ -11447,6 +11467,9 @@ try {
                         alert(`Shift Berhasil Ditutup (Serah Terima Kasir Selesai)!\n\nShift: ${data.summary?.shift_name || 'Shift 1'}\nUang Fisik Aktual: ${formatRupiah(data.summary.actual_cash)}\nEkspektasi Sistem: ${formatRupiah(data.summary.expected_cash)}\nSelisih Kas: ${formatRupiah(data.summary.cash_difference)}${disbInfo}${meterInfo}\n\nSisa stok fisik & saldo kas otomatis siap diserahterimakan ke Shift berikutnya.`);
                     }
                     state.activeShift = null;
+                    state.currentUserHasClosedShift = true;
+                    window.userHasClosedShift = true;
+                    updateShiftReportSubtabVisibility();
                     renderShiftBanner();
                     closeShiftModal();
                     if (state.reportActiveSubtab === 'shifts') {
@@ -11950,14 +11973,57 @@ try {
         }
 
         // ==========================================
-        // 2b. MODUL LAPORAN & PELUNASAN PIUTANG USAHA (ACCOUNTS RECEIVABLE)
-        // ==========================================
-        // ==========================================
         // 2b. MODUL LAPORAN MULTI-SHIFT, PENJUALAN & PIUTANG USAHA
         // ==========================================
         let currentDailyShiftReportData = null;
 
+        function updateShiftReportSubtabVisibility() {
+            const btnShifts = document.getElementById('report-subtab-btn-shifts');
+            const btnReset = document.getElementById('btn-shift-report-reset');
+            const curUser = state.currentUser || state.loggedInUser;
+            const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
+
+            if (btnReset) {
+                if (isManagerOrAdmin) {
+                    btnReset.classList.remove('hidden');
+                } else {
+                    btnReset.classList.add('hidden');
+                }
+            }
+
+            if (!btnShifts) return;
+
+            if (isManagerOrAdmin) {
+                btnShifts.classList.remove('hidden');
+                return;
+            }
+
+            // Untuk level selain Super Admin dan Branch Manager:
+            // Sub menu baru muncul setelah proses closing shift setiap user
+            const hasClosed = (state.currentUserHasClosedShift === true) || (window.userHasClosedShift === true);
+            if (hasClosed) {
+                btnShifts.classList.remove('hidden');
+            } else {
+                btnShifts.classList.add('hidden');
+                if (state.reportActiveSubtab === 'shifts') {
+                    setReportSubtab('sales');
+                }
+            }
+        }
+
         function setReportSubtab(subtab) {
+            const curUser = state.currentUser || state.loggedInUser;
+            const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
+            const hasClosed = (state.currentUserHasClosedShift === true) || (window.userHasClosedShift === true);
+
+            // Validasi: selain superadmin & branch manager tidak bisa masuk subtab shift sebelum closing
+            if (subtab === 'shifts' && !isManagerOrAdmin && !hasClosed) {
+                alert('Sub-menu Laporan Shift Kasir & Tutup Toko baru dapat diakses setelah Anda menyelesaikan proses tutup shift (Closing Shift).');
+                subtab = 'sales';
+            }
+
             state.reportActiveSubtab = subtab;
             const btnSales = document.getElementById('report-subtab-btn-sales');
             const btnAR = document.getElementById('report-subtab-btn-receivables');
@@ -12011,6 +12077,8 @@ try {
             }
             const date = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
             const branchId = state.currentBranch ? state.currentBranch.id : 1;
+            const curUser = state.currentUser || state.loggedInUser;
+            const uId = curUser ? curUser.id : 0;
 
             const branchLabel = document.getElementById('shift-report-branch-label');
             if (branchLabel) {
@@ -12028,9 +12096,17 @@ try {
             }
 
             try {
-                const res = await fetch(`api.php?action=get_shift_reports&branch_id=${branchId}&date=${date}`);
+                const res = await fetch(`api.php?action=get_shift_reports&branch_id=${branchId}&date=${date}&user_id=${uId}`);
                 const data = await res.json();
                 if (!data.success) {
+                    if (data.can_view === false) {
+                        state.currentUserHasClosedShift = false;
+                        window.userHasClosedShift = false;
+                        updateShiftReportSubtabVisibility();
+                        alert(data.message || 'Laporan shift belum dapat diakses sebelum Anda menyelesaikan proses tutup shift.');
+                        setReportSubtab('sales');
+                        return;
+                    }
                     if (container) container.innerHTML = `<div class="col-span-full p-6 text-center text-rose-600 bg-rose-50 rounded-2xl border border-rose-200 text-xs font-bold">${escapeHtml(data.message || 'Gagal memuat data shift')}</div>`;
                     return;
                 }
@@ -12049,6 +12125,38 @@ try {
 
         function renderDailyClosingSummary(summary, reportDate) {
             if (!summary) return;
+            const curUser = state.currentUser || state.loggedInUser;
+            const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
+
+            const titleEl = document.getElementById('daily-closing-summary-title');
+            const kpiRevLabel = document.getElementById('daily-kpi-revenue-label');
+            const sectionTitle = document.getElementById('shift-reports-section-title');
+
+            if (titleEl) {
+                if (!isManagerOrAdmin) {
+                    titleEl.innerText = `Rekapitulasi Shift Saya (${curUser?.name || 'Kasir'})`;
+                } else {
+                    titleEl.innerText = 'Rekapitulasi Penutupan Toko Harian';
+                }
+            }
+
+            if (kpiRevLabel) {
+                if (!isManagerOrAdmin) {
+                    kpiRevLabel.innerText = 'Total Omzet Shift Saya';
+                } else {
+                    kpiRevLabel.innerText = 'Total Omzet (Semua Shift)';
+                }
+            }
+
+            if (sectionTitle) {
+                if (!isManagerOrAdmin) {
+                    sectionTitle.innerText = `Rincian Laporan Shift Saya (${curUser?.name || 'Kasir'}) [Data Terisolasi Akun]`;
+                } else {
+                    sectionTitle.innerText = 'Rincian Laporan Kasir Per-Shift (Data Terisolasi)';
+                }
+            }
+
             const badge = document.getElementById('daily-store-status-badge');
             const desc = document.getElementById('daily-store-desc');
             const countEl = document.getElementById('daily-total-shifts-count');
@@ -22709,6 +22817,7 @@ Manager / Supervisor: __________________
                     btn.style.display = 'none';
                 }
             });
+            updateShiftReportSubtabVisibility();
         }
 
         state.settingsSelectedBranchId = 0;
