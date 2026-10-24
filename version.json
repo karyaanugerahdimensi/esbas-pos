@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.23",
-  "build": "20261024-04",
+  "version": "1.2.24",
+  "build": "20261024-05",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.24",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Perbaikan Pemuatan Dropdown Peran (Role) Modal Karyawan & Pembatasan Modifikasi Presisi",
+      "description": "Menyelesaikan kendala dropdown opsi Peran (Role) karyawan yang kosong/tidak muncul saat membuka modal Tambah atau Edit Karyawan: (1) Menyediakan opsi statis default pada HTML elemen select emp-role (SUPER_ADMIN, BRANCH_MANAGER, CASHIER, STAFF) sebagai jaminan fallback cepat sehingga dropdown tidak pernah kosong. (2) Mengaktifkan pemanggilan renderEmployeeRoleOptions('CASHIER') secara otomatis saat openEmployeeModal() dibuka, serta renderEmployeeRoleOptions(emp.role) saat editEmployee(emp). (3) Memperbaiki deklarasi variabel canSwitchBranch pada fungsi editEmployee sehingga tidak memicu JavaScript ReferenceError saat mengedit staf. (4) Memperkuat renderEmployeeRoleOptions dengan pemeriksaan tipe aman dan kemampuan mempertahankan role kustom/legacy yang belum terdaftar di state.userRoles. (5) Perubahan dibatasi secara presisi dan terisolasi khusus pada formulir modal karyawan tanpa mengubah atau mengganggu alur sistem di modul lain (POS, Shift, Reset Stok, dsb).",
+      "rollback_command": "git checkout v1.2.23"
+    },
     {
       "version": "1.2.23",
       "commit": "HEAD",

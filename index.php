@@ -4835,7 +4835,12 @@ $appVersionData = getAppVersionData();
                     </div>
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">Peran (Role):</label>
-                        <select id="emp-role" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium"></select>
+                        <select id="emp-role" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium">
+                            <option value="SUPER_ADMIN">👑 Super Admin Pusat (SUPER_ADMIN)</option>
+                            <option value="BRANCH_MANAGER">👔 Branch Manager (BRANCH_MANAGER)</option>
+                            <option value="CASHIER" selected>🛒 Kasir (Cashier) (CASHIER)</option>
+                            <option value="STAFF">📦 Staf Gudang / Toko (STAFF)</option>
+                        </select>
                     </div>
                 </div>
                 <div>
@@ -13571,7 +13576,10 @@ Manager / Supervisor: __________________
             document.getElementById('emp-commission').value = '1.5';
             document.getElementById('emp-modal-title').innerText = 'Tambah Karyawan Baru';
 
-                        const curUser = state.currentUser || state.loggedInUser;
+            // Populate role options (Default: CASHIER)
+            renderEmployeeRoleOptions('CASHIER');
+
+            const curUser = state.currentUser || state.loggedInUser;
             const canSwitchBranch = curUser && (Number(curUser.can_access_all_branches) === 1 || ['SUPER_ADMIN', 'SUPERADMIN'].includes((curUser.role || '').toUpperCase().replace(/_/g, '')));
             const branchSelect = document.getElementById('emp-branch');
             if (!canSwitchBranch) {
@@ -13582,7 +13590,7 @@ Manager / Supervisor: __________________
                 branchSelect.title = "Karyawan cabang hanya dapat menambahkan/mengedit staf pada cabang penempatan yang sama.";
             } else {
                 branchSelect.disabled = false;
-                branchSelect.innerHTML = state.branches.map(b => 
+                branchSelect.innerHTML = (state.branches || []).map(b => 
                     `<option value="${b.id}" ${b.id === (state.currentBranch ? state.currentBranch.id : 1) ? 'selected' : ''}>${b.name}</option>`
                 ).join('');
             }
@@ -13656,8 +13664,11 @@ Manager / Supervisor: __________________
             document.getElementById('emp-id').value = emp.id;
             document.getElementById('emp-nik').value = emp.nik;
             document.getElementById('emp-name').value = emp.name;
+            renderEmployeeRoleOptions(emp.role);
             document.getElementById('emp-role').value = emp.role;
-                        document.getElementById('emp-branch').value = emp.branch_id || 1;
+            const curUser = state.currentUser || state.loggedInUser;
+            const canSwitchBranch = curUser && (Number(curUser.can_access_all_branches) === 1 || ['SUPER_ADMIN', 'SUPERADMIN'].includes((curUser.role || '').toUpperCase().replace(/_/g, '')));
+            document.getElementById('emp-branch').value = emp.branch_id || 1;
             if (!canSwitchBranch) {
                 document.getElementById('emp-branch').disabled = true;
             } else {
@@ -22142,15 +22153,27 @@ Manager / Supervisor: __________________
         function renderEmployeeRoleOptions(selectedRole = 'CASHIER') {
             const roleSelect = document.getElementById('emp-role');
             if (!roleSelect) return;
-            const roles = (state.userRoles && state.userRoles.length > 0) ? state.userRoles : [
+            const roles = (typeof state !== 'undefined' && state.userRoles && state.userRoles.length > 0) ? state.userRoles : [
                 { code: 'SUPER_ADMIN', name: 'Super Admin Pusat' },
                 { code: 'BRANCH_MANAGER', name: 'Branch Manager' },
                 { code: 'CASHIER', name: 'Kasir (Cashier)' },
                 { code: 'STAFF', name: 'Staf Gudang / Toko' }
             ];
-            roleSelect.innerHTML = roles.map(r => 
-                `<option value="${r.code}" ${r.code === selectedRole ? 'selected' : ''}>${getRoleBadgeEmoji(r.code)} ${r.name} (${r.code})</option>`
+            const getBadge = (typeof getRoleBadgeEmoji === 'function') ? getRoleBadgeEmoji : () => '🛡️';
+            
+            // Periksa apakah selectedRole ada di list roles; jika belum ada, tambahkan sebagai opsi ekstra
+            const roleExists = roles.some(r => r.code === selectedRole);
+            let extraOption = '';
+            if (selectedRole && !roleExists) {
+                extraOption = `<option value="${selectedRole}" selected>${getBadge(selectedRole)} ${selectedRole} (${selectedRole})</option>`;
+            }
+
+            roleSelect.innerHTML = extraOption + roles.map(r => 
+                `<option value="${r.code}" ${r.code === selectedRole ? 'selected' : ''}>${getBadge(r.code)} ${r.name} (${r.code})</option>`
             ).join('');
+            if (selectedRole) {
+                roleSelect.value = selectedRole;
+            }
         }
 
 
