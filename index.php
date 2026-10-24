@@ -12424,7 +12424,10 @@ try {
                             <span class="truncate">${escapeHtml(item.name)}</span>
                         </td>
                         <td class="py-2 px-2 text-center font-mono text-slate-600">${formatDecimal(item.opening_qty)}</td>
-                        <td class="py-2 px-2 text-center font-bold text-indigo-700">${formatDecimal(soldAmount)}</td>
+                        <td class="py-2 px-2 text-center">
+                            <span class="font-bold text-indigo-700 block">${formatDecimal(soldAmount)}</span>
+                            ${item.breakdown_subtext ? `<span class="text-[9px] text-slate-400 block font-normal leading-tight mt-0.5">${escapeHtml(item.breakdown_subtext)}</span>` : ''}
+                        </td>
                         <td class="py-2 px-2 text-center font-black text-slate-900 bg-slate-50">${formatDecimal(item.closing_qty)}</td>
                         <td class="py-2 px-2 text-center font-bold">${diffBadge}</td>
                     </tr>
@@ -12639,7 +12642,10 @@ try {
                         <td class="py-3 px-4 font-mono text-slate-500 text-[11px]">${escapeHtml(item.sku)}</td>
                         <td class="py-3 px-4 text-center font-bold text-slate-600">${escapeHtml(item.unit || 'pcs')}</td>
                         <td class="py-3 px-4 text-center font-semibold text-slate-700">${formatDecimal(item.opening_qty)}</td>
-                        <td class="py-3 px-4 text-center font-bold text-indigo-700">${formatDecimal(totalSold)}</td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="font-bold text-indigo-700 block">${formatDecimal(totalSold)}</span>
+                            ${item.breakdown_subtext ? `<span class="text-[10px] text-slate-400 block font-normal mt-0.5">${escapeHtml(item.breakdown_subtext)}</span>` : ''}
+                        </td>
                         <td class="py-3 px-4 text-center font-black text-indigo-950 bg-indigo-50/40 text-sm">
                             ${formatDecimal(item.closing_qty)} <span class="text-[10px] text-slate-400 font-normal">${escapeHtml(item.unit || 'pcs')}</span>
                         </td>
@@ -12672,7 +12678,8 @@ try {
                 const diffVal = Number(it.difference_qty) || 0;
                 const itSold = it.sold_qty !== undefined ? it.sold_qty : it.usage_qty;
                 const diffText = diffVal !== 0 ? ` | Selisih ${(diffVal > 0 ? '+' : '') + diffVal}` : ' | Selisih 0';
-                return `  - ${it.name} (${it.sku}): Awal ${it.opening_qty} | Jual ${itSold} | Fisik ${it.closing_qty}${diffText} ${it.unit}`;
+                const subtext = it.breakdown_subtext ? ` ${it.breakdown_subtext}` : '';
+                return `  - ${it.name} (${it.sku}): Awal ${it.opening_qty} | Pakai ${itSold}${subtext} | Fisik ${it.closing_qty}${diffText} ${it.unit}`;
             }).join('\n');
 
             const content = 

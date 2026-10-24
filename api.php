@@ -5202,11 +5202,30 @@ try {
                 $shiftHasStockDiff = false;
                 $shiftStockDiffCount = 0;
 
+                // Ambil seluruh baris penjualan item shift ini
+                $stmtShiftSales = $pdo->prepare("
+                    SELECT si.product_id, si.qty, si.variant_id
+                    FROM sale_items si
+                    JOIN sales s ON s.id = si.sale_id
+                    WHERE s.shift_id = ? AND (s.status IS NULL OR s.status != 'CANCELLED')
+                ");
+                $stmtShiftSales->execute([$sId]);
+                $shiftSalesItems = $stmtShiftSales->fetchAll();
+
+                // 1. Akumulasi penjualan produk jadi (Finished Goods)
+                $fgSalesTotals = [];
+                foreach ($shiftSalesItems as $siRow) {
+                    $pIdKey = (int)$siRow['product_id'];
+                    $fgSalesTotals[$pIdKey] = ($fgSalesTotals[$pIdKey] ?? 0) + (float)$siRow['qty'];
+                }
+
+                // 2. Dekomposisi Finished Goods: Stok Awal vs On-Demand vs Standby Refill
+                $fgBreakdown = [];
                 foreach ($trackedMaster as $tm) {
                     $pId = (int)$tm['product_id'];
                     $oQty = isset($openItems[$pId]) ? (float)$openItems[$pId] : 0;
                     $cQty = isset($closeItems[$pId]) ? (float)$closeItems[$pId] : 0;
-                    
+
                     if ($tm['sku'] === 'RAW-089') {
                         if (!$oQty && $s['opening_raw_mineral'] !== null) $oQty = (float)$s['opening_raw_mineral'];
                         if (!$cQty && $s['closing_raw_mineral'] !== null) $cQty = (float)$s['closing_raw_mineral'];
@@ -5218,66 +5237,209 @@ try {
                         if (!$cQty && $s['closing_raw_plastik'] !== null) $cQty = (float)$s['closing_raw_plastik'];
                     }
 
-                    // 1. Hitung penjualan aktual riil faktur POS shift ini
-                    // a. Penjualan langsung produk ini
-                    $stmtSoldDirect = $pdo->prepare("
+                    $totSold = (float)($fgSalesTotals[$pId] ?? 0);
+                    $fromStock = min($oQty, $totSold);
+                    $onDemand = max(0, $totSold - $oQty);
+                    $remOpening = max(0, $oQty - $totSold);
+                    // Jika shift CLOSED dan kasir input sisa fisik > sisa pembukaan, berarti ada refill galon standby
+                    $standbyRefill = ($s['status'] === 'CLOSED') ? max(0, $cQty - $remOpening) : 0;
+
+                    $fgBreakdown[$pId] = [
+                        'opening_qty' => $oQty,
+                        'closing_qty' => $cQty,
+                        'total_sold' => $totSold,
+                        'from_stock' => $fromStock,
+                        'on_demand' => $onDemand,
+                        'rem_opening' => $remOpening,
+                        'standby_refill' => $standbyRefill
+                    ];
+                }
+
+                // 3. Hitung konsumsi bahan baku dari penjualan on-demand & refill standby
+                $rawBOMUsage = [];
+                foreach ($shiftSalesItems as $siRow) {
+                    $fgId = (int)$siRow['product_id'];
+                    $varId = (int)($siRow['variant_id'] ?? 0);
+                    $itemQty = (float)$siRow['qty'];
+                    if ($itemQty <= 0) continue;
+
+                    $totFGSold = $fgBreakdown[$fgId]['total_sold'] ?? $itemQty;
+                    $fgOnDemand = $fgBreakdown[$fgId]['on_demand'] ?? 0;
+                    $onDemandRatio = ($totFGSold > 0) ? ($fgOnDemand / $totFGSold) : 1;
+                    $itemOnDemandQty = $itemQty * $onDemandRatio;
+
+                    // Variant BOM (misal Tutup Galon Mineral / RO)
+                    if ($varId > 0 && $itemOnDemandQty > 0) {
+                        $stmtVR = $pdo->prepare("SELECT ingredient_product_id, qty_needed FROM variant_recipes WHERE variant_id = ?");
+                        $stmtVR->execute([$varId]);
+                        while ($vr = $stmtVR->fetch()) {
+                            $rawId = (int)$vr['ingredient_product_id'];
+                            $needed = (float)$vr['qty_needed'] * $itemOnDemandQty;
+                            if (!isset($rawBOMUsage[$rawId])) $rawBOMUsage[$rawId] = ['on_demand_usage' => 0, 'standby_usage' => 0, 'direct_sold' => 0];
+                            $rawBOMUsage[$rawId]['on_demand_usage'] += $needed;
+                        }
+                    }
+
+                    // Base BOM (Air Baku, Tisu, dsb)
+                    if ($itemOnDemandQty > 0) {
+                        $stmtPR = $pdo->prepare("SELECT ingredient_product_id, qty_needed FROM product_recipes WHERE finished_product_id = ?");
+                        $stmtPR->execute([$fgId]);
+                        while ($pr = $stmtPR->fetch()) {
+                            $rawId = (int)$pr['ingredient_product_id'];
+                            $needed = (float)$pr['qty_needed'] * $itemOnDemandQty;
+                            if (!isset($rawBOMUsage[$rawId])) $rawBOMUsage[$rawId] = ['on_demand_usage' => 0, 'standby_usage' => 0, 'direct_sold' => 0];
+                            $rawBOMUsage[$rawId]['on_demand_usage'] += $needed;
+                        }
+                    }
+                }
+
+                // Konsumsi bahan baku untuk persiapan stok produk jadi standby malam ($standbyRefill)
+                foreach ($fgBreakdown as $fgId => $fgb) {
+                    $standbyQty = $fgb['standby_refill'];
+                    if ($standbyQty <= 0) continue;
+
+                    // Variant recipe (tutup)
+                    $stmtVRDef = $pdo->prepare("
+                        SELECT vr.ingredient_product_id, vr.qty_needed 
+                        FROM variant_recipes vr 
+                        JOIN product_variants pv ON pv.id = vr.variant_id 
+                        WHERE pv.product_id = ? 
+                        LIMIT 1
+                    ");
+                    $stmtVRDef->execute([$fgId]);
+                    while ($vr = $stmtVRDef->fetch()) {
+                        $rawId = (int)$vr['ingredient_product_id'];
+                        $needed = (float)$vr['qty_needed'] * $standbyQty;
+                        if (!isset($rawBOMUsage[$rawId])) $rawBOMUsage[$rawId] = ['on_demand_usage' => 0, 'standby_usage' => 0, 'direct_sold' => 0];
+                        $rawBOMUsage[$rawId]['standby_usage'] += $needed;
+                    }
+
+                    // Base recipe (air, tisu)
+                    $stmtPRDef = $pdo->prepare("SELECT ingredient_product_id, qty_needed FROM product_recipes WHERE finished_product_id = ?");
+                    $stmtPRDef->execute([$fgId]);
+                    while ($pr = $stmtPRDef->fetch()) {
+                        $rawId = (int)$pr['ingredient_product_id'];
+                        $needed = (float)$pr['qty_needed'] * $standbyQty;
+                        if (!isset($rawBOMUsage[$rawId])) $rawBOMUsage[$rawId] = ['on_demand_usage' => 0, 'standby_usage' => 0, 'direct_sold' => 0];
+                        $rawBOMUsage[$rawId]['standby_usage'] += $needed;
+                    }
+                }
+
+                // Direct sale bahan baku
+                foreach ($trackedMaster as $tm) {
+                    $pId = (int)$tm['product_id'];
+                    $stmtDS = $pdo->prepare("
                         SELECT COALESCE(SUM(si.qty), 0)
                         FROM sale_items si
                         JOIN sales s ON s.id = si.sale_id
-                        WHERE s.shift_id = ? AND (s.status IS NULL OR s.status != 'CANCELLED')
-                          AND si.product_id = ?
+                        WHERE s.shift_id = ? AND si.product_id = ? AND (s.status IS NULL OR s.status != 'CANCELLED')
                     ");
-                    $stmtSoldDirect->execute([$sId, $pId]);
-                    $directSold = (float)$stmtSoldDirect->fetchColumn();
-
-                    // b. Konsumsi bahan baku dari Variant BOM resep (misal Tutup Galon dari varian 'Pakai Tutup Mineral' / 'Pakai Tutup RO')
-                    $stmtSoldVar = $pdo->prepare("
-                        SELECT COALESCE(SUM(si.qty * vr.qty_needed), 0)
-                        FROM sale_items si
-                        JOIN sales s ON s.id = si.sale_id
-                        JOIN variant_recipes vr ON vr.variant_id = si.variant_id
-                        WHERE s.shift_id = ? AND (s.status IS NULL OR s.status != 'CANCELLED')
-                          AND vr.ingredient_product_id = ?
-                    ");
-                    $stmtSoldVar->execute([$sId, $pId]);
-                    $varSold = (float)$stmtSoldVar->fetchColumn();
-
-                    // c. Konsumsi bahan baku dari Base Product BOM resep (misal jika item adalah bahan baku di product_recipes)
-                    $stmtSoldBase = $pdo->prepare("
-                        SELECT COALESCE(SUM(si.qty * pr.qty_needed), 0)
-                        FROM sale_items si
-                        JOIN sales s ON s.id = si.sale_id
-                        JOIN product_recipes pr ON pr.finished_product_id = si.product_id
-                        WHERE s.shift_id = ? AND (s.status IS NULL OR s.status != 'CANCELLED')
-                          AND pr.ingredient_product_id = ?
-                    ");
-                    $stmtSoldBase->execute([$sId, $pId]);
-                    $baseSold = (float)$stmtSoldBase->fetchColumn();
-
-                    $actualSold = $directSold + $varSold + $baseSold;
-                    $expectedStock = $oQty - $actualSold;
-                    $diffStock = ($s['status'] === 'CLOSED') ? ($cQty - $expectedStock) : 0;
-                    $hasDiff = ($s['status'] === 'CLOSED') && (abs($diffStock) > 0.0001);
-
-                    if ($hasDiff) {
-                        $shiftHasStockDiff = true;
-                        $shiftStockDiffCount++;
+                    $stmtDS->execute([$sId, $pId]);
+                    $dsQty = (float)$stmtDS->fetchColumn();
+                    if ($dsQty > 0) {
+                        if (!isset($rawBOMUsage[$pId])) $rawBOMUsage[$pId] = ['on_demand_usage' => 0, 'standby_usage' => 0, 'direct_sold' => 0];
+                        $rawBOMUsage[$pId]['direct_sold'] += $dsQty;
                     }
+                }
 
-                    $reconciledItems[] = [
-                        'product_id' => $pId,
-                        'sku' => $tm['sku'],
-                        'name' => $tm['name'],
-                        'unit' => $tm['unit'],
-                        'image_emoji' => $tm['image_emoji'] ?? '📦',
-                        'opening_qty' => $oQty,
-                        'sold_qty' => $actualSold,
-                        'usage_qty' => $actualSold, // alias kompatibilitas
-                        'expected_qty' => $expectedStock,
-                        'closing_qty' => $cQty,
-                        'difference_qty' => $diffStock,
-                        'has_difference' => $hasDiff
-                    ];
+                // 4. Rekonsiliasi & Penentuan Selisih Realtime
+                foreach ($trackedMaster as $tm) {
+                    $pId = (int)$tm['product_id'];
+                    $fgb = $fgBreakdown[$pId] ?? null;
+                    $oQty = $fgb ? $fgb['opening_qty'] : 0;
+                    $cQty = $fgb ? $fgb['closing_qty'] : 0;
+                    $isFG = ($fgb && ($fgb['total_sold'] > 0 || in_array($tm['sku'], ['PRD-00001', 'PRD-00002'])));
+
+                    if ($isFG) {
+                        // Produk Jadi (Galon Air Olahan)
+                        $totSold = $fgb['total_sold'];
+                        $fromStock = $fgb['from_stock'];
+                        $onDemand = $fgb['on_demand'];
+                        $standbyRefill = $fgb['standby_refill'];
+
+                        $expectedPhysical = $fgb['rem_opening'] + $standbyRefill;
+                        $diffStock = ($s['status'] === 'CLOSED') ? ($cQty - $expectedPhysical) : 0;
+                        $hasDiff = ($s['status'] === 'CLOSED') && (abs($diffStock) > 0.0001);
+
+                        if ($hasDiff) {
+                            $shiftHasStockDiff = true;
+                            $shiftStockDiffCount++;
+                        }
+
+                        $breakdownSubtext = '';
+                        if ($totSold > 0) {
+                            if ($fromStock > 0 && $onDemand > 0) {
+                                $breakdownSubtext = "({$fromStock} Stok + {$onDemand} On-Demand)";
+                            } elseif ($onDemand > 0) {
+                                $breakdownSubtext = "({$onDemand} On-Demand)";
+                            } elseif ($fromStock > 0) {
+                                $breakdownSubtext = "({$fromStock} dari Stok Jadi)";
+                            }
+                        }
+
+                        $reconciledItems[] = [
+                            'product_id' => $pId,
+                            'sku' => $tm['sku'],
+                            'name' => $tm['name'],
+                            'unit' => $tm['unit'],
+                            'image_emoji' => $tm['image_emoji'] ?? '📦',
+                            'is_finished_goods' => true,
+                            'opening_qty' => $oQty,
+                            'sold_qty' => $totSold,
+                            'sold_from_stock' => $fromStock,
+                            'sold_on_demand' => $onDemand,
+                            'standby_refill' => $standbyRefill,
+                            'usage_qty' => $totSold,
+                            'expected_qty' => $expectedPhysical,
+                            'closing_qty' => $cQty,
+                            'difference_qty' => $diffStock,
+                            'has_difference' => $hasDiff,
+                            'breakdown_subtext' => $breakdownSubtext
+                        ];
+                    } else {
+                        // Bahan Baku (Tutup Galon, Plastik, Tisu, Air)
+                        $rawInfo = $rawBOMUsage[$pId] ?? ['on_demand_usage' => 0, 'standby_usage' => 0, 'direct_sold' => 0];
+                        $onDemandUse = (float)$rawInfo['on_demand_usage'];
+                        $standbyUse = (float)$rawInfo['standby_usage'];
+                        $directSale = (float)$rawInfo['direct_sold'];
+                        $totalUsage = $onDemandUse + $standbyUse + $directSale;
+
+                        $expectedStock = $oQty - $totalUsage;
+                        $diffStock = ($s['status'] === 'CLOSED') ? ($cQty - $expectedStock) : 0;
+                        $hasDiff = ($s['status'] === 'CLOSED') && (abs($diffStock) > 0.0001);
+
+                        if ($hasDiff) {
+                            $shiftHasStockDiff = true;
+                            $shiftStockDiffCount++;
+                        }
+
+                        $breakdownSubtext = '';
+                        if ($standbyUse > 0 && $onDemandUse > 0) {
+                            $breakdownSubtext = "({$onDemandUse} Jual + {$standbyUse} Standby)";
+                        } elseif ($onDemandUse > 0) {
+                            $breakdownSubtext = "({$onDemandUse} Jual On-Demand)";
+                        } elseif ($standbyUse > 0) {
+                            $breakdownSubtext = "({$standbyUse} Refill Standby)";
+                        }
+
+                        $reconciledItems[] = [
+                            'product_id' => $pId,
+                            'sku' => $tm['sku'],
+                            'name' => $tm['name'],
+                            'unit' => $tm['unit'],
+                            'image_emoji' => $tm['image_emoji'] ?? '📦',
+                            'is_finished_goods' => false,
+                            'opening_qty' => $oQty,
+                            'sold_qty' => $onDemandUse + $directSale,
+                            'standby_refill_usage' => $standbyUse,
+                            'usage_qty' => $totalUsage,
+                            'expected_qty' => $expectedStock,
+                            'closing_qty' => $cQty,
+                            'difference_qty' => $diffStock,
+                            'has_difference' => $hasDiff,
+                            'breakdown_subtext' => $breakdownSubtext
+                        ];
+                    }
                 }
 
                 $shiftObj = [

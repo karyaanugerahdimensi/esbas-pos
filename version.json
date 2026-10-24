@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.46",
-  "build": "20261026-01",
+  "version": "1.2.47",
+  "build": "20261026-02",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.47",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Penyelarasan Pemakaian Stok Shift: Dekomposisi Penjualan Produk Jadi vs On-Demand & Eliminasi Selisih Palsu",
+      "description": "Menyempurnakan kalkulasi rekonsiliasi stok shift pada get_shift_reports di api.php dan antarmuka laporan shift di index.php: (1) Mendekomposisi penjualan produk jadi (Air Mineral 19L) menjadi kuantitas dari stok fisik toko (from_stock = min(awal, penjualan)) dan kuantitas on-demand (on_demand = max(0, penjualan - awal)). (2) Memperbaiki kalkulasi stok ekspektasi produk jadi sehingga tidak menghasilkan angka minus semu (-10) yang memicu selisih palsu (+20); sisa dari stok awal toko adalah rem_opening = max(0, awal - penjualan), ditambah pengisian kembali stok standby malam (standby_refill = max(0, closing - rem_opening)). (3) Memperbaiki kalkulasi pemakaian bahan baku (Tutup Galon Mineral): konsumsi penjualan dihitung murni dari porsi on-demand (10 pcs, karena 10 produk jadi kemarin sudah bertutup), ditambah konsumsi pengisian standby malam (10 pcs), sehingga total pemakaian 20 pcs cocok sempurna dengan sisa fisik 30 pcs (selisih 0 seimbang). (4) Menyematkan subteks rincian visual pada kolom Terjual/Terpakai: '(10 Stok + 10 On-Demand)' untuk galon jadi dan '(10 Jual + 10 Standby)' untuk tutup galon, serta meniadakan alarm peringatan selisih jika stok fisik dan sistem berada dalam kondisi seimbang sempurna.",
+      "rollback_command": "git checkout v1.2.46"
+    },
     {
       "version": "1.2.46",
       "commit": "HEAD",
