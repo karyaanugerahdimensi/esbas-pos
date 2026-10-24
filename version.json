@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.33",
-  "build": "20261024-14",
+  "version": "1.2.34",
+  "build": "20261024-15",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.34",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Penyempurnaan Modal Closing Shift: Peniadaan 4 Kotak KPI Kas, Peniadaan Form Adjustment Meteran Air, & Kondisional Display Meteran Khusus Tutup Toko",
+      "description": "Menyempurnakan antarmuka modal penutupan shift kasir (Closing Shift) sesuai prinsip blind cash audit dan ketepatan operasional akhir hari: (1) Menghilangkan 4 kotak informasi ringkasan kas (Modal Awal Sesi, Penjualan +Cash, Pengeluaran Kasir, dan Ekspektasi di Laci) sehingga kasir menghitung dan menginput uang fisik kasir secara murni (blind count) tanpa bias angka kalkulasi sistem. (2) Menghilangkan tombol accordion dan formulir 'Tambah Koreksi / Adjustment Nilai Meteran (Opsional)' pada modul meteran air mesin isi ulang, menyederhanakan antarmuka pencatatan langsung angka counter hari ini. (3) Menjadikan bagian Pencatatan Meteran Air Mesin Isi Ulang bersifat kondisional dinamis: meteran air hanya ditampilkan jika checkbox 'Tutup Toko Hari Ini (Closing Akhir / Selesai Operasional Malam)' dicentang, dan disembunyikan otomatis jika shift yang ditutup adalah serah terima shift biasa (Shift 1 ke Shift 2). (4) Backend dan frontend secara otomatis menyesuaikan payload penyimpanan meteran air hanya saat status final shift aktif.",
+      "rollback_command": "git checkout v1.2.33"
+    },
     {
       "version": "1.2.33",
       "commit": "HEAD",

@@ -10293,26 +10293,6 @@ try {
                             <span class="text-[10px] sm:text-[11px] font-bold text-slate-500">${txCount} Transaksi Penjualan Tunai</span>
                         </div>
 
-                        <!-- 4 Kotak KPI Kas -->
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                            <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">
-                                <span class="text-[9px] uppercase font-bold text-slate-400 block">Modal Awal Sesi</span>
-                                <span class="text-xs font-black text-slate-800 font-mono">${formatRupiah(initCash)}</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">
-                                <span class="text-[9px] uppercase font-bold text-slate-400 block">Penjualan (+Cash)</span>
-                                <span class="text-xs font-black text-emerald-700 font-mono">+ ${formatRupiah(cashSales)}</span>
-                            </div>
-                            <div class="bg-amber-50 p-2.5 rounded-2xl border border-amber-200 shadow-2xs">
-                                <span class="text-[9px] uppercase font-bold text-amber-800 block">Pengeluaran Kasir</span>
-                                <span id="closing-kpi-disbursements" class="text-xs font-black text-amber-900 font-mono">- Rp 0</span>
-                            </div>
-                            <div class="bg-rose-100/50 p-2.5 rounded-2xl border border-rose-300 shadow-2xs">
-                                <span class="text-[9px] uppercase font-bold text-rose-800 block">Ekspektasi di Laci</span>
-                                <span id="closing-kpi-expected" class="text-xs font-black text-rose-950 font-mono">= ${formatRupiah(expectedCash)}</span>
-                            </div>
-                        </div>
-
                         <!-- Opsi Pengeluaran Kas Laci Kasir (Beban, Kasbon, Uang Makan) -->
                         <div class="bg-white p-3 sm:p-4 rounded-2xl border border-rose-200 shadow-2xs space-y-3">
                             <div class="flex items-center justify-between border-b border-slate-100 pb-2 flex-wrap gap-2">
@@ -10455,8 +10435,20 @@ try {
                         </div>
                     </div>
 
-                    <!-- 2.3 Pencatatan Meteran Air Mesin Isi Ulang (Display Counter) -->
-                    <div class="bg-gradient-to-br from-sky-50 via-cyan-50/40 to-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-sky-200/90 shadow-sm space-y-3.5">
+                    <!-- 2.3 Opsi Penutupan Toko Harian (Final Shift) -->
+                    <div class="bg-indigo-50/70 p-3 sm:p-3.5 rounded-2xl border border-indigo-200 flex items-center justify-between gap-3">
+                        <div class="flex items-start sm:items-center space-x-2.5">
+                            <input type="checkbox" id="check-is-final-shift" onchange="toggleFinalShiftWaterMeter()" ${isFinalCandidate ? 'checked' : ''} class="w-4 h-4 mt-0.5 sm:mt-0 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer">
+                            <div>
+                                <label for="check-is-final-shift" class="text-xs font-black text-indigo-950 block cursor-pointer">Tutup Toko Hari Ini (Closing Akhir / Selesai Operasional Malam 🌙)</label>
+                                <span class="text-[10px] text-indigo-700 block leading-tight">Centang jika ini adalah penutupan shift terakhir hari ini. Sisa stok fisik akan terkunci permanen sebagai Stok Akhir Malam Toko dan form meteran air mesin akan diisi.</span>
+                            </div>
+                        </div>
+                        <span class="text-xl shrink-0">🏪</span>
+                    </div>
+
+                    <!-- 2.4 Pencatatan Meteran Air Mesin Isi Ulang (Display Counter) - Ditampilkan jika Tutup Toko Dicentang -->
+                    <div id="closing-water-meter-section" class="${isFinalCandidate ? '' : 'hidden '}bg-gradient-to-br from-sky-50 via-cyan-50/40 to-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-sky-200/90 shadow-sm space-y-3.5">
                         <div class="flex items-center justify-between border-b border-sky-100 pb-2 flex-wrap gap-2">
                             <div class="flex items-center space-x-2">
                                 <span class="text-base">💧</span>
@@ -10505,56 +10497,6 @@ try {
                                 <span id="closing-meter-diff-pulsa" class="text-[9px] text-sky-200 block font-mono mt-0.5">Selisih: 0 pulsa</span>
                             </div>
                         </div>
-
-                        <!-- Accordion Toggle Adjustment / Koreksi Meteran -->
-                        <div class="pt-1">
-                            <button type="button" onclick="toggleWaterMeterAdjustmentForm()" class="text-xs font-bold text-sky-700 hover:text-sky-900 flex items-center space-x-1.5 transition-colors">
-                                <span id="closing-meter-adj-icon">➕</span>
-                                <span id="closing-meter-adj-toggle-text">Tambah Koreksi / Adjustment Nilai Meteran (Opsional)</span>
-                            </button>
-
-                            <!-- Form Adjustment Collapsible -->
-                            <div id="closing-meter-adj-container" class="hidden mt-2.5 p-3.5 bg-white rounded-2xl border border-sky-200/90 shadow-2xs space-y-2.5">
-                                <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                                    <span class="text-xs font-black text-slate-800 uppercase">Form Adjustment / Koreksi Pengeluaran Air</span>
-                                    <span class="text-[10px] text-slate-400">Gunakan jika ada kalibrasi sensor, bilas pipa, atau error</span>
-                                </div>
-
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-                                    <div>
-                                        <label class="block font-bold text-slate-600 mb-1">Jenis Koreksi:</label>
-                                        <select id="closing-meter-adj-type" onchange="calculateWaterMeterOutput()" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-800">
-                                            <option value="PULSE">Pulsa Meteran (/ 782)</option>
-                                            <option value="GALON">Galon Langsung (+/-)</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block font-bold text-slate-600 mb-1">Nilai Koreksi (+ / -):</label>
-                                        <input type="number" step="any" id="closing-meter-adj-val" oninput="calculateWaterMeterOutput()" value="0" placeholder="0" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-mono font-bold text-slate-800">
-                                    </div>
-                                    <div>
-                                        <label class="block font-bold text-slate-600 mb-1">Alasan Penyesuaian:</label>
-                                        <input type="text" id="closing-meter-adj-reason" placeholder="Contoh: Kuras pipa filter 5 galon" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-800">
-                                    </div>
-                                </div>
-                                <div class="text-[10px] text-slate-500 bg-sky-50/50 p-2 rounded-xl flex items-center justify-between">
-                                    <span>Total Output Setelah Koreksi:</span>
-                                    <span id="closing-meter-final-adjusted-galon" class="font-mono font-black text-sky-900">0.00 Galon</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 2.5 Opsi Penutupan Toko Harian (Final Shift) -->
-                    <div class="bg-indigo-50/70 p-3 sm:p-3.5 rounded-2xl border border-indigo-200 flex items-center justify-between gap-3">
-                        <div class="flex items-start sm:items-center space-x-2.5">
-                            <input type="checkbox" id="check-is-final-shift" ${isFinalCandidate ? 'checked' : ''} class="w-4 h-4 mt-0.5 sm:mt-0 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer">
-                            <div>
-                                <label for="check-is-final-shift" class="text-xs font-black text-indigo-950 block cursor-pointer">Tutup Toko Hari Ini (Closing Akhir / Selesai Operasional Malam 🌙)</label>
-                                <span class="text-[10px] text-indigo-700 block leading-tight">Centang jika ini adalah penutupan shift terakhir hari ini. Sisa stok fisik akan terkunci permanen sebagai Stok Akhir Malam Toko.</span>
-                            </div>
-                        </div>
-                        <span class="text-xl shrink-0">🏪</span>
                     </div>
 
                     <!-- 3. Catatan Shift / Serah Terima (Opsional) -->
@@ -11173,6 +11115,23 @@ try {
             calculateWaterMeterOutput();
         }
 
+        function toggleFinalShiftWaterMeter() {
+            const chk = document.getElementById('check-is-final-shift');
+            const meterSection = document.getElementById('closing-water-meter-section');
+            const isChecked = chk ? chk.checked : false;
+            if (meterSection) {
+                if (isChecked) {
+                    meterSection.classList.remove('hidden');
+                } else {
+                    meterSection.classList.add('hidden');
+                }
+            }
+            const btn = document.getElementById('shift-modal-action-btn');
+            if (btn) {
+                btn.innerText = isChecked ? 'TUTUP TOKO & SIMPAN REKAP MALAM' : 'TUTUP SHIFT 1 & SERAH TERIMA KASIR';
+            }
+        }
+
         function toggleWaterMeterAdjustmentForm() {
             const container = document.getElementById('closing-meter-adj-container');
             const icon = document.getElementById('closing-meter-adj-icon');
@@ -11418,14 +11377,14 @@ try {
                     }
                 });
 
-                // Collect Water Meter Display Counter Input
-                const meterTodayVal = document.getElementById('closing-meter-today') ? document.getElementById('closing-meter-today').value.trim() : '';
+                // Collect Water Meter Display Counter Input (Hanya jika Tutup Toko Hari Ini / isFinal dicentang)
+                const meterTodayVal = (isFinal && document.getElementById('closing-meter-today')) ? document.getElementById('closing-meter-today').value.trim() : '';
                 const meterToday = meterTodayVal !== '' ? parseFloat(meterTodayVal) : null;
-                const meterYesterdayVal = document.getElementById('closing-meter-yesterday') ? document.getElementById('closing-meter-yesterday').value.trim() : '';
+                const meterYesterdayVal = (isFinal && document.getElementById('closing-meter-yesterday')) ? document.getElementById('closing-meter-yesterday').value.trim() : '';
                 const meterYesterday = meterYesterdayVal !== '' ? parseFloat(meterYesterdayVal) : null;
-                const meterAdj = document.getElementById('closing-meter-adj-val') ? (parseFloat(document.getElementById('closing-meter-adj-val').value) || 0) : 0;
-                const meterAdjType = document.getElementById('closing-meter-adj-type')?.value || 'PULSE';
-                const meterAdjReason = document.getElementById('closing-meter-adj-reason')?.value || '';
+                const meterAdj = 0;
+                const meterAdjType = 'PULSE';
+                const meterAdjReason = '';
 
                 const res = await fetch('api.php?action=close_shift', {
                     method: 'POST',

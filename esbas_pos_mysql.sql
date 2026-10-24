@@ -1,6 +1,6 @@
 -- ========================================================
 -- ESBAS POS Database Export (MySQL / MariaDB Compatible)
--- Generated: 2026-10-24 11:31:57
+-- Generated: 2026-10-24 11:42:17
 -- ========================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -475,19 +475,21 @@ CREATE TABLE `products` (
 
 -- Dumping data for table `products`
 INSERT INTO `products` (`id`, `sku`, `barcode`, `name`, `category`, `unit`, `cogs`, `selling_price`, `image_emoji`, `product_type`, `has_bom`, `category_id`, `reorder_point`, `is_active`, `member_price`, `reseller_price`, `mitra_price`, `visible_categories`, `is_taxable`, `tax_id`, `tax_percent`, `is_delivery_required`, `is_delivery_included`, `is_stockable`) VALUES
-(88, 'RAW-020', '899260000020', 'Tutup Galon RO', 'Produk Jual', 'pcs', 90, 0, '🔘', 'RAW_MATERIAL', 0, 1, 10, 1, 0, 0, 0, 'ALL', 0, 1, 11, 0, 0, 1),
-(89, 'RAW-089', '899260000089', 'Tutup Galon Mineral', 'Produk Jual', 'pcs', 90, 0, '🔘', 'RAW_MATERIAL', 0, 1, 10, 1, 0, 0, 0, 'ALL', 0, 1, 11, 0, 0, 1),
+(88, 'RAW-020', '899260000020', 'Tutup Galon RO', 'Bahan Baku (Raw Material)', 'pcs', 90, 0, '🔘', 'RAW_MATERIAL', 0, 4, 10, 1, 0, 0, 0, 'ALL', 0, 1, 11, 0, 0, 1),
+(89, 'RAW-089', '899260000089', 'Tutup Galon Mineral', 'Bahan Baku (Raw Material)', 'pcs', 90, 0, '🔘', 'RAW_MATERIAL', 0, 4, 10, 1, 0, 0, 0, 'ALL', 0, 1, 11, 0, 0, 1),
 (90, 'RAW-090', '899260000090', 'Tisu Galon CC2', 'Bahan Baku (Raw Material)', 'pcs', 85, 0, '🧻', 'RAW_MATERIAL', 0, 4, 10, 1, 0, 0, 0, 'ALL', 0, 1, 11, 0, 0, 1),
 (91, 'RAW-091', '899260000091', 'Air Baku', 'Bahan Baku (Raw Material)', 'liter', 45, 0, '💧', 'RAW_MATERIAL', 0, 4, 10, 1, 0, 0, 0, 'ALL', 0, 1, 11, 0, 0, 1),
-(98, 'PRD-00001', '899260000092', 'Air Mineral Galon 19 Liter', 'Produk Jual', 'galon', 985, 4500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 4100, 3600, 3200, 'ALL', 0, 1, 11, 2, 1, 2),
-(99, 'PRD-00002', '899260000099', 'Air RO Galon 19 Liter', 'Produk Jual', 'galon', 985, 6500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 5900, 5200, 4700, 'ALL', 0, 1, 11, 2, 1, 2),
+(98, 'PRD-00001', '899260000092', 'Air Mineral Galon 19 Liter', 'Produk Jual', 'galon', 985, 4500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 4100, 3600, 3200, 'ALL', 0, 1, 11, 2, 1, 1),
+(99, 'PRD-00002', '899260000099', 'Air RO Galon 19 Liter', 'Produk Jual', 'galon', 985, 6500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 5900, 5200, 4700, 'ALL', 0, 1, 11, 2, 1, 1),
 (100, 'PRD-00003', '899260000100', 'Air Mineral Galon 15 Liter', 'Produk Jual', 'galon', 805, 4500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 4100, 3600, 3200, 'ALL', 0, 1, 11, 2, 1, 0),
 (101, 'PRD-00004', '899260000101', 'Air RO Galon 15 Liter', 'Produk Jual', 'galon', 805, 6500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 5900, 5200, 4700, 'ALL', 0, 1, 11, 2, 1, 1),
 (102, 'PRD-00005', '899260000102', 'Gas 3 KG', 'Konsinyasi', 'tabung', 24000, 25000, '📦', 'FINISHED_GOODS', 0, 8, 10, 1, 22500, 20000, 18000, 'ALL', 0, 1, 11, 2, 1, 1),
 (103, 'PRD-00006', '899260000103', 'Aqua Refill 19 Liter', 'Konsinyasi', 'galon', 19700, 23500, '📦', 'FINISHED_GOODS', 0, 8, 10, 1, 21200, 18800, 16900, 'ALL', 0, 1, 11, 2, 1, 1),
-(104, 'PRD-00007', '899260000104', 'Es Kristal 5kg', 'Produk Jual', 'ball', 1360, 6500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 5900, 5200, 4700, 'ALL', 0, 1, 11, 1, 0, 2),
+(104, 'PRD-00007', '899260000104', 'Es Kristal 5kg', 'Produk Jual', 'ball', 1360, 6500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 5900, 5200, 4700, 'ALL', 0, 1, 11, 1, 0, 1),
 (105, 'RAW-00092', '899260000105', 'Plastik PE 40 X 60', 'Bahan Baku (Raw Material)', 'pcs', 1000, 0, '📦', 'RAW_MATERIAL', 0, 4, 10, 1, 0, 0, 0, 'ALL', 0, 1, 11, 0, 0, 1),
-(106, 'PRD-00008', '899260000106', 'Es Kristal 10 Kg', 'Produk Jual', 'ball', 2675, 12000, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 10800, 9600, 8600, 'ALL', 0, 1, 11, 1, 0, 0),
+(106, 'PRD-00008', '899260000106', 'Es Kristal 10 Kg', 'Produk Jual', 'ball', 2675, 12000, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 10800, 9600, 8600, 'ALL', 0, 1, 11, 1, 0, 1),
+(107, 'PRD-00009', '899260000107', 'Galon Kosong Aqua 19 L', 'Produk Jual', 'galon', 25000, 35000, '📦', 'FINISHED_GOODS', 0, 1, 1, 1, 31500, 28000, 25200, 'ALL', 0, 1, 11, 0, 0, 1),
+(108, 'PRD-00010', '899260000108', 'Galon Kosong Non Aqua', 'Produk Jual', 'galon', 15000, 25000, '📦', 'FINISHED_GOODS', 0, 1, 1, 1, 22500, 20000, 18000, 'ALL', 0, 1, 11, 0, 0, 1),
 (134, 'HIB-31679', 'HIB-31679', 'Test Galon Hibrida 1792831679', 'Produk Jual', 'galon', 800, 5000, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 4500, 4000, 3600, 'ALL', 0, 1, 11, 0, 0, 2);
 
 -- --------------------------------------------------------
@@ -597,9 +599,9 @@ INSERT INTO `branch_stocks` (`id`, `branch_id`, `product_id`, `stock`, `local_co
 (319, 3, 99, 0, 985, 7000, '2026-10-11 11:59:37', 1, NULL, NULL),
 (320, 1, 99, 10, 985, 6500, '2026-10-24 16:30:52', 1, 2, 1),
 (321, 2, 99, 0, 985, 9000, '2026-10-11 11:59:20', 1, NULL, NULL),
-(322, 3, 100, 0, 805, 4500, '2026-10-24 08:55:06', 0, NULL, NULL),
-(323, 1, 100, 0, 805, 4500, '2026-10-20 05:59:29', 1, 2, 1),
-(324, 2, 100, 0, 805, 4500, '2026-10-11 22:36:07', 0, NULL, NULL),
+(322, 3, 100, 0, 895, 4500, '2026-10-24 08:55:06', 0, NULL, NULL),
+(323, 1, 100, 0, 895, 4500, '2026-10-20 05:59:29', 1, 2, 1),
+(324, 2, 100, 0, 895, 4500, '2026-10-11 22:36:07', 0, NULL, NULL),
 (325, 3, 101, 0, 805, 6500, '2026-10-11 22:36:52', 0, NULL, NULL),
 (326, 1, 101, 0, 805, 6500, '2026-10-20 13:45:56', 1, 2, 1),
 (327, 2, 101, 0, 805, 6500, '2026-10-11 22:36:22', 0, NULL, NULL),
@@ -615,7 +617,7 @@ INSERT INTO `branch_stocks` (`id`, `branch_id`, `product_id`, `stock`, `local_co
 (338, 6, 91, 0, 45, 0, NULL, 1, NULL, NULL),
 (339, 6, 98, 0, 985, 4500, '2026-10-11 23:26:45', 1, 0, NULL),
 (340, 6, 99, 0, 985, 6500, '2026-10-11 23:26:54', 0, 0, NULL),
-(341, 6, 100, 0, 805, 4500, '2026-10-24 08:54:57', 0, 0, NULL),
+(341, 6, 100, 0, 895, 4500, '2026-10-24 08:54:57', 0, 0, NULL),
 (342, 6, 101, 0, 805, 6500, '2026-10-11 23:26:49', 0, 0, NULL),
 (343, 6, 102, 0, 24000, 25000, '2026-10-11 23:27:06', 0, 0, NULL),
 (344, 6, 103, 0, 19700, 23500, '2026-10-11 23:26:59', 0, 0, NULL),
@@ -631,8 +633,20 @@ INSERT INTO `branch_stocks` (`id`, `branch_id`, `product_id`, `stock`, `local_co
 (354, 6, 106, 0, 2675, 12000, NULL, 1, NULL, NULL),
 (355, 1, 106, 0, 2675, 12000, '2026-10-24 16:31:01', 1, 1, 0),
 (356, 2, 106, 0, 2675, 12000, '2026-10-11 22:46:14', 1, 0, NULL),
-(644, 1, 89, 45, 0, 0, '2026-10-24 07:00:03', 1, NULL, NULL),
-(783, 1, 88, 248, 50, 0, '2026-10-24 11:04:28', 1, NULL, NULL);
+(644, 1, 89, 45, 90, 0, '2026-10-24 16:32:31', 1, 0, 0),
+(783, 1, 88, 248, 90, 0, '2026-10-24 16:32:37', 1, 0, 0),
+(794, 2, 107, 0, 25000, 35000, NULL, 1, NULL, NULL),
+(795, 2, 108, 0, 15000, 25000, NULL, 1, NULL, NULL),
+(796, 2, 134, 0, 800, 5000, NULL, 1, NULL, NULL),
+(797, 3, 107, 0, 25000, 35000, NULL, 1, NULL, NULL),
+(798, 3, 108, 0, 15000, 25000, NULL, 1, NULL, NULL),
+(799, 3, 134, 0, 800, 5000, NULL, 1, NULL, NULL),
+(800, 6, 107, 0, 25000, 35000, NULL, 1, NULL, NULL),
+(801, 6, 108, 0, 15000, 25000, NULL, 1, NULL, NULL),
+(802, 6, 134, 0, 800, 5000, NULL, 1, NULL, NULL),
+(803, 1, 107, 0, 25000, 35000, NULL, 1, NULL, NULL),
+(804, 1, 108, 0, 15000, 25000, NULL, 1, NULL, NULL),
+(805, 1, 134, 0, 800, 5000, NULL, 1, NULL, NULL);
 
 -- --------------------------------------------------------
 -- Table structure for `customers`
