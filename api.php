@@ -2848,6 +2848,55 @@ try {
             ]);
             break;
 
+        case 'delete_base_bom':
+            $fgId = (int)($input['product_id'] ?? 0);
+            if (!$fgId) {
+                echo json_encode(['success' => false, 'message' => 'ID produk tidak valid.']);
+                exit;
+            }
+
+            $stmtGet = $pdo->prepare("SELECT name FROM products WHERE id = ?");
+            $stmtGet->execute([$fgId]);
+            $pName = $stmtGet->fetchColumn() ?: 'Produk';
+
+            // Hapus seluruh bahan baku resep base BOM untuk produk ini
+            $stmtDel = $pdo->prepare("DELETE FROM product_recipes WHERE finished_product_id = ?");
+            $stmtDel->execute([$fgId]);
+            $deletedCount = $stmtDel->rowCount();
+
+            // Matikan flag has_bom pada produk
+            $pdo->prepare("UPDATE products SET has_bom = 0 WHERE id = ?")->execute([$fgId]);
+
+            // Hitung ulang HPP
+            $autoCogs = recalculateProductBOMCogs($pdo, $fgId);
+
+            echo json_encode([
+                'success' => true,
+                'message' => "Formula resep Base BOM untuk produk '{$pName}' ({$deletedCount} bahan baku) berhasil dihapus.",
+                'product_id' => $fgId,
+                'calculated_cogs' => $autoCogs
+            ]);
+            break;
+
+        case 'reset_all_base_bom':
+            // Otorisasi: hanya Super Admin atau Branch Manager
+            $curRoleId = $_SESSION['role'] ?? '';
+            $cleanRole = strtoupper(str_replace(['_', ' ', '-'], '', (string)$curRoleId));
+            if (!empty($cleanRole) && !in_array($cleanRole, ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'])) {
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak. Hanya Super Admin & Branch Manager yang berwenang mereset Base BOM.']);
+                exit;
+            }
+
+            $countBefore = (int)$pdo->query("SELECT COUNT(*) FROM product_recipes")->fetchColumn();
+            $pdo->exec("DELETE FROM product_recipes");
+            $pdo->exec("UPDATE products SET has_bom = 0 WHERE product_type = 'FINISHED_GOODS'");
+
+            echo json_encode([
+                'success' => true,
+                'message' => "Seluruh formula resep Base BOM ({$countBefore} relasi bahan baku) berhasil dihapus dari sistem."
+            ]);
+            break;
+
         case 'get_variant_recipes':
             // Get all variants with product info
             $stmtVar = $pdo->query("

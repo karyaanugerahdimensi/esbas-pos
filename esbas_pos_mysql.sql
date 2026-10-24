@@ -1,6 +1,6 @@
 -- ========================================================
 -- ESBAS POS Database Export (MySQL / MariaDB Compatible)
--- Generated: 2026-10-24 11:42:17
+-- Generated: 2026-10-24 11:48:52
 -- ========================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -530,11 +530,9 @@ CREATE TABLE `product_recipes` (
 
 -- Dumping data for table `product_recipes`
 INSERT INTO `product_recipes` (`id`, `finished_product_id`, `ingredient_product_id`, `qty_needed`, `unit`) VALUES
-(43, 98, 91, 20, 'liter'),
 (44, 99, 91, 20, 'liter'),
 (46, 100, 91, 16, 'liter'),
 (47, 100, 90, 1, 'pcs'),
-(48, 98, 90, 1, 'pcs'),
 (49, 101, 91, 16, 'liter'),
 (50, 101, 90, 1, 'pcs'),
 (51, 99, 90, 1, 'pcs'),
@@ -542,7 +540,8 @@ INSERT INTO `product_recipes` (`id`, `finished_product_id`, `ingredient_product_
 (53, 104, 105, 1, 'pcs'),
 (54, 106, 91, 15, 'liter'),
 (55, 106, 105, 2, 'pcs'),
-(61, 100, 89, 1, 'pcs');
+(61, 100, 89, 1, 'pcs'),
+(66, 98, 88, 1, 'pcs');
 
 -- --------------------------------------------------------
 -- Table structure for `variant_recipes`

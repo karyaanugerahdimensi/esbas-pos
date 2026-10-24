@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.34",
-  "build": "20261024-15",
+  "version": "1.2.35",
+  "build": "20261024-16",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.35",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Fitur Hapus Base BOM: Tombol Hapus BOM Per-Produk & Reset Seluruh Base BOM",
+      "description": "Menghadirkan fitur penghapusan formula resep produk utama (Base BOM) pada Menu Formula Resep & Bill of Materials (#tab-bom): (1) Menambahkan tombol 'Hapus BOM' (dengan ikon trash-2 warna rose) pada setiap kartu produk Base BOM yang telah memiliki relasi resep bahan baku, memungkinkan pengguna menghapus seluruh formula resep produk tersebut dalam 1 kali klik terkonfirmasi. (2) Menambahkan tombol 'Hapus Semua Base BOM' pada sub-navigation bar Base BOM untuk mereset seluruh resep produk jadi secara global dengan verifikasi konfirmasi teks ganda 'HAPUS BOM'. (3) Menyediakan 2 endpoint backend baru di api.php: 'delete_base_bom' (menghapus relasi product_recipes produk terkait, mematikan has_bom = 0, dan rekalkulasi HPP cogs) serta 'reset_all_base_bom' (mengosongkan seluruh tabel product_recipes dan mereset status has_bom produk jadi). (4) Antarmuka reaktif seketika memperbarui daftar resep bahan tanpa perlu refresh browser.",
+      "rollback_command": "git checkout v1.2.34"
+    },
     {
       "version": "1.2.34",
       "commit": "HEAD",

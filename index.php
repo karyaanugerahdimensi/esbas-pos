@@ -2211,13 +2211,21 @@ try {
                 </div>
 
                 <!-- Sub Navigation: Base Product BOM vs Variant BOM -->
-                <div class="flex space-x-2 border-b border-slate-200 pb-2">
-                    <button onclick="switchBOMSubTab('base')" id="bom-subtab-btn-base" class="px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold transition-colors">
-                        Resep Produk Utama (Base BOM)
-                    </button>
-                    <button onclick="switchBOMSubTab('variant')" id="bom-subtab-btn-variant" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors">
-                        Resep Pilihan Varian (Variant BOM)
-                    </button>
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                    <div class="flex space-x-2">
+                        <button onclick="switchBOMSubTab('base')" id="bom-subtab-btn-base" class="px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold transition-colors">
+                            Resep Produk Utama (Base BOM)
+                        </button>
+                        <button onclick="switchBOMSubTab('variant')" id="bom-subtab-btn-variant" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors">
+                            Resep Pilihan Varian (Variant BOM)
+                        </button>
+                    </div>
+                    <div id="bom-base-actions" class="flex items-center space-x-2">
+                        <button onclick="resetAllBaseBOM()" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-2xs transition-all" title="Hapus seluruh formula resep Base BOM semua produk">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-600"></i>
+                            <span>Hapus Semua Base BOM</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Recipe Grid 1: Finished Goods Base BOM -->
@@ -16155,10 +16163,18 @@ Manager / Supervisor: __________________
                             </h4>
                             <p class="text-[10px] text-slate-400 font-medium">${fg.sku} • Jual: ${formatRupiah(fg.selling_price)}</p>
                         </div>
-                        <button onclick="openAddRecipeModal(${fg.id}, '${fg.name}')" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold border border-indigo-200 flex items-center space-x-1 transition-colors">
-                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                            <span>Bahan Baku</span>
-                        </button>
+                        <div class="flex items-center space-x-1.5">
+                            ${(fg.ingredients && fg.ingredients.length > 0) ? `
+                            <button onclick="deleteBaseBOM(${fg.id}, '${fg.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold border border-rose-200 flex items-center space-x-1 transition-colors shadow-2xs" title="Hapus seluruh formula resep Base BOM untuk ${fg.name}">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-500"></i>
+                                <span>Hapus BOM</span>
+                            </button>
+                            ` : ''}
+                            <button onclick="openAddRecipeModal(${fg.id}, '${fg.name.replace(/'/g, "\\'")}')" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold border border-indigo-200 flex items-center space-x-1 transition-colors">
+                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                <span>Bahan Baku</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Ingredients List -->
@@ -16269,24 +16285,79 @@ Manager / Supervisor: __________________
             if (data.success) loadBOMRecipes();
         }
 
+        async function deleteBaseBOM(productId, productName) {
+            const confirmed = confirm(`Apakah Anda yakin ingin menghapus seluruh formula resep Base BOM untuk produk "${productName}"?\n\nSetelah dihapus, penjualan produk ini tidak akan memotong bahan baku Base BOM secara otomatis.`);
+            if (!confirmed) return;
+
+            try {
+                const res = await fetch('api.php?action=delete_base_bom', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_id: productId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message || 'Formula resep Base BOM berhasil dihapus.');
+                    loadBOMRecipes();
+                } else {
+                    alert(`❌ GAGAL: ${data.message || 'Terjadi kesalahan sistem'}`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan koneksi saat menghapus Base BOM.');
+            }
+        }
+
+        async function resetAllBaseBOM() {
+            const confirmed = confirm('⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SELURUH formula resep Base BOM untuk semua produk jadi?\n\nTindakan ini akan mengosongkan seluruh bahan baku resep utama di semua produk. Tindakan ini tidak dapat dibatalkan.');
+            if (!confirmed) return;
+
+            const secondCheck = prompt('Ketik "HAPUS BOM" untuk mengonfirmasi penghapusan seluruh Base BOM:');
+            if (secondCheck !== 'HAPUS BOM') {
+                alert('Konfirmasi dibatalkan atau teks konfirmasi tidak cocok.');
+                return;
+            }
+
+            try {
+                const res = await fetch('api.php?action=reset_all_base_bom', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message || 'Seluruh Base BOM berhasil dihapus.');
+                    loadBOMRecipes();
+                } else {
+                    alert(`❌ GAGAL: ${data.message || 'Terjadi kesalahan sistem'}`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan koneksi saat mereset seluruh Base BOM.');
+            }
+        }
+
         // --- SUBTAB BOM: SWITCH SUBTAB & VARIANT BOM RECIPES ---
         function switchBOMSubTab(sub) {
             const btnBase = document.getElementById('bom-subtab-btn-base');
             const btnVar = document.getElementById('bom-subtab-btn-variant');
             const viewBase = document.getElementById('bom-view-base');
             const viewVar = document.getElementById('bom-view-variant');
+            const actionsBase = document.getElementById('bom-base-actions');
 
             if (sub === 'base') {
                 btnBase.className = 'px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold transition-colors';
                 btnVar.className = 'px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors';
                 viewBase.classList.remove('hidden');
                 viewVar.classList.add('hidden');
+                if (actionsBase) actionsBase.classList.remove('hidden');
                 loadBOMRecipes();
             } else {
                 btnVar.className = 'px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold transition-colors';
                 btnBase.className = 'px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors';
                 viewVar.classList.remove('hidden');
                 viewBase.classList.add('hidden');
+                if (actionsBase) actionsBase.classList.add('hidden');
                 loadVariantBOMRecipes();
             }
         }
