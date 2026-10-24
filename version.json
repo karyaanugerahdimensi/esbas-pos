@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.45",
-  "build": "20261025-04",
-  "release_date": "2026-10-25",
+  "version": "1.2.46",
+  "build": "20261026-01",
+  "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.46",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Audit Stok Shift Kasir & Kolom Selisih Persediaan Realtime",
+      "description": "Memperbaiki kalkulasi stok shift pada endpoint get_shift_reports di api.php dan antarmuka laporan shift di index.php: (1) Menggantikan formula semu pemakaian stok (Awal - Sisa) dengan kalkulasi penjualan riil faktur POS kasir (Direct Sale + Variant BOM Recipe + Base BOM Recipe) sehingga kolom 'Terjual' secara presisi mencerminkan kuantitas transaksi aktual POS (misal 10 galon / 10 tutup). (2) Menambahkan kolom audit 'Selisih' pada tabel Pemakaian Stok Selama Shift Ini (Sisa Fisik Closing - Stok Sistem) lengkap dengan badge highlight status (Defisit merah, Surplus biru, Seimbang 0) serta banner peringatan audit jika ditemukan selisih stok. (3) Menambahkan kolom Selisih Stok pada tabel Rekapitulasi Penutupan Toko Harian (daily-final-stocks-tbody), struk cetak shift (printSingleShiftReceipt), dan struk rekap harian (printDailyClosingSummaryReceipt). (4) Menambahkan banner peringatan selisih stok shift pada sub-tab Laporan Penjualan (sales-report-stock-diff-banner) yang terhubung langsung ke laporan shift.",
+      "rollback_command": "git checkout v1.2.45"
+    },
     {
       "version": "1.2.45",
       "commit": "HEAD",

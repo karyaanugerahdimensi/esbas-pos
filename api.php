@@ -5154,6 +5154,8 @@ try {
                 'is_store_closed' => false,
                 'final_closing_time' => null,
                 'final_cashier_name' => null,
+                'has_stock_difference' => false,
+                'total_stock_differences_count' => 0,
                 'final_stocks' => []
             ];
 
@@ -5197,23 +5199,71 @@ try {
                 $closeItems = !empty($s['closing_items_json']) ? json_decode($s['closing_items_json'], true) : [];
 
                 $reconciledItems = [];
+                $shiftHasStockDiff = false;
+                $shiftStockDiffCount = 0;
+
                 foreach ($trackedMaster as $tm) {
                     $pId = (int)$tm['product_id'];
-                    $oQty = isset($openItems[$pId]) ? (int)$openItems[$pId] : 0;
-                    $cQty = isset($closeItems[$pId]) ? (int)$closeItems[$pId] : 0;
+                    $oQty = isset($openItems[$pId]) ? (float)$openItems[$pId] : 0;
+                    $cQty = isset($closeItems[$pId]) ? (float)$closeItems[$pId] : 0;
                     
                     if ($tm['sku'] === 'RAW-089') {
-                        if (!$oQty && $s['opening_raw_mineral'] !== null) $oQty = (int)$s['opening_raw_mineral'];
-                        if (!$cQty && $s['closing_raw_mineral'] !== null) $cQty = (int)$s['closing_raw_mineral'];
+                        if (!$oQty && $s['opening_raw_mineral'] !== null) $oQty = (float)$s['opening_raw_mineral'];
+                        if (!$cQty && $s['closing_raw_mineral'] !== null) $cQty = (float)$s['closing_raw_mineral'];
                     } elseif ($tm['sku'] === 'RAW-020') {
-                        if (!$oQty && $s['opening_raw_ro'] !== null) $oQty = (int)$s['opening_raw_ro'];
-                        if (!$cQty && $s['closing_raw_ro'] !== null) $cQty = (int)$s['closing_raw_ro'];
+                        if (!$oQty && $s['opening_raw_ro'] !== null) $oQty = (float)$s['opening_raw_ro'];
+                        if (!$cQty && $s['closing_raw_ro'] !== null) $cQty = (float)$s['closing_raw_ro'];
                     } elseif ($tm['sku'] === 'RAW-00092') {
-                        if (!$oQty && $s['opening_raw_plastik'] !== null) $oQty = (int)$s['opening_raw_plastik'];
-                        if (!$cQty && $s['closing_raw_plastik'] !== null) $cQty = (int)$s['closing_raw_plastik'];
+                        if (!$oQty && $s['opening_raw_plastik'] !== null) $oQty = (float)$s['opening_raw_plastik'];
+                        if (!$cQty && $s['closing_raw_plastik'] !== null) $cQty = (float)$s['closing_raw_plastik'];
                     }
 
-                    $usedQty = ($s['status'] === 'CLOSED') ? ($oQty - $cQty) : 0;
+                    // 1. Hitung penjualan aktual riil faktur POS shift ini
+                    // a. Penjualan langsung produk ini
+                    $stmtSoldDirect = $pdo->prepare("
+                        SELECT COALESCE(SUM(si.qty), 0)
+                        FROM sale_items si
+                        JOIN sales s ON s.id = si.sale_id
+                        WHERE s.shift_id = ? AND (s.status IS NULL OR s.status != 'CANCELLED')
+                          AND si.product_id = ?
+                    ");
+                    $stmtSoldDirect->execute([$sId, $pId]);
+                    $directSold = (float)$stmtSoldDirect->fetchColumn();
+
+                    // b. Konsumsi bahan baku dari Variant BOM resep (misal Tutup Galon dari varian 'Pakai Tutup Mineral' / 'Pakai Tutup RO')
+                    $stmtSoldVar = $pdo->prepare("
+                        SELECT COALESCE(SUM(si.qty * vr.qty_needed), 0)
+                        FROM sale_items si
+                        JOIN sales s ON s.id = si.sale_id
+                        JOIN variant_recipes vr ON vr.variant_id = si.variant_id
+                        WHERE s.shift_id = ? AND (s.status IS NULL OR s.status != 'CANCELLED')
+                          AND vr.ingredient_product_id = ?
+                    ");
+                    $stmtSoldVar->execute([$sId, $pId]);
+                    $varSold = (float)$stmtSoldVar->fetchColumn();
+
+                    // c. Konsumsi bahan baku dari Base Product BOM resep (misal jika item adalah bahan baku di product_recipes)
+                    $stmtSoldBase = $pdo->prepare("
+                        SELECT COALESCE(SUM(si.qty * pr.qty_needed), 0)
+                        FROM sale_items si
+                        JOIN sales s ON s.id = si.sale_id
+                        JOIN product_recipes pr ON pr.finished_product_id = si.product_id
+                        WHERE s.shift_id = ? AND (s.status IS NULL OR s.status != 'CANCELLED')
+                          AND pr.ingredient_product_id = ?
+                    ");
+                    $stmtSoldBase->execute([$sId, $pId]);
+                    $baseSold = (float)$stmtSoldBase->fetchColumn();
+
+                    $actualSold = $directSold + $varSold + $baseSold;
+                    $expectedStock = $oQty - $actualSold;
+                    $diffStock = ($s['status'] === 'CLOSED') ? ($cQty - $expectedStock) : 0;
+                    $hasDiff = ($s['status'] === 'CLOSED') && (abs($diffStock) > 0.0001);
+
+                    if ($hasDiff) {
+                        $shiftHasStockDiff = true;
+                        $shiftStockDiffCount++;
+                    }
+
                     $reconciledItems[] = [
                         'product_id' => $pId,
                         'sku' => $tm['sku'],
@@ -5221,8 +5271,12 @@ try {
                         'unit' => $tm['unit'],
                         'image_emoji' => $tm['image_emoji'] ?? '📦',
                         'opening_qty' => $oQty,
+                        'sold_qty' => $actualSold,
+                        'usage_qty' => $actualSold, // alias kompatibilitas
+                        'expected_qty' => $expectedStock,
                         'closing_qty' => $cQty,
-                        'usage_qty' => $usedQty
+                        'difference_qty' => $diffStock,
+                        'has_difference' => $hasDiff
                     ];
                 }
 
@@ -5264,10 +5318,17 @@ try {
                     'water_meter_adjustment_reason' => $s['water_meter_adjustment_reason'] ?? null,
                     'water_meter_dispensed_galon' => $s['water_meter_dispensed_galon'] !== null ? (float)$s['water_meter_dispensed_galon'] : null,
                     'shift_notes' => $s['shift_notes'],
+                    'has_stock_difference' => $shiftHasStockDiff,
+                    'stock_differences_count' => $shiftStockDiffCount,
                     'reconciled_items' => $reconciledItems
                 ];
 
                 $shiftSummaries[] = $shiftObj;
+
+                if ($shiftHasStockDiff) {
+                    $dailyTotals['has_stock_difference'] = true;
+                    $dailyTotals['total_stock_differences_count'] += $shiftStockDiffCount;
+                }
 
                 // Akumulasi Harian
                 $dailyTotals['total_transactions'] += $txCount;

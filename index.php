@@ -742,6 +742,26 @@ try {
                         </div>
                     </div>
 
+                    <!-- Quick Shift Stock Discrepancy Alert Banner (Hanya Muncul Jika Ditemukan Selisih) -->
+                    <div id="sales-report-stock-diff-banner" class="hidden bg-rose-50 border border-rose-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-sm">
+                                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-rose-900 text-sm flex items-center gap-2">
+                                    <span>Peringatan Audit: Ditemukan Selisih Fisik Stok pada Shift Kasir</span>
+                                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-200 text-rose-800 font-bold">Audit Stok POS</span>
+                                </h4>
+                                <p id="sales-report-stock-diff-desc" class="text-xs text-rose-700 mt-0.5">Terdapat perbedaan antara stok terhitung sistem vs sisa fisik yang dilaporkan kasir saat tutup shift.</p>
+                            </div>
+                        </div>
+                        <button onclick="setReportSubtab('shifts')" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm">
+                            <span>Periksa Laporan Shift</span>
+                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+
                     <!-- Top Products & Payment Breakdown -->
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                         <div class="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
@@ -1055,14 +1075,15 @@ try {
                                         <th class="py-3 px-4">SKU / Kode</th>
                                         <th class="py-3 px-4 text-center">Satuan</th>
                                         <th class="py-3 px-4 text-center">Stok Awal Pagi</th>
-                                        <th class="py-3 px-4 text-center">Total Terpakai (Hari Ini)</th>
-                                        <th class="py-3 px-4 text-center bg-indigo-50/50 text-indigo-900">Sisa Stok Fisik Malam (Tutup Toko)</th>
+                                        <th class="py-3 px-4 text-center">Total Terjual (POS)</th>
+                                        <th class="py-3 px-4 text-center bg-indigo-50/50 text-indigo-900">Sisa Stok Fisik Malam</th>
+                                        <th class="py-3 px-4 text-center text-rose-700 bg-rose-50/50">Selisih Stok</th>
                                         <th class="py-3 px-4 text-center">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody id="daily-final-stocks-tbody" class="divide-y divide-slate-100">
                                     <tr>
-                                        <td colspan="7" class="py-8 text-center text-slate-400">Memuat stok akhir penutupan toko...</td>
+                                        <td colspan="8" class="py-8 text-center text-slate-400">Memuat stok akhir penutupan toko...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -11739,6 +11760,22 @@ try {
                 if (elTissues) elTissues.innerText = `${totalTissues.toLocaleString('id-ID')} Pcs`;
             }
 
+            // Cek selisih stok shift untuk rentang tanggal laporan
+            try {
+                const shiftDiffRes = await fetch(`api.php?action=get_shift_reports&branch_id=${branchId}&date=${end}`);
+                const shiftDiffData = await shiftDiffRes.json();
+                const diffBanner = document.getElementById('sales-report-stock-diff-banner');
+                if (diffBanner) {
+                    if (shiftDiffData.success && shiftDiffData.daily_summary && shiftDiffData.daily_summary.has_stock_difference) {
+                        diffBanner.classList.remove('hidden');
+                        const descEl = document.getElementById('sales-report-stock-diff-desc');
+                        if (descEl) descEl.innerText = `Ditemukan ${shiftDiffData.daily_summary.total_stock_differences_count || 1} selisih fisik stok pada penutupan shift kasir (${end}). Silakan klik tombol di samping untuk meninjau audit stok.`;
+                    } else {
+                        diffBanner.classList.add('hidden');
+                    }
+                }
+            } catch (eDiff) {}
+
             document.getElementById('report-top-products-body').innerHTML = data.top_products.map(tp => `
                 <tr>
                     <td class="py-2.5 px-3 font-semibold text-slate-800">${tp.product_name}</td>
@@ -12363,18 +12400,36 @@ try {
                     diffText = 'Seimbang Rp 0 ✅';
                 }
 
-                // Table Mini Rekonsiliasi Stok Produk Shift
-                const itemsRows = (s.reconciled_items || []).map(item => `
+                // Cek apakah terdapat selisih stok pada shift ini
+                const hasShiftStockDiff = (s.reconciled_items || []).some(it => it.has_difference);
+
+                // Table Mini Rekonsiliasi & Audit Stok Produk Shift
+                const itemsRows = (s.reconciled_items || []).map(item => {
+                    const diffVal = Number(item.difference_qty) || 0;
+                    let diffBadge = `<span class="font-mono text-slate-400">0</span>`;
+                    if (s.status !== 'CLOSED') {
+                        diffBadge = `<span class="text-slate-400 text-[10px]">-</span>`;
+                    } else if (diffVal < 0) {
+                        diffBadge = `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-700 font-mono">${formatDecimal(diffVal)}</span>`;
+                    } else if (diffVal > 0) {
+                        diffBadge = `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black bg-sky-100 text-sky-700 font-mono">+${formatDecimal(diffVal)}</span>`;
+                    }
+
+                    const soldAmount = (item.sold_qty !== undefined) ? item.sold_qty : item.usage_qty;
+
+                    return `
                     <tr class="hover:bg-slate-50/50">
                         <td class="py-2 px-2.5 font-bold text-slate-800 flex items-center gap-1.5">
                             <span>${item.image_emoji || '📦'}</span>
                             <span class="truncate">${escapeHtml(item.name)}</span>
                         </td>
                         <td class="py-2 px-2 text-center font-mono text-slate-600">${formatDecimal(item.opening_qty)}</td>
-                        <td class="py-2 px-2 text-center font-bold text-indigo-700">${formatDecimal(item.usage_qty)}</td>
+                        <td class="py-2 px-2 text-center font-bold text-indigo-700">${formatDecimal(soldAmount)}</td>
                         <td class="py-2 px-2 text-center font-black text-slate-900 bg-slate-50">${formatDecimal(item.closing_qty)}</td>
+                        <td class="py-2 px-2 text-center font-bold">${diffBadge}</td>
                     </tr>
-                `).join('');
+                    `;
+                }).join('');
 
                 return `
                     <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-4 sm:p-5 space-y-4 hover:border-indigo-300 transition-all">
@@ -12455,12 +12510,21 @@ try {
                             ` : ''}
                         </div>
 
-                        <!-- Rincian Pemakaian Stok Bahan/Produk Shift Ini -->
+                        <!-- Rincian Pemakaian & Audit Stok Produk Shift Ini -->
                         <div class="space-y-1.5">
                             <div class="flex items-center justify-between text-[11px] font-bold text-slate-700">
-                                <span>Pemakaian Stok Selama Shift Ini:</span>
-                                <span class="text-slate-400 font-normal">Awal - Terpakai = Sisa</span>
+                                <span class="flex items-center gap-1.5">
+                                    <span>Pemakaian Stok Selama Shift Ini:</span>
+                                    ${hasShiftStockDiff ? `<span class="px-1.5 py-0.5 bg-rose-100 text-rose-700 text-[9px] font-black rounded-md border border-rose-200">Ada Selisih</span>` : ''}
+                                </span>
+                                <span class="text-slate-400 font-normal">Awal - Terjual = Fisik & Selisih</span>
                             </div>
+                            ${hasShiftStockDiff ? `
+                            <div class="p-2 bg-rose-50 border border-rose-200 rounded-xl text-[10px] font-bold text-rose-800 flex items-center gap-1.5">
+                                <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-rose-600 shrink-0"></i>
+                                <span>Perhatian: Ditemukan selisih fisik stok pada penutupan shift ini. Periksa kolom Selisih.</span>
+                            </div>
+                            ` : ''}
                             <div class="overflow-x-auto rounded-xl border border-slate-100">
                                 <table class="w-full text-left text-[11px]">
                                     <thead class="bg-slate-50 text-slate-500 font-bold">
@@ -12468,7 +12532,8 @@ try {
                                             <th class="py-1.5 px-2.5">Produk</th>
                                             <th class="py-1.5 px-2 text-center">Awal</th>
                                             <th class="py-1.5 px-2 text-center">Terjual</th>
-                                            <th class="py-1.5 px-2 text-center">Sisa</th>
+                                            <th class="py-1.5 px-2 text-center">Sisa Fisik</th>
+                                            <th class="py-1.5 px-2 text-center text-rose-600">Selisih</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-100">
@@ -12547,14 +12612,24 @@ try {
             if (!finalStocks || finalStocks.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="7" class="py-8 text-center text-slate-400 text-xs">Belum ada data stok closing malam untuk tanggal ini.</td>
+                        <td colspan="8" class="py-8 text-center text-slate-400 text-xs">Belum ada data stok closing malam untuk tanggal ini.</td>
                     </tr>
                 `;
                 return;
             }
 
             tbody.innerHTML = finalStocks.map(item => {
-                const totalUsed = item.usage_qty || 0;
+                const totalSold = (item.sold_qty !== undefined) ? item.sold_qty : (item.usage_qty || 0);
+                const diffVal = Number(item.difference_qty) || 0;
+                let diffBadge = `<span class="font-mono text-slate-400">0</span>`;
+                if (!isClosed) {
+                    diffBadge = `<span class="text-slate-400 text-[10px]">-</span>`;
+                } else if (diffVal < 0) {
+                    diffBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-black bg-rose-100 text-rose-700 font-mono">${formatDecimal(diffVal)}</span>`;
+                } else if (diffVal > 0) {
+                    diffBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-black bg-sky-100 text-sky-700 font-mono">+${formatDecimal(diffVal)}</span>`;
+                }
+
                 return `
                     <tr class="hover:bg-slate-50/50">
                         <td class="py-3 px-4 font-bold text-slate-800 flex items-center gap-2">
@@ -12564,9 +12639,12 @@ try {
                         <td class="py-3 px-4 font-mono text-slate-500 text-[11px]">${escapeHtml(item.sku)}</td>
                         <td class="py-3 px-4 text-center font-bold text-slate-600">${escapeHtml(item.unit || 'pcs')}</td>
                         <td class="py-3 px-4 text-center font-semibold text-slate-700">${formatDecimal(item.opening_qty)}</td>
-                        <td class="py-3 px-4 text-center font-bold text-indigo-700">${formatDecimal(totalUsed)}</td>
+                        <td class="py-3 px-4 text-center font-bold text-indigo-700">${formatDecimal(totalSold)}</td>
                         <td class="py-3 px-4 text-center font-black text-indigo-950 bg-indigo-50/40 text-sm">
                             ${formatDecimal(item.closing_qty)} <span class="text-[10px] text-slate-400 font-normal">${escapeHtml(item.unit || 'pcs')}</span>
+                        </td>
+                        <td class="py-3 px-4 text-center font-bold">
+                            ${diffBadge}
                         </td>
                         <td class="py-3 px-4 text-center">
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isClosed ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
@@ -12590,9 +12668,12 @@ try {
             const diff = s.cash_difference || 0;
             const diffStr = (diff >= 0 ? '+' : '') + formatRupiah(diff);
 
-            const itemsStr = (s.reconciled_items || []).map(it => 
-                `  - ${it.name} (${it.sku}): Awal ${it.opening_qty} | Pakai ${it.usage_qty} | Sisa ${it.closing_qty} ${it.unit}`
-            ).join('\n');
+            const itemsStr = (s.reconciled_items || []).map(it => {
+                const diffVal = Number(it.difference_qty) || 0;
+                const itSold = it.sold_qty !== undefined ? it.sold_qty : it.usage_qty;
+                const diffText = diffVal !== 0 ? ` | Selisih ${(diffVal > 0 ? '+' : '') + diffVal}` : ' | Selisih 0';
+                return `  - ${it.name} (${it.sku}): Awal ${it.opening_qty} | Jual ${itSold} | Fisik ${it.closing_qty}${diffText} ${it.unit}`;
+            }).join('\n');
 
             const content = 
 `========================================
@@ -12649,9 +12730,11 @@ TTD Kasir: __________________
                 `[${s.shift_name}] ${s.cashier_name} | Omzet: ${formatRupiah(s.total_sales)} | Tunai: ${formatRupiah(s.cash_sales)} | Fisik: ${formatRupiah(s.actual_cash)}`
             ).join('\n');
 
-            const stocksStr = (ds.final_stocks || []).map(st => 
-                `  - ${st.name} (${st.sku}): Sisa Malam ${st.closing_qty} ${st.unit}`
-            ).join('\n');
+            const stocksStr = (ds.final_stocks || []).map(st => {
+                const diffVal = Number(st.difference_qty) || 0;
+                const diffText = diffVal !== 0 ? ` | Selisih ${(diffVal > 0 ? '+' : '') + diffVal}` : '';
+                return `  - ${st.name} (${st.sku}): Fisik ${st.closing_qty}${diffText} ${st.unit}`;
+            }).join('\n');
 
             const content = 
 `========================================
