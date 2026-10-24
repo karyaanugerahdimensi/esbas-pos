@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.31",
-  "build": "20261024-12",
+  "version": "1.2.32",
+  "build": "20261024-13",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.32",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Peniadaan Nilai Default & Informasi Terpakai/Terjual pada Input Sisa Fisik Closing Shift",
+      "description": "Menyempurnakan antarmuka modal penutupan shift kasir (Closing Shift) pada bagian Laporan Stok Fisik Akhir Malam (Closing Stock): (1) Mengosongkan seluruh kotak isian (textbox input) 'Input Sisa Fisik Malam Ini' (value=\"\") dengan placeholder default '0', mewajibkan kasir menghitung dan menginput sisa fisik aktual secara mandiri (blind stock count) tanpa disuapi angka estimasi sistem sebelumnya. (2) Menghilangkan teks dan lencana informasi 'Terpakai / Terjual: X pcs' di bawah setiap baris input sisa fisik malam guna menjaga objektivitas penghitungan fisik persediaan di akhir hari. (3) Menjaga integritas data penyimpanan di mana nilai input kasir tetap tersimpan secara presisi ke kolom closing_qty dan snapshot shift.",
+      "rollback_command": "git checkout v1.2.31"
+    },
     {
       "version": "1.2.31",
       "commit": "HEAD",

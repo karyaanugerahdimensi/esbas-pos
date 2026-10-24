@@ -10248,10 +10248,7 @@ try {
                                     </div>
                                     <div class="sm:col-span-4">
                                         <div class="relative">
-                                            <input type="number" ${legacyId} data-product-id="${item.product_id}" data-product-name="${itemName}" data-unit="${itemUnit}" data-opening-qty="${item.opening_qty}" oninput="calculateClosingItemDiff(this)" min="0" value="${item.closing_qty}" placeholder="0" class="shift-closing-item-input w-full text-center py-2 px-3 bg-rose-50/30 border border-rose-200 rounded-xl font-black text-slate-900 text-sm focus:ring-2 focus:ring-rose-500 shadow-inner">
-                                        </div>
-                                        <div id="closing-diff-badge-${item.product_id}" class="text-[10px] font-bold text-center mt-1 text-slate-500">
-                                            Terpakai / Terjual: <b>${Math.max(0, item.opening_qty - item.closing_qty)} ${itemUnit}</b>
+                                            <input type="number" ${legacyId} data-product-id="${item.product_id}" data-product-name="${itemName}" data-unit="${itemUnit}" data-opening-qty="${item.opening_qty}" min="0" value="" placeholder="0" class="shift-closing-item-input w-full text-center py-2 px-3 bg-white border border-rose-200 rounded-xl font-black text-slate-900 text-sm focus:ring-2 focus:ring-rose-500 shadow-inner">
                                         </div>
                                     </div>
                                 </div>
@@ -11091,20 +11088,7 @@ try {
         }
 
         function calculateClosingItemDiff(input) {
-            const pId = input.getAttribute('data-product-id');
-            const unit = input.getAttribute('data-unit') || 'pcs';
-            const openQty = parseInt(input.getAttribute('data-opening-qty')) || 0;
-            const closeQty = parseInt(input.value) || 0;
-            const used = openQty - closeQty;
-
-            const badge = document.getElementById(`closing-diff-badge-${pId}`);
-            if (badge) {
-                if (used >= 0) {
-                    badge.innerHTML = `Terpakai / Terjual: <b class="text-indigo-700">${used} ${unit}</b>`;
-                } else {
-                    badge.innerHTML = `Fisik Lebih: <b class="text-emerald-700">+${Math.abs(used)} ${unit}</b>`;
-                }
-            }
+            // Informasi terpakai/terjual ditiadakan sesuai instruksi operasional closing shift
         }
 
         // ==========================================
