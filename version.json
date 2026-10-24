@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.37",
-  "build": "20261024-18",
+  "version": "1.2.38",
+  "build": "20261024-19",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.38",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Proteksi & Validasi Penghapusan Resep BOM yang Memiliki Riwayat Transaksi Terhubung",
+      "description": "Menerapkan validasi ketat integritas relasional data sebelum penghapusan formula resep Bill of Materials (BOM): (1) Pada endpoint delete_recipe_item (tombol hapus bahan baku dari kartu Base BOM), sistem memvalidasi tabel sale_items terhadap finished_product_id terkait. Jika produk jadi sudah pernah memiliki riwayat transaksi penjualan, penghapusan bahan baku DITOLAK seketika dan menampilkan notifikasi peringatan rinci yang menginformasikan bahwa produk telah memiliki riwayat transaksi terhubung dan penghapusan diblokir demi menjaga integritas data riwayat penjualan serta audit HPP (COGS). (2) Pada endpoint delete_base_bom (tombol Hapus BOM per-produk), sistem memvalidasi keberadaan transaksi penjualan sebelum mengizinkan pembersihan resep produk jadi. (3) Pada endpoint reset_all_base_bom (tombol Hapus Semua Base BOM), sistem memvalidasi seluruh produk resep; jika terdapat produk yang sudah memiliki riwayat transaksi penjualan, reset massal ditolak. (4) Pada endpoint delete_variant_recipe, delete_variant, dan detach_product_from_variant, sistem turut memvalidasi integritas riwayat transaksi varian pada sale_items. (5) Antarmuka index.php menyajikan dialog peringatan modal/alert interaktif '⚠️ TIDAK BISA DIHAPUS' dengan pesan edukatif yang jelas bagi operator.",
+      "rollback_command": "git checkout v1.2.37"
+    },
     {
       "version": "1.2.37",
       "commit": "HEAD",

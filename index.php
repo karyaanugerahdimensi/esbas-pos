@@ -15293,11 +15293,13 @@ Manager / Supervisor: __________________
                     body: JSON.stringify({ variant_id: variantId })
                 });
                 const data = await res.json();
-                alert(data.message || data.error);
                 if (data.success) {
+                    alert('✅ ' + (data.message || 'Produk berhasil dilepas dari varian.'));
                     loadAllProducts();
                     loadVariantBOMRecipes();
                     initApp();
+                } else {
+                    alert('⚠️ TIDAK BISA DILEPAS:\n\n' + (data.message || data.error || 'Terjadi kesalahan sistem'));
                 }
             } catch (err) {
                 alert('Gagal melepas produk dari varian: ' + err.message);
@@ -16289,14 +16291,23 @@ Manager / Supervisor: __________________
 
         async function deleteRecipeItem(id) {
             if (!confirm('Hapus bahan baku ini dari formula resep?')) return;
-            const res = await fetch('api.php?action=delete_recipe_item', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ recipe_id: id })
-            });
-            const data = await res.json();
-            alert(data.message || data.error);
-            if (data.success) loadBOMRecipes();
+            try {
+                const res = await fetch('api.php?action=delete_recipe_item', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ recipe_id: id })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ ' + (data.message || 'Bahan baku berhasil dihapus dari resep.'));
+                    loadBOMRecipes();
+                } else {
+                    alert('⚠️ TIDAK BISA DIHAPUS:\n\n' + (data.message || data.error || 'Terjadi kesalahan saat menghapus bahan baku.'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan koneksi saat menghapus bahan baku resep.');
+            }
         }
 
         async function deleteBaseBOM(productId, productName) {
@@ -16311,10 +16322,10 @@ Manager / Supervisor: __________________
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert(data.message || 'Formula resep Base BOM berhasil dihapus.');
+                    alert('✅ ' + (data.message || 'Formula resep Base BOM berhasil dihapus.'));
                     loadBOMRecipes();
                 } else {
-                    alert(`❌ GAGAL: ${data.message || 'Terjadi kesalahan sistem'}`);
+                    alert('⚠️ TIDAK BISA DIHAPUS:\n\n' + (data.message || data.error || 'Terjadi kesalahan sistem'));
                 }
             } catch (err) {
                 console.error(err);
@@ -16340,10 +16351,10 @@ Manager / Supervisor: __________________
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert(data.message || 'Seluruh Base BOM berhasil dihapus.');
+                    alert('✅ ' + (data.message || 'Seluruh Base BOM berhasil dihapus.'));
                     loadBOMRecipes();
                 } else {
-                    alert(`❌ GAGAL: ${data.message || 'Terjadi kesalahan sistem'}`);
+                    alert('⚠️ TIDAK BISA DIHAPUS:\n\n' + (data.message || data.error || 'Terjadi kesalahan sistem'));
                 }
             } catch (err) {
                 console.error(err);
@@ -16592,16 +16603,23 @@ Manager / Supervisor: __________________
 
         async function deleteVariantRecipeItem(id) {
             if (!confirm('Hapus bahan baku ini dari formula varian?')) return;
-            const res = await fetch('api.php?action=delete_variant_recipe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ variant_recipe_id: id })
-            });
-            const data = await res.json();
-            alert(data.message || data.error);
-            if (data.success) {
-                loadVariantBOMRecipes();
-                initApp();
+            try {
+                const res = await fetch('api.php?action=delete_variant_recipe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ variant_recipe_id: id })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ ' + (data.message || 'Bahan baku varian berhasil dihapus.'));
+                    loadVariantBOMRecipes();
+                    initApp();
+                } else {
+                    alert('⚠️ TIDAK BISA DIHAPUS:\n\n' + (data.message || data.error || 'Terjadi kesalahan saat menghapus bahan baku varian.'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan koneksi saat menghapus bahan baku varian.');
             }
         }
 

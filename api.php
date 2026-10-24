@@ -2621,6 +2621,32 @@ try {
 
         case 'delete_variant':
             $varId = (int)($input['variant_id'] ?? 0);
+            if (!$varId) {
+                echo json_encode(['success' => false, 'message' => 'ID varian tidak valid.']);
+                exit;
+            }
+
+            // Cek nama dan riwayat transaksi terkait
+            $stmtVar = $pdo->prepare("SELECT variant_name, product_id FROM product_variants WHERE id = ?");
+            $stmtVar->execute([$varId]);
+            $varData = $stmtVar->fetch(PDO::FETCH_ASSOC);
+
+            if ($varData) {
+                $varName = $varData['variant_name'];
+                $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM sale_items WHERE variant_id = ? OR (product_id = ? AND LOWER(variant_name) = LOWER(?))");
+                $stmtCheck->execute([$varId, $varData['product_id'], $varName]);
+                $txCount = (int)$stmtCheck->fetchColumn();
+                if ($txCount > 0) {
+                    echo json_encode([
+                        'success' => false,
+                        'has_transactions' => true,
+                        'sales_count' => $txCount,
+                        'message' => "Varian '{$varName}' tidak dapat dihapus karena sudah memiliki {$txCount} riwayat transaksi penjualan yang terhubung.\n\nPenghapusan diblokir untuk menjaga integritas data riwayat penjualan."
+                    ]);
+                    exit;
+                }
+            }
+
             $pdo->prepare("DELETE FROM product_variants WHERE id = ?")->execute([$varId]);
             echo json_encode(['success' => true, 'message' => 'Varian berhasil dihapus.']);
             break;
@@ -2829,9 +2855,46 @@ try {
 
         case 'delete_recipe_item':
             $recipeId = (int)($input['recipe_id'] ?? 0);
-            $stmtGet = $pdo->prepare("SELECT finished_product_id FROM product_recipes WHERE id = ?");
+            if (!$recipeId) {
+                echo json_encode(['success' => false, 'message' => 'ID resep tidak valid.']);
+                exit;
+            }
+
+            // Ambil info produk jadi dan bahan baku
+            $stmtGet = $pdo->prepare("
+                SELECT pr.finished_product_id, pr.ingredient_product_id, 
+                       pfg.name as finished_name, ping.name as ingredient_name
+                FROM product_recipes pr
+                LEFT JOIN products pfg ON pfg.id = pr.finished_product_id
+                LEFT JOIN products ping ON ping.id = pr.ingredient_product_id
+                WHERE pr.id = ?
+            ");
             $stmtGet->execute([$recipeId]);
-            $fgId = $stmtGet->fetchColumn();
+            $recRow = $stmtGet->fetch(PDO::FETCH_ASSOC);
+
+            if (!$recRow) {
+                echo json_encode(['success' => false, 'message' => 'Data resep bahan baku tidak ditemukan.']);
+                exit;
+            }
+
+            $fgId = (int)$recRow['finished_product_id'];
+            $fgName = $recRow['finished_name'] ?: "ID #{$fgId}";
+            $ingName = $recRow['ingredient_name'] ?: "Bahan baku";
+
+            // Cek apakah produk jadi sudah pernah ada riwayat transaksi penjualan
+            $stmtCheckSales = $pdo->prepare("SELECT COUNT(*) FROM sale_items WHERE product_id = ?");
+            $stmtCheckSales->execute([$fgId]);
+            $salesCount = (int)$stmtCheckSales->fetchColumn();
+
+            if ($salesCount > 0) {
+                echo json_encode([
+                    'success' => false,
+                    'has_transactions' => true,
+                    'sales_count' => $salesCount,
+                    'message' => "Bahan baku '{$ingName}' tidak dapat dihapus dari resep produk '{$fgName}' karena produk ini sudah memiliki {$salesCount} riwayat transaksi penjualan yang terhubung.\n\nPenghapusan diblokir untuk menjaga integritas data riwayat transaksi dan audit HPP (COGS)."
+                ]);
+                exit;
+            }
 
             $pdo->prepare("DELETE FROM product_recipes WHERE id = ?")->execute([$recipeId]);
 
@@ -2847,7 +2910,7 @@ try {
 
             echo json_encode([
                 'success' => true, 
-                'message' => 'Bahan baku dihapus dari resep. HPP modal barang jadi disesuaikan.',
+                'message' => "Bahan baku '{$ingName}' berhasil dihapus dari resep produk '{$fgName}'. HPP modal barang jadi disesuaikan.",
                 'calculated_cogs' => $autoCogs
             ]);
             break;
@@ -2862,6 +2925,21 @@ try {
             $stmtGet = $pdo->prepare("SELECT name FROM products WHERE id = ?");
             $stmtGet->execute([$fgId]);
             $pName = $stmtGet->fetchColumn() ?: 'Produk';
+
+            // Cek apakah produk jadi sudah pernah ada riwayat transaksi penjualan
+            $stmtCheckSales = $pdo->prepare("SELECT COUNT(*) FROM sale_items WHERE product_id = ?");
+            $stmtCheckSales->execute([$fgId]);
+            $salesCount = (int)$stmtCheckSales->fetchColumn();
+
+            if ($salesCount > 0) {
+                echo json_encode([
+                    'success' => false,
+                    'has_transactions' => true,
+                    'sales_count' => $salesCount,
+                    'message' => "Formula resep Base BOM untuk produk '{$pName}' tidak dapat dihapus karena sudah memiliki {$salesCount} riwayat transaksi penjualan yang terhubung.\n\nPenghapusan diblokir demi menjaga integritas data riwayat transaksi dan laporan HPP."
+                ]);
+                exit;
+            }
 
             // Hapus seluruh bahan baku resep base BOM untuk produk ini
             $stmtDel = $pdo->prepare("DELETE FROM product_recipes WHERE finished_product_id = ?");
@@ -2888,6 +2966,27 @@ try {
             $cleanRole = strtoupper(str_replace(['_', ' ', '-'], '', (string)$curRoleId));
             if (!empty($cleanRole) && !in_array($cleanRole, ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'])) {
                 echo json_encode(['success' => false, 'message' => 'Akses ditolak. Hanya Super Admin & Branch Manager yang berwenang mereset Base BOM.']);
+                exit;
+            }
+
+            // Cek apakah ada produk resep yang sudah memiliki riwayat transaksi penjualan
+            $stmtCheckTx = $pdo->query("
+                SELECT COUNT(DISTINCT si.product_id) as transacted_count, COUNT(si.id) as total_tx
+                FROM sale_items si
+                JOIN product_recipes pr ON pr.finished_product_id = si.product_id
+            ");
+            $txInfo = $stmtCheckTx->fetch(PDO::FETCH_ASSOC);
+            $transactedCount = (int)($txInfo['transacted_count'] ?? 0);
+            $totalTx = (int)($txInfo['total_tx'] ?? 0);
+
+            if ($totalTx > 0) {
+                echo json_encode([
+                    'success' => false,
+                    'has_transactions' => true,
+                    'transacted_count' => $transactedCount,
+                    'total_tx' => $totalTx,
+                    'message' => "Penghapusan seluruh formula Base BOM ditolak karena terdapat {$transactedCount} produk resep yang telah memiliki total {$totalTx} riwayat transaksi penjualan yang terhubung.\n\nPenghapusan diblokir demi menjaga integritas data riwayat transaksi dan audit HPP."
+                ]);
                 exit;
             }
 
@@ -3041,22 +3140,53 @@ try {
 
         case 'delete_variant_recipe':
             $vrId = (int)($input['variant_recipe_id'] ?? 0);
+            if (!$vrId) {
+                echo json_encode(['success' => false, 'message' => 'ID resep varian tidak valid.']);
+                exit;
+            }
             
-            // Cari data recipe & hapus juga di sibling variants agar sinkron
-            $recRow = $pdo->query("
-                SELECT vr.*, pv.variant_name 
+            // Cari data recipe & varian terkait
+            $stmtVR = $pdo->prepare("
+                SELECT vr.*, pv.variant_name, pv.product_id, pfg.name as product_name, ping.name as ingredient_name
                 FROM variant_recipes vr 
                 JOIN product_variants pv ON pv.id = vr.variant_id 
-                WHERE vr.id = $vrId
-            ")->fetch();
+                LEFT JOIN products pfg ON pfg.id = pv.product_id
+                LEFT JOIN products ping ON ping.id = vr.ingredient_product_id
+                WHERE vr.id = ?
+            ");
+            $stmtVR->execute([$vrId]);
+            $recRow = $stmtVR->fetch(PDO::FETCH_ASSOC);
 
             if ($recRow) {
-                $stmtDelSib = $pdo->prepare("
-                    DELETE vr FROM variant_recipes vr
-                    JOIN product_variants pv ON pv.id = vr.variant_id
-                    WHERE LOWER(pv.variant_name) = LOWER(?) AND vr.ingredient_product_id = ?
+                $varName = $recRow['variant_name'] ?: 'Varian';
+                $ingName = $recRow['ingredient_name'] ?: 'Bahan baku';
+
+                // Cek apakah varian ini atau sibling variants sudah pernah ditransaksikan di sale_items
+                $stmtCheckSales = $pdo->prepare("
+                    SELECT COUNT(*) 
+                    FROM sale_items si
+                    JOIN product_variants pv ON pv.id = si.variant_id OR (si.product_id = pv.product_id AND LOWER(si.variant_name) = LOWER(pv.variant_name))
+                    WHERE LOWER(pv.variant_name) = LOWER(?)
                 ");
-                $stmtDelSib->execute([$recRow['variant_name'], $recRow['ingredient_product_id']]);
+                $stmtCheckSales->execute([$varName]);
+                $salesCount = (int)$stmtCheckSales->fetchColumn();
+
+                if ($salesCount > 0) {
+                    echo json_encode([
+                        'success' => false,
+                        'has_transactions' => true,
+                        'sales_count' => $salesCount,
+                        'message' => "Bahan baku '{$ingName}' tidak dapat dihapus dari formula varian '{$varName}' karena varian ini sudah memiliki {$salesCount} riwayat transaksi penjualan yang terhubung.\n\nPenghapusan diblokir demi menjaga integritas data riwayat transaksi dan audit HPP."
+                    ]);
+                    exit;
+                }
+
+                $stmtDelSib = $pdo->prepare("
+                    DELETE FROM variant_recipes 
+                    WHERE ingredient_product_id = ? 
+                      AND variant_id IN (SELECT id FROM product_variants WHERE LOWER(variant_name) = LOWER(?))
+                ");
+                $stmtDelSib->execute([$recRow['ingredient_product_id'], $recRow['variant_name']]);
             } else {
                 $pdo->prepare("DELETE FROM variant_recipes WHERE id = ?")->execute([$vrId]);
             }
@@ -3070,6 +3200,26 @@ try {
                 echo json_encode(['success' => false, 'message' => 'ID varian produk wajib diisi.']);
                 exit;
             }
+
+            $stmtVar = $pdo->prepare("SELECT pv.*, p.name as product_name FROM product_variants pv JOIN products p ON p.id = pv.product_id WHERE pv.id = ?");
+            $stmtVar->execute([$variantId]);
+            $varData = $stmtVar->fetch(PDO::FETCH_ASSOC);
+
+            if ($varData) {
+                $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM sale_items WHERE variant_id = ? OR (product_id = ? AND LOWER(variant_name) = LOWER(?))");
+                $stmtCheck->execute([$variantId, $varData['product_id'], $varData['variant_name']]);
+                $txCount = (int)$stmtCheck->fetchColumn();
+                if ($txCount > 0) {
+                    echo json_encode([
+                        'success' => false,
+                        'has_transactions' => true,
+                        'sales_count' => $txCount,
+                        'message' => "Varian '{$varData['variant_name']}' tidak dapat dilepas dari produk '{$varData['product_name']}' karena sudah memiliki {$txCount} riwayat transaksi penjualan yang terhubung.\n\nPenghapusan diblokir untuk menjaga integritas data transaksi."
+                    ]);
+                    exit;
+                }
+            }
+
             $pdo->prepare("DELETE FROM product_variants WHERE id = ?")->execute([$variantId]);
             echo json_encode(['success' => true, 'message' => 'Produk berhasil dilepas dari varian ini.']);
             break;
