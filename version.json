@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.47",
-  "build": "20261026-02",
+  "version": "1.2.48",
+  "build": "20261026-03",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.48",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Pemotongan Otomatis Bahan Baku BOM Saat Closed Day / Closing Shift Produk Jadi Standby",
+      "description": "Menyempurnakan alur penutupan shift dan closed day (close_shift) pada api.php: (1) Ketika kasir menginput kuantitas fisik produk jadi olahan (seperti Air Mineral Galon 19L atau Air RO Galon 19L) yang disiapkan untuk standby toko malam hari (misal 10 galon atau 7 galon), sistem secara otomatis memotong stok bahan baku (BOM) di cabang secara proporsional sesuai formula resep produk tersebut. (2) Pemotongan BOM mencakup Base BOM (Air Baku 20L/galon, Tisu Galon 1 pcs/galon) dan Variant BOM (Tutup Galon Mineral 1 pcs/galon atau Tutup Galon RO 1 pcs/galon), dengan perlindungan deduplikasi bahan baku. (3) Pengurangan bahan baku dicatat secara transparan pada kartu mutasi stok (stock_movements) dengan tipe 'BOM_DEDUCTION' dan referensi closing shift terkait, sehingga otomatis terakumulasi dalam laporan pemakaian bahan baku cabang. (4) Pemrosesan dilakukan dua tahap terstruktur: produk jadi ber-BOM diproses terlebih dahulu untuk memotong bahan baku galon standby (termasuk tutup galon terpasang), baru kemudian sisa tutup galon yang belum terpasang diretur ke gudang saat tutup toko (is_final_shift = 1), menjamin saldo stok cabang, kartu retur, dan fisik di toko sinkron sempurna tanpa selisih.",
+      "rollback_command": "git checkout v1.2.47"
+    },
     {
       "version": "1.2.47",
       "commit": "HEAD",

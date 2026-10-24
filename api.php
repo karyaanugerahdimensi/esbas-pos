@@ -4959,20 +4959,179 @@ try {
                 $stmtUpdBs = $pdo->prepare("UPDATE branch_stocks SET stock = ? WHERE branch_id = ? AND product_id = ?");
                 $stmtInsBs = $pdo->prepare("INSERT INTO branch_stocks (branch_id, product_id, stock, local_price, local_cogs) VALUES (?, ?, ?, 0, 0)");
 
-                $stmtProdInfo = $pdo->prepare("SELECT id, sku, name, product_type, unit FROM products WHERE id = ?");
+                $stmtProdInfo = $pdo->prepare("SELECT id, sku, name, product_type, unit, has_bom FROM products WHERE id = ?");
+
+                // Klasifikasikan item closing:
+                // 1. Produk Jadi Ber-BOM (misal Air Mineral Galon, Air RO Galon): diproses pertama agar BOM bahan baku terpotong sebelum retur
+                // 2. Item Lain / Bahan Baku (termasuk Tutup Galon yang mungkin diretur saat tutup toko)
+                $bomFinishedGoods = [];
+                $otherItems = [];
 
                 foreach ($closingMap as $pId => $closeQty) {
                     $pId = (int)$pId;
                     if ($pId <= 0) continue;
-                    
+
                     $stmtProdInfo->execute([$pId]);
                     $pInfo = $stmtProdInfo->fetch(PDO::FETCH_ASSOC);
-                    $isCapItem = $pInfo && ($pInfo['sku'] === 'RAW-089' || $pInfo['sku'] === 'RAW-020' || stripos($pInfo['name'], 'Tutup Galon') !== false);
+                    if (!$pInfo) continue;
+
+                    $isCapItem = ($pInfo['sku'] === 'RAW-089' || $pInfo['sku'] === 'RAW-020' || stripos($pInfo['name'], 'Tutup Galon') !== false);
+                    
+                    // Cek apakah item ini memiliki resep BOM
+                    $hasBomRecipe = false;
+                    if (!empty($pInfo['has_bom'])) {
+                        $hasBomRecipe = true;
+                    } else {
+                        $chkRc = $pdo->prepare("SELECT COUNT(*) FROM product_recipes WHERE finished_product_id = ?");
+                        $chkRc->execute([$pId]);
+                        if ($chkRc->fetchColumn() > 0) {
+                            $hasBomRecipe = true;
+                        }
+                    }
+
+                    // Hanya produk jadi (bukan tutup galon / bahan baku) yang memiliki BOM yang masuk kelompok BOM Finished Goods
+                    if (!$isCapItem && $hasBomRecipe && !empty($explicitlyUpdated[$pId]) && $closeQty > 0) {
+                        $bomFinishedGoods[] = [
+                            'product_id' => $pId,
+                            'close_qty' => (float)$closeQty,
+                            'product_info' => $pInfo
+                        ];
+                    } else {
+                        $otherItems[] = [
+                            'product_id' => $pId,
+                            'close_qty' => (float)$closeQty,
+                            'product_info' => $pInfo,
+                            'is_cap' => $isCapItem
+                        ];
+                    }
+                }
+
+                // TAHAP 1: EKSEKUSI PRODUK JADI BER-BOM (STANDBY STOK TUTUP TOKO)
+                // Memperbarui stok fisik produk jadi DAN secara otomatis memotong bahan baku (BOM)
+                foreach ($bomFinishedGoods as $fg) {
+                    $fgId = $fg['product_id'];
+                    $fgQty = $fg['close_qty'];
+                    $pInfo = $fg['product_info'];
+
+                    // A. Update stok fisik produk jadi di branch_stocks
+                    $stmtCheckBs->execute([$shift['branch_id'], $fgId]);
+                    $stmtCurFg = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                    $stmtCurFg->execute([$shift['branch_id'], $fgId]);
+                    $curFgStock = (float)($stmtCurFg->fetchColumn() ?: 0);
+
+                    if ($stmtCheckBs->fetchColumn()) {
+                        $stmtUpdBs->execute([$fgQty, $shift['branch_id'], $fgId]);
+                    } else {
+                        $stmtInsBs->execute([$shift['branch_id'], $fgId, $fgQty]);
+                    }
+
+                    // Catat riwayat audit opname penetapan stok fisik produk jadi
+                    $fgDiff = $fgQty - $curFgStock;
+                    if (abs($fgDiff) > 0.0001) {
+                        $pdo->prepare("
+                            INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
+                            VALUES (?, ?, 'STOCK_OPNAME', ?, ?, ?, ?, ?, ?)
+                        ")->execute([
+                            $shift['branch_id'], $fgId, $fgDiff, $curFgStock, $fgQty,
+                            'CLOSING-SHIFT-' . $shiftId,
+                            "Penetapan fisik {$fgQty} {$pInfo['unit']} produk jadi standby shift #{$shift['shift_number']}",
+                            $shift['user_id']
+                        ]);
+                    }
+
+                    // B. Potong Otomatis Bahan Baku BOM Sesuai Kuantitas Fisik Produk Jadi yang Dibuat
+                    $variantIngredientsUsed = [];
+
+                    // 1. Variant BOM (Tutup Galon Mineral / Tutup Galon RO dsb)
+                    $stmtVR = $pdo->prepare("
+                        SELECT vr.ingredient_product_id, vr.qty_needed, vr.unit, p.name as ing_name, p.sku as ing_sku, pv.variant_name
+                        FROM product_variants pv
+                        JOIN variant_recipes vr ON vr.variant_id = pv.id
+                        JOIN products p ON p.id = vr.ingredient_product_id
+                        WHERE pv.product_id = ?
+                    ");
+                    $stmtVR->execute([$fgId]);
+                    $varRecipes = $stmtVR->fetchAll(PDO::FETCH_ASSOC);
+
+                    foreach ($varRecipes as $vr) {
+                        $varIngId = (int)$vr['ingredient_product_id'];
+                        $variantIngredientsUsed[$varIngId] = true;
+                        $totalNeeded = (float)$vr['qty_needed'] * $fgQty;
+                        if ($totalNeeded <= 0) continue;
+
+                        $stmtCurVar = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                        $stmtCurVar->execute([$shift['branch_id'], $varIngId]);
+                        $curVarStock = (float)($stmtCurVar->fetchColumn() ?: 0);
+                        $newVarStock = max(0, $curVarStock - $totalNeeded);
+
+                        $pdo->prepare("UPDATE branch_stocks SET stock = stock - ? WHERE branch_id = ? AND product_id = ?")
+                            ->execute([$totalNeeded, $shift['branch_id'], $varIngId]);
+
+                        $noteVar = "Konsumsi Variant BOM [{$vr['variant_name']}] ({$fgQty}x {$pInfo['name']}) untuk stok standby tutup toko";
+                        $pdo->prepare("
+                            INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
+                            VALUES (?, ?, 'BOM_DEDUCTION', ?, ?, ?, ?, ?, ?)
+                        ")->execute([
+                            $shift['branch_id'], $varIngId, -$totalNeeded, $curVarStock, $newVarStock,
+                            'CLOSING-SHIFT-' . $shiftId, $noteVar, $shift['user_id']
+                        ]);
+                    }
+
+                    // 2. Base BOM (Air Baku, Tisu Galon, dsb)
+                    $stmtBR = $pdo->prepare("
+                        SELECT pr.ingredient_product_id, pr.qty_needed, pr.unit, p.name as ing_name, p.sku as ing_sku
+                        FROM product_recipes pr
+                        JOIN products p ON p.id = pr.ingredient_product_id
+                        WHERE pr.finished_product_id = ?
+                    ");
+                    $stmtBR->execute([$fgId]);
+                    $baseRecipes = $stmtBR->fetchAll(PDO::FETCH_ASSOC);
+
+                    foreach ($baseRecipes as $br) {
+                        $ingId = (int)$br['ingredient_product_id'];
+                        if (isset($variantIngredientsUsed[$ingId])) {
+                            continue;
+                        }
+
+                        $totalNeeded = (float)$br['qty_needed'] * $fgQty;
+                        if ($totalNeeded <= 0) continue;
+
+                        $stmtCurIng = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                        $stmtCurIng->execute([$shift['branch_id'], $ingId]);
+                        $curIngStock = (float)($stmtCurIng->fetchColumn() ?: 0);
+                        $newIngStock = max(0, $curIngStock - $totalNeeded);
+
+                        $pdo->prepare("UPDATE branch_stocks SET stock = stock - ? WHERE branch_id = ? AND product_id = ?")
+                            ->execute([$totalNeeded, $shift['branch_id'], $ingId]);
+
+                        $noteBase = "Konsumsi Base BOM ({$fgQty}x {$pInfo['name']}) untuk stok standby tutup toko";
+                        $pdo->prepare("
+                            INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
+                            VALUES (?, ?, 'BOM_DEDUCTION', ?, ?, ?, ?, ?, ?)
+                        ")->execute([
+                            $shift['branch_id'], $ingId, -$totalNeeded, $curIngStock, $newIngStock,
+                            'CLOSING-SHIFT-' . $shiftId, $noteBase, $shift['user_id']
+                        ]);
+                    }
+                }
+
+                // TAHAP 2: EKSEKUSI ITEM LAIN & RETUR TUTUP GALON KE GUDANG
+                foreach ($otherItems as $item) {
+                    $pId = $item['product_id'];
+                    $closeQty = $item['close_qty'];
+                    $pInfo = $item['product_info'];
+                    $isCapItem = $item['is_cap'];
 
                     // Jika ini adalah Tutup Toko Hari Ini (isFinalShift) dan item adalah Tutup Galon (Bahan Baku),
                     // sisa tutup yang tidak terpakai diretur ke gudang sehingga stok cabang untuk tutup dinolkan (0)
                     if ($isFinalShift && $isCapItem) {
                         $returnedCaps = (int)$closeQty;
+
+                        // Ambil saldo aktual cabang setelah pemotongan produk jadi di Tahap 1
+                        $stmtCurCap = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                        $stmtCurCap->execute([$shift['branch_id'], $pId]);
+                        $curCapStock = (float)($stmtCurCap->fetchColumn() ?: 0);
+
                         $stmtCheckBs->execute([$shift['branch_id'], $pId]);
                         if ($stmtCheckBs->fetchColumn()) {
                             $stmtUpdBs->execute([0, $shift['branch_id'], $pId]);
@@ -4987,7 +5146,7 @@ try {
                                 VALUES (?, ?, 'STOCK_OUT_RETURN', ?, ?, 0, ?, ?, ?)
                             ");
                             $stmtMoveRet->execute([
-                                $shift['branch_id'], $pId, -$returnedCaps, $returnedCaps, 'RETUR-SHIFT-' . $shiftId,
+                                $shift['branch_id'], $pId, -$returnedCaps, $curCapStock, 'RETUR-SHIFT-' . $shiftId,
                                 "Retur fisik sisa {$returnedCaps} pcs {$pInfo['name']} ke gudang saat tutup toko", $shift['user_id']
                             ]);
                         }
@@ -4998,7 +5157,7 @@ try {
                             continue;
                         }
 
-                        // Untuk produk jadi (misal 10 galon) atau item lainnya yang diisi fisik kasir, simpan stok fisik
+                        // Untuk produk / item lainnya yang diisi fisik kasir, simpan stok fisik
                         $stmtCheckBs->execute([$shift['branch_id'], $pId]);
                         if ($stmtCheckBs->fetchColumn()) {
                             $stmtUpdBs->execute([$closeQty, $shift['branch_id'], $pId]);

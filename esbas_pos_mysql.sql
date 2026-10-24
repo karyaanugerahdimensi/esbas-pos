@@ -1,6 +1,6 @@
 -- ========================================================
 -- ESBAS POS Database Export (MySQL / MariaDB Compatible)
--- Generated: 2026-10-24 15:38:43
+-- Generated: 2026-10-24 15:49:36
 -- ========================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
