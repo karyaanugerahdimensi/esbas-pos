@@ -18,3 +18,7 @@ define('DB_PASS', '');
 
 // 3. Kredensial SQLite
 define('DB_SQLITE_PATH', __DIR__ . '/database.sqlite');
+
+// 4. Konfigurasi Sinkronisasi Master Hosting & Lokal
+define('HOSTING_API_URL', 'https://kadtech.my.id');
+define('SYNC_SECRET_KEY', 'esbas_master_sync_2026_kadtech');

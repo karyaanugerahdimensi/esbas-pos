@@ -1871,10 +1871,16 @@ try {
                         </h3>
                         <p class="text-xs text-slate-500">Kelola master data seluruh karyawan, hak akses peran, cabang tugas, dan PIN kasir.</p>
                     </div>
-                    <button onclick="openEmployeeModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-2">
-                        <i data-lucide="user-plus" class="w-4 h-4"></i>
-                        <span>Tambah Karyawan Baru</span>
-                    </button>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="openMasterSyncModal({ tables: ['users', 'user_roles', 'role_menu_permissions', 'work_shifts'] })" class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold shadow-2xs flex items-center space-x-1.5 transition-colors" title="Sinkronkan data karyawan & hak akses dari server hosting">
+                            <i data-lucide="cloud-download" class="w-4 h-4 text-indigo-600"></i>
+                            <span>Sinkron dari Hosting</span>
+                        </button>
+                        <button onclick="openEmployeeModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-2">
+                            <i data-lucide="user-plus" class="w-4 h-4"></i>
+                            <span>Tambah Karyawan Baru</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Employee Table -->
@@ -1913,6 +1919,10 @@ try {
                         <p class="text-xs text-slate-500">Kelola Barang Jadi (Finished Goods), Bahan Baku (Raw Material), Varian Produk, dan Master Pajak (Tax CRUD).</p>
                     </div>
                     <div class="flex items-center flex-wrap gap-2">
+                        <button onclick="openMasterSyncModal({ tables: ['products', 'categories', 'product_types', 'product_units', 'product_variants', 'product_recipes', 'variant_recipes'] })" class="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold shadow-2xs flex items-center space-x-1.5 transition-colors" title="Sinkronkan katalog produk & resep BOM dari server hosting">
+                            <i data-lucide="cloud-download" class="w-4 h-4 text-indigo-600"></i>
+                            <span>Sinkron Produk Hosting</span>
+                        </button>
                         <button id="btn-export-products" onclick="exportMasterProducts()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-1.5 transition-colors" title="Export seluruh master data produk ke file CSV/Excel">
                             <i data-lucide="download" class="w-4 h-4"></i>
                             <span>Export CSV / Excel</span>
@@ -3604,10 +3614,16 @@ try {
                         </h3>
                         <p class="text-xs text-slate-500 mt-0.5">Kelola data seluruh toko, titik koordinat GPS maps outlet, radius presensi, dan nomor kontak cabang.</p>
                     </div>
-                    <button onclick="openBranchModal()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center space-x-2">
-                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                        <span>Tambah Cabang Baru</span>
-                    </button>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="openMasterSyncModal({ tables: ['branches', 'branch_settings', 'delivery_settings'] })" class="px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-2xl text-xs font-bold shadow-sm transition-all flex items-center space-x-1.5" title="Sinkronkan data cabang & operasional dari server hosting">
+                            <i data-lucide="cloud-download" class="w-4 h-4 text-indigo-600"></i>
+                            <span>Sinkron Cabang Hosting</span>
+                        </button>
+                        <button onclick="openBranchModal()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center space-x-2">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                            <span>Tambah Cabang Baru</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- KPI Ringkasan Cabang -->
@@ -4156,6 +4172,10 @@ try {
                         </p>
                     </div>
                     <div class="flex items-center space-x-2">
+                        <button onclick="openMasterSyncModal()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold flex items-center space-x-2 shadow-lg transition-all" title="Sinkronisasi Database Master dari Server Hosting ke Database Lokal">
+                            <i data-lucide="cloud-download" class="w-4 h-4"></i>
+                            <span>Sinkron Master Hosting</span>
+                        </button>
                         <button onclick="openMasterResetModal()" class="px-4 py-2.5 bg-rose-600/90 hover:bg-rose-600 text-white rounded-2xl text-xs font-bold flex items-center space-x-2 shadow-lg transition-all" title="Buka menu pusat reset & pembersihan data cabang (Superadmin Only)">
                             <i data-lucide="refresh-ccw" class="w-4 h-4"></i>
                             <span>Reset Data Toko</span>
@@ -4214,6 +4234,9 @@ try {
                     </button>
                     <button id="settings-tab-btn-notifications" onclick="setSettingsSubtab('notifications')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-1.5">
                         <span>📱 Nota WA & Telegram</span>
+                    </button>
+                    <button id="settings-tab-btn-sync" onclick="setSettingsSubtab('sync')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-1.5" title="Sinkronisasi Database Master Hosting & Lokal">
+                        <span>🌐 Sinkronisasi Hosting</span>
                     </button>
                 </div>
 
@@ -4624,6 +4647,145 @@ try {
                         </div>
                     </div>
                 </div>
+
+                <!-- SUBTAB 7: Sinkronisasi Database Master Hosting & Lokal -->
+                <div id="settings-subtab-sync" class="space-y-6 hidden">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+                        <div class="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
+                                    <span>🌐 Sinkronisasi Database Master Hosting & Lokal</span>
+                                </h3>
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    Selaraskan katalog produk, cabang, akun karyawan, formula BOM, pelanggan, dan konfigurasi dari server hosting live (MySQL) ke database lokal (SQLite). Transaksi kasir lokal tidak akan tertimpa.
+                                </p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" onclick="openMasterSyncModal()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold shadow-md flex items-center space-x-2 transition-all">
+                                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                                    <span>Buka Modal Sinkronisasi Lengkap</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Panel Status Hosting -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-700">Target Server Hosting</span>
+                                    <span id="subtab-sync-badge-status" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-700">Belum Diuji</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <input type="text" id="subtab-sync-hosting-url" value="https://kadtech.my.id" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500">
+                                    <button type="button" onclick="testHostingConnection('subtab-sync-hosting-url', 'subtab-sync-badge-status')" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-bold transition-all shrink-0">
+                                        Uji
+                                    </button>
+                                </div>
+                                <p class="text-[10px] text-slate-400">URL utama production (default: kadtech.my.id)</p>
+                            </div>
+
+                            <div class="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-2">
+                                <span class="text-xs font-bold text-indigo-900 block">Status Database Lokal</span>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-lg">💾</span>
+                                    <div>
+                                        <p class="text-xs font-black text-slate-800">SQLite Engine (Lokal)</p>
+                                        <p class="text-[10px] text-slate-500">database.sqlite aktif & terhubung</p>
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-indigo-600 font-medium">Bebas diakses tanpa internet</p>
+                            </div>
+
+                            <div class="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 space-y-2">
+                                <span class="text-xs font-bold text-emerald-900 block">Integritas Transaksi</span>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-lg">🛡️</span>
+                                    <div>
+                                        <p class="text-xs font-black text-slate-800">Proteksi Transaksi Kasir</p>
+                                        <p class="text-[10px] text-slate-500">Data penjualan lokal tetap aman</p>
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-emerald-600 font-medium">Hanya memperbarui tabel master</p>
+                            </div>
+                        </div>
+
+                        <!-- 3 Kartu Metode Sinkronisasi -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                            <!-- Metode 1: Tarik Otomatis -->
+                            <div class="p-5 bg-gradient-to-b from-indigo-50/80 to-white rounded-3xl border border-indigo-200 space-y-3.5 flex flex-col justify-between">
+                                <div class="space-y-2">
+                                    <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black shadow-md">
+                                        <i data-lucide="cloud-download" class="w-5 h-5"></i>
+                                    </div>
+                                    <h4 class="font-black text-slate-800 text-sm">1. Tarik Otomatis Dari Hosting</h4>
+                                    <p class="text-[11px] text-slate-500 leading-relaxed">
+                                        Menghubungkan langsung aplikasi lokal dengan hosting melalui API untuk mengunduh seluruh data master terbaru secara otomatis dalam 1 klik.
+                                    </p>
+                                </div>
+                                <button type="button" onclick="executeQuickMasterSyncRemote()" id="btn-quick-sync-remote" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center justify-center space-x-2 transition-all">
+                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                    <span>Tarik Master Hosting Sekarang</span>
+                                </button>
+                            </div>
+
+                            <!-- Metode 2: Impor File JSON -->
+                            <div class="p-5 bg-gradient-to-b from-blue-50/80 to-white rounded-3xl border border-blue-200 space-y-3.5 flex flex-col justify-between">
+                                <div class="space-y-2">
+                                    <div class="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black shadow-md">
+                                        <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+                                    </div>
+                                    <h4 class="font-black text-slate-800 text-sm">2. Impor Berkas Cadangan JSON</h4>
+                                    <p class="text-[11px] text-slate-500 leading-relaxed">
+                                        Gunakan berkas JSON master jika koneksi internet laptop offline atau IP lokal dibatasi oleh firewall server hosting.
+                                    </p>
+                                </div>
+                                <div class="space-y-2">
+                                    <input type="file" id="subtab-sync-file-input" accept=".json" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer">
+                                    <button type="button" onclick="executeQuickMasterSyncFile()" id="btn-quick-sync-file" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center justify-center space-x-2 transition-all">
+                                        <i data-lucide="upload" class="w-4 h-4"></i>
+                                        <span>Terapkan Berkas JSON</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Metode 3: Ekspor Master Lokal -->
+                            <div class="p-5 bg-gradient-to-b from-emerald-50/80 to-white rounded-3xl border border-emerald-200 space-y-3.5 flex flex-col justify-between">
+                                <div class="space-y-2">
+                                    <div class="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black shadow-md">
+                                        <i data-lucide="download" class="w-5 h-5"></i>
+                                    </div>
+                                    <h4 class="font-black text-slate-800 text-sm">3. Ekspor & Cadangkan Master</h4>
+                                    <p class="text-[11px] text-slate-500 leading-relaxed">
+                                        Unduh seluruh data master lokal sebagai berkas JSON untuk backup atau diunggah ke server hosting lainnya.
+                                    </p>
+                                </div>
+                                <div class="space-y-2">
+                                    <button type="button" onclick="downloadMasterDataJson(false)" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center justify-center space-x-2 transition-all">
+                                        <i data-lucide="download" class="w-4 h-4"></i>
+                                        <span>Unduh Master Lokal (.json)</span>
+                                    </button>
+                                    <button type="button" onclick="downloadMasterDataJson(true)" class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold border border-slate-200 flex items-center justify-center space-x-2 transition-all" title="Buka tautan unduh master data langsung dari hosting live">
+                                        <i data-lucide="cloud" class="w-4 h-4 text-indigo-600"></i>
+                                        <span>Unduh dari Hosting Live</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Live Console & Riwayat -->
+                        <div class="p-4 bg-slate-900 text-slate-200 rounded-2xl space-y-2 font-mono text-xs shadow-inner">
+                            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                <span class="font-bold flex items-center space-x-2 text-indigo-400">
+                                    <i data-lucide="terminal" class="w-4 h-4"></i>
+                                    <span>Konsol Aktivitas Sinkronisasi</span>
+                                </span>
+                                <span id="subtab-sync-last-time" class="text-[11px] text-slate-400">Siap</span>
+                            </div>
+                            <pre id="subtab-sync-console" class="text-[11px] leading-relaxed max-h-40 overflow-y-auto whitespace-pre-wrap text-emerald-400">Sistem siap menyelaraskan master data hosting dan lokal.</pre>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- End of #tab-settings -->
 
         </main>
     </div>
@@ -5812,8 +5974,195 @@ try {
         </div>
     </div>
 
+    <!-- ============================================================== -->
+    <!-- MODAL SINKRONISASI DATABASE MASTER HOSTING & LOKAL             -->
+    <!-- ============================================================== -->
+    <div id="master-sync-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[94vh] overflow-y-auto border-2 border-indigo-500/30">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+                <div class="flex items-center space-x-3">
+                    <div class="w-11 h-11 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
+                        <i data-lucide="cloud-download" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-slate-800 text-lg leading-tight">🌐 Sinkronisasi Database Master</h3>
+                        <p class="text-xs text-slate-500">Selaraskan master data antara server hosting dan database lokal</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeMasterSyncModal()" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Server & Target URL Box -->
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                <div class="flex items-center justify-between">
+                    <label class="text-xs font-bold text-slate-700">Alamat URL Server Hosting Production:</label>
+                    <span id="modal-sync-badge-status" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-slate-200 text-slate-700">Siap</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <input type="text" id="modal-sync-hosting-url" value="https://kadtech.my.id" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500">
+                    <button type="button" onclick="testHostingConnection('modal-sync-hosting-url', 'modal-sync-badge-status')" class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center space-x-1.5">
+                        <i data-lucide="radio" class="w-3.5 h-3.5 text-indigo-600"></i>
+                        <span>Uji Koneksi</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Checklist Master Categories to Sync -->
+            <div class="space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-black uppercase tracking-wider text-slate-700">Pilih Modul Master Data:</span>
+                    <div class="flex items-center space-x-2 text-[11px]">
+                        <button type="button" onclick="setAllSyncCheckboxes(true)" class="text-indigo-600 font-bold hover:underline">Pilih Semua</button>
+                        <span class="text-slate-300">•</span>
+                        <button type="button" onclick="setAllSyncCheckboxes(false)" class="text-slate-500 font-bold hover:underline">Kosongkan</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                    <label class="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer flex items-center space-x-3 transition-colors">
+                        <input type="checkbox" id="sync-cat-products" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" checked>
+                        <div>
+                            <p class="font-bold text-slate-800">📦 Katalog Produk & Satuan</p>
+                            <p class="text-[10px] text-slate-500">products, categories, types, units, variants</p>
+                        </div>
+                    </label>
+
+                    <label class="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer flex items-center space-x-3 transition-colors">
+                        <input type="checkbox" id="sync-cat-recipes" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" checked>
+                        <div>
+                            <p class="font-bold text-slate-800">🧪 Formula Resep / BOM</p>
+                            <p class="text-[10px] text-slate-500">product_recipes, variant_recipes</p>
+                        </div>
+                    </label>
+
+                    <label class="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer flex items-center space-x-3 transition-colors">
+                        <input type="checkbox" id="sync-cat-branches" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" checked>
+                        <div>
+                            <p class="font-bold text-slate-800">🏢 Cabang & Operasional</p>
+                            <p class="text-[10px] text-slate-500">branches, branch_settings</p>
+                        </div>
+                    </label>
+
+                    <label class="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer flex items-center space-x-3 transition-colors">
+                        <input type="checkbox" id="sync-cat-users" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" checked>
+                        <div>
+                            <p class="font-bold text-slate-800">👥 Karyawan & Hak Akses</p>
+                            <p class="text-[10px] text-slate-500">users, user_roles, role_menu_permissions</p>
+                        </div>
+                    </label>
+
+                    <label class="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer flex items-center space-x-3 transition-colors">
+                        <input type="checkbox" id="sync-cat-customers" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" checked>
+                        <div>
+                            <p class="font-bold text-slate-800">🤝 Pelanggan & Harga Mitra</p>
+                            <p class="text-[10px] text-slate-500">customers, categories, mitra_custom_prices</p>
+                        </div>
+                    </label>
+
+                    <label class="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer flex items-center space-x-3 transition-colors">
+                        <input type="checkbox" id="sync-cat-payments" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" checked>
+                        <div>
+                            <p class="font-bold text-slate-800">💳 Pembayaran, Kas & Pajak</p>
+                            <p class="text-[10px] text-slate-500">payment_methods, cash_denominations, taxes</p>
+                        </div>
+                    </label>
+
+                    <label class="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer flex items-center space-x-3 transition-colors">
+                        <input type="checkbox" id="sync-cat-logistics" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" checked>
+                        <div>
+                            <p class="font-bold text-slate-800">🚚 Kurir & Armada Pengiriman</p>
+                            <p class="text-[10px] text-slate-500">delivery_settings, courier_vehicles</p>
+                        </div>
+                    </label>
+
+                    <label class="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer flex items-center space-x-3 transition-colors">
+                        <input type="checkbox" id="sync-cat-settings" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" checked>
+                        <div>
+                            <p class="font-bold text-slate-800">⚙️ Pengaturan & Shift Awal</p>
+                            <p class="text-[10px] text-slate-500">app_settings, opening_shifts, work_shifts</p>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="pt-1">
+                    <label class="p-2.5 bg-amber-50 border border-amber-200 rounded-xl flex items-center space-x-2.5 cursor-pointer text-xs">
+                        <input type="checkbox" id="sync-cat-stocks" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4">
+                        <div class="leading-tight">
+                            <span class="font-bold text-amber-900">Sinkronkan juga saldo kuantitas stok cabang (branch_stocks)</span>
+                            <span class="text-[10px] text-amber-700 block">Biarkan tidak tercentang bila ingin mempertahankan catatan stok fisik lokal kasir offline.</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Tab Mode Eksekusi -->
+            <div class="border-t pt-3 space-y-3">
+                <div class="flex items-center space-x-2 border-b border-slate-200 pb-2 text-xs">
+                    <button type="button" onclick="setModalSyncMode('remote')" id="modal-sync-tab-remote" class="px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow-xs">
+                        Tarik Otomatis (Online HTTP)
+                    </button>
+                    <button type="button" onclick="setModalSyncMode('file')" id="modal-sync-tab-file" class="px-3 py-1.5 rounded-lg font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">
+                        Unggah Berkas Cadangan (Offline JSON)
+                    </button>
+                </div>
+
+                <!-- Konten Mode Remote -->
+                <div id="modal-sync-content-remote" class="space-y-3">
+                    <div class="p-3 bg-indigo-50/60 rounded-xl border border-indigo-100 text-xs text-indigo-900 flex items-start space-x-2.5">
+                        <span class="text-base">💡</span>
+                        <p class="leading-relaxed">
+                            Aplikasi lokal akan menghubungi endpoint hosting secara aman dengan <strong>Token Kunci Sinkronisasi</strong>, lalu melakukan Upsert data master secara otomatis.
+                        </p>
+                    </div>
+                    <div class="flex items-center justify-end space-x-2 pt-2">
+                        <button type="button" onclick="closeMasterSyncModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all">
+                            Batal
+                        </button>
+                        <button type="button" id="btn-modal-exec-remote" onclick="executeModalMasterSyncRemote()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center space-x-2 transition-all">
+                            <i data-lucide="cloud-download" class="w-4 h-4"></i>
+                            <span>Mulai Tarik Data dari Hosting</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Konten Mode File Upload -->
+                <div id="modal-sync-content-file" class="space-y-3 hidden">
+                    <div class="p-3 bg-blue-50/60 rounded-xl border border-blue-100 text-xs text-blue-900 flex items-start space-x-2.5">
+                        <span class="text-base">📁</span>
+                        <p class="leading-relaxed">
+                            Pilih berkas <strong>esbas_master_data_*.json</strong> yang sebelumnya diunduh dari hosting untuk diselaraskan ke database lokal tanpa perlu koneksi internet langsung.
+                        </p>
+                    </div>
+                    <div>
+                        <input type="file" id="modal-sync-file-input" accept=".json" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer">
+                    </div>
+                    <div class="flex items-center justify-end space-x-2 pt-2">
+                        <button type="button" onclick="closeMasterSyncModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all">
+                            Batal
+                        </button>
+                        <button type="button" id="btn-modal-exec-file" onclick="executeModalMasterSyncFile()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center space-x-2 transition-all">
+                            <i data-lucide="upload" class="w-4 h-4"></i>
+                            <span>Terapkan Berkas ke Database</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Console & Progress Bar -->
+            <div id="modal-sync-console-box" class="space-y-2 pt-2 border-t border-slate-100 hidden">
+                <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                    <div id="modal-sync-progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <pre id="modal-sync-console" class="p-3 bg-slate-900 text-slate-200 rounded-xl text-[11px] font-mono leading-relaxed max-h-32 overflow-y-auto whitespace-pre-wrap text-emerald-400">Menunggu perintah eksekusi...</pre>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal 17: Pembersihan / Penghapusan Massal Seluruh Data Penjualan (Superadmin Only) -->
-        <!-- ============================================================== -->
+    <!-- ============================================================== -->
     <!-- MODAL MASTER RESET & PEMBERSIHAN DATA CABANG (GRANULAR PURGE)  -->
     <!-- ============================================================== -->
     <div id="master-reset-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -21542,6 +21891,332 @@ Manager / Supervisor: __________________
             updateResetScopeInfo();
         }
 
+        // ==========================================
+        // 15.1 SINKRONISASI DATABASE MASTER (HOSTING & LOKAL)
+        // ==========================================
+        let currentModalSyncMode = 'remote';
+
+        function openMasterSyncModal(preselectOpts = {}) {
+            if (!canUserAccessAllBranches()) {
+                alert('Akses Ditolak: Fitur Sinkronisasi Master Data hanya dapat diakses oleh Super Admin.');
+                return;
+            }
+
+            // Sync URL input
+            const hostingUrl = (document.getElementById('subtab-sync-hosting-url') && document.getElementById('subtab-sync-hosting-url').value) || 'https://kadtech.my.id';
+            const modalUrlInput = document.getElementById('modal-sync-hosting-url');
+            if (modalUrlInput) modalUrlInput.value = hostingUrl;
+
+            // Reset checklist checkboxes
+            const tables = preselectOpts.tables || null;
+            if (tables && Array.isArray(tables)) {
+                const setCb = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+                setCb('sync-cat-products', tables.some(t => ['products', 'categories', 'product_types', 'product_units', 'product_variants'].includes(t)));
+                setCb('sync-cat-recipes', tables.some(t => ['product_recipes', 'variant_recipes'].includes(t)));
+                setCb('sync-cat-branches', tables.some(t => ['branches', 'branch_settings'].includes(t)));
+                setCb('sync-cat-users', tables.some(t => ['users', 'user_roles', 'role_menu_permissions'].includes(t)));
+                setCb('sync-cat-customers', tables.some(t => ['customers', 'customer_categories', 'mitra_custom_prices'].includes(t)));
+                setCb('sync-cat-payments', tables.some(t => ['payment_methods', 'cash_denominations', 'taxes'].includes(t)));
+                setCb('sync-cat-logistics', tables.some(t => ['delivery_settings', 'courier_vehicles'].includes(t)));
+                setCb('sync-cat-settings', tables.some(t => ['app_settings', 'opening_shift_products', 'work_shifts'].includes(t)));
+            } else {
+                setAllSyncCheckboxes(true);
+            }
+            const stockCb = document.getElementById('sync-cat-stocks');
+            if (stockCb) stockCb.checked = false;
+
+            setModalSyncMode('remote');
+            const consoleBox = document.getElementById('modal-sync-console-box');
+            if (consoleBox) consoleBox.classList.add('hidden');
+            const pBar = document.getElementById('modal-sync-progress-bar');
+            if (pBar) pBar.style.width = '0%';
+
+            const modal = document.getElementById('master-sync-modal');
+            if (modal) modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeMasterSyncModal() {
+            const modal = document.getElementById('master-sync-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function setAllSyncCheckboxes(isChecked) {
+            ['products', 'recipes', 'branches', 'users', 'customers', 'payments', 'logistics', 'settings'].forEach(cat => {
+                const cb = document.getElementById(`sync-cat-${cat}`);
+                if (cb) cb.checked = isChecked;
+            });
+        }
+
+        function setModalSyncMode(mode) {
+            currentModalSyncMode = mode;
+            const tabRemote = document.getElementById('modal-sync-tab-remote');
+            const tabFile = document.getElementById('modal-sync-tab-file');
+            const contentRemote = document.getElementById('modal-sync-content-remote');
+            const contentFile = document.getElementById('modal-sync-content-file');
+
+            if (mode === 'remote') {
+                if (tabRemote) tabRemote.className = 'px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow-xs';
+                if (tabFile) tabFile.className = 'px-3 py-1.5 rounded-lg font-bold bg-slate-100 text-slate-700 hover:bg-slate-200';
+                if (contentRemote) contentRemote.classList.remove('hidden');
+                if (contentFile) contentFile.classList.add('hidden');
+            } else {
+                if (tabRemote) tabRemote.className = 'px-3 py-1.5 rounded-lg font-bold bg-slate-100 text-slate-700 hover:bg-slate-200';
+                if (tabFile) tabFile.className = 'px-3 py-1.5 rounded-lg font-bold bg-blue-600 text-white shadow-xs';
+                if (contentRemote) contentRemote.classList.add('hidden');
+                if (contentFile) contentFile.classList.remove('hidden');
+            }
+        }
+
+        function getSelectedSyncTableNames() {
+            const tableMap = {
+                'products': ['products', 'categories', 'product_types', 'product_units', 'product_variants'],
+                'recipes': ['product_recipes', 'variant_recipes'],
+                'branches': ['branches', 'branch_settings'],
+                'users': ['users', 'user_roles', 'role_menu_permissions'],
+                'customers': ['customers', 'customer_categories', 'mitra_custom_prices'],
+                'payments': ['payment_methods', 'cash_denominations', 'taxes'],
+                'logistics': ['delivery_settings', 'courier_vehicles'],
+                'settings': ['app_settings', 'opening_shift_products', 'work_shifts', 'expense_categories']
+            };
+
+            let tables = [];
+            Object.keys(tableMap).forEach(cat => {
+                const cb = document.getElementById(`sync-cat-${cat}`);
+                if (cb && cb.checked) {
+                    tables = tables.concat(tableMap[cat]);
+                }
+            });
+            return tables;
+        }
+
+        async function testHostingConnection(urlInputId, badgeId) {
+            const urlInput = document.getElementById(urlInputId);
+            const badge = document.getElementById(badgeId);
+            if (!urlInput || !badge) return;
+
+            const url = urlInput.value.trim();
+            if (!url) {
+                alert('Silakan masukkan URL server hosting terlebih dahulu.');
+                return;
+            }
+
+            badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-sky-100 text-sky-700 animate-pulse';
+            badge.innerText = 'Menguji...';
+
+            try {
+                const res = await fetch('api.php?action=test_hosting_connection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ hosting_url: url })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const ver = (data.version_data && data.version_data.version) ? ` (v${data.version_data.version})` : '';
+                    badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800';
+                    badge.innerText = `Terhubung ${data.latency_ms}ms${ver}`;
+                    alert(`✅ Koneksi Berhasil!\n\nServer hosting terjangkau (${data.latency_ms} ms).\nVersi Hosting: ${data.version_data ? data.version_data.version : 'OK'}`);
+                } else {
+                    badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-700';
+                    badge.innerText = 'Gagal Terhubung';
+                    alert(`❌ Uji Koneksi Gagal:\n\n${data.message || 'Tidak dapat menghubungi hosting.'}`);
+                }
+            } catch (err) {
+                badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-700';
+                badge.innerText = 'Error Jaringan';
+                alert(`❌ Kesalahan Uji Koneksi: ${err.message}`);
+            }
+        }
+
+        async function executeModalMasterSyncRemote() {
+            const urlInput = document.getElementById('modal-sync-hosting-url');
+            const hostingUrl = urlInput ? urlInput.value.trim() : 'https://kadtech.my.id';
+            const selectedTables = getSelectedSyncTableNames();
+            const includeStocks = document.getElementById('sync-cat-stocks') && document.getElementById('sync-cat-stocks').checked;
+
+            if (selectedTables.length === 0) {
+                alert('Pilih minimal satu modul master data untuk disinkronkan.');
+                return;
+            }
+
+            if (!confirm(`Mulai sinkronisasi master data dari ${hostingUrl}?\n\nModul yang akan diperbarui: ${selectedTables.length} tabel master.\nData transaksi kasir dan shift lokal akan tetap aman.`)) {
+                return;
+            }
+
+            const btn = document.getElementById('btn-modal-exec-remote');
+            const consoleBox = document.getElementById('modal-sync-console-box');
+            const pBar = document.getElementById('modal-sync-progress-bar');
+            const consoleEl = document.getElementById('modal-sync-console');
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Menghubungi Hosting...</span>`;
+            }
+            if (consoleBox) consoleBox.classList.remove('hidden');
+            if (pBar) pBar.style.width = '30%';
+            if (consoleEl) {
+                consoleEl.innerText = `[${new Date().toLocaleTimeString()}] Menghubungi server hosting di ${hostingUrl}...\n[${new Date().toLocaleTimeString()}] Mengunduh paket data master JSON...\n`;
+            }
+            lucide.createIcons();
+
+            try {
+                const res = await fetch('api.php?action=sync_master_data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mode: 'remote',
+                        hosting_url: hostingUrl,
+                        sync_mode: 'upsert',
+                        tables: selectedTables,
+                        include_stocks: includeStocks ? 1 : 0
+                    })
+                });
+                const result = await res.json();
+
+                if (pBar) pBar.style.width = '100%';
+
+                if (result.success) {
+                    let logDetails = `[${new Date().toLocaleTimeString()}] ✅ SINKRONISASI MASTER BERHASIL DISAJIKAN!\n`;
+                    logDetails += `Total tabel: ${result.total_synced_tables} tabel | Total baris: ${result.total_synced_rows} baris\n`;
+                    logDetails += `Versi Sumber Hosting: ${result.source_version} | Driver: ${result.source_driver}\n`;
+                    logDetails += `Waktu Selesai: ${result.synced_at}\n\nRincian Baris:\n`;
+                    if (result.report) {
+                        for (const [tbl, cnt] of Object.entries(result.report)) {
+                            logDetails += ` - ${tbl}: ${cnt} baris\n`;
+                        }
+                    }
+                    if (consoleEl) consoleEl.innerText += logDetails;
+
+                    // Sync subtab update
+                    const subConsole = document.getElementById('subtab-sync-console');
+                    if (subConsole) subConsole.innerText = logDetails;
+                    const subTime = document.getElementById('subtab-sync-last-time');
+                    if (subTime) subTime.innerText = `Terakhir: ${new Date().toLocaleTimeString()}`;
+
+                    alert(`🎉 Sinkronisasi Berhasil!\n\n${result.message}\nTotal ${result.total_synced_rows} baris diperbarui pada ${result.total_synced_tables} tabel master.`);
+
+                    // Reload application state
+                    if (typeof initApp === 'function') {
+                        await initApp();
+                    }
+                } else {
+                    const errMsg = `[${new Date().toLocaleTimeString()}] ❌ GAGAL: ${result.message}\n`;
+                    if (consoleEl) consoleEl.innerText += errMsg;
+                    alert(`❌ Sinkronisasi Gagal:\n\n${result.message}`);
+                }
+            } catch (err) {
+                if (consoleEl) consoleEl.innerText += `[${new Date().toLocaleTimeString()}] ❌ Exception: ${err.message}\n`;
+                alert(`❌ Terjadi kesalahan jaringan saat sinkronisasi: ${err.message}`);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i data-lucide="cloud-download" class="w-4 h-4"></i><span>Mulai Tarik Data dari Hosting</span>`;
+                    lucide.createIcons();
+                }
+            }
+        }
+
+        async function executeModalMasterSyncFile() {
+            const fileInput = document.getElementById('modal-sync-file-input');
+            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                alert('Pilih berkas master data JSON (.json) terlebih dahulu.');
+                return;
+            }
+
+            const selectedTables = getSelectedSyncTableNames();
+            const includeStocks = document.getElementById('sync-cat-stocks') && document.getElementById('sync-cat-stocks').checked;
+
+            const btn = document.getElementById('btn-modal-exec-file');
+            const consoleBox = document.getElementById('modal-sync-console-box');
+            const pBar = document.getElementById('modal-sync-progress-bar');
+            const consoleEl = document.getElementById('modal-sync-console');
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Memproses Berkas...</span>`;
+            }
+            if (consoleBox) consoleBox.classList.remove('hidden');
+            if (pBar) pBar.style.width = '40%';
+            if (consoleEl) {
+                consoleEl.innerText = `[${new Date().toLocaleTimeString()}] Membaca berkas ${fileInput.files[0].name}...\n`;
+            }
+            lucide.createIcons();
+
+            const formData = new FormData();
+            formData.append('mode', 'upload');
+            formData.append('sync_mode', 'upsert');
+            formData.append('include_stocks', includeStocks ? '1' : '0');
+            selectedTables.forEach(t => formData.append('tables[]', t));
+            formData.append('master_file', fileInput.files[0]);
+
+            try {
+                const res = await fetch('api.php?action=sync_master_data', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await res.json();
+                if (pBar) pBar.style.width = '100%';
+
+                if (result.success) {
+                    let logDetails = `[${new Date().toLocaleTimeString()}] ✅ IMPOR BERKAS MASTER BERHASIL!\n`;
+                    logDetails += `Total tabel: ${result.total_synced_tables} tabel | Total baris: ${result.total_synced_rows} baris\n`;
+                    logDetails += `Versi Sumber: ${result.source_version} | Driver: ${result.source_driver}\n`;
+                    if (result.report) {
+                        for (const [tbl, cnt] of Object.entries(result.report)) {
+                            logDetails += ` - ${tbl}: ${cnt} baris\n`;
+                        }
+                    }
+                    if (consoleEl) consoleEl.innerText += logDetails;
+
+                    alert(`🎉 Impor Berkas Berhasil!\n\n${result.message}\nTotal ${result.total_synced_rows} baris diperbarui.`);
+                    if (typeof initApp === 'function') {
+                        await initApp();
+                    }
+                } else {
+                    if (consoleEl) consoleEl.innerText += `[${new Date().toLocaleTimeString()}] ❌ GAGAL: ${result.message}\n`;
+                    alert(`❌ Impor Berkas Gagal:\n\n${result.message}`);
+                }
+            } catch (err) {
+                if (consoleEl) consoleEl.innerText += `[${new Date().toLocaleTimeString()}] ❌ Exception: ${err.message}\n`;
+                alert(`❌ Kesalahan saat membaca berkas: ${err.message}`);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i data-lucide="upload" class="w-4 h-4"></i><span>Terapkan Berkas ke Database</span>`;
+                    lucide.createIcons();
+                }
+            }
+        }
+
+        // Quick action wrapper for subtab buttons
+        function executeQuickMasterSyncRemote() {
+            openMasterSyncModal();
+        }
+
+        function executeQuickMasterSyncFile() {
+            const subInput = document.getElementById('subtab-sync-file-input');
+            if (!subInput || !subInput.files || subInput.files.length === 0) {
+                alert('Pilih berkas JSON master data terlebih dahulu pada input file di samping.');
+                return;
+            }
+            openMasterSyncModal();
+            setModalSyncMode('file');
+            const modalInput = document.getElementById('modal-sync-file-input');
+            if (modalInput) {
+                modalInput.files = subInput.files;
+            }
+        }
+
+        function downloadMasterDataJson(isHosting = false) {
+            if (isHosting) {
+                const urlInput = document.getElementById('subtab-sync-hosting-url') || document.getElementById('modal-sync-hosting-url');
+                const hostingUrl = urlInput ? urlInput.value.trim().replace(/\/$/, '') : 'https://kadtech.my.id';
+                window.open(`${hostingUrl}/api.php?action=export_master_data&download=1&sync_key=esbas_master_sync_2026_kadtech`, '_blank');
+            } else {
+                window.location.href = 'api.php?action=export_master_data&download=1&sync_key=esbas_master_sync_2026_kadtech';
+            }
+        }
+
         function openMasterResetModal(preselectOpts = {}) {
             if (!canUserAccessAllBranches()) {
                 alert('Akses Ditolak: Fitur Reset Data Toko hanya dapat diakses oleh Super Admin.');
@@ -21773,7 +22448,7 @@ Manager / Supervisor: __________________
 
         function setSettingsSubtab(subtab) {
             settingsSubtabActive = subtab;
-            const subtabs = ['general', 'roles', 'printer', 'receipt', 'payslip', 'notifications'];
+            const subtabs = ['general', 'roles', 'printer', 'receipt', 'payslip', 'notifications', 'sync'];
             subtabs.forEach(st => {
                 const el = document.getElementById(`settings-subtab-${st}`);
                 const btn = document.getElementById(`settings-tab-btn-${st}`);

@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.26",
-  "build": "20261024-07",
+  "version": "1.2.27",
+  "build": "20261024-08",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.27",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Modul Sinkronisasi Database Master Hosting (MySQL) & Lokal (SQLite) Dua Arah",
+      "description": "Menghadirkan arsitektur dan antarmuka sinkronisasi database master lengkap antara server hosting produksi (MySQL/MariaDB) dan database lokal laptop (SQLite): (1) Menambahkan endpoint backend api.php?action=export_master_data yang memaketkan 24 tabel master data (branches, users, user_roles, role_menu_permissions, categories, product_types, product_units, products, product_variants, product_recipes, variant_recipes, customer_categories, customers, mitra_custom_prices, taxes, payment_methods, cash_denominations, expense_categories, delivery_settings, app_settings, branch_settings, opening_shift_products, work_shifts, courier_vehicles) ke dalam format JSON berstruktur dengan metadata, statistik, dan dukungan unduh berkas langsung. (2) Menambahkan endpoint backend api.php?action=sync_master_data yang mendukung sinkronisasi langsung via HTTP API (cURL) serta opsi impor berkas cadangan JSON offline dengan transaksi atomik dan proteksi keamanan foreign keys. (3) Menambahkan endpoint api.php?action=test_hosting_connection untuk verifikasi latensi dan keterjangkauan server hosting secara real-time. (4) Menghadirkan tombol 'Sinkron Master Hosting' di Pengaturan Sistem (#tab-settings), Tab Produk (#tab-products), Tab Karyawan (#tab-employees), dan Tab Cabang (#tab-branches). (5) Menambahkan subtab khusus '#settings-subtab-sync' dan modal interaktif '#master-sync-modal' dengan seleksi kategori modular, visualisasi progress bar, dan konsol aktivitas live. (6) Memastikan seluruh data transaksi penjualan kasir lokal dan shift tetap aman terisolasi tanpa risiko terhapus atau tertimpa.",
+      "rollback_command": "git checkout v1.2.26"
+    },
     {
       "version": "1.2.26",
       "commit": "HEAD",

@@ -23,7 +23,7 @@ if (!headers_sent()) {
             'httponly' => true,
             'samesite' => 'Lax'
         ]);
-        session_start();
+        @session_start();
     }
 }
 
@@ -152,6 +152,369 @@ try {
             echo json_encode([
                 'success' => true,
                 'version_data' => getAppVersionData()
+            ]);
+            break;
+
+        // ==========================================
+        // 0.05 MASTER DATA SYNC (HOSTING & LOCAL)
+        // ==========================================
+        case 'test_hosting_connection':
+            $targetUrl = trim($input['hosting_url'] ?? (defined('HOSTING_API_URL') ? HOSTING_API_URL : 'https://kadtech.my.id'));
+            $targetUrl = rtrim($targetUrl, '/');
+            if (empty($targetUrl)) {
+                echo json_encode(['success' => false, 'message' => 'URL Hosting tidak boleh kosong.']);
+                exit;
+            }
+
+            $testEndpoint = $targetUrl . '/api.php?action=get_version_info';
+            $startTime = microtime(true);
+            $ch = curl_init($testEndpoint);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'ESBAS-POS-Client/1.2.27');
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlErr = curl_error($ch);
+            curl_close($ch);
+            $latencyMs = round((microtime(true) - $startTime) * 1000);
+
+            if ($response === false || $httpCode !== 200) {
+                echo json_encode([
+                    'success' => false,
+                    'http_code' => $httpCode,
+                    'latency_ms' => $latencyMs,
+                    'message' => 'Gagal terhubung ke hosting (' . ($curlErr ?: "HTTP Status {$httpCode}") . '). Pastikan koneksi internet aktif dan domain hosting dapat dijangkau.'
+                ]);
+                exit;
+            }
+
+            $resJson = json_decode($response, true);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Koneksi ke hosting berhasil.',
+                'http_code' => $httpCode,
+                'latency_ms' => $latencyMs,
+                'hosting_url' => $targetUrl,
+                'version_data' => $resJson['version_data'] ?? null
+            ]);
+            break;
+
+        case 'export_master_data':
+            $configuredSyncKey = defined('SYNC_SECRET_KEY') ? SYNC_SECRET_KEY : 'esbas_master_sync_2026_kadtech';
+            $reqKey = $_GET['sync_key'] ?? ($_POST['sync_key'] ?? ($input['sync_key'] ?? ''));
+            $isAuthorized = ($sessionUserId > 0 && $sessionUserCanAccessAll) || ($reqKey !== '' && $reqKey === $configuredSyncKey);
+
+            if (!$isAuthorized) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak: Diperlukan hak Super Admin atau Kunci Sinkronisasi (sync_key) yang valid.']);
+                exit;
+            }
+
+            $masterTables = [
+                'branches',
+                'user_roles',
+                'role_menu_permissions',
+                'users',
+                'categories',
+                'product_types',
+                'product_units',
+                'products',
+                'product_variants',
+                'product_recipes',
+                'variant_recipes',
+                'customer_categories',
+                'customers',
+                'mitra_custom_prices',
+                'taxes',
+                'payment_methods',
+                'cash_denominations',
+                'expense_categories',
+                'delivery_settings',
+                'app_settings',
+                'branch_settings',
+                'opening_shift_products',
+                'work_shifts',
+                'courier_vehicles'
+            ];
+
+            $includeStocks = !empty($_GET['include_stocks']) || !empty($_POST['include_stocks']) || !empty($input['include_stocks']);
+            if ($includeStocks) {
+                $masterTables[] = 'branch_stocks';
+            }
+
+            $scope = $_GET['scope'] ?? ($_POST['scope'] ?? ($input['scope'] ?? 'all'));
+            $selectedTables = $masterTables;
+            if ($scope !== 'all') {
+                $requestedTables = is_array($scope) ? $scope : explode(',', (string)$scope);
+                $selectedTables = array_values(array_intersect($masterTables, $requestedTables));
+            }
+
+            $exportData = [];
+            $counts = [];
+            $totalRows = 0;
+
+            foreach ($selectedTables as $table) {
+                try {
+                    $stmt = $pdo->query("SELECT * FROM `{$table}`");
+                    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    $exportData[$table] = $rows;
+                    $counts[$table] = count($rows);
+                    $totalRows += count($rows);
+                } catch (Exception $e) {
+                    $exportData[$table] = [];
+                    $counts[$table] = 0;
+                }
+            }
+
+            $appVer = getAppVersionData();
+            $payload = [
+                'success' => true,
+                'app' => 'ESBAS POS',
+                'export_type' => 'master_data',
+                'version' => $appVer['version'] ?? '1.2.27',
+                'driver' => $pdo->isMysql() ? 'mysql' : 'sqlite',
+                'exported_at' => date('Y-m-d H:i:s'),
+                'total_tables' => count($selectedTables),
+                'total_rows' => $totalRows,
+                'counts' => $counts,
+                'data' => $exportData
+            ];
+
+            if (!empty($_GET['download']) || !empty($_POST['download']) || !empty($input['download'])) {
+                header('Content-Type: application/json; charset=utf-8');
+                header('Content-Disposition: attachment; filename="esbas_master_data_' . date('Ymd_His') . '.json"');
+                echo json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+
+            echo json_encode($payload);
+            exit;
+
+        case 'sync_master_data':
+            $configuredSyncKey = defined('SYNC_SECRET_KEY') ? SYNC_SECRET_KEY : 'esbas_master_sync_2026_kadtech';
+            $reqKey = $_GET['sync_key'] ?? ($_POST['sync_key'] ?? ($input['sync_key'] ?? ''));
+            $isAuthorized = ($sessionUserId > 0 && $sessionUserCanAccessAll) || ($reqKey !== '' && $reqKey === $configuredSyncKey);
+
+            if (!$isAuthorized) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak: Diperlukan hak Super Admin atau Kunci Sinkronisasi (sync_key) yang valid.']);
+                exit;
+            }
+
+            $mode = $input['mode'] ?? ($_POST['mode'] ?? 'remote'); // 'remote', 'upload', 'payload'
+            $hostingUrl = trim($input['hosting_url'] ?? ($_POST['hosting_url'] ?? (defined('HOSTING_API_URL') ? HOSTING_API_URL : 'https://kadtech.my.id')));
+            $hostingUrl = rtrim($hostingUrl, '/');
+            $syncMode = $input['sync_mode'] ?? ($_POST['sync_mode'] ?? 'upsert'); // 'upsert' or 'overwrite'
+            $includeStocks = !empty($input['include_stocks']) || !empty($_POST['include_stocks']);
+
+            $incomingData = null;
+
+            if ($mode === 'remote') {
+                if (empty($hostingUrl)) {
+                    echo json_encode(['success' => false, 'message' => 'URL server hosting tidak boleh kosong.']);
+                    exit;
+                }
+
+                $fetchUrl = $hostingUrl . '/api.php?action=export_master_data&sync_key=' . urlencode($configuredSyncKey);
+                if ($includeStocks) {
+                    $fetchUrl .= '&include_stocks=1';
+                }
+
+                $ch = curl_init($fetchUrl);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+                curl_setopt($ch, CURLOPT_USERAGENT, 'ESBAS-POS-Client/1.2.27');
+                $rawResult = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $curlErr = curl_error($ch);
+                curl_close($ch);
+
+                if ($rawResult === false || $httpCode !== 200) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Gagal mengunduh master data dari hosting: ' . ($curlErr ?: "HTTP Status {$httpCode}") . '. Silakan gunakan opsi unggah berkas jika koneksi internet terhalang.'
+                    ]);
+                    exit;
+                }
+
+                $incomingData = json_decode($rawResult, true);
+            } elseif ($mode === 'upload') {
+                if (empty($_FILES['master_file']['tmp_name']) || !is_uploaded_file($_FILES['master_file']['tmp_name'])) {
+                    echo json_encode(['success' => false, 'message' => 'Berkas JSON master data tidak ditemukan dalam unggahan.']);
+                    exit;
+                }
+                $fileContent = file_get_contents($_FILES['master_file']['tmp_name']);
+                $incomingData = json_decode($fileContent, true);
+            } elseif ($mode === 'payload') {
+                $rawPayload = $input['payload'] ?? ($_POST['payload'] ?? '');
+                if (is_array($rawPayload)) {
+                    $incomingData = $rawPayload;
+                } else {
+                    $incomingData = json_decode((string)$rawPayload, true);
+                }
+            }
+
+            if (!is_array($incomingData) || empty($incomingData['data']) || !is_array($incomingData['data'])) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Format berkas master data tidak valid atau kosong.'
+                ]);
+                exit;
+            }
+
+            $masterDataTables = [
+                'branches',
+                'user_roles',
+                'role_menu_permissions',
+                'users',
+                'categories',
+                'product_types',
+                'product_units',
+                'products',
+                'product_variants',
+                'product_recipes',
+                'variant_recipes',
+                'customer_categories',
+                'customers',
+                'mitra_custom_prices',
+                'taxes',
+                'payment_methods',
+                'cash_denominations',
+                'expense_categories',
+                'delivery_settings',
+                'app_settings',
+                'branch_settings',
+                'opening_shift_products',
+                'work_shifts',
+                'courier_vehicles'
+            ];
+            if ($includeStocks) {
+                $masterDataTables[] = 'branch_stocks';
+            }
+
+            // Filter tables if requested
+            $requestedScope = $input['tables'] ?? ($_POST['tables'] ?? null);
+            if (!empty($requestedScope)) {
+                $arrScope = is_array($requestedScope) ? $requestedScope : explode(',', (string)$requestedScope);
+                $tablesToSync = array_values(array_intersect($masterDataTables, $arrScope));
+            } else {
+                $tablesToSync = $masterDataTables;
+            }
+
+            $isMysql = $pdo->isMysql();
+            $report = [];
+            $totalUpserted = 0;
+
+            // Nonaktifkan pemeriksaan foreign key untuk sinkronisasi lancar
+            try {
+                if ($isMysql) {
+                    $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+                } else {
+                    $pdo->exec("PRAGMA foreign_keys = OFF");
+                }
+            } catch (Exception $e) {}
+
+            $pdo->beginTransaction();
+            try {
+                foreach ($tablesToSync as $table) {
+                    if (!isset($incomingData['data'][$table]) || !is_array($incomingData['data'][$table])) {
+                        continue;
+                    }
+                    $rows = $incomingData['data'][$table];
+
+                    // Dapatkan daftar kolom yang sah di database target
+                    if ($isMysql) {
+                        $colStmt = $pdo->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$table}'");
+                        $targetCols = $colStmt->fetchAll(PDO::FETCH_COLUMN);
+                    } else {
+                        $colStmt = $pdo->query("PRAGMA table_info(`{$table}`)");
+                        $targetCols = $colStmt->fetchAll(PDO::FETCH_COLUMN, 1);
+                    }
+
+                    if (empty($targetCols)) {
+                        continue;
+                    }
+
+                    if ($syncMode === 'overwrite' && !empty($rows)) {
+                        $pdo->exec("DELETE FROM `{$table}`");
+                    }
+
+                    $cnt = 0;
+                    foreach ($rows as $row) {
+                        if (!is_array($row)) continue;
+                        $filtered = array_intersect_key($row, array_flip($targetCols));
+                        if (empty($filtered)) continue;
+
+                        $cols = array_keys($filtered);
+                        $quotedCols = array_map(function($c) { return "`{$c}`"; }, $cols);
+                        $placeholders = array_fill(0, count($cols), '?');
+
+                        $sql = "INSERT OR REPLACE INTO `{$table}` (" . implode(', ', $quotedCols) . ") VALUES (" . implode(', ', $placeholders) . ")";
+                        $stmt = $pdo->prepare($sql);
+                        $stmt->execute(array_values($filtered));
+                        $cnt++;
+                        $totalUpserted++;
+                    }
+                    $report[$table] = $cnt;
+                }
+
+                // Post-integrity: pastikan setiap produk di setiap cabang memiliki baris di branch_stocks
+                try {
+                    $now = date('Y-m-d H:i:s');
+                    $pdo->exec("
+                        INSERT OR IGNORE INTO branch_stocks (branch_id, product_id, quantity, min_stock, max_stock, created_at, updated_at)
+                        SELECT b.id, p.id, 0, 5, 100, '{$now}', '{$now}'
+                        FROM branches b
+                        CROSS JOIN products p
+                        LEFT JOIN branch_stocks bs ON bs.branch_id = b.id AND bs.product_id = p.id
+                        WHERE bs.id IS NULL
+                    ");
+                } catch (Exception $e) {}
+
+                $pdo->commit();
+            } catch (Exception $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                try {
+                    if ($isMysql) {
+                        $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+                    } else {
+                        $pdo->exec("PRAGMA foreign_keys = ON");
+                    }
+                } catch (Exception $e2) {}
+
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Gagal memproses sinkronisasi database: ' . $e->getMessage()
+                ]);
+                exit;
+            }
+
+            try {
+                if ($isMysql) {
+                    $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+                } else {
+                    $pdo->exec("PRAGMA foreign_keys = ON");
+                }
+            } catch (Exception $e) {}
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Sinkronisasi master data berhasil diselesaikan.',
+                'source_version' => $incomingData['version'] ?? 'Unknown',
+                'source_driver' => $incomingData['driver'] ?? 'Unknown',
+                'exported_at' => $incomingData['exported_at'] ?? 'Unknown',
+                'synced_at' => date('Y-m-d H:i:s'),
+                'total_synced_tables' => count($report),
+                'total_synced_rows' => $totalUpserted,
+                'report' => $report
             ]);
             break;
 

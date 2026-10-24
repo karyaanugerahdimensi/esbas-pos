@@ -15,6 +15,7 @@ $dbDriver = defined('DB_DRIVER') ? strtolower(DB_DRIVER) : 'sqlite';
 /**
  * Universal PDO Wrapper to bridge MySQL and SQLite syntax seamlessly
  */
+if (!class_exists('AppPDO')) {
 class AppPDO extends PDO {
     protected bool $isMysql = false;
 
@@ -93,6 +94,7 @@ class AppPDO extends PDO {
         return parent::query($adapted);
     }
 }
+}
 
 try {
     if ($dbDriver === 'mysql') {
@@ -122,6 +124,7 @@ try {
     die("Database Connection Error: " . $e->getMessage());
 }
 
+if (!function_exists('getDbTableColumns')) {
 function getDbTableColumns($pdo, $tableName) {
     global $dbDriver;
     if ($dbDriver === 'mysql') {
@@ -138,7 +141,9 @@ function getDbTableColumns($pdo, $tableName) {
         return [];
     }
 }
+}
 
+if (!function_exists('initDatabaseSchema')) {
 function initDatabaseSchema($pdo) {
     // 1. Branches
     $pdo->exec("CREATE TABLE IF NOT EXISTS branches (
@@ -775,10 +780,12 @@ function initDatabaseSchema($pdo) {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
 }
+}
 
 /**
  * Robust Migration: Auto-detects and adds missing columns/tables on existing databases
  */
+if (!function_exists('autoMigrateAndSync')) {
 function autoMigrateAndSync($pdo) {
     // 1. Ensure `users` columns exist
     $userCols = getDbTableColumns($pdo, 'users');
@@ -1973,7 +1980,9 @@ function autoMigrateAndSync($pdo) {
         }
     } catch (Exception $e) {}
 }
+}
 
+if (!function_exists('autoMigrateMysql')) {
 function autoMigrateMysql($pdo) {
     // 1. Kolom default_work_shift_id pada tabel users
     try {
@@ -2286,6 +2295,7 @@ function autoMigrateMysql($pdo) {
             }
         }
     } catch (Exception $e) {}
+}
 }
 
 if ($dbDriver === 'mysql') {
