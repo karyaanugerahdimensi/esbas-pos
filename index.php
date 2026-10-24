@@ -1,6 +1,42 @@
 <?php
 require_once __DIR__ . '/version.php';
 $appVersionData = getAppVersionData();
+
+function getQuickUserRoleInfo($role) {
+    $c = strtoupper(str_replace('_', '', $role ?? ''));
+    if (strpos($c, 'SUPERADMIN') !== false) return ['emoji' => '👑', 'label' => 'Super Admin'];
+    if (strpos($c, 'BRANCHMANAGER') !== false || strpos($c, 'MANAGER') !== false) return ['emoji' => '👔', 'label' => 'Manager'];
+    if (strpos($c, 'CASHIER') !== false || strpos($c, 'KASIR') !== false) return ['emoji' => '🛒', 'label' => 'Kasir'];
+    if (strpos($c, 'STAFF') !== false || strpos($c, 'STAF') !== false) return ['emoji' => '📦', 'label' => 'Staf Gudang'];
+    if (strpos($c, 'KURIR') !== false || strpos($c, 'DRIVER') !== false) return ['emoji' => '🛵', 'label' => 'Kurir'];
+    return ['emoji' => '🛡️', 'label' => $role ?? 'Karyawan'];
+}
+
+$quickUsers = [];
+try {
+    require_once __DIR__ . '/db.php';
+    if (isset($pdo)) {
+        $stmtUsers = $pdo->query("
+            SELECT u.id, u.nik, u.name, u.role, u.branch_id, b.name as branch_name 
+            FROM users u 
+            LEFT JOIN branches b ON b.id = u.branch_id 
+            WHERE COALESCE(u.is_active, 1) = 1 
+            ORDER BY 
+                CASE 
+                    WHEN UPPER(u.role) LIKE '%SUPER%ADMIN%' THEN 1
+                    WHEN UPPER(u.role) LIKE '%MANAGER%' THEN 2
+                    WHEN UPPER(u.role) LIKE '%CASHIER%' OR UPPER(u.role) LIKE '%KASIR%' THEN 3
+                    WHEN UPPER(u.role) LIKE '%STAFF%' OR UPPER(u.role) LIKE '%STAF%' THEN 4
+                    ELSE 5 
+                END, 
+                u.id ASC
+            LIMIT 6
+        ");
+        $quickUsers = $stmtUsers->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (Throwable $e) {
+    $quickUsers = [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -124,23 +160,28 @@ $appVersionData = getAppVersionData();
             <div class="pt-4 border-t border-slate-100">
                 <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center mb-1">Pilih Cepat Akun (Tetap Wajib Isi Sandi):</p>
                 <p class="text-[10px] text-slate-500 text-center mb-2.5">Pilih profil NIK di bawah, lalu masukkan kata sandi / PIN Anda</p>
-                <div class="grid grid-cols-2 gap-2 text-xs">
-                    <button type="button" onclick="selectQuickAccount('ADM001', 'Super Admin')" class="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-colors">
-                        <p class="font-bold text-slate-800">👑 Super Admin</p>
-                        <p class="text-[10px] text-slate-400">Muhamad Ismail (ADM001)</p>
-                    </button>
-                    <button type="button" onclick="selectQuickAccount('MGR001', 'Manager JKT')" class="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-colors">
-                        <p class="font-bold text-slate-800">👔 Manager JKT</p>
-                        <p class="text-[10px] text-slate-400">Hendra Wijaya (MGR001)</p>
-                    </button>
-                    <button type="button" onclick="selectQuickAccount('CSR001', 'Kasir JKT')" class="p-2.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl text-left transition-colors">
-                        <p class="font-bold text-indigo-900">🛒 Kasir JKT</p>
-                        <p class="text-[10px] text-indigo-500">Siti Rahmawati (CSR001)</p>
-                    </button>
-                    <button type="button" onclick="selectQuickAccount('STF001', 'Staf Gudang')" class="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-colors">
-                        <p class="font-bold text-slate-800">📦 Staf Gudang</p>
-                        <p class="text-[10px] text-slate-400">Rian Kurniawan (STF001)</p>
-                    </button>
+                <div id="quick-accounts-grid" class="grid grid-cols-2 gap-2 text-xs">
+                    <?php if (!empty($quickUsers)): ?>
+                        <?php foreach ($quickUsers as $qu): 
+                            $roleMeta = getQuickUserRoleInfo($qu['role']);
+                            $displayName = htmlspecialchars($qu['name']);
+                            $displayNik = htmlspecialchars($qu['nik']);
+                            $escapedName = htmlspecialchars(addslashes($qu['name']));
+                            $branchName = !empty($qu['branch_name']) ? htmlspecialchars($qu['branch_name']) : '';
+                        ?>
+                            <button type="button" onclick="selectQuickAccount('<?= $displayNik ?>', '<?= $escapedName ?>')" class="p-2.5 bg-slate-50 hover:bg-indigo-50/70 border border-slate-200 hover:border-indigo-200 rounded-xl text-left transition-colors group">
+                                <div class="flex items-center justify-between">
+                                    <p class="font-bold text-slate-800 group-hover:text-indigo-900 text-[11px] truncate"><?= $roleMeta['emoji'] ?> <?= htmlspecialchars($roleMeta['label']) ?></p>
+                                    <?php if (!empty($branchName)): ?>
+                                        <span class="text-[9px] text-slate-400 group-hover:text-indigo-500 truncate max-w-[70px]"><?= $branchName ?></span>
+                                    <?php endif; ?>
+                                </div>
+                                <p class="text-[10px] text-slate-500 group-hover:text-indigo-600 font-medium truncate mt-0.5"><?= $displayName ?> (<?= $displayNik ?>)</p>
+                            </button>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="col-span-2 text-center py-2 text-slate-400 text-[11px]">Memuat akun karyawan...</div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -8143,6 +8184,47 @@ $appVersionData = getAppVersionData();
                 state.sessionTimerInterval = null;
             }
             updateSessionBadgeUI(null);
+            if (typeof loadQuickLoginAccounts === 'function') {
+                loadQuickLoginAccounts();
+            }
+        }
+
+        async function loadQuickLoginAccounts() {
+            try {
+                const res = await fetch('api.php?action=get_quick_login_users');
+                const data = await res.json();
+                if (!data.success || !Array.isArray(data.users) || data.users.length === 0) return;
+                
+                const grid = document.getElementById('quick-accounts-grid');
+                if (!grid) return;
+                
+                grid.innerHTML = data.users.slice(0, 6).map(u => {
+                    const badge = (typeof getRoleBadgeEmoji === 'function') ? getRoleBadgeEmoji(u.role) : '🛡️';
+                    const c = (u.role || '').toUpperCase().replace(/_/g, '');
+                    let roleLabel = u.role || 'Karyawan';
+                    if (c.includes('SUPERADMIN')) roleLabel = 'Super Admin';
+                    else if (c.includes('BRANCHMANAGER') || c.includes('MANAGER')) roleLabel = 'Manager';
+                    else if (c.includes('CASHIER') || c.includes('KASIR')) roleLabel = 'Kasir';
+                    else if (c.includes('STAFF') || c.includes('STAF')) roleLabel = 'Staf Gudang';
+                    else if (c.includes('KURIR') || c.includes('DRIVER')) roleLabel = 'Kurir';
+
+                    const safeName = (u.name || '').replace(/'/g, "\\'");
+                    const safeNik = (u.nik || '').replace(/'/g, "\\'");
+                    const branchText = u.branch_name ? `<span class="text-[9px] text-slate-400 group-hover:text-indigo-500 truncate max-w-[70px]">${escapeHtml(u.branch_name)}</span>` : '';
+
+                    return `
+                        <button type="button" onclick="selectQuickAccount('${safeNik}', '${safeName}')" class="p-2.5 bg-slate-50 hover:bg-indigo-50/70 border border-slate-200 hover:border-indigo-200 rounded-xl text-left transition-colors group">
+                            <div class="flex items-center justify-between">
+                                <p class="font-bold text-slate-800 group-hover:text-indigo-900 text-[11px] truncate">${badge} ${escapeHtml(roleLabel)}</p>
+                                ${branchText}
+                            </div>
+                            <p class="text-[10px] text-slate-500 group-hover:text-indigo-600 font-medium truncate mt-0.5">${escapeHtml(u.name)} (${escapeHtml(u.nik)})</p>
+                        </button>
+                    `;
+                }).join('');
+            } catch (err) {
+                // Silently fallback to server rendered accounts
+            }
         }
 
         function hideLoginScreen() {
@@ -13731,6 +13813,7 @@ Manager / Supervisor: __________________
                 loadEmployees();
                 if (typeof loadLogisticsData === 'function') loadLogisticsData();
                 renderPosCourierSelect();
+                if (typeof loadQuickLoginAccounts === 'function') loadQuickLoginAccounts();
             }
         }
 
@@ -13743,7 +13826,10 @@ Manager / Supervisor: __________________
             });
             const data = await res.json();
             alert(data.message || data.error);
-            if (data.success) loadEmployees();
+            if (data.success) {
+                loadEmployees();
+                if (typeof loadQuickLoginAccounts === 'function') loadQuickLoginAccounts();
+            }
         }
 
         // ==========================================

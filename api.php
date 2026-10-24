@@ -118,6 +118,31 @@ try {
         // ==========================================
         // 0.1 AUTHENTICATION & SESSION CONTROL
         // ==========================================
+        case 'get_quick_login_users':
+            try {
+                $stmt = $pdo->query("
+                    SELECT u.id, u.nik, u.name, u.role, u.branch_id, b.name as branch_name 
+                    FROM users u 
+                    LEFT JOIN branches b ON b.id = u.branch_id 
+                    WHERE COALESCE(u.is_active, 1) = 1 
+                    ORDER BY 
+                        CASE 
+                            WHEN UPPER(u.role) LIKE '%SUPER%ADMIN%' THEN 1
+                            WHEN UPPER(u.role) LIKE '%MANAGER%' THEN 2
+                            WHEN UPPER(u.role) LIKE '%CASHIER%' OR UPPER(u.role) LIKE '%KASIR%' THEN 3
+                            WHEN UPPER(u.role) LIKE '%STAFF%' OR UPPER(u.role) LIKE '%STAF%' THEN 4
+                            ELSE 5 
+                        END, 
+                        u.id ASC
+                    LIMIT 8
+                ");
+                $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                echo json_encode(['success' => true, 'users' => $users]);
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            }
+            break;
+
         case 'login':
             $username = trim($input['username'] ?? ''); // NIK or Email
             $password = trim($input['password'] ?? '');

@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.24",
-  "build": "20261024-05",
+  "version": "1.2.25",
+  "build": "20261024-06",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.25",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Sinkronisasi Dinamis Akun Cepat Form Login dengan Database Karyawan Terkini",
+      "description": "Menyelesaikan kendala profil akun cepat pada form login yang sebelumnya masih menampilkan nama dan peran demo statis lama (Muhamad Ismail, Hendra Wijaya, Siti Rahmawati, Rian Kurniawan) dan tidak sesuai dengan data karyawan riil yang telah diupdate oleh pengguna: (1) Menyediakan endpoint backend api.php?action=get_quick_login_users yang mengembalikan profil aktif karyawan riil (NIK, Nama, Role, Cabang) tanpa data kredensial sensitif. (2) Menghadirkan Server-Side Rendering pada index.php yang memuat akun aktif langsung dari tabel users pada saat pemuatan awal halaman. (3) Menambahkan fungsi sinkronisasi dinamis frontend loadQuickLoginAccounts() yang otomatis memperbarui kartu pemilih akun cepat setiap kali form login ditampilkan (showLoginScreen) serta setiap kali ada penambahan, pengeditan (saveEmployeeForm), atau penonaktifan karyawan (deleteEmployee). (4) Kartu pemilih akun cepat kini menampilkan nama riil karyawan (seperti Nina Indrayani, Bima, Abdul Latif, Shafiqa, Keenan), peran terkini, dan cabang penempatan secara akurat dan interaktif.",
+      "rollback_command": "git checkout v1.2.24"
+    },
     {
       "version": "1.2.24",
       "commit": "HEAD",
