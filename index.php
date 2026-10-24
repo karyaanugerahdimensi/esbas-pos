@@ -6375,9 +6375,10 @@ try {
                     <select id="category-modal-is-stockable" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium">
                         <option value="1">📦 Wajib Di-Stok (Default - Pantau sisa stok fisik)</option>
                         <option value="0">⚡ Tidak Di-Stok (BOM On-Demand - Bebas stok, langsung potong resep bahan baku)</option>
+                        <option value="2">🔄 Hibrida: Wajib Di-Stok & On-Demand (Fisik Dihitung + Bebas Jual Auto-BOM)</option>
                     </select>
                     <p class="text-[10px] text-slate-500 mt-1">
-                        Pilih <strong>Tidak Di-Stok</strong> jika produk dalam kategori ini diproduksi on-demand (misal: Galon 15L yang langsung potong air baku 16L, 1 tutup, dan 1 tisu).
+                        Pilih <strong>Hibrida</strong> untuk kombinasi kedua fitur (fisik tetap dilacak dan dicatat di inventori/shift, namun kasir bebas menjual tanpa diblokir saat stok habis).
                     </p>
                 </div>
                 <div class="grid grid-cols-2 gap-2 pt-2">
@@ -6658,6 +6659,7 @@ try {
                             <select id="prod-is-stockable" onchange="toggleProductStockableBadge()" class="w-full p-2.5 bg-white border border-violet-200 rounded-xl font-bold text-xs text-slate-800 focus:ring-2 focus:ring-violet-500">
                                 <option value="1">📦 Wajib Di-Stok (Fisik dihitung & dibatasi di kasir)</option>
                                 <option value="0">⚡ Tidak Di-Stok / On-Demand (Otomatis potong resep BOM)</option>
+                                <option value="2">🔄 Hibrida: Wajib Di-Stok & On-Demand (Fisik Dihitung + Bebas Jual Auto-BOM)</option>
                             </select>
                             <p id="prod-stockable-desc-text" class="text-[11px] text-violet-900/80 leading-relaxed">
                                 Jika diset <strong>Tidak Di-Stok</strong>, kasir dapat menjual produk ini tanpa dibatasi sisa stok fisik jadi, dan sistem akan langsung memotong stok bahan baku BOM terkait.
@@ -9088,9 +9090,11 @@ try {
                             <div class="flex items-center justify-between mb-1.5">
                                 <span class="text-3xl">${p.image_emoji || '📦'}</span>
                                 <div class="flex flex-col items-end">
-                                    ${(p.requires_stock === 0 || p.is_stockable === 0 || p.cat_is_stockable === 0)
-                                        ? '<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-violet-100 text-violet-800 border border-violet-200">⚡ Tanpa Stok (BOM)</span>'
-                                        : `<span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${p.stock > 10 ? 'bg-slate-100 text-slate-600' : 'bg-rose-100 text-rose-600'}">Stok: ${p.stock}</span>`}
+                                    ${(Number(p.is_stockable) === 2)
+                                        ? `<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 border border-amber-300" title="Mode Hibrida: Fisik dihitung dan bebas jual On-Demand">🔄 Hibrida (Stok: ${p.stock})</span>`
+                                        : ((p.requires_stock === 0 || p.is_stockable === 0 || p.cat_is_stockable === 0)
+                                            ? '<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-violet-100 text-violet-800 border border-violet-200">⚡ Tanpa Stok (BOM)</span>'
+                                            : `<span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${p.stock > 10 ? 'bg-slate-100 text-slate-600' : 'bg-rose-100 text-rose-600'}">Stok: ${p.stock}</span>`)}
                                     ${p.has_bom ? '<span class="text-[9px] text-indigo-600 font-bold mt-0.5">🧪 Pakai Resep</span>' : ''}
                                     ${(Number(p.is_delivery_included) === 1 || Number(p.is_delivery_required) === 2) 
                                         ? '<span class="text-[9px] text-emerald-800 font-extrabold mt-0.5 bg-emerald-100 border border-emerald-300 px-1.5 py-0.2 rounded">🎁 Termasuk Kirim</span>' 
@@ -9135,8 +9139,8 @@ try {
                     return;
                 }
             }
-            const isProductReqStock = (product.requires_stock !== undefined) ? Number(product.requires_stock) === 1 : (Number(product.is_stockable ?? 1) === 1 && Number(product.cat_is_stockable ?? 1) === 1);
-            if (isProductReqStock && product.stock <= 0) {
+            const isProductStrictStock = (Number(product.is_stockable ?? 1) === 1 && Number(product.cat_is_stockable ?? 1) === 1 && product.requires_stock !== 0);
+            if (isProductStrictStock && product.stock <= 0) {
                 alert(`Stok '${product.name}' habis di cabang ini!`);
                 return;
             }
@@ -9215,8 +9219,8 @@ try {
                 }
             }
 
-            const isProductReqStock = (product.requires_stock !== undefined) ? Number(product.requires_stock) === 1 : (Number(product.is_stockable ?? 1) === 1 && Number(product.cat_is_stockable ?? 1) === 1);
-            if (isProductReqStock && product.stock <= 0) {
+            const isProductStrictStock = (Number(product.is_stockable ?? 1) === 1 && Number(product.cat_is_stockable ?? 1) === 1 && product.requires_stock !== 0);
+            if (isProductStrictStock && product.stock <= 0) {
                 alert(`Stok '${product.name}' habis di cabang ini!`);
                 return;
             }
@@ -9254,8 +9258,8 @@ try {
                     price: finalPrice,
                     cogs: finalCogs,
                     qty: 1,
-                    max_stock: isProductReqStock ? product.stock : 999999,
-                    requires_stock: isProductReqStock,
+                    max_stock: isProductStrictStock ? product.stock : 999999,
+                    requires_stock: isProductStrictStock,
                     price_tag: basePriceInfo.tag,
                     is_taxable: (product.is_taxable !== undefined) ? Number(product.is_taxable) : 1,
                     tax_percent: (product.tax_percent !== undefined) ? Number(product.tax_percent) : 11.0,
@@ -14540,7 +14544,11 @@ Manager / Supervisor: __________________
                     <tr class="hover:bg-slate-50">
                         <td class="py-2.5 px-3 font-mono font-bold text-indigo-700">${p.sku}<br><span class="text-[10px] text-slate-400">${p.barcode}</span></td>
                         <td class="py-2.5 px-3 font-semibold text-slate-800">
-                            <span class="mr-1.5">${p.image_emoji || '📦'}</span>${p.name}${(p.effective_is_stockable === 0 || p.requires_stock === 0) ? ' <span class="inline-block text-[9px] px-1.5 py-0.2 bg-violet-100 text-violet-800 border border-violet-200 rounded font-bold">⚡ Tanpa Stok</span>' : ''}
+                            <span class="mr-1.5">${p.image_emoji || '📦'}</span>${p.name}${
+                                (Number(p.is_stockable) === 2)
+                                    ? ' <span class="inline-block text-[9px] px-1.5 py-0.2 bg-amber-100 text-amber-800 border border-amber-300 rounded font-bold">🔄 Hibrida</span>'
+                                    : ((p.effective_is_stockable === 0 || p.requires_stock === 0) ? ' <span class="inline-block text-[9px] px-1.5 py-0.2 bg-violet-100 text-violet-800 border border-violet-200 rounded font-bold">⚡ Tanpa Stok</span>' : '')
+                            }
                         </td>
                         <td class="py-2.5 px-3">${typeBadge}</td>
                         <td class="py-2.5 px-3 text-slate-600">${p.category}</td>
@@ -14821,7 +14829,7 @@ Manager / Supervisor: __________________
             document.getElementById('prod-is-delivery-required').checked = (delivVal === '1' || delivVal === '2');
             toggleProductDeliveryBadge();
             if (document.getElementById('prod-is-stockable')) {
-                document.getElementById('prod-is-stockable').value = (p.is_stockable !== undefined && Number(p.is_stockable) === 0) ? '0' : '1';
+                document.getElementById('prod-is-stockable').value = (p.is_stockable !== undefined && p.is_stockable !== null) ? String(p.is_stockable) : '1';
             }
             toggleProductStockableBadge();
 
@@ -14833,13 +14841,21 @@ Manager / Supervisor: __________________
         function toggleProductStockableBadge() {
             const el = document.getElementById('prod-is-stockable');
             const badge = document.getElementById('prod-stockable-status-badge');
+            const desc = document.getElementById('prod-stockable-desc-text');
             if (!el || !badge) return;
-            if (el.value === '0') {
-                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black bg-violet-100 text-violet-800';
+            const val = String(el.value);
+            if (val === '0') {
+                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black bg-violet-100 text-violet-800 border border-violet-200';
                 badge.innerText = '⚡ Tanpa Stok (BOM)';
+                if (desc) desc.innerHTML = 'Jika diset <strong>Tidak Di-Stok</strong>, kasir dapat menjual produk ini tanpa dibatasi sisa stok fisik jadi, dan sistem akan langsung memotong stok bahan baku BOM terkait.';
+            } else if (val === '2') {
+                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300';
+                badge.innerText = '🔄 Hibrida (Fisik + Auto-BOM)';
+                if (desc) desc.innerHTML = '<strong>Kombinasi Kedua Fitur (Hibrida):</strong> Saldo stok fisik produk tetap dihitung & dicatat di inventori/shift, namun kasir <strong>bebas menjual tanpa dibatasi</strong> jika stok habis (otomatis potong bahan baku resep BOM).';
             } else {
-                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800';
+                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200';
                 badge.innerText = '📦 Wajib Stok';
+                if (desc) desc.innerHTML = 'Standar: Produk wajib memiliki saldo fisik di cabang dan kasir <strong>dibatasi jika stok habis</strong>.';
             }
         }
 
@@ -14877,7 +14893,7 @@ Manager / Supervisor: __________________
                 tax_id: taxId,
                 is_delivery_required: isDelivReq,
                 is_delivery_included: isDelivInc,
-                is_stockable: document.getElementById('prod-is-stockable') ? (parseInt(document.getElementById('prod-is-stockable').value) === 0 ? 0 : 1) : 1
+                is_stockable: document.getElementById('prod-is-stockable') ? parseInt(document.getElementById('prod-is-stockable').value) : 1
             };
 
             const res = await fetch('api.php?action=save_product', {
@@ -15413,7 +15429,18 @@ Manager / Supervisor: __________________
 
                 tbody.innerHTML = data.categories.map(c => {
                     const isProtected = Number(c.id) === 1;
-                    const isStockable = (c.is_stockable !== undefined) ? Number(c.is_stockable) === 1 : true;
+                    const stockStatus = (c.is_stockable !== undefined) ? Number(c.is_stockable) : 1;
+                    let stockBadge = '';
+                    if (stockStatus === 2) {
+                        stockBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">🔄 Hibrida</span>
+                                      <button onclick="toggleCategoryStockable(${c.id}, 1)" class="text-[9px] text-slate-400 hover:text-indigo-600 underline">Ubah ke Wajib Stok</button>`;
+                    } else if (stockStatus === 0) {
+                        stockBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-800 border border-violet-200">⚡ Tanpa Stok (BOM)</span>
+                                      <button onclick="toggleCategoryStockable(${c.id}, 2)" class="text-[9px] text-slate-400 hover:text-indigo-600 underline">Ubah ke Hibrida</button>`;
+                    } else {
+                        stockBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">📦 Wajib Stok</span>
+                                      <button onclick="toggleCategoryStockable(${c.id}, 0)" class="text-[9px] text-slate-400 hover:text-indigo-600 underline">Ubah ke Tanpa Stok</button>`;
+                    }
                     return `
                         <tr class="hover:bg-slate-50 transition-colors">
                             <td class="py-3 px-4 font-mono font-bold text-slate-500">#${c.id}</td>
@@ -15422,11 +15449,7 @@ Manager / Supervisor: __________________
                             <td class="py-3 px-4 font-semibold text-slate-600">${c.product_count || 0} Produk Terkait</td>
                             <td class="py-3 px-4 text-center">
                                 <div class="inline-flex flex-col items-center gap-1">
-                                    ${isStockable 
-                                        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">📦 Wajib Stok</span>
-                                           <button onclick="toggleCategoryStockable(${c.id}, 0)" class="text-[9px] text-slate-400 hover:text-indigo-600 underline">Ubah ke Tanpa Stok</button>`
-                                        : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-800 border border-violet-200">⚡ Tanpa Stok (BOM)</span>
-                                           <button onclick="toggleCategoryStockable(${c.id}, 1)" class="text-[9px] text-slate-400 hover:text-indigo-600 underline">Ubah ke Wajib Stok</button>`}
+                                    ${stockBadge}
                                 </div>
                             </td>
                             <td class="py-3 px-4 text-center space-x-1">
@@ -15458,7 +15481,7 @@ Manager / Supervisor: __________________
             document.getElementById('category-modal-name').value = c.name;
             document.getElementById('category-modal-icon').value = c.icon || '🏷️';
             const stkEl = document.getElementById('category-modal-is-stockable');
-            if (stkEl) stkEl.value = (c.is_stockable !== undefined && Number(c.is_stockable) === 0) ? '0' : '1';
+            if (stkEl) stkEl.value = (c.is_stockable !== undefined && c.is_stockable !== null) ? String(c.is_stockable) : '1';
             document.getElementById('category-modal-title').innerText = 'Edit Kategori: ' + c.name;
         }
 
@@ -15946,7 +15969,11 @@ Manager / Supervisor: __________________
                             <td class="py-3 px-4 text-center font-mono font-bold text-slate-500">${p.sort_order || (idx + 1)}</td>
                             <td class="py-3 px-4 font-mono font-bold text-indigo-700">${p.sku}</td>
                             <td class="py-3 px-4 font-black text-slate-800">
-                                <span class="mr-1.5">${p.image_emoji || '📦'}</span>${p.name}${(p.effective_is_stockable === 0 || p.requires_stock === 0) ? ' <span class="inline-block text-[9px] px-1.5 py-0.2 bg-violet-100 text-violet-800 border border-violet-200 rounded font-bold">⚡ Tanpa Stok</span>' : ''}
+                                <span class="mr-1.5">${p.image_emoji || '📦'}</span>${p.name}${
+                                    (Number(p.is_stockable) === 2)
+                                        ? ' <span class="inline-block text-[9px] px-1.5 py-0.2 bg-amber-100 text-amber-800 border border-amber-300 rounded font-bold">🔄 Hibrida</span>'
+                                        : ((p.effective_is_stockable === 0 || p.requires_stock === 0) ? ' <span class="inline-block text-[9px] px-1.5 py-0.2 bg-violet-100 text-violet-800 border border-violet-200 rounded font-bold">⚡ Tanpa Stok</span>' : '')
+                                }
                             </td>
                             <td class="py-3 px-4">
                                 <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${p.product_type === 'RAW_MATERIAL' ? 'bg-amber-100 text-amber-900' : 'bg-indigo-100 text-indigo-900'}">${p.product_type}</span>

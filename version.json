@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.29",
-  "build": "20261024-10",
+  "version": "1.2.30",
+  "build": "20261024-11",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.30",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Opsi Mode Hibrida Pengelolaan Stok: Menjalankan Fitur Wajib Di-Stok & On-Demand Sekaligus",
+      "description": "Menghadirkan opsi ke-3 pada pengelolaan stok fisik produk (is_stockable = 2) yang menggabungkan fitur Wajib Di-Stok dan Tidak Di-Stok / On-Demand secara bersamaan: (1) Menambahkan opsi '🔄 Hibrida: Wajib Di-Stok & On-Demand (Fisik Dihitung + Bebas Jual Auto-BOM)' pada dropdown Modal Tambah/Edit Produk (#prod-is-stockable) dan Modal Kategori (#category-modal-is-stockable) lengkap dengan badge indikator visual '🔄 Hibrida (Fisik + Auto-BOM)' dan deskripsi aturan bisnis. (2) Sisi Inventori & Pelacakan Fisik (Fitur Wajib Di-Stok): Saldo fisik barang jadi tetap dihitung dan dicatat di inventori cabang (branch_stocks), muncul di kartu mutasi stok, laporan stok, dan tetap wajib dicatat pada pelacakan shift kasir (opening_shift_products dan closing_shift). (3) Sisi Kasir POS (Fitur Tidak Di-Stok / On-Demand): Kasir tidak dibatasi jika stok barang jadi habis (bebas jual tanpa alert pemblokiran stok habis); saat checkout kasir, sistem tetap memotong stok fisik barang jadi (STOCK_OUT_SALE) DAN secara otomatis memotong bahan baku resep BOM (BOM_DEDUCTION) secara real-time. (4) Tampilan Visual POS & Master Data: Kartu produk POS dan tabel produk master menampilkan badge informatif '🔄 Hibrida (Stok: X)' untuk transparansi operasional kasir.",
+      "rollback_command": "git checkout v1.2.29"
+    },
     {
       "version": "1.2.29",
       "commit": "HEAD",

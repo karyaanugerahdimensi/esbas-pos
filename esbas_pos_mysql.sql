@@ -1,6 +1,6 @@
 -- ========================================================
 -- ESBAS POS Database Export (MySQL / MariaDB Compatible)
--- Generated: 2026-10-24 10:35:58
+-- Generated: 2026-10-24 10:48:39
 -- ========================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -291,66 +291,66 @@ CREATE TABLE `role_menu_permissions` (
 
 -- Dumping data for table `role_menu_permissions`
 INSERT INTO `role_menu_permissions` (`id`, `role`, `menu_key`, `menu_title`, `can_access`, `created_at`, `updated_at`) VALUES
-(1, 'SUPERADMIN', 'pos', '1. POS Penjualan Kasir', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(2, 'SUPERADMIN', 'reports', '2. Laporan Penjualan & Piutang', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(3, 'SUPERADMIN', 'ess', '3. Portal ESS Karyawan', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(4, 'SUPERADMIN', 'employees', '4. Kelola Karyawan (CRUD)', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(5, 'SUPERADMIN', 'products', '5. Master Produk & Varian', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(6, 'SUPERADMIN', 'bom', '6. Resep / BOM Bahan', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(7, 'SUPERADMIN', 'stocks', '7. Stok & Kartu Mutasi', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(8, 'SUPERADMIN', 'pnl', '8. Laporan Laba Rugi', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(9, 'SUPERADMIN', 'expenses', '9. Beban Operasional Cabang', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(10, 'SUPERADMIN', 'customers', '10. Pelanggan & Mitra CRM', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(11, 'SUPERADMIN', 'logistics', '11. Kurir & Biaya Kirim', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(12, 'SUPERADMIN', 'branches', '12. Kelola Cabang (CRUD)', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(13, 'SUPERADMIN', 'payments', '13. Metode Pembayaran', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(14, 'SUPERADMIN', 'sale-cancellations', '14. Pembatalan Penjualan (Void)', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(15, 'SUPERADMIN', 'settings', '15. Konfigurasi Sistem & Cetak', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(16, 'MANAGER', 'pos', '1. POS Penjualan Kasir', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(17, 'MANAGER', 'reports', '2. Laporan Penjualan & Piutang', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(18, 'MANAGER', 'ess', '3. Portal ESS Karyawan', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(19, 'MANAGER', 'employees', '4. Kelola Karyawan (CRUD)', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(20, 'MANAGER', 'products', '5. Master Produk & Varian', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(21, 'MANAGER', 'bom', '6. Resep / BOM Bahan', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(22, 'MANAGER', 'stocks', '7. Stok & Kartu Mutasi', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(23, 'MANAGER', 'pnl', '8. Laporan Laba Rugi', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(24, 'MANAGER', 'expenses', '9. Beban Operasional Cabang', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(25, 'MANAGER', 'customers', '10. Pelanggan & Mitra CRM', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(26, 'MANAGER', 'logistics', '11. Kurir & Biaya Kirim', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(27, 'MANAGER', 'branches', '12. Kelola Cabang (CRUD)', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(28, 'MANAGER', 'payments', '13. Metode Pembayaran', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(29, 'MANAGER', 'sale-cancellations', '14. Pembatalan Penjualan (Void)', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(30, 'MANAGER', 'settings', '15. Konfigurasi Sistem & Cetak', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(31, 'CASHIER', 'pos', '1. POS Penjualan Kasir', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(32, 'CASHIER', 'reports', '2. Laporan Penjualan & Piutang', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(33, 'CASHIER', 'ess', '3. Portal ESS Karyawan', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(34, 'CASHIER', 'employees', '4. Kelola Karyawan (CRUD)', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(35, 'CASHIER', 'products', '5. Master Produk & Varian', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(36, 'CASHIER', 'bom', '6. Resep / BOM Bahan', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(37, 'CASHIER', 'stocks', '7. Stok & Kartu Mutasi', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(38, 'CASHIER', 'pnl', '8. Laporan Laba Rugi', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(39, 'CASHIER', 'expenses', '9. Beban Operasional Cabang', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(40, 'CASHIER', 'customers', '10. Pelanggan & Mitra CRM', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(41, 'CASHIER', 'logistics', '11. Kurir & Biaya Kirim', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(42, 'CASHIER', 'branches', '12. Kelola Cabang (CRUD)', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(43, 'CASHIER', 'payments', '13. Metode Pembayaran', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(44, 'CASHIER', 'sale-cancellations', '14. Pembatalan Penjualan (Void)', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(45, 'CASHIER', 'settings', '15. Konfigurasi Sistem & Cetak', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(46, 'STAFF', 'pos', '1. POS Penjualan Kasir', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(47, 'STAFF', 'reports', '2. Laporan Penjualan & Piutang', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(48, 'STAFF', 'ess', '3. Portal ESS Karyawan', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(49, 'STAFF', 'employees', '4. Kelola Karyawan (CRUD)', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(50, 'STAFF', 'products', '5. Master Produk & Varian', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(51, 'STAFF', 'bom', '6. Resep / BOM Bahan', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(52, 'STAFF', 'stocks', '7. Stok & Kartu Mutasi', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(53, 'STAFF', 'pnl', '8. Laporan Laba Rugi', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(54, 'STAFF', 'expenses', '9. Beban Operasional Cabang', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(55, 'STAFF', 'customers', '10. Pelanggan & Mitra CRM', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(56, 'STAFF', 'logistics', '11. Kurir & Biaya Kirim', 1, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(57, 'STAFF', 'branches', '12. Kelola Cabang (CRUD)', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(58, 'STAFF', 'payments', '13. Metode Pembayaran', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(59, 'STAFF', 'sale-cancellations', '14. Pembatalan Penjualan (Void)', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
-(60, 'STAFF', 'settings', '15. Konfigurasi Sistem & Cetak', 0, '2026-10-12 12:40:25', '2026-10-23 18:03:20'),
+(1, 'SUPERADMIN', 'pos', '1. POS Penjualan Kasir', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(2, 'SUPERADMIN', 'reports', '2. Laporan Penjualan & Piutang', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(3, 'SUPERADMIN', 'ess', '3. Portal ESS Karyawan', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(4, 'SUPERADMIN', 'employees', '4. Kelola Karyawan (CRUD)', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(5, 'SUPERADMIN', 'products', '5. Master Produk & Varian', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(6, 'SUPERADMIN', 'bom', '6. Resep / BOM Bahan', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(7, 'SUPERADMIN', 'stocks', '7. Stok & Kartu Mutasi', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(8, 'SUPERADMIN', 'pnl', '8. Laporan Laba Rugi', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(9, 'SUPERADMIN', 'expenses', '9. Beban Operasional Cabang', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(10, 'SUPERADMIN', 'customers', '10. Pelanggan & Mitra CRM', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(11, 'SUPERADMIN', 'logistics', '11. Kurir & Biaya Kirim', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(12, 'SUPERADMIN', 'branches', '12. Kelola Cabang (CRUD)', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(13, 'SUPERADMIN', 'payments', '13. Metode Pembayaran', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(14, 'SUPERADMIN', 'sale-cancellations', '14. Pembatalan Penjualan (Void)', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(15, 'SUPERADMIN', 'settings', '15. Konfigurasi Sistem & Cetak', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(16, 'MANAGER', 'pos', '1. POS Penjualan Kasir', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(17, 'MANAGER', 'reports', '2. Laporan Penjualan & Piutang', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(18, 'MANAGER', 'ess', '3. Portal ESS Karyawan', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(19, 'MANAGER', 'employees', '4. Kelola Karyawan (CRUD)', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(20, 'MANAGER', 'products', '5. Master Produk & Varian', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(21, 'MANAGER', 'bom', '6. Resep / BOM Bahan', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(22, 'MANAGER', 'stocks', '7. Stok & Kartu Mutasi', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(23, 'MANAGER', 'pnl', '8. Laporan Laba Rugi', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(24, 'MANAGER', 'expenses', '9. Beban Operasional Cabang', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(25, 'MANAGER', 'customers', '10. Pelanggan & Mitra CRM', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(26, 'MANAGER', 'logistics', '11. Kurir & Biaya Kirim', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(27, 'MANAGER', 'branches', '12. Kelola Cabang (CRUD)', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(28, 'MANAGER', 'payments', '13. Metode Pembayaran', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(29, 'MANAGER', 'sale-cancellations', '14. Pembatalan Penjualan (Void)', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(30, 'MANAGER', 'settings', '15. Konfigurasi Sistem & Cetak', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(31, 'CASHIER', 'pos', '1. POS Penjualan Kasir', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(32, 'CASHIER', 'reports', '2. Laporan Penjualan & Piutang', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(33, 'CASHIER', 'ess', '3. Portal ESS Karyawan', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(34, 'CASHIER', 'employees', '4. Kelola Karyawan (CRUD)', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(35, 'CASHIER', 'products', '5. Master Produk & Varian', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(36, 'CASHIER', 'bom', '6. Resep / BOM Bahan', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(37, 'CASHIER', 'stocks', '7. Stok & Kartu Mutasi', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(38, 'CASHIER', 'pnl', '8. Laporan Laba Rugi', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(39, 'CASHIER', 'expenses', '9. Beban Operasional Cabang', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(40, 'CASHIER', 'customers', '10. Pelanggan & Mitra CRM', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(41, 'CASHIER', 'logistics', '11. Kurir & Biaya Kirim', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(42, 'CASHIER', 'branches', '12. Kelola Cabang (CRUD)', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(43, 'CASHIER', 'payments', '13. Metode Pembayaran', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(44, 'CASHIER', 'sale-cancellations', '14. Pembatalan Penjualan (Void)', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(45, 'CASHIER', 'settings', '15. Konfigurasi Sistem & Cetak', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(46, 'STAFF', 'pos', '1. POS Penjualan Kasir', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(47, 'STAFF', 'reports', '2. Laporan Penjualan & Piutang', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(48, 'STAFF', 'ess', '3. Portal ESS Karyawan', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(49, 'STAFF', 'employees', '4. Kelola Karyawan (CRUD)', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(50, 'STAFF', 'products', '5. Master Produk & Varian', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(51, 'STAFF', 'bom', '6. Resep / BOM Bahan', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(52, 'STAFF', 'stocks', '7. Stok & Kartu Mutasi', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(53, 'STAFF', 'pnl', '8. Laporan Laba Rugi', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(54, 'STAFF', 'expenses', '9. Beban Operasional Cabang', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(55, 'STAFF', 'customers', '10. Pelanggan & Mitra CRM', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(56, 'STAFF', 'logistics', '11. Kurir & Biaya Kirim', 1, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(57, 'STAFF', 'branches', '12. Kelola Cabang (CRUD)', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(58, 'STAFF', 'payments', '13. Metode Pembayaran', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(59, 'STAFF', 'sale-cancellations', '14. Pembatalan Penjualan (Void)', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
+(60, 'STAFF', 'settings', '15. Konfigurasi Sistem & Cetak', 0, '2026-10-12 12:40:25', '2026-10-24 15:40:13'),
 (301, '0', 'role', 'role', 1, '2026-10-12 12:43:15', '2026-10-12 19:43:15'),
 (302, '0', 'menu_key', 'menu_key', 1, '2026-10-12 12:43:15', '2026-10-12 19:43:15'),
 (303, '0', 'menu_title', 'menu_title', 1, '2026-10-12 12:43:15', '2026-10-12 19:43:15'),
@@ -363,37 +363,37 @@ INSERT INTO `role_menu_permissions` (`id`, `role`, `menu_key`, `menu_title`, `ca
 (310, '2', 'menu_key', 'menu_key', 1, '2026-10-12 12:43:15', '2026-10-12 19:43:15'),
 (311, '2', 'menu_title', 'menu_title', 1, '2026-10-12 12:43:15', '2026-10-12 19:43:15'),
 (312, '2', 'can_access', 'can_access', 0, '2026-10-12 12:43:15', '2026-10-12 19:43:15'),
-(313, 'SUPER_ADMIN', 'pos', '1. POS Penjualan Kasir', 1, '2026-10-23 18:03:20', '2026-10-23 18:03:20'),
-(314, 'SUPER_ADMIN', 'reports', '2. Laporan Penjualan & Piutang', 1, '2026-10-23 18:03:20', '2026-10-23 18:03:20'),
-(315, 'SUPER_ADMIN', 'ess', '3. Portal ESS Karyawan', 1, '2026-10-23 18:03:20', '2026-10-23 18:03:20'),
-(316, 'SUPER_ADMIN', 'employees', '4. Kelola Karyawan (CRUD)', 1, '2026-10-23 18:03:20', '2026-10-23 18:03:20'),
-(317, 'SUPER_ADMIN', 'products', '5. Master Produk & Varian', 1, '2026-10-23 18:03:20', '2026-10-23 18:03:20'),
-(318, 'SUPER_ADMIN', 'bom', '6. Resep / BOM Bahan', 1, '2026-10-23 18:03:20', '2026-10-23 18:03:20'),
-(319, 'SUPER_ADMIN', 'stocks', '7. Stok & Kartu Mutasi', 1, '2026-10-23 18:03:20', '2026-10-23 18:03:20'),
-(320, 'SUPER_ADMIN', 'pnl', '8. Laporan Laba Rugi', 1, '2026-10-23 18:03:20', '2026-10-23 18:03:20'),
-(321, 'SUPER_ADMIN', 'expenses', '9. Beban Operasional Cabang', 1, '2026-10-23 18:03:20', '2026-10-23 18:03:20'),
-(322, 'SUPER_ADMIN', 'customers', '10. Pelanggan & Mitra CRM', 1, '2026-10-23 18:03:20', '2026-10-23 18:03:20'),
-(323, 'SUPER_ADMIN', 'logistics', '11. Kurir & Biaya Kirim', 1, '2026-10-23 18:03:20', '2026-10-23 18:03:20'),
-(324, 'SUPER_ADMIN', 'branches', '12. Kelola Cabang (CRUD)', 1, '2026-10-23 18:03:20', '2026-10-23 18:03:20'),
-(325, 'SUPER_ADMIN', 'payments', '13. Metode Pembayaran', 1, '2026-10-23 18:03:20', '2026-10-23 18:03:20'),
-(326, 'SUPER_ADMIN', 'sale-cancellations', '14. Pembatalan Penjualan (Void)', 1, '2026-10-23 18:03:20', '2026-10-23 18:03:20'),
-(327, 'SUPER_ADMIN', 'settings', '15. Konfigurasi Sistem & Cetak', 1, '2026-10-23 18:03:20', '2026-10-23 18:03:20'),
-(328, 'BRANCH_MANAGER', 'pos', '1. POS Penjualan Kasir', 1, '2026-10-23 18:03:21', '2026-10-23 18:03:20'),
-(329, 'BRANCH_MANAGER', 'reports', '2. Laporan Penjualan & Piutang', 1, '2026-10-23 18:03:21', '2026-10-23 18:03:20'),
-(330, 'BRANCH_MANAGER', 'ess', '3. Portal ESS Karyawan', 1, '2026-10-23 18:03:21', '2026-10-23 18:03:20'),
-(331, 'BRANCH_MANAGER', 'employees', '4. Kelola Karyawan (CRUD)', 1, '2026-10-23 18:03:21', '2026-10-23 18:03:20'),
-(332, 'BRANCH_MANAGER', 'products', '5. Master Produk & Varian', 1, '2026-10-23 18:03:21', '2026-10-23 18:03:20'),
-(333, 'BRANCH_MANAGER', 'bom', '6. Resep / BOM Bahan', 1, '2026-10-23 18:03:21', '2026-10-23 18:03:20'),
-(334, 'BRANCH_MANAGER', 'stocks', '7. Stok & Kartu Mutasi', 1, '2026-10-23 18:03:21', '2026-10-23 18:03:20'),
-(335, 'BRANCH_MANAGER', 'pnl', '8. Laporan Laba Rugi', 1, '2026-10-23 18:03:21', '2026-10-23 18:03:20'),
-(336, 'BRANCH_MANAGER', 'expenses', '9. Beban Operasional Cabang', 1, '2026-10-23 18:03:21', '2026-10-23 18:03:20'),
-(337, 'BRANCH_MANAGER', 'customers', '10. Pelanggan & Mitra CRM', 1, '2026-10-23 18:03:21', '2026-10-23 18:03:20'),
-(338, 'BRANCH_MANAGER', 'logistics', '11. Kurir & Biaya Kirim', 1, '2026-10-23 18:03:21', '2026-10-23 18:03:20'),
-(339, 'BRANCH_MANAGER', 'branches', '12. Kelola Cabang (CRUD)', 0, '2026-10-23 18:03:21', '2026-10-23 18:03:20'),
-(340, 'BRANCH_MANAGER', 'payments', '13. Metode Pembayaran', 0, '2026-10-23 18:03:21', '2026-10-23 18:03:20');
+(313, 'SUPER_ADMIN', 'pos', '1. POS Penjualan Kasir', 1, '2026-10-23 18:03:20', '2026-10-24 15:40:13'),
+(314, 'SUPER_ADMIN', 'reports', '2. Laporan Penjualan & Piutang', 1, '2026-10-23 18:03:20', '2026-10-24 15:40:13'),
+(315, 'SUPER_ADMIN', 'ess', '3. Portal ESS Karyawan', 1, '2026-10-23 18:03:20', '2026-10-24 15:40:13'),
+(316, 'SUPER_ADMIN', 'employees', '4. Kelola Karyawan (CRUD)', 1, '2026-10-23 18:03:20', '2026-10-24 15:40:13'),
+(317, 'SUPER_ADMIN', 'products', '5. Master Produk & Varian', 1, '2026-10-23 18:03:20', '2026-10-24 15:40:13'),
+(318, 'SUPER_ADMIN', 'bom', '6. Resep / BOM Bahan', 1, '2026-10-23 18:03:20', '2026-10-24 15:40:13'),
+(319, 'SUPER_ADMIN', 'stocks', '7. Stok & Kartu Mutasi', 1, '2026-10-23 18:03:20', '2026-10-24 15:40:13'),
+(320, 'SUPER_ADMIN', 'pnl', '8. Laporan Laba Rugi', 1, '2026-10-23 18:03:20', '2026-10-24 15:40:13'),
+(321, 'SUPER_ADMIN', 'expenses', '9. Beban Operasional Cabang', 1, '2026-10-23 18:03:20', '2026-10-24 15:40:13'),
+(322, 'SUPER_ADMIN', 'customers', '10. Pelanggan & Mitra CRM', 1, '2026-10-23 18:03:20', '2026-10-24 15:40:13'),
+(323, 'SUPER_ADMIN', 'logistics', '11. Kurir & Biaya Kirim', 1, '2026-10-23 18:03:20', '2026-10-24 15:40:13'),
+(324, 'SUPER_ADMIN', 'branches', '12. Kelola Cabang (CRUD)', 1, '2026-10-23 18:03:20', '2026-10-24 15:40:13'),
+(325, 'SUPER_ADMIN', 'payments', '13. Metode Pembayaran', 1, '2026-10-23 18:03:20', '2026-10-24 15:40:13'),
+(326, 'SUPER_ADMIN', 'sale-cancellations', '14. Pembatalan Penjualan (Void)', 1, '2026-10-23 18:03:20', '2026-10-24 15:40:13'),
+(327, 'SUPER_ADMIN', 'settings', '15. Konfigurasi Sistem & Cetak', 1, '2026-10-23 18:03:20', '2026-10-24 15:40:13'),
+(328, 'BRANCH_MANAGER', 'pos', '1. POS Penjualan Kasir', 1, '2026-10-23 18:03:21', '2026-10-24 15:40:13'),
+(329, 'BRANCH_MANAGER', 'reports', '2. Laporan Penjualan & Piutang', 1, '2026-10-23 18:03:21', '2026-10-24 15:40:13'),
+(330, 'BRANCH_MANAGER', 'ess', '3. Portal ESS Karyawan', 1, '2026-10-23 18:03:21', '2026-10-24 15:40:13'),
+(331, 'BRANCH_MANAGER', 'employees', '4. Kelola Karyawan (CRUD)', 1, '2026-10-23 18:03:21', '2026-10-24 15:40:13'),
+(332, 'BRANCH_MANAGER', 'products', '5. Master Produk & Varian', 1, '2026-10-23 18:03:21', '2026-10-24 15:40:13'),
+(333, 'BRANCH_MANAGER', 'bom', '6. Resep / BOM Bahan', 1, '2026-10-23 18:03:21', '2026-10-24 15:40:13'),
+(334, 'BRANCH_MANAGER', 'stocks', '7. Stok & Kartu Mutasi', 1, '2026-10-23 18:03:21', '2026-10-24 15:40:13'),
+(335, 'BRANCH_MANAGER', 'pnl', '8. Laporan Laba Rugi', 1, '2026-10-23 18:03:21', '2026-10-24 15:40:13'),
+(336, 'BRANCH_MANAGER', 'expenses', '9. Beban Operasional Cabang', 1, '2026-10-23 18:03:21', '2026-10-24 15:40:13'),
+(337, 'BRANCH_MANAGER', 'customers', '10. Pelanggan & Mitra CRM', 1, '2026-10-23 18:03:21', '2026-10-24 15:40:13'),
+(338, 'BRANCH_MANAGER', 'logistics', '11. Kurir & Biaya Kirim', 1, '2026-10-23 18:03:21', '2026-10-24 15:40:13'),
+(339, 'BRANCH_MANAGER', 'branches', '12. Kelola Cabang (CRUD)', 0, '2026-10-23 18:03:21', '2026-10-24 15:40:13'),
+(340, 'BRANCH_MANAGER', 'payments', '13. Metode Pembayaran', 0, '2026-10-23 18:03:21', '2026-10-24 15:40:13');
 INSERT INTO `role_menu_permissions` (`id`, `role`, `menu_key`, `menu_title`, `can_access`, `created_at`, `updated_at`) VALUES
-(341, 'BRANCH_MANAGER', 'sale-cancellations', '14. Pembatalan Penjualan (Void)', 0, '2026-10-23 18:03:21', '2026-10-23 18:03:20'),
-(342, 'BRANCH_MANAGER', 'settings', '15. Konfigurasi Sistem & Cetak', 1, '2026-10-23 18:03:21', '2026-10-23 18:03:20'),
+(341, 'BRANCH_MANAGER', 'sale-cancellations', '14. Pembatalan Penjualan (Void)', 0, '2026-10-23 18:03:21', '2026-10-24 15:40:13'),
+(342, 'BRANCH_MANAGER', 'settings', '15. Konfigurasi Sistem & Cetak', 1, '2026-10-23 18:03:21', '2026-10-24 15:40:13'),
 (88423, 'BRANCHMANAGER', 'pos', '1. POS Penjualan Kasir', 1, '2026-10-23 06:43:47', '2026-10-23 14:32:53'),
 (88424, 'BRANCHMANAGER', 'reports', '2. Laporan Penjualan & Piutang', 1, '2026-10-23 06:43:47', '2026-10-23 14:32:53'),
 (88425, 'BRANCHMANAGER', 'ess', '3. Portal ESS Karyawan', 1, '2026-10-23 06:43:47', '2026-10-23 14:32:53'),
@@ -487,7 +487,10 @@ INSERT INTO `products` (`id`, `sku`, `barcode`, `name`, `category`, `unit`, `cog
 (103, 'PRD-00006', '899260000103', 'Aqua Refill 19 Liter', 'Konsinyasi', 'galon', 19700, 23500, '📦', 'FINISHED_GOODS', 0, 8, 10, 1, 21200, 18800, 16900, 'ALL', 0, 1, 11, 2, 1, 1),
 (104, 'PRD-00007', '899260000104', 'Es Kristal 5kg', 'Produk Jual', 'ball', 1360, 6500, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 5900, 5200, 4700, 'ALL', 0, 1, 11, 1, 0, 1),
 (105, 'RAW-00092', '899260000105', 'Plastik PE 40 X 60', 'Bahan Baku (Raw Material)', 'pcs', 1000, 0, '📦', 'RAW_MATERIAL', 0, 4, 10, 1, 0, 0, 0, 'ALL', 0, 1, 11, 0, 0, 1),
-(106, 'PRD-00008', '899260000106', 'Es Kristal 10 Kg', 'Produk Jual', 'ball', 2675, 12000, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 10800, 9600, 8600, 'ALL', 0, 1, 11, 1, 0, 1);
+(106, 'PRD-00008', '899260000106', 'Es Kristal 10 Kg', 'Produk Jual', 'ball', 2675, 12000, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 10800, 9600, 8600, 'ALL', 0, 1, 11, 1, 0, 1),
+(132, 'HIB-31614', 'HIB-31614', 'Test Galon Hibrida 1792831614', 'Produk Jual', 'galon', 800, 5000, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 4500, 4000, 3600, 'ALL', 1, 1, 11, 0, 0, 2),
+(133, 'HIB-31640', 'HIB-31640', 'Test Galon Hibrida 1792831640', 'Produk Jual', 'galon', 800, 5000, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 4500, 4000, 3600, 'ALL', 0, 1, 11, 0, 0, 2),
+(134, 'HIB-31679', 'HIB-31679', 'Test Galon Hibrida 1792831679', 'Produk Jual', 'galon', 800, 5000, '📦', 'FINISHED_GOODS', 1, 1, 10, 1, 4500, 4000, 3600, 'ALL', 0, 1, 11, 0, 0, 2);
 
 -- --------------------------------------------------------
 -- Table structure for `product_variants`
@@ -540,7 +543,9 @@ INSERT INTO `product_recipes` (`id`, `finished_product_id`, `ingredient_product_
 (53, 104, 105, 1, 'pcs'),
 (54, 106, 91, 15, 'liter'),
 (55, 106, 105, 2, 'pcs'),
-(61, 100, 89, 1, 'pcs');
+(61, 100, 89, 1, 'pcs'),
+(62, 132, 88, 10, 'liter'),
+(63, 133, 88, 10, 'liter');
 
 -- --------------------------------------------------------
 -- Table structure for `variant_recipes`
@@ -586,13 +591,13 @@ INSERT INTO `branch_stocks` (`id`, `branch_id`, `product_id`, `stock`, `local_co
 (295, 3, 89, 0, 90, 0, NULL, 1, NULL, NULL),
 (297, 2, 89, 0, 90, 0, NULL, 1, NULL, NULL),
 (298, 3, 90, 0, 85, 0, NULL, 1, NULL, NULL),
-(299, 1, 90, 99985, 85, 0, '2026-10-24 10:23:00', 1, NULL, NULL),
+(299, 1, 90, 99980, 85, 0, '2026-10-24 10:23:00', 1, NULL, NULL),
 (300, 2, 90, 0, 85, 0, NULL, 1, NULL, NULL),
 (301, 3, 91, 0, 45, 0, NULL, 1, NULL, NULL),
-(302, 1, 91, 99760, 45, 0, '2026-10-24 10:22:52', 1, NULL, NULL),
+(302, 1, 91, 99660, 45, 0, '2026-10-24 10:22:52', 1, NULL, NULL),
 (303, 2, 91, 0, 45, 0, NULL, 1, NULL, NULL),
 (316, 3, 98, 0, 985, 5000, '2026-10-11 22:36:49', 1, NULL, NULL),
-(317, 1, 98, 10, 985, 4500, '2026-10-24 10:22:26', 1, 0, 1),
+(317, 1, 98, 5, 985, 4500, '2026-10-24 10:22:26', 1, 0, 1),
 (318, 2, 98, 0, 985, 5000, '2026-10-11 22:54:50', 1, 0, NULL),
 (319, 3, 99, 0, 985, 7000, '2026-10-11 11:59:37', 1, NULL, NULL),
 (320, 1, 99, 10, 985, 6500, '2026-10-24 10:22:33', 1, 2, 1),
@@ -632,7 +637,19 @@ INSERT INTO `branch_stocks` (`id`, `branch_id`, `product_id`, `stock`, `local_co
 (355, 1, 106, 0, 2675, 12000, '2026-10-20 13:46:08', 1, 1, 0),
 (356, 2, 106, 0, 2675, 12000, '2026-10-11 22:46:14', 1, 0, NULL),
 (644, 1, 89, 45, 0, 0, '2026-10-24 07:00:03', 1, NULL, NULL),
-(645, 1, 88, 10, 0, 0, '2026-10-24 07:00:10', 1, NULL, NULL);
+(776, 1, 132, 0, 800, 5000, NULL, 1, NULL, NULL),
+(778, 1, 133, 0, 800, 5000, NULL, 1, NULL, NULL),
+(783, 1, 88, 90, 50, 0, NULL, 1, NULL, NULL),
+(784, 2, 132, 0, 800, 5000, NULL, 1, NULL, NULL),
+(785, 2, 133, 0, 800, 5000, NULL, 1, NULL, NULL),
+(786, 2, 134, 0, 800, 5000, NULL, 1, NULL, NULL),
+(787, 3, 132, 0, 800, 5000, NULL, 1, NULL, NULL),
+(788, 3, 133, 0, 800, 5000, NULL, 1, NULL, NULL),
+(789, 3, 134, 0, 800, 5000, NULL, 1, NULL, NULL),
+(790, 6, 132, 0, 800, 5000, NULL, 1, NULL, NULL),
+(791, 6, 133, 0, 800, 5000, NULL, 1, NULL, NULL),
+(792, 6, 134, 0, 800, 5000, NULL, 1, NULL, NULL),
+(793, 1, 134, 0, 800, 5000, NULL, 1, NULL, NULL);
 
 -- --------------------------------------------------------
 -- Table structure for `customers`
@@ -826,11 +843,11 @@ CREATE TABLE `opening_shift_products` (
 
 -- Dumping data for table `opening_shift_products`
 INSERT INTO `opening_shift_products` (`id`, `product_id`, `sort_order`, `is_active`, `created_at`) VALUES
-(1, 89, 1, 1, '2026-10-24 08:35:47'),
-(2, 88, 2, 1, '2026-10-24 08:35:47'),
-(3, 105, 3, 1, '2026-10-24 08:35:47'),
-(6, 103, 4, 1, '2026-10-24 08:35:47'),
-(7, 102, 5, 1, '2026-10-24 08:35:47');
+(1, 89, 1, 1, '2026-10-24 08:48:31'),
+(2, 88, 2, 1, '2026-10-24 08:48:31'),
+(3, 105, 3, 1, '2026-10-24 08:48:31'),
+(6, 103, 4, 1, '2026-10-24 08:48:31'),
+(7, 102, 5, 1, '2026-10-24 08:48:31');
 
 -- --------------------------------------------------------
 -- Table structure for `sales`
@@ -872,7 +889,8 @@ CREATE TABLE `sales` (
 -- Dumping data for table `sales`
 INSERT INTO `sales` (`id`, `invoice_number`, `branch_id`, `user_id`, `shift_id`, `subtotal`, `discount`, `tax`, `grand_total`, `total_cogs`, `payment_method`, `cash_received`, `cash_change`, `created_at`, `customer_id`, `customer_name`, `customer_category`, `sales_type`, `delivery_fee`, `delivery_distance_km`, `courier_vehicle_id`, `delivery_status`, `payment_status`, `status`, `cancellation_reason`, `cancelled_by`, `cancelled_at`, `driver_user_id`, `driver_name`, `is_delivery_included`) VALUES
 (8, 'INV/JKT-01/20261024/0001', 1, 3, 73, 22500, 0, 0, 22500, 4025, 'CASH', 22500, 0, '2026-10-24 15:23:59', 1, 'Teh Eni', 'REGULER', 'REGULER', 0, 0, 1, 'ASSIGNED', 'PAID', 'COMPLETED', NULL, NULL, NULL, 3, 'Bima', 1),
-(9, 'INV/JKT-01/20261024/0009', 1, 3, 73, 65000, 0, 0, 65000, 8050, 'CASH', 65000, 0, '2026-10-24 15:28:10', 1, 'Teh Eni', 'REGULER', 'REGULER', 0, 0, 1, 'ASSIGNED', 'PAID', 'COMPLETED', NULL, NULL, NULL, 3, 'Bima', 1);
+(9, 'INV/JKT-01/20261024/0009', 1, 3, 73, 65000, 0, 0, 65000, 8050, 'CASH', 65000, 0, '2026-10-24 15:28:10', 1, 'Teh Eni', 'REGULER', 'REGULER', 0, 0, 1, 'ASSIGNED', 'PAID', 'COMPLETED', NULL, NULL, NULL, 3, 'Bima', 1),
+(10, 'INV/JKT-01/20261024/0010', 1, 3, 73, 22500, 0, 0, 22500, 4925, 'CASH', 22500, 0, '2026-10-24 15:40:59', 1, 'Bakso Suramadu', 'REGULER', 'REGULER', 0, 0, 1, 'ASSIGNED', 'PAID', 'COMPLETED', NULL, NULL, NULL, 3, 'Bima', 1);
 
 -- --------------------------------------------------------
 -- Table structure for `sale_items`
@@ -895,7 +913,8 @@ CREATE TABLE `sale_items` (
 -- Dumping data for table `sale_items`
 INSERT INTO `sale_items` (`id`, `sale_id`, `product_id`, `product_name`, `qty`, `unit_price`, `unit_cogs`, `subtotal_price`, `subtotal_cogs`, `variant_name`, `variant_id`) VALUES
 (8, 8, 100, 'Air Mineral Galon 15 Liter [Pakai Tutup Mineral]', 5, 4500, 805, 22500, 4025, 'Pakai Tutup Mineral', 35),
-(9, 9, 101, 'Air RO Galon 15 Liter [Pakai Tutup RO]', 10, 6500, 805, 65000, 8050, 'Pakai Tutup RO', 40);
+(9, 9, 101, 'Air RO Galon 15 Liter [Pakai Tutup RO]', 10, 6500, 805, 65000, 8050, 'Pakai Tutup RO', 40),
+(10, 10, 98, 'Air Mineral Galon 19 Liter [Tanpa Tutup Mineral]', 5, 4500, 985, 22500, 4925, 'Tanpa Tutup Mineral', 20);
 
 -- --------------------------------------------------------
 -- Table structure for `stock_movements`
@@ -927,7 +946,13 @@ INSERT INTO `stock_movements` (`id`, `branch_id`, `product_id`, `movement_type`,
 (385, 1, 89, 'BOM_DEDUCTION', -5, 50, 45, 'INV/JKT-01/20261024/0001', 'Konsumsi BOM Varian [Pakai Tutup Mineral] untuk 5x Air Mineral Galon 15 Liter', 3, '2026-10-24 08:23:59'),
 (386, 1, 91, 'BOM_DEDUCTION', -160, 99920, 99760, 'INV/JKT-01/20261024/0009', 'Konsumsi Base BOM untuk 10x Air RO Galon 15 Liter [Pakai Tutup RO]', 3, '2026-10-24 08:28:10'),
 (387, 1, 90, 'BOM_DEDUCTION', -10, 99995, 99985, 'INV/JKT-01/20261024/0009', 'Konsumsi Base BOM untuk 10x Air RO Galon 15 Liter [Pakai Tutup RO]', 3, '2026-10-24 08:28:10'),
-(388, 1, 88, 'BOM_DEDUCTION', -10, 20, 10, 'INV/JKT-01/20261024/0009', 'Konsumsi BOM Varian [Pakai Tutup RO] untuk 10x Air RO Galon 15 Liter', 3, '2026-10-24 08:28:10');
+(388, 1, 88, 'BOM_DEDUCTION', -10, 20, 10, 'INV/JKT-01/20261024/0009', 'Konsumsi BOM Varian [Pakai Tutup RO] untuk 10x Air RO Galon 15 Liter', 3, '2026-10-24 08:28:10'),
+(389, 1, 98, 'STOCK_OUT_SALE', -5, 10, 5, 'INV/JKT-01/20261024/0010', 'Penjualan POS [REGULER] kpd Bakso Suramadu (Tanpa Tutup Mineral)', 3, '2026-10-24 08:40:59'),
+(390, 1, 91, 'BOM_DEDUCTION', -100, 99760, 99660, 'INV/JKT-01/20261024/0010', 'Konsumsi Base BOM untuk 5x Air Mineral Galon 19 Liter [Tanpa Tutup Mineral]', 3, '2026-10-24 08:40:59'),
+(391, 1, 90, 'BOM_DEDUCTION', -5, 99985, 99980, 'INV/JKT-01/20261024/0010', 'Konsumsi Base BOM untuk 5x Air Mineral Galon 19 Liter [Tanpa Tutup Mineral]', 3, '2026-10-24 08:40:59'),
+(392, 1, 134, 'STOCK_OUT_SALE', -1, 0, -1, 'INV/JKT-01/20261024/0011', 'Penjualan POS [REGULER] kpd Pelanggan Umum', 1, '2026-10-24 08:47:59'),
+(393, 1, 88, 'BOM_DEDUCTION', -10, 100, 90, 'INV/JKT-01/20261024/0011', 'Konsumsi Base BOM untuk 1x Test Galon Hibrida 1792831679', 1, '2026-10-24 08:47:59'),
+(395, 1, 88, 'BOM_DEDUCTION', -10, 100, 90, 'INV/JKT-01/20261024/0011', 'Konsumsi Base BOM untuk 1x Test Galon Hibrida 1792831693', 1, '2026-10-24 08:48:13');
 
 -- --------------------------------------------------------
 -- Table structure for `attendance_logs`
@@ -1199,9 +1224,9 @@ CREATE TABLE `branch_expenses` (
 
 -- Dumping data for table `branch_expenses`
 INSERT INTO `branch_expenses` (`id`, `branch_id`, `category`, `amount`, `expense_date`, `source`, `notes`, `created_at`, `shift_id`) VALUES
-(58, 1, 'Listrik & Utilitas Toko', 750000, '2026-10-07', 'MANUAL', 'Tagihan PLN Token Toko Mingguan', '2026-10-24 08:35:53', NULL),
-(59, 2, 'Listrik & Utilitas Toko', 500000, '2026-10-06', 'MANUAL', 'Tagihan Listrik Cabang Surabaya', '2026-10-24 08:35:53', NULL),
-(60, 3, 'Beban Bahan Bakar (BBM) Kurir', 30000, '2026-10-10', 'VEHICLE_FUEL', 'Pembelian bensin 3L motor B 4821 KTZ', '2026-10-24 08:35:53', NULL);
+(63, 1, 'Listrik & Utilitas Toko', 750000, '2026-10-07', 'MANUAL', 'Tagihan PLN Token Toko Mingguan', '2026-10-24 08:48:21', NULL),
+(64, 2, 'Listrik & Utilitas Toko', 500000, '2026-10-06', 'MANUAL', 'Tagihan Listrik Cabang Surabaya', '2026-10-24 08:48:21', NULL),
+(65, 3, 'Beban Bahan Bakar (BBM) Kurir', 30000, '2026-10-10', 'VEHICLE_FUEL', 'Pembelian bensin 3L motor B 4821 KTZ', '2026-10-24 08:48:21', NULL);
 
 -- --------------------------------------------------------
 -- Table structure for `vehicle_fuel_logs`

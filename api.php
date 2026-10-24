@@ -1520,7 +1520,9 @@ try {
 
             foreach ($prods as &$p) {
                 $p['variants'] = $variantsByProd[$p['id']] ?? [];
-                $p['effective_is_stockable'] = ((int)($p['is_stockable'] ?? 1) === 1 && (int)($p['cat_is_stockable'] ?? 1) === 1) ? 1 : 0;
+                $isPStk = (int)($p['is_stockable'] ?? 1);
+                $isCStk = (int)($p['cat_is_stockable'] ?? 1);
+                $p['effective_is_stockable'] = ($isPStk === 2 || $isCStk === 2) ? 2 : (($isPStk === 1 && $isCStk === 1) ? 1 : 0);
             }
             unset($p);
 
@@ -3689,7 +3691,7 @@ try {
                     FROM products p
                     JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
                     WHERE p.is_active = 1 
-                      AND COALESCE(p.is_stockable, 1) = 1
+                      AND COALESCE(p.is_stockable, 1) IN (1, 2)
                       AND COALESCE(bs.is_active, 1) = 1
                     ORDER BY p.name ASC
                 ");
@@ -3711,7 +3713,7 @@ try {
                                COALESCE(bs.stock, 0) as branch_stock
                         FROM products p
                         LEFT JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
-                        WHERE p.is_active = 1 AND COALESCE(p.is_stockable, 1) = 1
+                        WHERE p.is_active = 1 AND COALESCE(p.is_stockable, 1) IN (1, 2)
                         ORDER BY p.name ASC
                     ");
                     $stmtFallback->execute([$branchId]);
@@ -4035,7 +4037,7 @@ try {
                     FROM products p
                     JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
                     WHERE p.is_active = 1 
-                      AND COALESCE(p.is_stockable, 1) = 1
+                      AND COALESCE(p.is_stockable, 1) IN (1, 2)
                       AND COALESCE(bs.is_active, 1) = 1
                     ORDER BY p.name ASC
                 ");
@@ -4079,7 +4081,7 @@ try {
                 }
             }
 
-            // 4. Fallback jika masih kosong: muat semua produk is_stockable = 1
+            // 4. Fallback jika masih kosong: muat semua produk is_stockable = 1 atau 2
             if (empty($trackedRows)) {
                 try {
                     $stmtFallback = $pdo->prepare("
@@ -4088,7 +4090,7 @@ try {
                                COALESCE(bs.stock, 0) as branch_stock
                         FROM products p
                         LEFT JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
-                        WHERE p.is_active = 1 AND COALESCE(p.is_stockable, 1) = 1
+                        WHERE p.is_active = 1 AND COALESCE(p.is_stockable, 1) IN (1, 2)
                         ORDER BY p.name ASC
                     ");
                     $stmtFallback->execute([$shift['branch_id']]);
@@ -4992,9 +4994,17 @@ try {
                     exit;
                 }
 
-                $requiresStock = ((int)$stockRow['is_stockable'] === 1 && (int)$stockRow['cat_is_stockable'] === 1);
+                // Status Pengelolaan Stok Produk:
+                // 1 = Wajib Di-Stok (Ketat): Fisik dihitung & dibatasi di kasir jika habis
+                // 0 = Tidak Di-Stok / On-Demand: Bebas jual, fisik barang jadi tidak dilacak, otomatis potong resep BOM
+                // 2 = Hibrida (Wajib Di-Stok & On-Demand): Fisik barang jadi dihitung & dipotong, namun kasir TIDAK DIBATASI (bebas jual auto-BOM)
+                $prodStockableMode = (int)($stockRow['is_stockable'] ?? 1);
+                $catStockableMode = (int)($stockRow['cat_is_stockable'] ?? 1);
 
-                if ($requiresStock && $stockRow['stock'] < $qty) {
+                $isStrictStock = ($prodStockableMode === 1 && $catStockableMode === 1);
+                $tracksPhysicalStock = ($prodStockableMode === 1 || $prodStockableMode === 2);
+
+                if ($isStrictStock && $stockRow['stock'] < $qty) {
                     $pdo->rollBack();
                     echo json_encode([
                         'success' => false,
@@ -5078,8 +5088,8 @@ try {
                     $hasChargeableItem = true;
                 }
 
-                // Deduct finished goods stock if item requires physical stock
-                if ($requiresStock) {
+                // Deduct finished goods stock if item tracks physical stock (Mode 1 Wajib Di-Stok atau Mode 2 Hibrida)
+                if ($tracksPhysicalStock) {
                     $stmtDeduct = $pdo->prepare("UPDATE branch_stocks SET stock = stock - ? WHERE branch_id = ? AND product_id = ?");
                     $stmtDeduct->execute([$qty, $branchId, $pId]);
 
