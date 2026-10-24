@@ -2257,6 +2257,35 @@ function autoMigrateMysql($pdo) {
             ");
         }
     } catch (Exception $e) {}
+
+    // 10. Tabel opening_shift_products untuk MySQL & Seed Defaults
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `opening_shift_products` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `product_id` INT NOT NULL UNIQUE,
+            `sort_order` INT DEFAULT 0,
+            `is_active` TINYINT(1) DEFAULT 1,
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $ospCount = $pdo->query("SELECT COUNT(*) FROM `opening_shift_products`")->fetchColumn();
+        if ($ospCount == 0) {
+            $pMineral = $pdo->query("SELECT id FROM `products` WHERE `sku` = 'RAW-089'")->fetchColumn();
+            $pRo = $pdo->query("SELECT id FROM `products` WHERE `sku` = 'RAW-020'")->fetchColumn();
+            $pPlastik = $pdo->query("SELECT id FROM `products` WHERE `sku` = 'RAW-00092'")->fetchColumn();
+
+            if ($pMineral) {
+                $pdo->exec("INSERT IGNORE INTO `opening_shift_products` (`product_id`, `sort_order`, `is_active`) VALUES ($pMineral, 1, 1)");
+            }
+            if ($pRo) {
+                $pdo->exec("INSERT IGNORE INTO `opening_shift_products` (`product_id`, `sort_order`, `is_active`) VALUES ($pRo, 2, 1)");
+            }
+            if ($pPlastik) {
+                $pdo->exec("INSERT IGNORE INTO `opening_shift_products` (`product_id`, `sort_order`, `is_active`) VALUES ($pPlastik, 3, 1)");
+            }
+        }
+    } catch (Exception $e) {}
 }
 
 if ($dbDriver === 'mysql') {

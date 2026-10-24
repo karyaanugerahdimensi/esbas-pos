@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.21",
-  "build": "20261024-02",
+  "version": "1.2.22",
+  "build": "20261024-03",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.22",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Perbaikan Pemuatan Produk yang Distok pada Formulir Laporan Closing Shift Akhir Malam",
+      "description": "Menyelesaikan kendala formulir closing shift akhir malam yang tidak memunculkan input produk yang distok ('Tidak ada produk pelacakan stok yang terdaftar untuk dilaporkan'). Menghadirkan solusi menyeluruh: (1) Menambahkan auto-migration DDL tabel opening_shift_products beserta auto-seeding pada autoMigrateMysql di db.php sehingga kompatibel penuh pada MySQL/MariaDB hosting. (2) Memperluas kueri get_closing_shift_data dan get_opening_shift_data di api.php untuk secara otomatis mendeteksi dan memuat SELURUH produk yang distok (is_stockable = 1) yang aktif di cabang bersangkutan, digabungkan dengan produk konfigurasi khusus dan produk yang tercatat di opening_items_json shift tersebut. (3) Menambahkan fail-safe client-side di index.php yang secara otomatis memetakan produk berstatus is_stockable dari state.products jika terjadi anomali respon jaringan. (4) Memastikan rekonsiliasi sisa fisik malam hari tersimpan sempurna ke closing_items_json dan otomatis menyelaraskan saldo fisik cabang di branch_stocks.",
+      "rollback_command": "git checkout v1.2.21"
+    },
     {
       "version": "1.2.21",
       "commit": "HEAD",

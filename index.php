@@ -9692,7 +9692,27 @@ $appVersionData = getAppVersionData();
                     const cashSales = closingData?.cash_sales ?? 0;
                     const expectedCash = closingData?.expected_cash ?? (initCash + cashSales);
                     const txCount = closingData?.total_transactions ?? 0;
-                    const items = closingData?.items || [];
+                    let items = (closingData && Array.isArray(closingData.items) && closingData.items.length > 0) ? closingData.items : [];
+
+                    // Fail-safe jika response backend kosong: gunakan state.products yang distok (is_stockable = 1) di cabang ini
+                    if (items.length === 0 && Array.isArray(state.products) && state.products.length > 0) {
+                        items = state.products.filter(p => {
+                            const isStockable = p.is_stockable === undefined || p.is_stockable === null || p.is_stockable == 1;
+                            const isBranchActive = p.branch_is_active === undefined || p.branch_is_active === null || p.branch_is_active == 1;
+                            return isStockable && p.is_active != 0 && isBranchActive;
+                        }).map(p => ({
+                            product_id: p.id,
+                            sku: p.sku,
+                            name: p.name,
+                            unit: p.unit || 'pcs',
+                            category: p.category,
+                            product_type: p.product_type,
+                            image_emoji: p.image_emoji || '📦',
+                            opening_qty: p.stock || 0,
+                            current_branch_stock: p.stock || 0,
+                            closing_qty: p.stock || 0
+                        }));
+                    }
                     const waterMeter = closingData?.water_meter || {};
                     const meterYesterday = waterMeter.meter_yesterday ?? 0;
                     const meterYesterdayDate = waterMeter.last_log_date ?? null;

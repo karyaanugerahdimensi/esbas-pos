@@ -3131,47 +3131,74 @@ try {
                 }
             }
 
-            // 2. Ambil daftar produk yang dikonfigurasi untuk dilacak di Opening Sales
-            $stmtTracked = $pdo->prepare("
-                SELECT osp.id as tracking_id, osp.product_id, osp.sort_order,
-                       p.sku, p.name, p.unit, p.product_type, p.category, p.image_emoji,
-                       COALESCE(bs.stock, 0) as branch_stock
-                FROM opening_shift_products osp
-                JOIN products p ON p.id = osp.product_id
-                LEFT JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
-                WHERE osp.is_active = 1 AND p.is_active = 1
-                ORDER BY osp.sort_order ASC, osp.id ASC
-            ");
-            $stmtTracked->execute([$branchId]);
-            $rawTracked = $stmtTracked->fetchAll();
+            // 2. Ambil daftar produk yang dikonfigurasi dan SELURUH produk yang distok (is_stockable = 1) di cabang
             $trackedRows = [];
             $seenTrackedIds = [];
-            foreach ($rawTracked as $tr) {
-                $pid = (int)$tr['product_id'];
-                if (isset($seenTrackedIds[$pid])) continue;
-                $seenTrackedIds[$pid] = true;
-                $trackedRows[] = $tr;
-            }
 
-            // Fallback default jika tabel konfigurasi kosong
-            if (empty($trackedRows)) {
-                $stmtFallback = $pdo->prepare("
-                    SELECT p.id as product_id, 0 as sort_order,
+            // 2a. Prioritas 1: Produk yang dikonfigurasi khusus di opening_shift_products
+            try {
+                $stmtTracked = $pdo->prepare("
+                    SELECT osp.id as tracking_id, osp.product_id, osp.sort_order,
+                           p.sku, p.name, p.unit, p.product_type, p.category, p.image_emoji,
+                           COALESCE(bs.stock, 0) as branch_stock
+                    FROM opening_shift_products osp
+                    JOIN products p ON p.id = osp.product_id
+                    LEFT JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
+                    WHERE osp.is_active = 1 AND p.is_active = 1
+                    ORDER BY osp.sort_order ASC, osp.id ASC
+                ");
+                $stmtTracked->execute([$branchId]);
+                $rawTracked = $stmtTracked->fetchAll();
+                foreach ($rawTracked as $tr) {
+                    $pid = (int)$tr['product_id'];
+                    if (isset($seenTrackedIds[$pid])) continue;
+                    $seenTrackedIds[$pid] = true;
+                    $trackedRows[] = $tr;
+                }
+            } catch (Exception $eOsp) {}
+
+            // 2b. Gabungkan dengan seluruh produk yang distok (is_stockable = 1) yang aktif di cabang ini
+            try {
+                $stmtStockable = $pdo->prepare("
+                    SELECT 0 as tracking_id, p.id as product_id, 999 as sort_order,
                            p.sku, p.name, p.unit, p.product_type, p.category, p.image_emoji,
                            COALESCE(bs.stock, 0) as branch_stock
                     FROM products p
-                    LEFT JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
-                    WHERE p.sku IN ('RAW-089', 'RAW-020', 'RAW-00092')
-                    ORDER BY p.id ASC
+                    JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
+                    WHERE p.is_active = 1 
+                      AND COALESCE(p.is_stockable, 1) = 1
+                      AND COALESCE(bs.is_active, 1) = 1
+                    ORDER BY p.name ASC
                 ");
-                $stmtFallback->execute([$branchId]);
-                $rawFallback = $stmtFallback->fetchAll();
-                foreach ($rawFallback as $fb) {
-                    $pid = (int)$fb['product_id'];
+                $stmtStockable->execute([$branchId]);
+                foreach ($stmtStockable->fetchAll() as $st) {
+                    $pid = (int)$st['product_id'];
                     if (isset($seenTrackedIds[$pid])) continue;
                     $seenTrackedIds[$pid] = true;
-                    $trackedRows[] = $fb;
+                    $trackedRows[] = $st;
                 }
+            } catch (Exception $eStk) {}
+
+            // 2c. Fallback default jika daftar masih kosong
+            if (empty($trackedRows)) {
+                try {
+                    $stmtFallback = $pdo->prepare("
+                        SELECT 0 as tracking_id, p.id as product_id, 1000 as sort_order,
+                               p.sku, p.name, p.unit, p.product_type, p.category, p.image_emoji,
+                               COALESCE(bs.stock, 0) as branch_stock
+                        FROM products p
+                        LEFT JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
+                        WHERE p.is_active = 1 AND COALESCE(p.is_stockable, 1) = 1
+                        ORDER BY p.name ASC
+                    ");
+                    $stmtFallback->execute([$branchId]);
+                    foreach ($stmtFallback->fetchAll() as $fb) {
+                        $pid = (int)$fb['product_id'];
+                        if (isset($seenTrackedIds[$pid])) continue;
+                        $seenTrackedIds[$pid] = true;
+                        $trackedRows[] = $fb;
+                    }
+                } catch (Exception $eFb) {}
             }
 
             $dynamicItems = [];
@@ -3451,45 +3478,104 @@ try {
                 $openingItems = json_decode($shift['opening_items_json'], true) ?: [];
             }
 
-            $stmtTracked = $pdo->prepare("
-                SELECT p.id as product_id, osp.sort_order,
-                       p.sku, p.name, p.unit, p.product_type, p.category, p.image_emoji,
-                       COALESCE(bs.stock, 0) as branch_stock
-                FROM opening_shift_products osp
-                JOIN products p ON p.id = osp.product_id
-                LEFT JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
-                WHERE osp.is_active = 1 AND p.is_active = 1
-                ORDER BY osp.sort_order ASC, osp.id ASC
-            ");
-            $stmtTracked->execute([$shift['branch_id']]);
-            $rawTracked = $stmtTracked->fetchAll();
             $trackedRows = [];
             $seenTrackedIds = [];
-            foreach ($rawTracked as $tr) {
-                $pid = (int)$tr['product_id'];
-                if (isset($seenTrackedIds[$pid])) continue;
-                $seenTrackedIds[$pid] = true;
-                $trackedRows[] = $tr;
-            }
 
-            if (empty($trackedRows)) {
-                $stmtFallback = $pdo->prepare("
-                    SELECT p.id as product_id, 0 as sort_order,
+            // 1. Ambil dari konfigurasi opening_shift_products jika ada
+            try {
+                $stmtTracked = $pdo->prepare("
+                    SELECT p.id as product_id, osp.sort_order,
+                           p.sku, p.name, p.unit, p.product_type, p.category, p.image_emoji,
+                           COALESCE(bs.stock, 0) as branch_stock
+                    FROM opening_shift_products osp
+                    JOIN products p ON p.id = osp.product_id
+                    LEFT JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
+                    WHERE osp.is_active = 1 AND p.is_active = 1
+                    ORDER BY osp.sort_order ASC, osp.id ASC
+                ");
+                $stmtTracked->execute([$shift['branch_id']]);
+                $rawTracked = $stmtTracked->fetchAll();
+                foreach ($rawTracked as $tr) {
+                    $pid = (int)$tr['product_id'];
+                    if (isset($seenTrackedIds[$pid])) continue;
+                    $seenTrackedIds[$pid] = true;
+                    $trackedRows[] = $tr;
+                }
+            } catch (Exception $eOsp) {}
+
+            // 2. Gabungkan dengan SELURUH produk yang distok (is_stockable = 1) yang aktif di cabang ini
+            try {
+                $stmtStockable = $pdo->prepare("
+                    SELECT p.id as product_id, 999 as sort_order,
                            p.sku, p.name, p.unit, p.product_type, p.category, p.image_emoji,
                            COALESCE(bs.stock, 0) as branch_stock
                     FROM products p
-                    LEFT JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
-                    WHERE p.sku IN ('RAW-089', 'RAW-020', 'RAW-00092')
-                    ORDER BY p.id ASC
+                    JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
+                    WHERE p.is_active = 1 
+                      AND COALESCE(p.is_stockable, 1) = 1
+                      AND COALESCE(bs.is_active, 1) = 1
+                    ORDER BY p.name ASC
                 ");
-                $stmtFallback->execute([$shift['branch_id']]);
-                $rawFallback = $stmtFallback->fetchAll();
-                foreach ($rawFallback as $fb) {
-                    $pid = (int)$fb['product_id'];
+                $stmtStockable->execute([$shift['branch_id']]);
+                foreach ($stmtStockable->fetchAll() as $st) {
+                    $pid = (int)$st['product_id'];
                     if (isset($seenTrackedIds[$pid])) continue;
                     $seenTrackedIds[$pid] = true;
-                    $trackedRows[] = $fb;
+                    $trackedRows[] = $st;
                 }
+            } catch (Exception $eStk) {}
+
+            // 3. Pastikan seluruh produk yang tercatat di opening_items_json shift ini juga termuat
+            if (!empty($openingItems)) {
+                $missingIds = [];
+                foreach (array_keys($openingItems) as $oid) {
+                    $oid = (int)$oid;
+                    if ($oid > 0 && !isset($seenTrackedIds[$oid])) {
+                        $missingIds[] = $oid;
+                    }
+                }
+                if (!empty($missingIds)) {
+                    try {
+                        $inQ = implode(',', array_fill(0, count($missingIds), '?'));
+                        $stmtMissing = $pdo->prepare("
+                            SELECT p.id as product_id, 1000 as sort_order,
+                                   p.sku, p.name, p.unit, p.product_type, p.category, p.image_emoji,
+                                   COALESCE(bs.stock, 0) as branch_stock
+                            FROM products p
+                            LEFT JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
+                            WHERE p.id IN ($inQ)
+                        ");
+                        $stmtMissing->execute(array_merge([$shift['branch_id']], $missingIds));
+                        foreach ($stmtMissing->fetchAll() as $mi) {
+                            $pid = (int)$mi['product_id'];
+                            if (isset($seenTrackedIds[$pid])) continue;
+                            $seenTrackedIds[$pid] = true;
+                            $trackedRows[] = $mi;
+                        }
+                    } catch (Exception $eMis) {}
+                }
+            }
+
+            // 4. Fallback jika masih kosong: muat semua produk is_stockable = 1
+            if (empty($trackedRows)) {
+                try {
+                    $stmtFallback = $pdo->prepare("
+                        SELECT p.id as product_id, 1000 as sort_order,
+                               p.sku, p.name, p.unit, p.product_type, p.category, p.image_emoji,
+                               COALESCE(bs.stock, 0) as branch_stock
+                        FROM products p
+                        LEFT JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
+                        WHERE p.is_active = 1 AND COALESCE(p.is_stockable, 1) = 1
+                        ORDER BY p.name ASC
+                    ");
+                    $stmtFallback->execute([$shift['branch_id']]);
+                    foreach ($stmtFallback->fetchAll() as $fb) {
+                        $pid = (int)$fb['product_id'];
+                        if (isset($seenTrackedIds[$pid])) continue;
+                        $seenTrackedIds[$pid] = true;
+                        $trackedRows[] = $fb;
+                    }
+                } catch (Exception $eFb) {}
             }
 
             $closingItems = [];
