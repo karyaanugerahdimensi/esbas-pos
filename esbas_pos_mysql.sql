@@ -1,6 +1,6 @@
 -- ========================================================
 -- ESBAS POS Database Export (MySQL / MariaDB Compatible)
--- Generated: 2026-10-24 09:52:16
+-- Generated: 2026-10-24 10:15:20
 -- ========================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -1163,20 +1163,9 @@ CREATE TABLE `branch_expenses` (
 
 -- Dumping data for table `branch_expenses`
 INSERT INTO `branch_expenses` (`id`, `branch_id`, `category`, `amount`, `expense_date`, `source`, `notes`, `created_at`, `shift_id`) VALUES
-(1, 1, 'Perlengkapan Kasir (ESS)', 65000, '2026-10-09', 'REIMBURSEMENT_ESS', 'Reimbursement Kasir Siti - Kertas Thermal 80mm', '2026-10-09 14:53:25', NULL),
-(2, 1, 'Listrik & Utilitas Toko', 750000, '2026-10-07', 'MANUAL', 'Tagihan PLN Token Toko Mingguan', '2026-10-09 14:53:25', NULL),
-(4, 2, 'Listrik & Utilitas Toko', 500000, '2026-10-06', 'MANUAL', 'Tagihan Listrik Cabang Surabaya', '2026-10-09 14:53:25', NULL),
-(5, 1, 'Beban Bahan Bakar (BBM) Kurir', 35000, '2026-10-07', 'VEHICLE_FUEL', 'Isi BBM Pertalite 3.5L (KM 14.120 s/d 14.250) - B 4821 KTZ', '2026-10-09 16:35:24', NULL),
-(6, 1, 'Beban Servis & Perawatan Armada Kurir', 125000, '2026-10-04', 'VEHICLE_SERVICE', 'Servis Berkala & Ganti Oli MPX2 di AHASS Menteng - B 4821 KTZ', '2026-10-09 16:35:24', NULL),
-(7, 1, 'Beban Bahan Bakar (BBM) Kurir', 30000, '2026-10-09', 'VEHICLE_FUEL', 'Pembelian bensin 3L motor B 4821 KTZ', '2026-10-09 16:57:54', NULL),
-(8, 1, 'Beban Servis & Perawatan Armada Kurir', 135000, '2026-10-09', 'VEHICLE_SERVICE', 'Servis Ganti Oli Rutin & Tune Up motor B 4821 KTZ di AHASS Honda Palmerah', '2026-10-09 16:57:54', NULL),
-(9, 1, 'Beban Bahan Bakar (BBM) Kurir', 30000, '2026-10-09', 'VEHICLE_FUEL', 'Pembelian bensin 3L motor B 4821 KTZ', '2026-10-09 16:58:06', NULL),
-(10, 1, 'Beban Servis & Perawatan Armada Kurir', 135000, '2026-10-09', 'VEHICLE_SERVICE', 'Servis Ganti Oli Rutin & Tune Up motor B 4821 KTZ di AHASS Honda Palmerah', '2026-10-09 16:58:06', NULL),
-(11, 3, 'Beban Bahan Bakar (BBM) Kurir', 30000, '2026-10-10', 'VEHICLE_FUEL', 'Pembelian bensin 3L motor B 4821 KTZ', '2026-10-10 12:19:33', NULL),
-(12, 3, 'Beban Servis & Perawatan Armada Kurir', 135000, '2026-10-10', 'VEHICLE_SERVICE', 'Servis Ganti Oli Rutin & Tune Up motor B 4821 KTZ di AHASS Honda Palmerah', '2026-10-10 12:19:33', NULL),
-(26, 1, 'Beban Operasional Toko (ESS)', 75000, '2026-10-15', 'REIMBURSEMENT_ESS', 'Pencairan klaim staf ID #4: Bensin antar barang Abdul Latif', '2026-10-15 17:09:38', NULL),
-(34, 1, 'Beban Bahan Bakar (BBM) Kurir', 30000, '2026-10-19', 'VEHICLE_FUEL', 'Pembelian bensin 3L motor B 4821 KTZ', '2026-10-19 05:29:24', NULL),
-(35, 1, 'Beban Servis & Perawatan Armada Kurir', 135000, '2026-10-19', 'VEHICLE_SERVICE', 'Servis Ganti Oli Rutin & Tune Up motor B 4821 KTZ di AHASS Honda Palmerah', '2026-10-19 05:29:24', NULL);
+(53, 1, 'Listrik & Utilitas Toko', 750000, '2026-10-07', 'MANUAL', 'Tagihan PLN Token Toko Mingguan', '2026-10-24 08:15:10', NULL),
+(54, 2, 'Listrik & Utilitas Toko', 500000, '2026-10-06', 'MANUAL', 'Tagihan Listrik Cabang Surabaya', '2026-10-24 08:15:10', NULL),
+(55, 3, 'Beban Bahan Bakar (BBM) Kurir', 30000, '2026-10-10', 'VEHICLE_FUEL', 'Pembelian bensin 3L motor B 4821 KTZ', '2026-10-24 08:15:10', NULL);
 
 -- --------------------------------------------------------
 -- Table structure for `vehicle_fuel_logs`
@@ -1205,11 +1194,11 @@ CREATE TABLE `vehicle_fuel_logs` (
 
 -- Dumping data for table `vehicle_fuel_logs`
 INSERT INTO `vehicle_fuel_logs` (`id`, `vehicle_id`, `branch_id`, `log_date`, `last_odometer`, `current_odometer`, `distance_traveled`, `liters_bought`, `cost_per_liter`, `total_cost`, `configured_ratio`, `expected_liters`, `efficiency_percent`, `fuel_type`, `driver_name`, `expense_record_id`, `notes`, `created_at`) VALUES
-(1, 1, 1, '2026-10-07', 14120, 14250, 130, 3.5, 10000, 35000, 38, 3.42, 97.7, 'Pertalite', 'Doni Prasetyo', 5, 'Pengisian rutin SPBU Pertamina Rasuna Said (130 KM / 38 KM/L = 3.42 Liter teoretis)', '2026-10-09 16:35:24'),
-(2, 1, 1, '2026-10-09', 14250, 14364, 114, 3, 10000, 30000, 38, 3, 100, 'Pertalite', NULL, 7, NULL, '2026-10-09 23:57:54'),
-(3, 1, 1, '2026-10-09', 14364, 14478, 114, 3, 10000, 30000, 38, 3, 100, 'Pertalite', NULL, 9, NULL, '2026-10-09 23:58:06'),
-(4, 1, 3, '2026-10-10', 14593.04, 14707.04, 114, 3, 10000, 30000, 38, 3, 100, 'Pertalite', NULL, 11, NULL, '2026-10-10 19:19:33'),
-(5, 1, 1, '2026-10-19', 14832.32, 14946.32, 114, 3, 10000, 30000, 38, 3, 100, 'Pertalite', NULL, 34, NULL, '2026-10-19 12:29:24');
+(1, 1, 1, '2026-10-07', 14120, 14250, 130, 3.5, 10000, 35000, 38, 3.42, 97.7, 'Pertalite', 'Doni Prasetyo', NULL, 'Pengisian rutin SPBU Pertamina Rasuna Said (130 KM / 38 KM/L = 3.42 Liter teoretis)', '2026-10-09 16:35:24'),
+(2, 1, 1, '2026-10-09', 14250, 14364, 114, 3, 10000, 30000, 38, 3, 100, 'Pertalite', NULL, NULL, NULL, '2026-10-09 23:57:54'),
+(3, 1, 1, '2026-10-09', 14364, 14478, 114, 3, 10000, 30000, 38, 3, 100, 'Pertalite', NULL, NULL, NULL, '2026-10-09 23:58:06'),
+(4, 1, 3, '2026-10-10', 14593.04, 14707.04, 114, 3, 10000, 30000, 38, 3, 100, 'Pertalite', NULL, NULL, NULL, '2026-10-10 19:19:33'),
+(5, 1, 1, '2026-10-19', 14832.32, 14946.32, 114, 3, 10000, 30000, 38, 3, 100, 'Pertalite', NULL, NULL, NULL, '2026-10-19 12:29:24');
 
 -- --------------------------------------------------------
 -- Table structure for `vehicle_service_logs`
@@ -1231,11 +1220,11 @@ CREATE TABLE `vehicle_service_logs` (
 
 -- Dumping data for table `vehicle_service_logs`
 INSERT INTO `vehicle_service_logs` (`id`, `vehicle_id`, `branch_id`, `service_date`, `odometer_km`, `service_type`, `workshop_name`, `cost`, `expense_record_id`, `notes`, `created_at`) VALUES
-(1, 1, 1, '2026-10-04', 14000, 'Ganti Oli Mesin SPX & Gardan + Tune Up Rutin', 'AHASS Honda Menteng Motor', 125000, 6, 'Servis rutin 14.000 KM kondisi mesin prima, kampas rem depan baru', '2026-10-09 16:35:24'),
-(2, 1, 1, '2026-10-09', 14364, 'Ganti Oli Rutin & Tune Up', 'AHASS Honda Palmerah', 135000, 8, 'Ganti oli mesin MPX2 + kampas rem depan', '2026-10-09 23:57:54'),
-(3, 1, 1, '2026-10-09', 14478, 'Ganti Oli Rutin & Tune Up', 'AHASS Honda Palmerah', 135000, 10, 'Ganti oli mesin MPX2 + kampas rem depan', '2026-10-09 23:58:06'),
-(4, 1, 3, '2026-10-10', 14707.04, 'Ganti Oli Rutin & Tune Up', 'AHASS Honda Palmerah', 135000, 12, 'Ganti oli mesin MPX2 + kampas rem depan', '2026-10-10 19:19:33'),
-(5, 1, 1, '2026-10-19', 14946.32, 'Ganti Oli Rutin & Tune Up', 'AHASS Honda Palmerah', 135000, 35, 'Ganti oli mesin MPX2 + kampas rem depan', '2026-10-19 12:29:24');
+(1, 1, 1, '2026-10-04', 14000, 'Ganti Oli Mesin SPX & Gardan + Tune Up Rutin', 'AHASS Honda Menteng Motor', 125000, NULL, 'Servis rutin 14.000 KM kondisi mesin prima, kampas rem depan baru', '2026-10-09 16:35:24'),
+(2, 1, 1, '2026-10-09', 14364, 'Ganti Oli Rutin & Tune Up', 'AHASS Honda Palmerah', 135000, NULL, 'Ganti oli mesin MPX2 + kampas rem depan', '2026-10-09 23:57:54'),
+(3, 1, 1, '2026-10-09', 14478, 'Ganti Oli Rutin & Tune Up', 'AHASS Honda Palmerah', 135000, NULL, 'Ganti oli mesin MPX2 + kampas rem depan', '2026-10-09 23:58:06'),
+(4, 1, 3, '2026-10-10', 14707.04, 'Ganti Oli Rutin & Tune Up', 'AHASS Honda Palmerah', 135000, NULL, 'Ganti oli mesin MPX2 + kampas rem depan', '2026-10-10 19:19:33'),
+(5, 1, 1, '2026-10-19', 14946.32, 'Ganti Oli Rutin & Tune Up', 'AHASS Honda Palmerah', 135000, NULL, 'Ganti oli mesin MPX2 + kampas rem depan', '2026-10-19 12:29:24');
 
 -- --------------------------------------------------------
 -- Table structure for `customer_receivables`

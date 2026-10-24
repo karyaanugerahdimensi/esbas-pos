@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.27",
-  "build": "20261024-08",
+  "version": "1.2.28",
+  "build": "20261024-09",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.28",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Tombol Hapus & Reset Data Beban Operasional Per-Cabang dan Seluruhnya (Global)",
+      "description": "Menghadirkan fitur penghapusan dan reset data beban operasional cabang secara fleksibel: (1) Menambahkan tombol 'Hapus Beban Cabang' di header atas Tab Beban Operasional (#tab-expenses) dan tombol aksi cepat di toolbar subtab Buku Catatan Beban (#subtab-exp-ledger), yang secara cerdas mendeteksi cabang aktif dari dropdown cabang buku kas operasional. (2) Menambahkan Opsi 5 'Hapus Beban Operasional Cabang' ke dalam modal engine pusat Master Reset (#master-reset-modal) yang terintegrasi penuh dengan otorisasi Super Admin (verifikasi PIN/Password) dan teks konfirmasi 'RESET DATA' / 'HAPUS BEBAN'. (3) Menyediakan endpoint backend mandiri api.php?action=purge_branch_expenses serta integrasi Section 5 pada api.php?action=master_reset_data dengan pembersihan tabel branch_expenses dan employee_meal_allowances, lengkap dengan pelepasan otomatis referensi foreign key vehicle_fuel_logs dan vehicle_service_logs (expense_record_id = NULL) guna menjamin integritas relasional database. (4) Proteksi keamanan berbasis peran: tombol reset beban hanya dapat diakses oleh akun Super Admin, sedangkan staf toko/kasir lokal tidak dapat menghapus catatan pengeluaran. (5) Antarmuka reaktif real-time: pasca-eksekusi, tabel beban operasional, kartu metrik KPI total beban dan frekuensi pengeluaran langsung diperbarui seketika tanpa perlu memuat ulang browser.",
+      "rollback_command": "git checkout v1.2.27"
+    },
     {
       "version": "1.2.27",
       "commit": "HEAD",

@@ -2521,7 +2521,11 @@ try {
                     </div>
 
                     <!-- Right Action Button (Dinamis per Sub-Tab) -->
-                    <div id="exp-top-actions">
+                    <div id="exp-top-actions" class="flex items-center space-x-2">
+                        <button id="exp-btn-purge" onclick="openPurgeExpenseModal()" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl shadow-2xs transition-all flex items-center space-x-1.5" title="Hapus data beban operasional per-cabang atau seluruhnya (Superadmin Only)">
+                            <i data-lucide="trash-2" class="w-4 h-4 text-rose-600"></i>
+                            <span id="exp-btn-purge-label">Hapus Data Beban</span>
+                        </button>
                         <button id="exp-btn-add-expense" onclick="openBranchExpenseModal()" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow transition-colors flex items-center space-x-1.5">
                             <i data-lucide="plus-circle" class="w-4 h-4"></i>
                             <span>+ Catat Beban Operasional Baru</span>
@@ -2560,7 +2564,11 @@ try {
                             </div>
                         </div>
 
-                        <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-2">
+                            <button onclick="openPurgeExpenseModal()" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl transition-colors flex items-center space-x-1" title="Hapus catatan beban sesuai cabang terpilih / seluruhnya">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-600"></i>
+                                <span>Hapus Beban</span>
+                            </button>
                             <button onclick="loadBranchExpensesTable()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors flex items-center space-x-1">
                                 <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                                 <span>Muat Ulang</span>
@@ -6280,6 +6288,20 @@ try {
                             </span>
                             <span class="text-[11px] text-slate-500 block leading-snug">
                                 Menghapus riwayat shift harian kasir (cashier_shifts), rekaman log meteran air mesin RO/mineral, serta pengeluaran kas laci toko (beban & uang makan shift) pada cabang terpilih / semua cabang.
+                            </span>
+                        </div>
+                    </label>
+
+                    <!-- Option 5: Hapus Beban Operasional Cabang -->
+                    <label class="flex items-start space-x-3 p-3 rounded-2xl border border-slate-200 bg-white hover:bg-rose-50/40 transition-colors cursor-pointer group">
+                        <input type="checkbox" id="reset-opt-expenses" class="mt-1 w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
+                        <div class="space-y-0.5">
+                            <span class="font-bold text-slate-800 group-hover:text-rose-900 block flex items-center gap-1.5">
+                                <span>🧾 5. Hapus Beban Operasional Cabang</span>
+                                <span class="px-1.5 py-0.2 rounded text-[9px] bg-purple-100 text-purple-800 font-semibold">Buku Beban</span>
+                            </span>
+                            <span class="text-[11px] text-slate-500 block leading-snug">
+                                Menghapus seluruh buku catatan beban operasional cabang (branch_expenses dan uang makan toko) pada cabang terpilih atau semua cabang secara menyeluruh.
                             </span>
                         </div>
                     </label>
@@ -17035,6 +17057,25 @@ Manager / Supervisor: __________________
                     }
                 }
 
+                // Update label dan kontrol tombol Hapus Data Beban Cabang
+                const purgeBtn = document.getElementById('exp-btn-purge');
+                const purgeBtnLabel = document.getElementById('exp-btn-purge-label');
+                if (purgeBtn) {
+                    if (!canUserAccessAllBranches()) {
+                        purgeBtn.classList.add('hidden');
+                    } else {
+                        purgeBtn.classList.remove('hidden');
+                        if (purgeBtnLabel) {
+                            if (bId && bId !== 'ALL') {
+                                const br = (state.branches || []).find(b => b.id == bId);
+                                purgeBtnLabel.innerText = br ? `Hapus Beban ${br.name}` : `Hapus Beban Cabang`;
+                            } else {
+                                purgeBtnLabel.innerText = 'Hapus Semua Beban Toko';
+                            }
+                        }
+                    }
+                }
+
                 if (!tbody) return;
 
                 if (expenses.length === 0) {
@@ -22258,17 +22299,20 @@ Manager / Supervisor: __________________
             const optSales = document.getElementById('reset-opt-sales');
             const optBom = document.getElementById('reset-opt-bom');
             const optShifts = document.getElementById('reset-opt-shifts');
+            const optExpenses = document.getElementById('reset-opt-expenses');
 
             if (Object.keys(preselectOpts).length === 0) {
                 if (optStocks) optStocks.checked = false;
                 if (optSales) optSales.checked = true;
                 if (optBom) optBom.checked = false;
                 if (optShifts) optShifts.checked = false;
+                if (optExpenses) optExpenses.checked = false;
             } else {
                 if (optStocks) optStocks.checked = !!preselectOpts.stocks;
                 if (optSales) optSales.checked = !!preselectOpts.sales;
                 if (optBom) optBom.checked = !!preselectOpts.bom;
                 if (optShifts) optShifts.checked = !!preselectOpts.shifts;
+                if (optExpenses) optExpenses.checked = !!preselectOpts.expenses;
             }
 
             // Auto-fill credentials if Superadmin
@@ -22304,16 +22348,30 @@ Manager / Supervisor: __________________
             closeMasterResetModal();
         }
 
+        function openPurgeExpenseModal(customBranchId = null) {
+            const bSelect = document.getElementById('exp-ledger-branch-select');
+            let targetBranch = customBranchId;
+            if (targetBranch === null || targetBranch === undefined) {
+                targetBranch = (bSelect && bSelect.value) ? bSelect.value : 'ALL';
+            }
+            openMasterResetModal({
+                expenses: true,
+                branch_id: targetBranch
+            });
+        }
+
         function toggleSelectAllResetOptions(checked) {
             const optStocks = document.getElementById('reset-opt-stocks');
             const optSales = document.getElementById('reset-opt-sales');
             const optBom = document.getElementById('reset-opt-bom');
             const optShifts = document.getElementById('reset-opt-shifts');
+            const optExpenses = document.getElementById('reset-opt-expenses');
 
             if (optStocks) optStocks.checked = checked;
             if (optSales) optSales.checked = checked;
             if (optBom) optBom.checked = checked;
             if (optShifts) optShifts.checked = checked;
+            if (optExpenses) optExpenses.checked = checked;
         }
 
         function updateResetScopeInfo() {
@@ -22358,8 +22416,9 @@ Manager / Supervisor: __________________
             const purgeSales = document.getElementById('reset-opt-sales').checked;
             const purgeBom = document.getElementById('reset-opt-bom').checked;
             const purgeShifts = document.getElementById('reset-opt-shifts').checked;
+            const purgeExpenses = document.getElementById('reset-opt-expenses') ? document.getElementById('reset-opt-expenses').checked : false;
 
-            if (!purgeStocks && !purgeSales && !purgeBom && !purgeShifts) {
+            if (!purgeStocks && !purgeSales && !purgeBom && !purgeShifts && !purgeExpenses) {
                 alert('Pilih minimal salah satu opsi data yang ingin direset!');
                 return;
             }
@@ -22368,7 +22427,7 @@ Manager / Supervisor: __________________
             const adminPassword = document.getElementById('master-reset-admin-password').value.trim();
             const confirmText = document.getElementById('master-reset-confirm-text').value.trim().toUpperCase();
 
-            if (!['RESET DATA', 'RESET', 'HAPUS', 'HAPUS DATA', 'HAPUS PENJUALAN'].includes(confirmText)) {
+            if (!['RESET DATA', 'RESET', 'HAPUS', 'HAPUS DATA', 'HAPUS PENJUALAN', 'HAPUS BEBAN'].includes(confirmText)) {
                 alert('Teks konfirmasi salah! Anda wajib mengetik "RESET DATA".');
                 return;
             }
@@ -22385,6 +22444,7 @@ Manager / Supervisor: __________________
             if (purgeSales) selectedItems.push('2. Riwayat Transaksi Penjualan & Piutang');
             if (purgeBom) selectedItems.push('3. Log Pemakaian Bahan Baku (BOM)');
             if (purgeShifts) selectedItems.push('4. Riwayat Laporan Shift & Meteran Air');
+            if (purgeExpenses) selectedItems.push('5. Buku Catatan Beban Operasional Cabang');
 
             const finalConfirm = confirm(`⚠️ PERINGATAN TINGKAT TINGGI!\n\nAnda akan MENGHAPUS / MERESET:\n• ${selectedItems.join('\n• ')}\n\nLingkup Target: ${branchLabel}\n\nOperasi ini bersifat PERMANEN dan TIDAK DAPAT DIBATALKAN!\n\nApakah Anda benar-benar yakin ingin mengeksekusi reset?`);
             if (!finalConfirm) return;
@@ -22402,6 +22462,7 @@ Manager / Supervisor: __________________
                         purge_sales: purgeSales,
                         purge_bom: purgeBom,
                         purge_shifts: purgeShifts,
+                        purge_expenses: purgeExpenses,
                         confirm_text: confirmText,
                         admin_pin: adminPin || '999999',
                         admin_password: adminPassword || 'admin123',
@@ -22422,6 +22483,7 @@ Manager / Supervisor: __________________
                     if (typeof loadStockMovements === 'function') loadStockMovements();
                     if (typeof loadReceivablesReport === 'function') loadReceivablesReport();
                     if (typeof loadSaleCancellations === 'function') loadSaleCancellations();
+                    if (typeof loadBranchExpensesTable === 'function') loadBranchExpensesTable();
                     if (typeof bootstrapApp === 'function') bootstrapApp();
                 } else {
                     alert(`❌ GAGAL: ${data.message || 'Terjadi kesalahan sistem'}`);
