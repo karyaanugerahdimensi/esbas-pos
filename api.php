@@ -102,6 +102,46 @@ if (!isset($pdo) && file_exists(__DIR__ . '/db.php')) {
     require __DIR__ . '/db.php';
 }
 
+// ========================================================
+// SECURITY & BRANCH ISOLATION ENFORCEMENT
+// ========================================================
+$sessionUserId = (int)($_SESSION['user_id'] ?? ($_GET['user_id'] ?? 0));
+$sessionBranchId = (int)($_SESSION['branch_id'] ?? 0);
+$sessionUserCanAccessAll = false;
+
+if ($sessionUserId > 0 && isset($pdo)) {
+    try {
+        $uStmt = $pdo->prepare("SELECT u.id, u.role, u.branch_id FROM users u WHERE u.id = ?");
+        $uStmt->execute([$sessionUserId]);
+        $uRow = $uStmt->fetch();
+        if ($uRow) {
+            $uRole = str_replace('_', '', strtoupper($uRow['role'] ?? ''));
+            if ($uRole === 'SUPERADMIN') {
+                $sessionUserCanAccessAll = true;
+            } else {
+                $rStmt = $pdo->prepare("SELECT can_access_all_branches FROM user_roles WHERE code = ?");
+                $rStmt->execute([$uRow['role']]);
+                $rRow = $rStmt->fetch();
+                if ($rRow && (int)$rRow['can_access_all_branches'] === 1) {
+                    $sessionUserCanAccessAll = true;
+                }
+            }
+            if (!$sessionBranchId && !empty($uRow['branch_id'])) {
+                $sessionBranchId = (int)$uRow['branch_id'];
+            }
+        }
+    } catch (Exception $e) {
+        // Silent fallback
+    }
+}
+
+// Jika bukan Super Admin / tidak memiliki hak multi-cabang, kunci mutlak parameter cabang ke cabang penugasan
+if ($sessionUserId > 0 && !$sessionUserCanAccessAll && $sessionBranchId > 0) {
+    if (isset($_GET['branch_id'])) $_GET['branch_id'] = $sessionBranchId;
+    if (isset($_POST['branch_id'])) $_POST['branch_id'] = $sessionBranchId;
+    if (is_array($input) && isset($input['branch_id'])) $input['branch_id'] = $sessionBranchId;
+}
+
 try {
     switch ($action) {
 
@@ -2748,6 +2788,9 @@ try {
         case 'get_inventory_stocks':
             $branchIdParam = isset($_GET['branch_id']) ? trim($_GET['branch_id']) : 'ALL';
             $typeFilter = $_GET['product_type'] ?? 'ALL';
+            if ($sessionUserId > 0 && !$sessionUserCanAccessAll && $sessionBranchId > 0) {
+                $branchIdParam = (string)$sessionBranchId;
+            }
             $isGlobal = ($branchIdParam === 'ALL' || $branchIdParam === '0' || $branchIdParam === '');
 
             if ($isGlobal) {
@@ -2965,6 +3008,9 @@ try {
         case 'get_stock_movements':
             $branchIdParam = isset($_GET['branch_id']) ? trim($_GET['branch_id']) : 'ALL';
             $productId = !empty($_GET['product_id']) ? (int)$_GET['product_id'] : null;
+            if ($sessionUserId > 0 && !$sessionUserCanAccessAll && $sessionBranchId > 0) {
+                $branchIdParam = (string)$sessionBranchId;
+            }
             $isGlobal = ($branchIdParam === 'ALL' || $branchIdParam === '0' || $branchIdParam === '');
 
             $sql = "
@@ -8916,6 +8962,10 @@ try {
             break;
 
         case 'master_reset_data':
+            if ($sessionUserId > 0 && !$sessionUserCanAccessAll) {
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak: Fitur Reset Data Toko hanya dapat diakses oleh Super Admin.']);
+                break;
+            }
             // Endpoint Otorisasi Khusus Superadmin untuk mereset data per cabang atau seluruh cabang (global)
             $adminPin = trim($input['admin_pin'] ?? '');
             $adminPassword = trim($input['admin_password'] ?? '');

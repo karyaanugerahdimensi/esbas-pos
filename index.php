@@ -8588,23 +8588,44 @@ try {
             lucide.createIcons();
         }
 
-                function renderBranchOptions() {
+                function canUserAccessAllBranches() {
+            const curUser = state.currentUser || state.loggedInUser;
+            if (!curUser) return false;
+            if (Number(curUser.can_access_all_branches) === 1) return true;
+            const r = (curUser.role || '').toUpperCase().replace(/_/g, '');
+            return (r === 'SUPERADMIN');
+        }
+
+        function getUserAssignedBranchId() {
+            const curUser = state.currentUser || state.loggedInUser;
+            if (curUser && curUser.branch_id) return parseInt(curUser.branch_id);
+            if (state.currentBranch && state.currentBranch.id) return parseInt(state.currentBranch.id);
+            return 1;
+        }
+
+        function getUserAssignedBranch() {
+            const uBId = getUserAssignedBranchId();
+            return (state.branches || []).find(b => b.id == uBId) || state.currentBranch || { id: uBId, name: 'Cabang Penugasan' };
+        }
+
+        function renderBranchOptions() {
             const select = document.getElementById('branch-select');
             if (!select) return;
-            const curUser = state.currentUser || state.loggedInUser;
-            const canSwitchBranch = curUser && (Number(curUser.can_access_all_branches) === 1 || ['SUPER_ADMIN', 'SUPERADMIN'].includes((curUser.role || '').toUpperCase().replace(/_/g, '')));
+            const canSwitchBranch = canUserAccessAllBranches();
 
             if (!canSwitchBranch) {
-                const uBId = curUser ? curUser.branch_id : (state.currentBranch ? state.currentBranch.id : 1);
-                const userBranch = (state.branches || []).find(b => b.id == uBId) || state.currentBranch;
+                const userBranch = getUserAssignedBranch();
                 select.innerHTML = `<option value="${userBranch.id}" selected>🔒 ${userBranch.name} (Terkunci)</option>`;
                 select.disabled = true;
                 select.title = "Lokasi operasional Anda terkunci pada cabang penugasan.";
+                if (state.currentBranch && state.currentBranch.id !== userBranch.id) {
+                    state.currentBranch = userBranch;
+                }
             } else {
                 select.disabled = false;
                 select.title = "Pilih cabang untuk memantau/mengelola operasional";
-                select.innerHTML = state.branches.map(b => 
-                    `<option value="${b.id}" ${b.id === state.currentBranch.id ? 'selected' : ''}>${b.name}</option>`
+                select.innerHTML = (state.branches || []).map(b => 
+                    `<option value="${b.id}" ${b.id === (state.currentBranch ? state.currentBranch.id : 1) ? 'selected' : ''}>${b.name}</option>`
                 ).join('');
             }
         }
@@ -16077,15 +16098,28 @@ Manager / Supervisor: __________________
         function initStockBranchSelector() {
             const select = document.getElementById('stock-branch-select');
             if (!select) return;
-            const curVal = select.value || 'ALL';
-            let html = '<option value="ALL">🌐 Semua Cabang (Konsolidasi Global)</option>';
-            if (Array.isArray(state.branches)) {
-                state.branches.forEach(b => {
-                    html += `<option value="${b.id}">📍 ${b.name} (${b.code || ''})</option>`;
-                });
+            const canAccessAll = canUserAccessAllBranches();
+            const userBranch = getUserAssignedBranch();
+
+            if (!canAccessAll) {
+                // Karyawan Cabang (Kasir / Staf): Kunci mutlak ke cabang lokasi bersangkutan!
+                select.innerHTML = `<option value="${userBranch.id}" selected>🔒 ${userBranch.name} (Terkunci)</option>`;
+                select.disabled = true;
+                select.value = userBranch.id;
+                select.title = "Akses inventori stok terkunci pada cabang penugasan Anda.";
+            } else {
+                select.disabled = false;
+                select.title = "Pilih cabang untuk melihat inventori stok";
+                const curVal = select.value || (state.currentBranch ? state.currentBranch.id : 'ALL');
+                let html = '<option value="ALL">🌐 Semua Cabang (Konsolidasi Global)</option>';
+                if (Array.isArray(state.branches)) {
+                    state.branches.forEach(b => {
+                        html += `<option value="${b.id}" ${b.id == curVal ? 'selected' : ''}>📍 ${b.name} (${b.code || ''})</option>`;
+                    });
+                }
+                select.innerHTML = html;
+                select.value = curVal;
             }
-            select.innerHTML = html;
-            select.value = curVal;
         }
 
         function onStockBranchChange() {
@@ -16098,9 +16132,21 @@ Manager / Supervisor: __________________
 
         async function loadStockInventory() {
             initStockBranchSelector();
+            const canAccessAll = canUserAccessAllBranches();
+            const userBranch = getUserAssignedBranch();
             const branchSelect = document.getElementById('stock-branch-select');
-            const bId = branchSelect ? branchSelect.value : 'ALL';
-            const isGlobal = (bId === 'ALL' || bId === '0' || bId === '');
+            const bId = (!canAccessAll) ? userBranch.id : (branchSelect ? branchSelect.value : 'ALL');
+            const isGlobal = canAccessAll && (bId === 'ALL' || bId === '0' || bId === '');
+
+            // Sembunyikan tombol Reset Stok jika bukan Superadmin / multi-cabang
+            const btnReset = document.getElementById('btn-stock-reset-label')?.closest('button');
+            if (btnReset) {
+                if (!canAccessAll) {
+                    btnReset.classList.add('hidden');
+                } else {
+                    btnReset.classList.remove('hidden');
+                }
+            }
 
             // Update Kolom Header
             const headerCol = document.getElementById('stock-col-header-balance');
@@ -16108,7 +16154,7 @@ Manager / Supervisor: __________________
                 if (isGlobal) {
                     headerCol.innerHTML = `Stok Fisik Gabungan <span class="block text-[10px] text-indigo-600 font-semibold">(Semua Cabang)</span>`;
                 } else {
-                    const br = (state.branches || []).find(b => b.id == bId);
+                    const br = (state.branches || []).find(b => b.id == bId) || userBranch;
                     const brName = br ? br.name : `Cabang #${bId}`;
                     headerCol.innerHTML = `Stok Fisik Cabang <span class="block text-[10px] text-emerald-600 font-semibold">(${brName})</span>`;
                 }
@@ -16120,7 +16166,7 @@ Manager / Supervisor: __________________
                 if (isGlobal) {
                     btnResetLabel.innerText = 'Reset Stok Semua Cabang (Global)';
                 } else {
-                    const brObj = (state.branches || []).find(b => b.id == bId);
+                    const brObj = (state.branches || []).find(b => b.id == bId) || userBranch;
                     const brTitle = brObj ? brObj.name : `Cabang #${bId}`;
                     btnResetLabel.innerText = `Reset Stok ${brTitle}`;
                 }
@@ -16182,8 +16228,10 @@ Manager / Supervisor: __________________
         }
 
         async function loadStockMovements() {
+            const canAccessAll = canUserAccessAllBranches();
+            const userBranch = getUserAssignedBranch();
             const branchSelect = document.getElementById('stock-branch-select');
-            const bId = branchSelect ? branchSelect.value : 'ALL';
+            const bId = (!canAccessAll) ? userBranch.id : (branchSelect ? branchSelect.value : 'ALL');
 
             const res = await fetch(`api.php?action=get_stock_movements&branch_id=${bId}`);
             const data = await res.json();
@@ -16226,22 +16274,33 @@ Manager / Supervisor: __________________
         let currentModalBranchStocks = [];
 
         async function openStockAdjustModal(targetProductId = null, targetBranchId = null) {
+            const canAccessAll = canUserAccessAllBranches();
+            const userBranch = getUserAssignedBranch();
+
             // 1. Populasi Dropdown Cabang
             const branchSelect = document.getElementById('adj-branch-select');
             if (branchSelect) {
-                branchSelect.innerHTML = (state.branches || []).map(b => 
-                    `<option value="${b.id}">📍 ${b.name} (${b.code || ''})</option>`
-                ).join('');
-
-                // Tentukan cabang default
-                if (targetBranchId) {
-                    branchSelect.value = targetBranchId;
+                if (!canAccessAll) {
+                    branchSelect.innerHTML = `<option value="${userBranch.id}" selected>🔒 ${userBranch.name} (Cabang Anda)</option>`;
+                    branchSelect.disabled = true;
+                    branchSelect.value = userBranch.id;
+                    branchSelect.title = "Lokasi penyesuaian stok terkunci pada cabang penugasan Anda.";
                 } else {
-                    const pageBranch = document.getElementById('stock-branch-select')?.value;
-                    if (pageBranch && pageBranch !== 'ALL') {
-                        branchSelect.value = pageBranch;
-                    } else if (state.currentBranch) {
-                        branchSelect.value = state.currentBranch.id;
+                    branchSelect.disabled = false;
+                    branchSelect.innerHTML = (state.branches || []).map(b => 
+                        `<option value="${b.id}">📍 ${b.name} (${b.code || ''})</option>`
+                    ).join('');
+
+                    // Tentukan cabang default
+                    if (targetBranchId) {
+                        branchSelect.value = targetBranchId;
+                    } else {
+                        const pageBranch = document.getElementById('stock-branch-select')?.value;
+                        if (pageBranch && pageBranch !== 'ALL') {
+                            branchSelect.value = pageBranch;
+                        } else if (state.currentBranch) {
+                            branchSelect.value = state.currentBranch.id;
+                        }
                     }
                 }
             }
@@ -16548,10 +16607,19 @@ Manager / Supervisor: __________________
             // Populasi cabang di dropdown filter ledger
             const branchSelect = document.getElementById('exp-ledger-branch-select');
             if (branchSelect) {
-                const curBId = state.currentBranch ? state.currentBranch.id : '';
-                branchSelect.innerHTML = `<option value="">Semua Cabang Outlet</option>` + (state.branches || []).map(b => `
-                    <option value="${b.id}" ${b.id === curBId ? 'selected' : ''}>${b.name}</option>
-                `).join('');
+                const canAccessAll = canUserAccessAllBranches();
+                const userBranch = getUserAssignedBranch();
+                if (!canAccessAll) {
+                    branchSelect.innerHTML = `<option value="${userBranch.id}" selected>🔒 ${userBranch.name}</option>`;
+                    branchSelect.disabled = true;
+                    branchSelect.value = userBranch.id;
+                } else {
+                    branchSelect.disabled = false;
+                    const curBId = state.currentBranch ? state.currentBranch.id : '';
+                    branchSelect.innerHTML = `<option value="">Semua Cabang Outlet</option>` + (state.branches || []).map(b => `
+                        <option value="${b.id}" ${b.id === curBId ? 'selected' : ''}>${b.name}</option>
+                    `).join('');
+                }
             }
 
             // Muat kategori beban terlebih dahulu
@@ -17649,9 +17717,18 @@ Manager / Supervisor: __________________
             const branchSelect = document.getElementById('cust-branch');
 
             // Populate branch options
-            const branchList = state.branches || [];
-            branchSelect.innerHTML = '<option value="">Semua Cabang (Global)</option>' + 
-                branchList.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            const canAccessAll = canUserAccessAllBranches();
+            const userBranch = getUserAssignedBranch();
+            if (!canAccessAll) {
+                branchSelect.innerHTML = `<option value="${userBranch.id}" selected>🔒 ${userBranch.name}</option>`;
+                branchSelect.disabled = true;
+                branchSelect.value = userBranch.id;
+            } else {
+                branchSelect.disabled = false;
+                const branchList = state.branches || [];
+                branchSelect.innerHTML = '<option value="">Semua Cabang (Global)</option>' + 
+                    branchList.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            }
 
             // Populate category options dynamically from active categories
             const catSelect = document.getElementById('cust-category');
@@ -18463,11 +18540,22 @@ Manager / Supervisor: __________________
                 }
 
                 const branchSelect = document.getElementById('branch-pricing-branch-select');
-                const currentBranchId = branchSelect.value ? parseInt(branchSelect.value) : (state.currentBranch ? state.currentBranch.id : 1);
+                const canAccessAll = canUserAccessAllBranches();
+                const userBranch = getUserAssignedBranch();
+                let currentBranchId = userBranch.id;
 
-                branchSelect.innerHTML = (state.branches || []).map(b => `
-                    <option value="${b.id}" ${b.id === currentBranchId ? 'selected' : ''}>${b.name}</option>
-                `).join('');
+                if (!canAccessAll) {
+                    branchSelect.innerHTML = `<option value="${userBranch.id}" selected>🔒 ${userBranch.name}</option>`;
+                    branchSelect.disabled = true;
+                    branchSelect.value = userBranch.id;
+                    currentBranchId = userBranch.id;
+                } else {
+                    branchSelect.disabled = false;
+                    currentBranchId = branchSelect.value ? parseInt(branchSelect.value) : (state.currentBranch ? state.currentBranch.id : 1);
+                    branchSelect.innerHTML = (state.branches || []).map(b => `
+                        <option value="${b.id}" ${b.id === currentBranchId ? 'selected' : ''}>${b.name}</option>
+                    `).join('');
+                }
 
                 const res = await fetch(`api.php?action=get_inventory_stocks&branch_id=${currentBranchId}&product_type=FINISHED_GOODS`);
                 const data = await res.json();
@@ -19713,10 +19801,22 @@ Manager / Supervisor: __________________
                 const branchSelect = document.getElementById('setting-branch-select');
                 if (!branchSelect) return;
 
-                const currentBranchId = branchSelect.value ? parseInt(branchSelect.value) : (state.currentBranch ? state.currentBranch.id : 1);
-                branchSelect.innerHTML = state.branches.map(b => `
-                    <option value="${b.id}" ${b.id === currentBranchId ? 'selected' : ''}>${b.name}</option>
-                `).join('');
+                const canAccessAll = canUserAccessAllBranches();
+                const userBranch = getUserAssignedBranch();
+                let currentBranchId = userBranch.id;
+
+                if (!canAccessAll) {
+                    branchSelect.innerHTML = `<option value="${userBranch.id}" selected>🔒 ${userBranch.name}</option>`;
+                    branchSelect.disabled = true;
+                    branchSelect.value = userBranch.id;
+                    currentBranchId = userBranch.id;
+                } else {
+                    branchSelect.disabled = false;
+                    currentBranchId = branchSelect.value ? parseInt(branchSelect.value) : (state.currentBranch ? state.currentBranch.id : 1);
+                    branchSelect.innerHTML = (state.branches || []).map(b => `
+                        <option value="${b.id}" ${b.id === currentBranchId ? 'selected' : ''}>${b.name}</option>
+                    `).join('');
+                }
 
                 const res = await fetch(`api.php?action=get_delivery_settings&branch_id=${currentBranchId}`);
                 const data = await res.json();
@@ -19838,10 +19938,19 @@ Manager / Supervisor: __________________
             const cSelect = document.getElementById('map-customer-select');
             if (!bSelect || !cSelect) return;
 
-            const curBId = state.currentBranch ? state.currentBranch.id : 1;
-            bSelect.innerHTML = state.branches.map(b => `
-                <option value="${b.id}" ${b.id === curBId ? 'selected' : ''}>🏢 ${b.name}</option>
-            `).join('');
+            const canAccessAll = canUserAccessAllBranches();
+            const userBranch = getUserAssignedBranch();
+            if (!canAccessAll) {
+                bSelect.innerHTML = `<option value="${userBranch.id}" selected>🏢 ${userBranch.name}</option>`;
+                bSelect.disabled = true;
+                bSelect.value = userBranch.id;
+            } else {
+                bSelect.disabled = false;
+                const curBId = state.currentBranch ? state.currentBranch.id : 1;
+                bSelect.innerHTML = (state.branches || []).map(b => `
+                    <option value="${b.id}" ${b.id === curBId ? 'selected' : ''}>🏢 ${b.name}</option>
+                `).join('');
+            }
 
             const custWithCoords = state.customers.filter(c => c.latitude && c.longitude);
             if (custWithCoords.length === 0) {
@@ -21434,6 +21543,11 @@ Manager / Supervisor: __________________
         }
 
         function openMasterResetModal(preselectOpts = {}) {
+            if (!canUserAccessAllBranches()) {
+                alert('Akses Ditolak: Fitur Reset Data Toko hanya dapat diakses oleh Super Admin.');
+                return;
+            }
+
             // Tentukan target branch ID:
             // 1. Dari preselectOpts.branch_id jika didefinisikan
             // 2. Jika tidak ada dan sedang di tab stok, baca stock-branch-select
@@ -21761,15 +21875,25 @@ Manager / Supervisor: __________________
         function populateSettingsBranchSelect() {
             const selectEl = document.getElementById('settings-branch-select');
             if (!selectEl) return;
-            const curVal = selectEl.value || '0';
-            let html = '<option value="0">🌐 [Standar Global] Semua Cabang / Kantor Pusat</option>';
-            if (Array.isArray(state.branches)) {
-                state.branches.forEach(b => {
-                    html += `<option value="${b.id}">🏢 [Cabang ${b.id}] ${escapeHtml(b.name)}</option>`;
-                });
+            const canAccessAll = canUserAccessAllBranches();
+            const userBranch = getUserAssignedBranch();
+
+            if (!canAccessAll) {
+                selectEl.innerHTML = `<option value="${userBranch.id}">🏢 [Cabang ${userBranch.id}] ${escapeHtml(userBranch.name)}</option>`;
+                selectEl.disabled = true;
+                selectEl.value = String(userBranch.id);
+            } else {
+                selectEl.disabled = false;
+                const curVal = selectEl.value || '0';
+                let html = '<option value="0">🌐 [Standar Global] Semua Cabang / Kantor Pusat</option>';
+                if (Array.isArray(state.branches)) {
+                    state.branches.forEach(b => {
+                        html += `<option value="${b.id}">🏢 [Cabang ${b.id}] ${escapeHtml(b.name)}</option>`;
+                    });
+                }
+                selectEl.innerHTML = html;
+                selectEl.value = curVal;
             }
-            selectEl.innerHTML = html;
-            selectEl.value = curVal;
         }
 
         async function onSettingsBranchChange() {

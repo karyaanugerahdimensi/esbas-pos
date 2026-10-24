@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.25",
-  "build": "20261024-06",
+  "version": "1.2.26",
+  "build": "20261024-07",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.26",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Isolasi Akses Data Stok dan Lokasi Cabang Ketat untuk Kasir & Karyawan Lokal",
+      "description": "Menegakkan kebijakan keamanan dan isolasi data lokasi cabang secara menyeluruh untuk karyawan non-Super Admin (Kasir, Staf Toko, non-multi-cabang): (1) Pada Tab Stok & Kartu Mutasi (#tab-stocks), dropdown pemilih cabang (#stock-branch-select) dikunci mutlak ke cabang penugasan (disabled dan hanya memuat cabang pengguna), tabel saldo stok hanya menampilkan data stok fisik cabang bersangkutan tanpa kolom konsolidasi gabungan dan tanpa pil breakdown cabang lain, serta tombol Reset Stok disembunyikan. (2) Pada modal Penyesuaian / Tambah Stok (#stock-adjust-modal), dropdown cabang dikunci hanya pada cabang pengguna. (3) Backend api.php mengimplementasikan middleware isolasi keamanan sesi (SECURITY & BRANCH ISOLATION ENFORCEMENT): setiap permintaan ke get_inventory_stocks, get_stock_movements, save_stock_adjustment, sales_reports, get_branch_expenses, dll secara otomatis dipaksa ke session branch_id pengguna non-Super Admin, mengeliminasi potensi kebocoran data cabang lain via manipulasi parameter HTTP. (4) Fitur Master Reset Data Toko diproteksi mutlak di frontend dan backend khusus untuk Super Admin. (5) Seluruh formulir cabang lainnya (CRM Pelanggan, Beban Operasional, Logistik & Pengaturan Cabang) otomatis mengikuti cabang resmi pengguna login.",
+      "rollback_command": "git checkout v1.2.25"
+    },
     {
       "version": "1.2.25",
       "commit": "HEAD",
