@@ -4486,11 +4486,32 @@ try {
                 }
 
                 // ==========================================
+                // LAYER 2 PRE-FETCH: VARIANT BOM RECIPES & OVERRIDE MAP
+                // ==========================================
+                $varRecipes = [];
+                $varIngredientIds = [];
+                if ($variantId) {
+                    $stmtVarRecipe = $pdo->prepare("
+                        SELECT vr.ingredient_product_id, vr.qty_needed, vr.unit, vr.notes,
+                               p.name as ing_name, p.sku as ing_sku, bs.stock as ing_stock
+                        FROM variant_recipes vr
+                        JOIN products p ON p.id = vr.ingredient_product_id
+                        JOIN branch_stocks bs ON bs.product_id = vr.ingredient_product_id AND bs.branch_id = ?
+                        WHERE vr.variant_id = ?
+                    ");
+                    $stmtVarRecipe->execute([$branchId, $variantId]);
+                    $varRecipes = $stmtVarRecipe->fetchAll();
+                    foreach ($varRecipes as $vr) {
+                        $varIngredientIds[(int)$vr['ingredient_product_id']] = true;
+                    }
+                }
+
+                // ==========================================
                 // LAYER 1: BASE BOM AUTO DEDUCTION FOR RAW MATERIALS
                 // ==========================================
                 if (!empty($stockRow['has_bom'])) {
                     $stmtRecipe = $pdo->prepare("
-                        SELECT pr.ingredient_product_id, pr.qty_needed, pr.unit, p.name as ing_name, bs.stock as ing_stock
+                        SELECT pr.ingredient_product_id, pr.qty_needed, pr.unit, p.name as ing_name, p.sku as ing_sku, bs.stock as ing_stock
                         FROM product_recipes pr
                         JOIN products p ON p.id = pr.ingredient_product_id
                         JOIN branch_stocks bs ON bs.product_id = pr.ingredient_product_id AND bs.branch_id = ?
@@ -4500,8 +4521,20 @@ try {
                     $recipes = $stmtRecipe->fetchAll();
 
                     foreach ($recipes as $r) {
+                        $ingId = (int)$r['ingredient_product_id'];
+
+                        // Proteksi Deduplikasi: Jika bahan baku ini sudah diatur spesifik pada Resep Varian, abaikan di Base BOM
+                        if (isset($varIngredientIds[$ingId])) {
+                            continue;
+                        }
+
+                        // Proteksi Varian 'Tanpa Tutup': Jika konsumen memilih varian tanpa tutup, jangan potong tutup galon dari Base BOM
+                        $isLid = (stripos($r['ing_name'], 'tutup') !== false || in_array($r['ing_sku'], ['RAW-089', 'RAW-020']));
+                        if ($variantName && stripos($variantName, 'tanpa tutup') !== false && $isLid) {
+                            continue;
+                        }
+
                         $totalIngNeeded = $r['qty_needed'] * $qty;
-                        $ingId = $r['ingredient_product_id'];
                         $curIngStock = (float)$r['ing_stock'];
                         $newIngStock = max(0, $curIngStock - $totalIngNeeded);
 
@@ -4523,22 +4556,14 @@ try {
                 // ==========================================
                 // LAYER 2: VARIANT BOM AUTO DEDUCTION (Pilihan Varian Potong BOM)
                 // ==========================================
-                if ($variantId) {
-                    $stmtVarRecipe = $pdo->prepare("
-                        SELECT vr.ingredient_product_id, vr.qty_needed, vr.unit, vr.notes,
-                               p.name as ing_name, bs.stock as ing_stock
-                        FROM variant_recipes vr
-                        JOIN products p ON p.id = vr.ingredient_product_id
-                        JOIN branch_stocks bs ON bs.product_id = vr.ingredient_product_id AND bs.branch_id = ?
-                        WHERE vr.variant_id = ?
-                    ");
-                    $stmtVarRecipe->execute([$branchId, $variantId]);
-                    $varRecipes = $stmtVarRecipe->fetchAll();
-
+                if (!empty($varRecipes)) {
                     foreach ($varRecipes as $vr) {
                         $totalVarIngNeeded = $vr['qty_needed'] * $qty;
-                        $varIngId = $vr['ingredient_product_id'];
-                        $curVarIngStock = (float)$vr['ing_stock'];
+                        $varIngId = (int)$vr['ingredient_product_id'];
+                        // Ambil saldo aktual terbaru di cabang
+                        $stmtCurStock = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                        $stmtCurStock->execute([$branchId, $varIngId]);
+                        $curVarIngStock = (float)($stmtCurStock->fetchColumn() ?: 0);
                         $newVarIngStock = max(0, $curVarIngStock - $totalVarIngNeeded);
 
                         // Deduct variant raw material stock
@@ -4839,6 +4864,26 @@ try {
             $stmtList->execute($params);
             $recentSales = $stmtList->fetchAll();
 
+            // Quick BOM Consumption Summary for this sales period
+            $bomWhere = "WHERE sm.movement_type = 'BOM_DEDUCTION' AND date(sm.created_at) BETWEEN ? AND ?";
+            $bomParams = [$startDate, $endDate];
+            if ($branchId) {
+                $bomWhere .= " AND sm.branch_id = ?";
+                $bomParams[] = $branchId;
+            }
+            $stmtQuickBom = $pdo->prepare("
+                SELECT p.id as product_id, p.name, p.sku, p.unit, p.cogs,
+                       SUM(ABS(sm.qty_change)) as total_qty,
+                       SUM(ABS(sm.qty_change) * p.cogs) as total_cogs
+                FROM stock_movements sm
+                JOIN products p ON p.id = sm.product_id
+                $bomWhere
+                GROUP BY p.id, p.name, p.sku, p.unit, p.cogs
+                ORDER BY total_qty DESC
+            ");
+            $stmtQuickBom->execute($bomParams);
+            $bomSummary = $stmtQuickBom->fetchAll();
+
             echo json_encode([
                 'success' => true,
                 'kpi' => [
@@ -4855,6 +4900,7 @@ try {
                 'payment_breakdown' => $paymentBreakdown,
                 'customer_category_breakdown' => $customerCategoryBreakdown,
                 'top_products' => $topProducts,
+                'bom_summary' => $bomSummary,
                 'recent_sales' => $recentSales
             ]);
             break;
@@ -4919,6 +4965,19 @@ try {
             $stmtItems->execute([$sale['id']]);
             $items = $stmtItems->fetchAll();
 
+            // Get BOM Raw Materials deducted for this invoice
+            $stmtBomDeducted = $pdo->prepare("
+                SELECT sm.id, sm.product_id, sm.qty_change, sm.notes,
+                       p.name as ingredient_name, p.sku as ingredient_sku, p.unit, p.cogs as ingredient_cogs,
+                       (ABS(sm.qty_change) * p.cogs) as total_cogs
+                FROM stock_movements sm
+                JOIN products p ON p.id = sm.product_id
+                WHERE sm.movement_type = 'BOM_DEDUCTION' AND sm.reference_no = ?
+                ORDER BY sm.id ASC
+            ");
+            $stmtBomDeducted->execute([$sale['invoice_number']]);
+            $bomMaterials = $stmtBomDeducted->fetchAll();
+
             $effectiveDriverName = !empty($sale['effective_driver_name']) && $sale['effective_driver_name'] !== '-' 
                 ? $sale['effective_driver_name'] 
                 : (!empty($sale['driver_name']) ? $sale['driver_name'] : ($sale['courier_employee_name'] ?? '-'));
@@ -4927,7 +4986,8 @@ try {
             echo json_encode([
                 'success' => true,
                 'sale' => $sale,
-                'items' => $items
+                'items' => $items,
+                'bom_materials' => $bomMaterials
             ]);
             break;
 
@@ -5106,6 +5166,349 @@ try {
                             <td class="num bold"><?= $totalProfitAll ?></td>
                             <td colspan="3"></td>
                             <td class="num bold"><?= $totalInvoiceSum ?></td>
+                        </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </body>
+            </html>
+            <?php
+            exit;
+
+        // ==========================================
+        // 7b. MODUL LAPORAN PEMAKAIAN BAHAN BAKU (BOM)
+        // ==========================================
+        case 'bom_usage_report':
+            $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : null;
+            $startDate = $_GET['start_date'] ?? date('Y-m-01');
+            $endDate = $_GET['end_date'] ?? date('Y-m-d');
+            $ingredientId = !empty($_GET['ingredient_id']) ? (int)$_GET['ingredient_id'] : null;
+            $search = trim($_GET['search'] ?? '');
+
+            // Base WHERE clause on stock_movements for BOM_DEDUCTION
+            $whereSm = "WHERE sm.movement_type = 'BOM_DEDUCTION' AND date(sm.created_at) BETWEEN ? AND ?";
+            $paramsSm = [$startDate, $endDate];
+
+            if ($branchId) {
+                $whereSm .= " AND sm.branch_id = ?";
+                $paramsSm[] = $branchId;
+            }
+            if ($ingredientId) {
+                $whereSm .= " AND sm.product_id = ?";
+                $paramsSm[] = $ingredientId;
+            }
+            if ($search !== '') {
+                $whereSm .= " AND (sm.reference_no LIKE ? OR p.name LIKE ? OR sm.notes LIKE ?)";
+                $paramsSm[] = "%$search%";
+                $paramsSm[] = "%$search%";
+                $paramsSm[] = "%$search%";
+            }
+
+            // 1. Rekapitulasi per Bahan Baku
+            $stmtMaterials = $pdo->prepare("
+                SELECT p.id as product_id, p.sku, p.name, p.unit, p.cogs, p.reorder_point,
+                       COALESCE(bs.stock, 0) as current_stock,
+                       SUM(ABS(sm.qty_change)) as total_qty_used,
+                       SUM(ABS(sm.qty_change) * p.cogs) as total_cogs_used,
+                       COUNT(DISTINCT sm.reference_no) as total_transactions
+                FROM stock_movements sm
+                JOIN products p ON p.id = sm.product_id
+                LEFT JOIN branch_stocks bs ON bs.product_id = p.id " . ($branchId ? "AND bs.branch_id = $branchId" : "") . "
+                $whereSm
+                GROUP BY p.id, p.sku, p.name, p.unit, p.cogs, p.reorder_point
+                ORDER BY total_qty_used DESC
+            ");
+            $stmtMaterials->execute($paramsSm);
+            $materials = $stmtMaterials->fetchAll();
+
+            // 2. High-level KPI Counters
+            $totalWater = 0;
+            $totalCapsMineral = 0;
+            $totalCapsRo = 0;
+            $totalTissues = 0;
+            $totalPlastics = 0;
+            $totalBomCogs = 0;
+
+            foreach ($materials as &$m) {
+                $totalBomCogs += (float)$m['total_cogs_used'];
+                $sku = $m['sku'];
+                $name = strtolower($m['name']);
+                $qtyUsed = (float)$m['total_qty_used'];
+                $curStk = (float)$m['current_stock'];
+                $minStk = (float)($m['reorder_point'] ?? 0);
+
+                if ($curStk <= 0) {
+                    $m['stock_status'] = 'HABIS';
+                } elseif ($minStk > 0 && $curStk <= $minStk) {
+                    $m['stock_status'] = 'MENIPIS';
+                } else {
+                    $m['stock_status'] = 'AMAN';
+                }
+
+                if ($sku === 'RAW-091' || strpos($name, 'air baku') !== false) {
+                    $totalWater += $qtyUsed;
+                } elseif ($sku === 'RAW-089' || (strpos($name, 'tutup') !== false && strpos($name, 'mineral') !== false)) {
+                    $totalCapsMineral += $qtyUsed;
+                } elseif ($sku === 'RAW-020' || (strpos($name, 'tutup') !== false && strpos($name, 'ro') !== false)) {
+                    $totalCapsRo += $qtyUsed;
+                } elseif ($sku === 'RAW-090' || strpos($name, 'tisu') !== false) {
+                    $totalTissues += $qtyUsed;
+                } elseif ($sku === 'RAW-00092' || strpos($name, 'plastik') !== false) {
+                    $totalPlastics += $qtyUsed;
+                }
+            }
+            unset($m);
+
+            // 3. Rincian Pemakaian per Transaksi Penjualan
+            $stmtTx = $pdo->prepare("
+                SELECT sm.id, sm.created_at, sm.reference_no, sm.qty_change, sm.notes,
+                       sm.branch_id, sm.user_id,
+                       p.id as ingredient_id, p.name as ingredient_name, p.sku as ingredient_sku, p.unit, p.cogs as ingredient_cogs,
+                       (ABS(sm.qty_change) * p.cogs) as total_ingredient_cost,
+                       COALESCE(s.customer_name, 'Pelanggan Walk-in') as customer_name,
+                       COALESCE(u.name, 'Kasir') as cashier_name,
+                       COALESCE(b.name, 'Cabang') as branch_name
+                FROM stock_movements sm
+                JOIN products p ON p.id = sm.product_id
+                LEFT JOIN sales s ON s.invoice_number = sm.reference_no
+                LEFT JOIN users u ON u.id = sm.user_id
+                LEFT JOIN branches b ON b.id = sm.branch_id
+                $whereSm
+                ORDER BY sm.id DESC
+                LIMIT 300
+            ");
+            $stmtTx->execute($paramsSm);
+            $rawTx = $stmtTx->fetchAll();
+
+            // Group by Invoice for beautiful transaction view
+            $invoicesMap = [];
+            foreach ($rawTx as $row) {
+                $inv = $row['reference_no'];
+                if (!isset($invoicesMap[$inv])) {
+                    $invoicesMap[$inv] = [
+                        'invoice_number' => $inv,
+                        'created_at' => $row['created_at'],
+                        'customer_name' => $row['customer_name'],
+                        'cashier_name' => $row['cashier_name'],
+                        'branch_name' => $row['branch_name'],
+                        'notes' => $row['notes'],
+                        'total_cost' => 0,
+                        'ingredients' => []
+                    ];
+                }
+                $invoicesMap[$inv]['total_cost'] += (float)$row['total_ingredient_cost'];
+                $invoicesMap[$inv]['ingredients'][] = [
+                    'ingredient_id' => (int)$row['ingredient_id'],
+                    'ingredient_name' => $row['ingredient_name'],
+                    'ingredient_sku' => $row['ingredient_sku'],
+                    'qty' => abs((float)$row['qty_change']),
+                    'unit' => $row['unit'],
+                    'cost' => (float)$row['total_ingredient_cost']
+                ];
+            }
+
+            echo json_encode([
+                'success' => true,
+                'kpi' => [
+                    'total_water_liters' => $totalWater,
+                    'total_caps_mineral' => $totalCapsMineral,
+                    'total_caps_ro' => $totalCapsRo,
+                    'total_tissues' => $totalTissues,
+                    'total_plastics' => $totalPlastics,
+                    'total_bom_cogs' => $totalBomCogs,
+                    'total_invoices_count' => count($invoicesMap)
+                ],
+                'materials' => $materials,
+                'invoices' => array_values($invoicesMap),
+                'raw_logs' => $rawTx
+            ]);
+            break;
+
+        case 'export_bom_usage_excel':
+            $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : null;
+            $startDate = $_GET['start_date'] ?? date('Y-m-01');
+            $endDate = $_GET['end_date'] ?? date('Y-m-d');
+            $ingredientId = !empty($_GET['ingredient_id']) ? (int)$_GET['ingredient_id'] : null;
+
+            $whereSm = "WHERE sm.movement_type = 'BOM_DEDUCTION' AND date(sm.created_at) BETWEEN ? AND ?";
+            $paramsSm = [$startDate, $endDate];
+
+            if ($branchId) {
+                $whereSm .= " AND sm.branch_id = ?";
+                $paramsSm[] = $branchId;
+            }
+            if ($ingredientId) {
+                $whereSm .= " AND sm.product_id = ?";
+                $paramsSm[] = $ingredientId;
+            }
+
+            // Summary per Bahan Baku
+            $stmtMaterials = $pdo->prepare("
+                SELECT p.id as product_id, p.sku, p.name, p.unit, p.cogs,
+                       COALESCE(bs.stock, 0) as current_stock,
+                       SUM(ABS(sm.qty_change)) as total_qty_used,
+                       SUM(ABS(sm.qty_change) * p.cogs) as total_cogs_used,
+                       COUNT(DISTINCT sm.reference_no) as total_transactions
+                FROM stock_movements sm
+                JOIN products p ON p.id = sm.product_id
+                LEFT JOIN branch_stocks bs ON bs.product_id = p.id " . ($branchId ? "AND bs.branch_id = $branchId" : "") . "
+                $whereSm
+                GROUP BY p.id, p.sku, p.name, p.unit, p.cogs
+                ORDER BY total_qty_used DESC
+            ");
+            $stmtMaterials->execute($paramsSm);
+            $materials = $stmtMaterials->fetchAll();
+
+            // Transaction Detail
+            $stmtTx = $pdo->prepare("
+                SELECT sm.id, sm.created_at, sm.reference_no, sm.qty_change, sm.notes,
+                       p.sku as ingredient_sku, p.name as ingredient_name, p.unit, p.cogs,
+                       (ABS(sm.qty_change) * p.cogs) as total_ingredient_cost,
+                       COALESCE(s.customer_name, 'Pelanggan Walk-in') as customer_name,
+                       COALESCE(u.name, 'Kasir') as cashier_name,
+                       COALESCE(b.name, 'Cabang') as branch_name
+                FROM stock_movements sm
+                JOIN products p ON p.id = sm.product_id
+                LEFT JOIN sales s ON s.invoice_number = sm.reference_no
+                LEFT JOIN users u ON u.id = sm.user_id
+                LEFT JOIN branches b ON b.id = sm.branch_id
+                $whereSm
+                ORDER BY sm.id DESC
+            ");
+            $stmtTx->execute($paramsSm);
+            $rawTx = $stmtTx->fetchAll();
+
+            $branchName = 'Semua Cabang';
+            if ($branchId) {
+                $stmtB = $pdo->prepare("SELECT name FROM branches WHERE id = ?");
+                $stmtB->execute([$branchId]);
+                $branchName = $stmtB->fetchColumn() ?: 'Cabang #' . $branchId;
+            }
+
+            $filename = "Laporan_Pemakaian_Bahan_Baku_" . date('Ymd_His') . ".xls";
+            header("Content-Type: application/vnd.ms-excel; charset=utf-8");
+            header("Content-Disposition: attachment; filename=\"$filename\"");
+            header("Pragma: no-cache");
+            header("Expires: 0");
+            ?>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <style>
+                    body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #1e293b; }
+                    .title { font-size: 16pt; font-weight: bold; color: #1e1b4b; margin-bottom: 4px; }
+                    .subtitle { font-size: 11pt; color: #475569; margin-bottom: 12px; }
+                    .section-title { font-size: 13pt; font-weight: bold; color: #312e81; margin-top: 18px; margin-bottom: 6px; }
+                    table { border-collapse: collapse; width: 100%; margin-bottom: 16px; }
+                    th { background-color: #4338ca; color: #ffffff; font-weight: bold; border: 1px solid #312e81; padding: 6px 8px; text-align: left; }
+                    td { border: 1px solid #cbd5e1; padding: 5px 8px; vertical-align: top; }
+                    .center { text-align: center; }
+                    .num { text-align: right; }
+                    .bold { font-weight: bold; }
+                    .bg-total { background-color: #e0e7ff; font-weight: bold; }
+                    .txt { mso-number-format:"\@"; }
+                </style>
+            </head>
+            <body>
+                <div class="title">LAPORAN PEMAKAIAN BAHAN BAKU (BOM) & KONSUMSI PENJUALAN</div>
+                <div class="subtitle">
+                    Periode: <b><?= htmlspecialchars($startDate) ?></b> s/d <b><?= htmlspecialchars($endDate) ?></b> &bull; 
+                    Cabang: <b><?= htmlspecialchars($branchName) ?></b> &bull; 
+                    Dicetak pada: <?= date('d/m/Y H:i:s') ?>
+                </div>
+
+                <div class="section-title">BAGIAN 1: REKAPITULASI TOTAL PEMAKAIAN PER BAHAN BAKU</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Kode SKU</th>
+                            <th>Nama Bahan Baku</th>
+                            <th>Satuan</th>
+                            <th>Total Terpakai</th>
+                            <th>HPP Satuan (Rp)</th>
+                            <th>Total Biaya HPP (Rp)</th>
+                            <th>Sisa Stok Fisik Cabang</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php 
+                        $no = 1;
+                        $totUsedCogs = 0;
+                        foreach ($materials as $m): 
+                            $totUsedCogs += (float)$m['total_cogs_used'];
+                        ?>
+                        <tr>
+                            <td class="center"><?= $no++ ?></td>
+                            <td class="txt"><?= htmlspecialchars($m['sku']) ?></td>
+                            <td class="bold"><?= htmlspecialchars($m['name']) ?></td>
+                            <td class="center"><?= htmlspecialchars($m['unit']) ?></td>
+                            <td class="num bold"><?= number_format((float)$m['total_qty_used'], 0, ',', '.') ?></td>
+                            <td class="num"><?= number_format((float)$m['cogs'], 0, ',', '.') ?></td>
+                            <td class="num bold"><?= number_format((float)$m['total_cogs_used'], 0, ',', '.') ?></td>
+                            <td class="num"><?= number_format((float)$m['current_stock'], 0, ',', '.') ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php if (empty($materials)): ?>
+                        <tr><td colspan="8" class="center">Tidak ada catatan pemakaian bahan baku pada periode ini.</td></tr>
+                        <?php else: ?>
+                        <tr class="bg-total">
+                            <td colspan="6" class="center bold">TOTAL BIAYA PEMAKAIAN BAHAN BAKU</td>
+                            <td class="num bold"><?= number_format($totUsedCogs, 0, ',', '.') ?></td>
+                            <td></td>
+                        </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+
+                <div class="section-title">BAGIAN 2: RINCIAN LOG PEMAKAIAN BAHAN BAKU PER FAKTUR PENJUALAN</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>No. Faktur</th>
+                            <th>Tanggal / Waktu</th>
+                            <th>Cabang</th>
+                            <th>Kasir</th>
+                            <th>Pelanggan</th>
+                            <th>Bahan Baku</th>
+                            <th>SKU</th>
+                            <th>Jumlah Terpakai</th>
+                            <th>Satuan</th>
+                            <th>Biaya HPP (Rp)</th>
+                            <th>Catatan Mutasi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php 
+                        $noTx = 1;
+                        $totTxCogs = 0;
+                        foreach ($rawTx as $tx): 
+                            $totTxCogs += (float)$tx['total_ingredient_cost'];
+                        ?>
+                        <tr>
+                            <td class="center"><?= $noTx++ ?></td>
+                            <td class="bold txt"><?= htmlspecialchars($tx['reference_no']) ?></td>
+                            <td><?= htmlspecialchars($tx['created_at']) ?></td>
+                            <td><?= htmlspecialchars($tx['branch_name']) ?></td>
+                            <td><?= htmlspecialchars($tx['cashier_name']) ?></td>
+                            <td><?= htmlspecialchars($tx['customer_name']) ?></td>
+                            <td class="bold"><?= htmlspecialchars($tx['ingredient_name']) ?></td>
+                            <td class="txt"><?= htmlspecialchars($tx['ingredient_sku']) ?></td>
+                            <td class="num bold"><?= number_format(abs((float)$tx['qty_change']), 0, ',', '.') ?></td>
+                            <td class="center"><?= htmlspecialchars($tx['unit']) ?></td>
+                            <td class="num"><?= number_format((float)$tx['total_ingredient_cost'], 0, ',', '.') ?></td>
+                            <td><?= htmlspecialchars($tx['notes']) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php if (empty($rawTx)): ?>
+                        <tr><td colspan="12" class="center">Tidak ada transaksi penjualan ber-BOM pada periode ini.</td></tr>
+                        <?php else: ?>
+                        <tr class="bg-total">
+                            <td colspan="10" class="center bold">TOTAL RINCIAN LOG</td>
+                            <td class="num bold"><?= number_format($totTxCogs, 0, ',', '.') ?></td>
+                            <td></td>
                         </tr>
                         <?php endif; ?>
                     </tbody>
@@ -8285,10 +8688,29 @@ try {
 
                 $restockedItemsSummary[] = "{$qty}x {$pName}";
 
+                // Pre-fetch variant recipes for deduplication
+                $varIngredientIds = [];
+                $varRecipes = [];
+                if ($variantId) {
+                    $stmtVarRecipe = $pdo->prepare("
+                        SELECT vr.ingredient_product_id, vr.qty_needed, vr.unit, vr.notes,
+                               p.name as ing_name, p.sku as ing_sku, bs.stock as ing_stock
+                        FROM variant_recipes vr
+                        JOIN products p ON p.id = vr.ingredient_product_id
+                        JOIN branch_stocks bs ON bs.product_id = vr.ingredient_product_id AND bs.branch_id = ?
+                        WHERE vr.variant_id = ?
+                    ");
+                    $stmtVarRecipe->execute([$realBranchId, $variantId]);
+                    $varRecipes = $stmtVarRecipe->fetchAll(PDO::FETCH_ASSOC);
+                    foreach ($varRecipes as $vr) {
+                        $varIngredientIds[(int)$vr['ingredient_product_id']] = true;
+                    }
+                }
+
                 // D. Kembalikan stok bahan baku Base BOM jika ada
                 if (!empty($item['has_bom'])) {
                     $stmtRecipe = $pdo->prepare("
-                        SELECT pr.ingredient_product_id, pr.qty_needed, pr.unit, p.name as ing_name, bs.stock as ing_stock
+                        SELECT pr.ingredient_product_id, pr.qty_needed, pr.unit, p.name as ing_name, p.sku as ing_sku, bs.stock as ing_stock
                         FROM product_recipes pr
                         JOIN products p ON p.id = pr.ingredient_product_id
                         JOIN branch_stocks bs ON bs.product_id = pr.ingredient_product_id AND bs.branch_id = ?
@@ -8298,8 +8720,14 @@ try {
                     $recipes = $stmtRecipe->fetchAll(PDO::FETCH_ASSOC);
 
                     foreach ($recipes as $r) {
-                        $totalIngReturn = $r['qty_needed'] * $qty;
                         $ingId = (int)$r['ingredient_product_id'];
+
+                        // Proteksi Deduplikasi: Jika bahan baku ini diatur spesifik pada Resep Varian, abaikan di Base BOM
+                        if (isset($varIngredientIds[$ingId])) continue;
+                        $isLid = (stripos($r['ing_name'], 'tutup') !== false || in_array($r['ing_sku'], ['RAW-089', 'RAW-020']));
+                        if ($variantName && stripos($variantName, 'tanpa tutup') !== false && $isLid) continue;
+
+                        $totalIngReturn = $r['qty_needed'] * $qty;
                         $curIngStock = (float)$r['ing_stock'];
                         $newIngStock = $curIngStock + $totalIngReturn;
 
@@ -8319,18 +8747,7 @@ try {
                 }
 
                 // E. Kembalikan stok bahan baku Variant BOM jika ada
-                if ($variantId) {
-                    $stmtVarRecipe = $pdo->prepare("
-                        SELECT vr.ingredient_product_id, vr.qty_needed, vr.unit, vr.notes,
-                               p.name as ing_name, bs.stock as ing_stock
-                        FROM variant_recipes vr
-                        JOIN products p ON p.id = vr.ingredient_product_id
-                        JOIN branch_stocks bs ON bs.product_id = vr.ingredient_product_id AND bs.branch_id = ?
-                        WHERE vr.variant_id = ?
-                    ");
-                    $stmtVarRecipe->execute([$realBranchId, $variantId]);
-                    $varRecipes = $stmtVarRecipe->fetchAll(PDO::FETCH_ASSOC);
-
+                if (!empty($varRecipes)) {
                     foreach ($varRecipes as $vr) {
                         $totalVarIngReturn = $vr['qty_needed'] * $qty;
                         $varIngId = (int)$vr['ingredient_product_id'];

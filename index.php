@@ -586,6 +586,10 @@ $appVersionData = getAppVersionData();
                             <i data-lucide="clock" class="w-4 h-4"></i>
                             <span>Laporan Shift Kasir & Tutup Toko</span>
                         </button>
+                        <button onclick="setReportSubtab('bom')" id="report-subtab-btn-bom" class="px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-indigo-600 hover:bg-slate-50 flex items-center space-x-1.5">
+                            <i data-lucide="boxes" class="w-4 h-4"></i>
+                            <span>Pemakaian Bahan Baku (BOM)</span>
+                        </button>
                     </div>
                     <div class="text-xs text-slate-500 font-medium px-2 hidden sm:block">
                         Modul Pelaporan Keuangan, Piutang & Rekonsiliasi Multi-Shift Terintegrasi
@@ -660,6 +664,40 @@ $appVersionData = getAppVersionData();
                         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                             <p class="text-xs text-slate-400 font-semibold">Rata-Rata Nota (AOV)</p>
                             <h3 id="kpi-aov" class="text-lg font-black text-indigo-700 mt-1">Rp 0</h3>
+                        </div>
+                    </div>
+
+                    <!-- Quick BOM Ingredients Consumption Banner -->
+                    <div class="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-200/80 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-sm">
+                                <i data-lucide="boxes" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    <span>Ringkasan Pemakaian Bahan Baku Periode Ini</span>
+                                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold">Otomatisasi BOM</span>
+                                </h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Pantau volume bahan baku utama yang terpotong otomatis dari penjualan produk olahan/galon.</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-4 text-xs">
+                            <div class="bg-white px-3.5 py-2 rounded-xl border border-amber-200 shadow-2xs">
+                                <span class="text-slate-400 block text-[10px] font-semibold">Air Baku Terpakai</span>
+                                <span id="quick-bom-water" class="font-black text-slate-800 text-sm">0 Liter</span>
+                            </div>
+                            <div class="bg-white px-3.5 py-2 rounded-xl border border-amber-200 shadow-2xs">
+                                <span class="text-slate-400 block text-[10px] font-semibold">Tutup Galon</span>
+                                <span id="quick-bom-caps" class="font-black text-slate-800 text-sm">0 Pcs</span>
+                            </div>
+                            <div class="bg-white px-3.5 py-2 rounded-xl border border-amber-200 shadow-2xs">
+                                <span class="text-slate-400 block text-[10px] font-semibold">Tisu Galon</span>
+                                <span id="quick-bom-tissues" class="font-black text-slate-800 text-sm">0 Pcs</span>
+                            </div>
+                            <button onclick="setReportSubtab('bom')" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition-all shadow-sm">
+                                <span>Lihat Laporan BOM Lengkap</span>
+                                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -3375,6 +3413,134 @@ $appVersionData = getAppVersionData();
 
             </div>
 
+                <!-- ---------------------------------------------------- -->
+                <!-- SUBTAB 4: LAPORAN PEMAKAIAN BAHAN BAKU (BOM)          -->
+                <!-- ---------------------------------------------------- -->
+                <div id="subtab-reports-bom" class="hidden space-y-6">
+                    <!-- Filter Bar -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-3 items-center justify-between">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">Dari Tanggal:</label>
+                                <input type="date" id="bom-report-start-date" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">Sampai Tanggal:</label>
+                                <input type="date" id="bom-report-end-date" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">Filter Bahan Baku:</label>
+                                <select id="bom-report-material-filter" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium">
+                                    <option value="ALL">Semua Bahan Baku</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="loadBomUsageReport()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-2">
+                                <i data-lucide="filter" class="w-4 h-4"></i>
+                                <span>Terapkan Filter</span>
+                            </button>
+                            <button onclick="exportBomUsageExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-2">
+                                <i data-lucide="download" class="w-4 h-4"></i>
+                                <span>Export Excel BOM</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- KPI Cards Pemakaian Bahan Baku -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <p class="text-xs text-slate-400 font-semibold">Total Air Baku (Liter)</p>
+                            <h3 id="bom-kpi-water-liters" class="text-lg font-black text-sky-700 mt-1">0 L</h3>
+                            <p id="bom-kpi-water-sub" class="text-[10px] text-slate-400 mt-0.5">Mineral & RO</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <p class="text-xs text-slate-400 font-semibold">Tutup Galon Mineral</p>
+                            <h3 id="bom-kpi-caps-mineral" class="text-lg font-black text-indigo-700 mt-1">0 Pcs</h3>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Varian Tutup Mineral</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <p class="text-xs text-slate-400 font-semibold">Tutup Galon RO</p>
+                            <h3 id="bom-kpi-caps-ro" class="text-lg font-black text-teal-700 mt-1">0 Pcs</h3>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Varian Tutup RO</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <p class="text-xs text-slate-400 font-semibold">Tisu Pembersih</p>
+                            <h3 id="bom-kpi-tissues" class="text-lg font-black text-amber-700 mt-1">0 Pcs</h3>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Pemakaian Sanitasi</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <p class="text-xs text-slate-400 font-semibold">Plastik / Seal</p>
+                            <h3 id="bom-kpi-plastics" class="text-lg font-black text-slate-700 mt-1">0 Pcs</h3>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Packaging</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm bg-gradient-to-br from-amber-50 to-white">
+                            <p class="text-xs text-amber-800 font-bold">Total Nilai HPP Bahan</p>
+                            <h3 id="bom-kpi-total-cost" class="text-lg font-black text-amber-800 mt-1">Rp 0</h3>
+                            <p class="text-[10px] text-amber-600 font-semibold mt-0.5">Biaya Bahan Terpakai</p>
+                        </div>
+                    </div>
+
+                    <!-- Rekapitulasi Akumulasi Per Bahan Baku -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                                <i data-lucide="layers" class="w-4 h-4 text-amber-600"></i>
+                                <span>Rekapitulasi Akumulasi Pemakaian Bahan Baku</span>
+                            </h3>
+                            <span id="bom-summary-count-badge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">0 Bahan Baku Terdata</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Bahan Baku</th>
+                                        <th class="py-2.5 px-3">Kategori</th>
+                                        <th class="py-2.5 px-3 text-right">Total Terpakai</th>
+                                        <th class="py-2.5 px-3 text-right">HPP Satuan</th>
+                                        <th class="py-2.5 px-3 text-right">Estimasi Biaya Bahan</th>
+                                        <th class="py-2.5 px-3 text-right">Sisa Stok Cabang</th>
+                                        <th class="py-2.5 px-3 text-center">Status Stok</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bom-summary-tbody" class="divide-y divide-slate-100">
+                                    <tr><td colspan="7" class="text-center py-6 text-slate-400">Pilih rentang tanggal dan terapkan filter untuk memuat data pemakaian.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Rincian Log Transaksi Penjualan yang Memotong Bahan Baku -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                                <i data-lucide="list-ordered" class="w-4 h-4 text-indigo-600"></i>
+                                <span>Rincian Log Transaksi Penjualan & Pemotongan Bahan</span>
+                            </h3>
+                            <span id="bom-logs-count-badge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">0 Log Transaksi</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Waktu & Tanggal</th>
+                                        <th class="py-2.5 px-3">No. Faktur</th>
+                                        <th class="py-2.5 px-3">Produk & Varian Terjual</th>
+                                        <th class="py-2.5 px-3 text-center">Qty Jual</th>
+                                        <th class="py-2.5 px-3">Bahan Baku Terpotong</th>
+                                        <th class="py-2.5 px-3 text-right">Jumlah Pemakaian</th>
+                                        <th class="py-2.5 px-3 text-right">HPP / Biaya</th>
+                                        <th class="py-2.5 px-3 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bom-logs-tbody" class="divide-y divide-slate-100">
+                                    <tr><td colspan="8" class="text-center py-6 text-slate-400">Pilih rentang tanggal dan terapkan filter untuk memuat rincian transaksi.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
             <!-- Tab 11: Kelola Cabang / Outlet (CRUD Branches) -->
             <div id="tab-branches" class="space-y-6 hidden">
                 <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm">
@@ -4544,6 +4710,30 @@ $appVersionData = getAppVersionData();
                                 </tr>
                             </thead>
                             <tbody id="detail-modal-items-body" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Bahan Baku Terpakai (BOM Ingredients) -->
+                <div id="detail-modal-bom-card" class="hidden border border-amber-200 bg-amber-50/40 rounded-2xl p-3.5 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-amber-900 text-xs flex items-center gap-1.5">
+                            <i data-lucide="boxes" class="w-4 h-4 text-amber-600"></i>
+                            Bahan Baku Terpotong Otomatis (BOM):
+                        </span>
+                        <span id="detail-modal-bom-count" class="text-[11px] font-semibold text-amber-800">0 Bahan</span>
+                    </div>
+                    <div class="overflow-x-auto rounded-xl border border-amber-200 bg-white">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-amber-100/60 text-amber-900 font-semibold border-b border-amber-200 text-[10px]">
+                                <tr>
+                                    <th class="py-1.5 px-3">Bahan Baku</th>
+                                    <th class="py-1.5 px-2 text-center">Tipe / Sumber</th>
+                                    <th class="py-1.5 px-2 text-right">Pemakaian</th>
+                                    <th class="py-1.5 px-3 text-right">Biaya HPP</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detail-modal-bom-body" class="divide-y divide-amber-100"></tbody>
                         </table>
                     </div>
                 </div>
@@ -10817,6 +11007,28 @@ $appVersionData = getAppVersionData();
             document.getElementById('kpi-tx-count').innerText = data.kpi.total_transactions;
             document.getElementById('kpi-aov').innerText = formatRupiah(data.kpi.aov);
 
+            // Populate Quick BOM Consumption Summary Banner
+            if (data.bom_summary && Array.isArray(data.bom_summary)) {
+                let totalWater = 0;
+                let totalCaps = 0;
+                let totalTissues = 0;
+                data.bom_summary.forEach(m => {
+                    const name = (m.name || '').toLowerCase();
+                    const qty = Number(m.total_qty) || 0;
+                    if (name.includes('air')) totalWater += qty;
+                    else if (name.includes('tutup')) totalCaps += qty;
+                    else if (name.includes('tisu')) totalTissues += qty;
+                });
+                const elWater = document.getElementById('quick-bom-water');
+                if (elWater) elWater.innerText = `${totalWater.toLocaleString('id-ID')} Liter`;
+
+                const elCaps = document.getElementById('quick-bom-caps');
+                if (elCaps) elCaps.innerText = `${totalCaps.toLocaleString('id-ID')} Pcs`;
+
+                const elTissues = document.getElementById('quick-bom-tissues');
+                if (elTissues) elTissues.innerText = `${totalTissues.toLocaleString('id-ID')} Pcs`;
+            }
+
             document.getElementById('report-top-products-body').innerHTML = data.top_products.map(tp => `
                 <tr>
                     <td class="py-2.5 px-3 font-semibold text-slate-800">${tp.product_name}</td>
@@ -10941,6 +11153,36 @@ $appVersionData = getAppVersionData();
                 document.getElementById('detail-modal-grand-total').innerText = formatRupiah(s.grand_total);
                 document.getElementById('detail-modal-cash-info').innerText = `Diterima: ${formatRupiah(s.cash_received || s.grand_total)} • Kembalian: ${formatRupiah(s.cash_change || 0)}`;
 
+                // Render BOM Ingredients Terpakai
+                const bomCard = document.getElementById('detail-modal-bom-card');
+                const bomBody = document.getElementById('detail-modal-bom-body');
+                const bomCount = document.getElementById('detail-modal-bom-count');
+                const materials = data.bom_materials || [];
+                if (materials.length > 0) {
+                    if (bomCard) bomCard.classList.remove('hidden');
+                    if (bomCount) bomCount.innerText = `${materials.length} Bahan Baku Terpotong`;
+                    if (bomBody) {
+                        bomBody.innerHTML = materials.map(m => {
+                            const isVar = (m.notes || '').includes('Varian');
+                            const typeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-semibold ${isVar ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-700'}">${isVar ? 'VARIANT' : 'BASE BOM'}</span>`;
+                            const qty = Math.abs(Number(m.qty_change)) || 0;
+                            return `
+                                <tr class="hover:bg-amber-50/50">
+                                    <td class="py-1.5 px-3">
+                                        <div class="font-bold text-slate-800">${m.ingredient_name || '-'}</div>
+                                        <div class="text-[10px] text-slate-400 font-mono">${m.ingredient_sku || '-'}</div>
+                                    </td>
+                                    <td class="py-1.5 px-2 text-center">${typeBadge}</td>
+                                    <td class="py-1.5 px-2 text-right font-black text-amber-900">${qty.toLocaleString('id-ID')} ${m.unit || 'pcs'}</td>
+                                    <td class="py-1.5 px-3 text-right font-semibold text-slate-700">${formatRupiah(m.total_cogs || 0)}</td>
+                                </tr>
+                            `;
+                        }).join('');
+                    }
+                } else {
+                    if (bomCard) bomCard.classList.add('hidden');
+                }
+
                 document.getElementById('sale-detail-modal').classList.remove('hidden');
                 lucide.createIcons();
             } catch (err) {
@@ -10951,6 +11193,150 @@ $appVersionData = getAppVersionData();
 
         function closeSaleDetailModal() {
             document.getElementById('sale-detail-modal').classList.add('hidden');
+        }
+
+        // ==========================================
+        // MODUL LAPORAN PEMAKAIAN BAHAN BAKU (BOM)
+        // ==========================================
+        let currentBomUsageData = null;
+
+        async function loadBomUsageReport() {
+            let start = document.getElementById('bom-report-start-date').value;
+            let end = document.getElementById('bom-report-end-date').value;
+            if (!start || !end) {
+                const today = new Date().toISOString().split('T')[0];
+                start = today;
+                end = today;
+                document.getElementById('bom-report-start-date').value = start;
+                document.getElementById('bom-report-end-date').value = end;
+            }
+            const matFilter = document.getElementById('bom-report-material-filter').value || 'ALL';
+            const branchId = state.currentBranch ? state.currentBranch.id : '';
+
+            try {
+                const res = await fetch(`api.php?action=bom_usage_report&branch_id=${branchId}&start_date=${start}&end_date=${end}&ingredient_id=${encodeURIComponent(matFilter === 'ALL' ? '' : matFilter)}`);
+                const data = await res.json();
+                if (!data.success) {
+                    alert(data.error || 'Gagal memuat laporan pemakaian bahan baku');
+                    return;
+                }
+
+                currentBomUsageData = data;
+
+                // Populate KPI Cards
+                const kpi = data.kpi || {};
+                const waterLiters = Number(kpi.total_water_liters) || 0;
+                document.getElementById('bom-kpi-water-liters').innerText = `${waterLiters.toLocaleString('id-ID')} L`;
+                document.getElementById('bom-kpi-water-sub').innerText = `Air Baku: ${waterLiters.toLocaleString('id-ID')} L`;
+                document.getElementById('bom-kpi-caps-mineral').innerText = `${(Number(kpi.total_caps_mineral) || 0).toLocaleString('id-ID')} Pcs`;
+                document.getElementById('bom-kpi-caps-ro').innerText = `${(Number(kpi.total_caps_ro) || 0).toLocaleString('id-ID')} Pcs`;
+                document.getElementById('bom-kpi-tissues').innerText = `${(Number(kpi.total_tissues) || 0).toLocaleString('id-ID')} Pcs`;
+                document.getElementById('bom-kpi-plastics').innerText = `${(Number(kpi.total_plastics) || 0).toLocaleString('id-ID')} Pcs`;
+                document.getElementById('bom-kpi-total-cost').innerText = formatRupiah(kpi.total_bom_cogs || 0);
+
+                // Populate Material Filter Dropdown if options not built yet
+                const matSelect = document.getElementById('bom-report-material-filter');
+                if (matSelect && matSelect.options.length <= 1 && data.materials) {
+                    data.materials.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m.product_id;
+                        opt.textContent = m.name;
+                        matSelect.appendChild(opt);
+                    });
+                }
+
+                // Populate Table 1: Rekapitulasi Akumulasi Per Bahan Baku (data.materials)
+                const summaryBody = document.getElementById('bom-summary-tbody');
+                const summaryCountBadge = document.getElementById('bom-summary-count-badge');
+                if (summaryCountBadge) summaryCountBadge.innerText = `${(data.materials || []).length} Bahan Baku Terdata`;
+
+                if (!data.materials || data.materials.length === 0) {
+                    summaryBody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">Tidak ada pemakaian bahan baku pada periode tanggal ini.</td></tr>`;
+                } else {
+                    summaryBody.innerHTML = data.materials.map(m => {
+                        let statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">AMAN</span>';
+                        if (m.stock_status === 'HABIS') {
+                            statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">HABIS (0)</span>';
+                        } else if (m.stock_status === 'MENIPIS') {
+                            statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">MENIPIS</span>';
+                        }
+
+                        return `
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="py-2.5 px-3">
+                                    <div class="font-bold text-slate-800">${m.name}</div>
+                                    <div class="text-[10px] text-slate-400 font-mono">${m.sku || '-'}</div>
+                                </td>
+                                <td class="py-2.5 px-3 text-slate-600 font-medium">Bahan Baku / Raw</td>
+                                <td class="py-2.5 px-3 text-right font-black text-amber-900 text-sm">${Number(m.total_qty_used).toLocaleString('id-ID')} <span class="text-xs font-normal text-slate-500">${m.unit}</span></td>
+                                <td class="py-2.5 px-3 text-right font-medium text-slate-600">${formatRupiah(m.cogs)}</td>
+                                <td class="py-2.5 px-3 text-right font-bold text-slate-800">${formatRupiah(m.total_cogs_used)}</td>
+                                <td class="py-2.5 px-3 text-right font-bold ${Number(m.current_stock) <= 0 ? 'text-rose-600' : 'text-slate-800'}">${Number(m.current_stock).toLocaleString('id-ID')} ${m.unit}</td>
+                                <td class="py-2.5 px-3 text-center">${statusBadge}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                // Populate Table 2: Rincian Log Transaksi Penjualan yang Memotong Bahan Baku (data.raw_logs)
+                const logsBody = document.getElementById('bom-logs-tbody');
+                const logsCountBadge = document.getElementById('bom-logs-count-badge');
+                if (logsCountBadge) logsCountBadge.innerText = `${(data.raw_logs || []).length} Log Transaksi`;
+
+                if (!data.raw_logs || data.raw_logs.length === 0) {
+                    logsBody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Tidak ada transaksi penjualan produk ber-BOM pada periode ini.</td></tr>`;
+                } else {
+                    logsBody.innerHTML = data.raw_logs.map(log => {
+                        const isVar = (log.notes || '').includes('Varian');
+                        const typeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-semibold ${isVar ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-700'}">${isVar ? 'VARIANT' : 'BASE BOM'}</span>`;
+                        const qty = Math.abs(Number(log.qty_change)) || 0;
+                        return `
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="py-2.5 px-3 font-mono text-slate-500 text-[11px]">${log.created_at}</td>
+                                <td class="py-2.5 px-3">
+                                    <span class="font-mono font-bold text-indigo-600 hover:underline cursor-pointer" onclick="openSaleDetailModal('${log.reference_no}')">${log.reference_no}</span>
+                                </td>
+                                <td class="py-2.5 px-3">
+                                    <span class="font-bold text-slate-800">${log.notes}</span>
+                                </td>
+                                <td class="py-2.5 px-3 text-center font-bold text-slate-700">-</td>
+                                <td class="py-2.5 px-3">
+                                    <div class="flex items-center space-x-1.5">
+                                        <span class="font-bold text-slate-800">${log.ingredient_name}</span>
+                                        ${typeBadge}
+                                    </div>
+                                    <div class="text-[10px] text-slate-400 font-mono">${log.ingredient_sku || '-'}</div>
+                                </td>
+                                <td class="py-2.5 px-3 text-right font-black text-amber-900">${qty.toLocaleString('id-ID')} <span class="text-xs font-normal text-slate-500">${log.unit}</span></td>
+                                <td class="py-2.5 px-3 text-right font-medium text-slate-700">${formatRupiah(log.total_ingredient_cost)}</td>
+                                <td class="py-2.5 px-3 text-center">
+                                    <button onclick="openSaleDetailModal('${log.reference_no}')" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs font-bold transition-all">
+                                        Lihat Nota
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                lucide.createIcons();
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan koneksi saat memuat laporan pemakaian bahan baku');
+            }
+        }
+
+        function exportBomUsageExcel() {
+            let start = document.getElementById('bom-report-start-date').value;
+            let end = document.getElementById('bom-report-end-date').value;
+            if (!start || !end) {
+                const today = new Date().toISOString().split('T')[0];
+                start = today;
+                end = today;
+            }
+            const matFilter = document.getElementById('bom-report-material-filter').value || 'ALL';
+            const branchId = state.currentBranch ? state.currentBranch.id : '';
+            window.location.href = `api.php?action=export_bom_usage_excel&branch_id=${branchId}&start_date=${start}&end_date=${end}&material_id=${encodeURIComponent(matFilter)}`;
         }
 
         function exportSalesDetailExcel() {
@@ -11000,10 +11386,12 @@ $appVersionData = getAppVersionData();
             const btnSales = document.getElementById('report-subtab-btn-sales');
             const btnAR = document.getElementById('report-subtab-btn-receivables');
             const btnShifts = document.getElementById('report-subtab-btn-shifts');
+            const btnBom = document.getElementById('report-subtab-btn-bom');
 
             const viewSales = document.getElementById('subtab-reports-sales');
             const viewAR = document.getElementById('subtab-reports-ar');
             const viewShifts = document.getElementById('subtab-reports-shifts');
+            const viewBOM = document.getElementById('subtab-reports-bom');
 
             // Reset buttons style
             const inactiveClass = 'px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-indigo-600 hover:bg-slate-50 flex items-center space-x-1.5';
@@ -11012,10 +11400,12 @@ $appVersionData = getAppVersionData();
             if (btnSales) btnSales.className = inactiveClass;
             if (btnAR) btnAR.className = inactiveClass;
             if (btnShifts) btnShifts.className = inactiveClass;
+            if (btnBom) btnBom.className = inactiveClass;
 
             if (viewSales) viewSales.classList.add('hidden');
             if (viewAR) viewAR.classList.add('hidden');
             if (viewShifts) viewShifts.classList.add('hidden');
+            if (viewBOM) viewBOM.classList.add('hidden');
 
             if (subtab === 'receivables') {
                 if (viewAR) viewAR.classList.remove('hidden');
@@ -11025,6 +11415,10 @@ $appVersionData = getAppVersionData();
                 if (viewShifts) viewShifts.classList.remove('hidden');
                 if (btnShifts) btnShifts.className = activeClass;
                 loadShiftReports();
+            } else if (subtab === 'bom') {
+                if (viewBOM) viewBOM.classList.remove('hidden');
+                if (btnBom) btnBom.className = activeClass;
+                loadBomUsageReport();
             } else {
                 if (viewSales) viewSales.classList.remove('hidden');
                 if (btnSales) btnSales.className = activeClass;

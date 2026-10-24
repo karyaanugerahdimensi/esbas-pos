@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.19",
-  "build": "20261023-07",
-  "release_date": "2026-10-23",
+  "version": "1.2.20",
+  "build": "20261024-01",
+  "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.20",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Perbaikan Eliminasi Pemotongan Ganda Bahan Baku Galon & Rilis Modul Laporan Pemakaian Bahan Baku (BOM)",
+      "description": "Menyelesaikan galat pemotongan bahan baku ganda pada produk olahan on-demand (galon air minum) dan menghadirkan Modul Laporan Pemakaian Bahan Baku (BOM) di menu Transaksi Penjualan: (1) Menghapus data duplikat pada Base BOM dan menyempurnakan backend api.php checkout_sale & void_sale dengan proteksi deduplikasi otomatis, di mana resep varian (Variant BOM) secara otomatis meng-override dan melewati ingredient yang sama pada Base BOM, serta varian 'Tanpa Tutup' otomatis mengabaikan tutup galon. Sisa stok Tutup Galon Cabang 1 dikoreksi akurat. (2) Menambahkan Subtab 4 'Pemakaian Bahan Baku (BOM)' pada tab Laporan Penjualan (tab-reports) dengan KPI lengkap, tabel rekapitulasi akumulasi per bahan baku beserta status stok fisik (AMAN/MENIPIS/HABIS), tabel log transaksi per faktur penjualan, kartu quick summary BOM pada Subtab 1 Penjualan, kartu rincian bahan baku terpotong pada modal Detail Faktur Penjualan, serta fitur Ekspor Dokumen Excel BOM terperinci.",
+      "rollback_command": "git checkout v1.2.19"
+    },
     {
       "version": "1.2.19",
       "commit": "HEAD",
