@@ -557,7 +557,7 @@ try {
 
                 // 1. Inisialisasi inventaris stok default untuk seluruh produk katalog
                 $allProducts = $pdo->query("SELECT id, cogs, selling_price FROM products WHERE is_active = 1")->fetchAll();
-                $stmtInitStock = $pdo->prepare("INSERT OR IGNORE INTO branch_stocks (branch_id, product_id, stock, local_cogs, local_price) VALUES (?, ?, 50, ?, ?)");
+                $stmtInitStock = $pdo->prepare("INSERT OR IGNORE INTO branch_stocks (branch_id, product_id, stock, local_cogs, local_price) VALUES (?, ?, 0, ?, ?)");
                 foreach ($allProducts as $p) {
                     $stmtInitStock->execute([$id, $p['id'], $p['cogs'], $p['selling_price']]);
                 }
@@ -1163,7 +1163,7 @@ try {
 
                 // Initialize stock for all branches
                 $branches = $pdo->query("SELECT id FROM branches")->fetchAll();
-                $stmtInitStock = $pdo->prepare("INSERT OR IGNORE INTO branch_stocks (branch_id, product_id, stock, local_cogs, local_price, is_delivery_required, is_delivery_included) VALUES (?, ?, 50, ?, ?, ?, ?)");
+                $stmtInitStock = $pdo->prepare("INSERT OR IGNORE INTO branch_stocks (branch_id, product_id, stock, local_cogs, local_price, is_delivery_required, is_delivery_included) VALUES (?, ?, 0, ?, ?, ?, ?)");
                 foreach ($branches as $b) {
                     $stmtInitStock->execute([$b['id'], $id, $cogs, $sellingPrice, $isDeliveryRequired, $isDeliveryIncluded]);
                 }
@@ -1465,7 +1465,7 @@ try {
                     has_bom = ?, reorder_point = ?, is_taxable = ?, tax_id = ?, tax_percent = ?, is_delivery_required = ?
                 WHERE id = ?
             ");
-            $stmtInitStock = $pdo->prepare("INSERT OR IGNORE INTO branch_stocks (branch_id, product_id, stock, local_cogs, local_price) VALUES (?, ?, 50, ?, ?)");
+            $stmtInitStock = $pdo->prepare("INSERT OR IGNORE INTO branch_stocks (branch_id, product_id, stock, local_cogs, local_price) VALUES (?, ?, 0, ?, ?)");
             $stmtSyncStock = $pdo->prepare("UPDATE branch_stocks SET local_price = ?, local_cogs = ? WHERE product_id = ?");
 
             // Cache categories
@@ -9017,21 +9017,50 @@ try {
                     if ($targetBranchId > 0) {
                         $stmtStk = $pdo->prepare("UPDATE branch_stocks SET stock = 0 WHERE branch_id = ?");
                         $stmtStk->execute([$targetBranchId]);
-                        $countStocks = $stmtStk->rowCount();
+                        $countStocks = (int)$pdo->query("SELECT COUNT(*) FROM branch_stocks WHERE branch_id = " . (int)$targetBranchId)->fetchColumn();
+
+                        // Pastikan seluruh produk katalog aktif juga terdaftar dengan stock 0 di cabang ini jika belum ada
+                        try {
+                            $pdo->prepare("
+                                INSERT OR IGNORE INTO branch_stocks (branch_id, product_id, stock, local_cogs, local_price, is_active)
+                                SELECT ?, p.id, 0, COALESCE(p.cogs, 0), COALESCE(p.selling_price, 0), 1
+                                FROM products p
+                                WHERE (p.is_active IS NULL OR p.is_active = 1)
+                            ")->execute([$targetBranchId]);
+                        } catch (Exception $eBs) {}
 
                         $stmtSm = $pdo->prepare("DELETE FROM stock_movements WHERE branch_id = ?");
                         $stmtSm->execute([$targetBranchId]);
                         $countSm = $stmtSm->rowCount();
+
+                        $stmtBName = $pdo->prepare("SELECT name FROM branches WHERE id = ?");
+                        $stmtBName->execute([$targetBranchId]);
+                        $tBName = $stmtBName->fetchColumn() ?: "Cabang #$targetBranchId";
+
+                        $summary[] = "Stok: $countStocks produk di cabang {$tBName} di-reset ke 0 ($countSm mutasi stok dibersihkan)";
                     } else {
                         $stmtStk = $pdo->prepare("UPDATE branch_stocks SET stock = 0");
                         $stmtStk->execute();
-                        $countStocks = $stmtStk->rowCount();
+                        $countStocks = (int)$pdo->query("SELECT COUNT(*) FROM branch_stocks")->fetchColumn();
+                        $countBranches = (int)$pdo->query("SELECT COUNT(DISTINCT branch_id) FROM branch_stocks")->fetchColumn();
+
+                        // Pastikan seluruh produk katalog aktif terdaftar dengan stock 0 di semua cabang jika belum ada
+                        try {
+                            $pdo->exec("
+                                INSERT OR IGNORE INTO branch_stocks (branch_id, product_id, stock, local_cogs, local_price, is_active)
+                                SELECT b.id, p.id, 0, COALESCE(p.cogs, 0), COALESCE(p.selling_price, 0), 1
+                                FROM branches b
+                                CROSS JOIN products p
+                                WHERE (p.is_active IS NULL OR p.is_active = 1)
+                            ");
+                        } catch (Exception $eBsAll) {}
 
                         $stmtSm = $pdo->prepare("DELETE FROM stock_movements");
                         $stmtSm->execute();
                         $countSm = $stmtSm->rowCount();
+
+                        $summary[] = "Stok: $countStocks item produk di SELURUH CABANG ($countBranches cabang) di-reset ke 0 ($countSm mutasi stok dibersihkan)";
                     }
-                    $summary[] = "Stok: $countStocks produk di-reset ke 0 ($countSm mutasi dibersihkan)";
                 }
 
                 // ----------------------------------------------------

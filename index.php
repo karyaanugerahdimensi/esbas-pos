@@ -2216,9 +2216,9 @@ $appVersionData = getAppVersionData();
                                 <option value="ALL">🌐 Semua Cabang (Konsolidasi Global)</option>
                             </select>
                         </div>
-                        <button onclick="openMasterResetModal({ stocks: true })" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-2xs transition-colors" title="Reset seluruh persediaan stok fisik menjadi 0 (Superadmin Only)">
+                        <button onclick="openMasterResetModal({ stocks: true, branch_id: (document.getElementById('stock-branch-select') ? document.getElementById('stock-branch-select').value : 'ALL') })" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-2xs transition-colors" title="Reset persediaan stok fisik menjadi 0 (Superadmin Only)">
                             <i data-lucide="package-x" class="w-4 h-4 text-rose-600"></i>
-                            <span>Reset Stok Cabang</span>
+                            <span id="btn-stock-reset-label">Reset Stok Cabang</span>
                         </button>
                         <button onclick="openStockAdjustModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-2">
                             <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
@@ -5803,7 +5803,17 @@ $appVersionData = getAppVersionData();
                         </label>
                         <span id="reset-scope-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800">Global (Semua Cabang)</span>
                     </div>
-                    <select id="master-reset-branch-select" onchange="updateResetScopeInfo()" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500">
+                    <!-- Tombol Cepat Pilihan Scope: Semua Cabang vs Cabang Tertentu -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="setMasterResetTargetBranch('ALL')" id="btn-scope-all" class="py-2 px-3 rounded-xl border text-[11px] font-bold flex items-center justify-center space-x-1.5 transition-all bg-rose-50 border-rose-600 text-rose-800 shadow-xs">
+                            <span>🌐 Semua Cabang (Global)</span>
+                        </button>
+                        <button type="button" onclick="setMasterResetTargetBranch('SPECIFIC')" id="btn-scope-specific" class="py-2 px-3 rounded-xl border text-[11px] font-bold flex items-center justify-center space-x-1.5 transition-all bg-white border-slate-300 text-slate-600 hover:border-slate-400">
+                            <span>📍 Cabang Spesifik</span>
+                        </button>
+                    </div>
+
+                    <select id="master-reset-branch-select" onchange="updateResetScopeInfo()" class="w-full p-2.5 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-inner">
                         <option value="ALL">🌐 SEMUA CABANG (Global Reset - Seluruh Database)</option>
                     </select>
                     <p id="reset-scope-desc" class="text-[11px] text-slate-500">Operasi akan mengeksekusi reset pada <b>seluruh cabang toko</b> tanpa kecuali.</p>
@@ -16007,6 +16017,18 @@ Manager / Supervisor: __________________
                 }
             }
 
+            // Update Label Tombol Reset Stok sesuai cabang yang sedang dilihat
+            const btnResetLabel = document.getElementById('btn-stock-reset-label');
+            if (btnResetLabel) {
+                if (isGlobal) {
+                    btnResetLabel.innerText = 'Reset Stok Semua Cabang (Global)';
+                } else {
+                    const brObj = (state.branches || []).find(b => b.id == bId);
+                    const brTitle = brObj ? brObj.name : `Cabang #${bId}`;
+                    btnResetLabel.innerText = `Reset Stok ${brTitle}`;
+                }
+            }
+
             const res = await fetch(`api.php?action=get_inventory_stocks&branch_id=${bId}`);
             const data = await res.json();
             if (!data.success) {
@@ -21294,18 +21316,55 @@ Manager / Supervisor: __________________
         // ==============================================================
         // MASTER RESET & PEMBERSIHAN DATA CABANG (GRANULAR DATA PURGE)
         // ==============================================================
+        function setMasterResetTargetBranch(scope) {
+            const select = document.getElementById('master-reset-branch-select');
+            if (!select) return;
+            if (scope === 'ALL') {
+                select.value = 'ALL';
+            } else if (scope === 'SPECIFIC') {
+                const stockSelect = document.getElementById('stock-branch-select');
+                if (stockSelect && stockSelect.value && stockSelect.value !== 'ALL') {
+                    select.value = stockSelect.value;
+                } else if (state.currentBranch && state.currentBranch.id) {
+                    select.value = String(state.currentBranch.id);
+                } else if (select.options.length > 1) {
+                    select.selectedIndex = 1;
+                }
+            } else {
+                select.value = String(scope);
+            }
+            updateResetScopeInfo();
+        }
+
         function openMasterResetModal(preselectOpts = {}) {
+            // Tentukan target branch ID:
+            // 1. Dari preselectOpts.branch_id jika didefinisikan
+            // 2. Jika tidak ada dan sedang di tab stok, baca stock-branch-select
+            // 3. Fallback ke state.currentBranch.id atau 'ALL'
+            let targetBranch = preselectOpts.branch_id;
+            if (targetBranch === undefined || targetBranch === null || targetBranch === '') {
+                const stockSelect = document.getElementById('stock-branch-select');
+                if (stockSelect && stockSelect.value) {
+                    targetBranch = stockSelect.value;
+                } else if (state.currentBranch && state.currentBranch.id) {
+                    targetBranch = String(state.currentBranch.id);
+                } else {
+                    targetBranch = 'ALL';
+                }
+            }
+
             // Populate branch dropdown
             const branchSelect = document.getElementById('master-reset-branch-select');
             if (branchSelect) {
                 let html = '<option value="ALL">🌐 SEMUA CABANG (Global Reset - Seluruh Database)</option>';
                 if (state.branches && state.branches.length > 0) {
                     state.branches.forEach(b => {
-                        const isCurrent = (state.currentBranch && state.currentBranch.id == b.id) ? 'selected' : '';
-                        html += `<option value="${b.id}" ${isCurrent}>📍 Cabang: ${b.name} (${b.code || ''})</option>`;
+                        const isSel = (String(targetBranch) === String(b.id)) ? 'selected' : '';
+                        html += `<option value="${b.id}" ${isSel}>📍 Cabang: ${b.name} (${b.code || ''})</option>`;
                     });
                 }
                 branchSelect.innerHTML = html;
+                branchSelect.value = String(targetBranch);
             }
 
             // Set checkboxes based on preselectOpts
@@ -21375,18 +21434,32 @@ Manager / Supervisor: __________________
             const select = document.getElementById('master-reset-branch-select');
             const badge = document.getElementById('reset-scope-badge');
             const desc = document.getElementById('reset-scope-desc');
+            const btnAll = document.getElementById('btn-scope-all');
+            const btnSpec = document.getElementById('btn-scope-specific');
             if (!select || !badge || !desc) return;
 
             const val = select.value;
             if (val === 'ALL') {
-                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800';
-                badge.innerText = 'Global (Semua Cabang)';
-                desc.innerHTML = 'Operasi akan mengeksekusi reset pada <b>seluruh cabang toko</b> di seluruh database secara simultan.';
+                badge.className = 'px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-600 text-white shadow-xs';
+                badge.innerText = '🌐 SEMUA CABANG (GLOBAL)';
+                desc.innerHTML = '<span class="text-rose-700 font-bold">PERINGATAN:</span> Operasi akan mereset data pada <b>SELURUH CABANG</b> (Multi-Cabang) di seluruh database sistem secara serentak!';
+                if (btnAll) {
+                    btnAll.className = 'py-2 px-3 rounded-xl border-2 text-[11px] font-black flex items-center justify-center space-x-1.5 transition-all bg-rose-50 border-rose-600 text-rose-800 shadow-xs';
+                }
+                if (btnSpec) {
+                    btnSpec.className = 'py-2 px-3 rounded-xl border text-[11px] font-bold flex items-center justify-center space-x-1.5 transition-all bg-white border-slate-300 text-slate-600 hover:border-slate-400';
+                }
             } else {
                 const text = select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : `Cabang #${val}`;
-                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800';
-                badge.innerText = 'Spesifik: ' + text.replace('📍 Cabang: ', '');
-                desc.innerHTML = `Operasi reset <b>HANYA</b> akan berdampak pada <b>${text}</b>. Cabang lainnya tetap utuh dan aman.`;
+                badge.className = 'px-2.5 py-1 rounded-full text-[10px] font-black bg-indigo-600 text-white shadow-xs';
+                badge.innerText = '📍 ' + text.replace('📍 Cabang: ', '');
+                desc.innerHTML = `Operasi reset <b>HANYA BERDAMPAK</b> pada <b>${text}</b>. Cabang lainnya tetap utuh dan aman.`;
+                if (btnAll) {
+                    btnAll.className = 'py-2 px-3 rounded-xl border text-[11px] font-bold flex items-center justify-center space-x-1.5 transition-all bg-white border-slate-300 text-slate-600 hover:border-slate-400';
+                }
+                if (btnSpec) {
+                    btnSpec.className = 'py-2 px-3 rounded-xl border-2 text-[11px] font-black flex items-center justify-center space-x-1.5 transition-all bg-indigo-50 border-indigo-600 text-indigo-800 shadow-xs';
+                }
             }
         }
 
@@ -21459,7 +21532,7 @@ Manager / Supervisor: __________________
                     if (typeof loadSalesReports === 'function') loadSalesReports();
                     if (typeof loadBomUsageReport === 'function') loadBomUsageReport();
                     if (typeof loadShiftReports === 'function') loadShiftReports();
-                    if (typeof loadInventoryStocks === 'function') loadInventoryStocks();
+                    if (typeof loadStockInventory === 'function') loadStockInventory();
                     if (typeof loadStockMovements === 'function') loadStockMovements();
                     if (typeof loadReceivablesReport === 'function') loadReceivablesReport();
                     if (typeof loadSaleCancellations === 'function') loadSaleCancellations();

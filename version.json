@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.22",
-  "build": "20261024-03",
+  "version": "1.2.23",
+  "build": "20261024-04",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.23",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "Penyempurnaan Reset Stok Multi-Cabang Presisi & Integrasi Pemilih Cabang Aktif",
+      "description": "Menyelesaikan kendala reset stok yang sebelumnya hanya berdampak pada cabang Pusat Cimahi dan tidak mereset cabang lainnya: (1) Menyelaraskan integrasi tombol 'Reset Stok Cabang' di Tab Manajemen Stok agar secara otomatis mendeteksi dan mengoper cabang yang sedang aktif dipilih pada dropdown (misal Cabang Buahbatu, Cabang Ciganitri, atau Semua Cabang Global), meniadakan penguncian semu ke cabang login. (2) Menambahkan tombol cepat alih lingkup pada modal Master Reset: 'Semua Cabang (Global)' dan 'Cabang Spesifik' lengkap dengan badge visual dan deskripsi peringatan yang dinamis. (3) Memperbaiki galat nama fungsi pembaruan tabel stok pasca-reset di frontend (loadStockInventory), menjamin tabel saldo stok langsung ter-reload seketika menjadi 0. (4) Mengubah default inisialisasi stok produk/cabang baru dari 50 menjadi 0 pada api.php serta memastikan kueri reset stok multi-cabang mengeksekusi pembersihan stok fisik dan kartu mutasi secara menyeluruh.",
+      "rollback_command": "git checkout v1.2.22"
+    },
     {
       "version": "1.2.22",
       "commit": "HEAD",
