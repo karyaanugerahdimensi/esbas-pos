@@ -4000,7 +4000,13 @@ try {
 
                 // Resolusi Stok Acuan Shift sebelumnya (Stok malam kemarin atau sisa serah terima shift 1)
                 $refQty = $bStock;
-                if (!empty($lastClosingItems) && isset($lastClosingItems[$pId])) {
+                $isPrevFinal = $lastShift && !empty($lastShift['is_final_shift']);
+                $isCapSku = ($sku === 'RAW-089' || $sku === 'RAW-020' || stripos($r['name'] ?? '', 'Tutup Galon') !== false);
+
+                if ($isPrevFinal && $isCapSku && !$isContinuation) {
+                    // Sisa tutup semalam telah diretur ke gudang, sehingga stok fisik semalam di toko bersih 0
+                    $refQty = 0;
+                } elseif (!empty($lastClosingItems) && isset($lastClosingItems[$pId])) {
                     $refQty = (int)$lastClosingItems[$pId];
                 } elseif (!empty($lastClosingItems) && isset($lastClosingItems[$sku])) {
                     $refQty = (int)$lastClosingItems[$sku];
@@ -4439,6 +4445,26 @@ try {
                 // Fail-safe jika tabel/kolom sedang disinkronisasi
             }
 
+            // Hitung total penjualan galon pada shift ini untuk analisis rekonsiliasi tutup galon & stok
+            $stmtGalonSold = $pdo->prepare("
+                SELECT si.product_id, p.name, p.sku, COALESCE(SUM(si.qty), 0) as total_sold
+                FROM sale_items si
+                JOIN sales s ON s.id = si.sale_id
+                JOIN products p ON p.id = si.product_id
+                WHERE s.shift_id = ? AND (p.unit = 'galon' OR p.name LIKE '%Galon%')
+                GROUP BY si.product_id, p.name, p.sku
+            ");
+            $stmtGalonSold->execute([$shiftId]);
+            $galonSoldList = $stmtGalonSold->fetchAll(PDO::FETCH_ASSOC);
+            $totalGalonSold = 0;
+            $galonSoldBySku = [];
+            foreach ($galonSoldList as $gs) {
+                $q = (int)$gs['total_sold'];
+                $totalGalonSold += $q;
+                $galonSoldBySku[$gs['sku']] = $q;
+                $galonSoldBySku[(int)$gs['product_id']] = $q;
+            }
+
             echo json_encode([
                 'success' => true,
                 'shift' => $shift,
@@ -4446,6 +4472,9 @@ try {
                 'cash_sales' => $cashSales,
                 'expected_cash' => $expectedCash,
                 'total_transactions' => $txCount,
+                'total_galon_sold' => $totalGalonSold,
+                'galon_sold_breakdown' => $galonSoldBySku,
+                'target_closing_galon' => 10,
                 'items' => $closingItems,
                 'expense_categories' => $expenseCategories,
                 'branch_employees' => $branchEmployees,
@@ -4783,14 +4812,46 @@ try {
                 $stmtUpdBs = $pdo->prepare("UPDATE branch_stocks SET stock = ? WHERE branch_id = ? AND product_id = ?");
                 $stmtInsBs = $pdo->prepare("INSERT INTO branch_stocks (branch_id, product_id, stock, local_price, local_cogs) VALUES (?, ?, ?, 0, 0)");
 
+                $stmtProdInfo = $pdo->prepare("SELECT id, sku, name, product_type, unit FROM products WHERE id = ?");
+
                 foreach ($closingMap as $pId => $closeQty) {
                     $pId = (int)$pId;
                     if ($pId <= 0) continue;
-                    $stmtCheckBs->execute([$shift['branch_id'], $pId]);
-                    if ($stmtCheckBs->fetchColumn()) {
-                        $stmtUpdBs->execute([$closeQty, $shift['branch_id'], $pId]);
+                    
+                    $stmtProdInfo->execute([$pId]);
+                    $pInfo = $stmtProdInfo->fetch(PDO::FETCH_ASSOC);
+                    $isCapItem = $pInfo && ($pInfo['sku'] === 'RAW-089' || $pInfo['sku'] === 'RAW-020' || stripos($pInfo['name'], 'Tutup Galon') !== false);
+
+                    // Jika ini adalah Tutup Toko Hari Ini (isFinalShift) dan item adalah Tutup Galon (Bahan Baku),
+                    // sisa tutup yang tidak terpakai diretur ke gudang sehingga stok cabang untuk tutup dinolkan (0)
+                    if ($isFinalShift && $isCapItem) {
+                        $returnedCaps = (int)$closeQty;
+                        $stmtCheckBs->execute([$shift['branch_id'], $pId]);
+                        if ($stmtCheckBs->fetchColumn()) {
+                            $stmtUpdBs->execute([0, $shift['branch_id'], $pId]);
+                        } else {
+                            $stmtInsBs->execute([$shift['branch_id'], $pId, 0]);
+                        }
+
+                        // Catat kartu mutasi retur sisa tutup galon ke gudang
+                        if ($returnedCaps > 0) {
+                            $stmtMoveRet = $pdo->prepare("
+                                INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
+                                VALUES (?, ?, 'STOCK_OUT_RETURN', ?, ?, 0, ?, ?, ?)
+                            ");
+                            $stmtMoveRet->execute([
+                                $shift['branch_id'], $pId, -$returnedCaps, $returnedCaps, 'RETUR-SHIFT-' . $shiftId,
+                                "Retur fisik sisa {$returnedCaps} pcs {$pInfo['name']} ke gudang saat tutup toko", $shift['user_id']
+                            ]);
+                        }
                     } else {
-                        $stmtInsBs->execute([$shift['branch_id'], $pId, $closeQty]);
+                        // Untuk produk jadi (misal 10 galon) atau item lainnya, simpan stok fisik sesuai laporan closing
+                        $stmtCheckBs->execute([$shift['branch_id'], $pId]);
+                        if ($stmtCheckBs->fetchColumn()) {
+                            $stmtUpdBs->execute([$closeQty, $shift['branch_id'], $pId]);
+                        } else {
+                            $stmtInsBs->execute([$shift['branch_id'], $pId, $closeQty]);
+                        }
                     }
                 }
 

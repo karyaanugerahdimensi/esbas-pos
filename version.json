@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.39",
-  "build": "20261024-20",
+  "version": "1.2.40",
+  "build": "20261024-21",
   "release_date": "2026-10-24",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.40",
+      "commit": "HEAD",
+      "date": "2026-10-24",
+      "title": "SOP Standarisasi Stok Produk Jadi 10 Galon Closing Harian & Otomatisasi Retur Sisa Tutup Galon",
+      "description": "Mengimplementasikan alur perhitungan dan standarisasi siklus harian stok produk jadi dan bahan baku tutup galon: (1) Menetapkan kebijakan stok produk jadi galon (Air Mineral Galon 19L / Air RO Galon 19L) wajib standby 10 galon pada penutupan toko harian (closing shift) sebagai stok awal pagi esok hari. (2) Menambahkan Kartu Audit Rekonsiliasi Tutup Galon (Live Audit SOP Card) pada modal Closing Shift yang secara otomatis menghitung: Total Galon Terjual di shift ini, Tutup Terpakai (1 galon = 1 tutup), dan panduan sisa tutup yang harus diretur. (3) Backend api.php pada close_shift dengan status Tutup Toko (is_final_shift = 1) secara otomatis meretur sisa fisik bahan baku tutup galon ke gudang pusat (stok cabang dinolkan) serta mencatat mutasi kartu pergerakan stok 'STOCK_OUT_RETURN'. (4) Backend api.php pada get_opening_shift_data secara otomatis menyajikan stok acuan malam kemarin: 10 galon jadi (terkunci) dan 0 tutup galon (bersih diretur), sehingga kasir pagi cukup menginput pasokan tutup baru masuk (misal 50 pcs) di kolom Tambah Stok Baru Pagi (+).",
+      "rollback_command": "git checkout v1.2.39"
+    },
     {
       "version": "1.2.39",
       "commit": "HEAD",

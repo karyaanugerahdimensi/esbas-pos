@@ -10254,8 +10254,11 @@ try {
                         expectedCash: expectedCash,
                         categories: closingData?.expense_categories || [],
                         employees: closingData?.branch_employees || [],
-                        waterMeter: waterMeter
+                        waterMeter: waterMeter,
+                        totalGalonSold: closingData?.total_galon_sold || 0
                     };
+
+                    const totalGalonSold = closingData?.total_galon_sold || 0;
 
                     let closingItemsRows = '';
                     if (items.length > 0) {
@@ -10267,6 +10270,18 @@ try {
 
                             const itemName = escapeHtml(item.name || item.sku);
                             const itemUnit = escapeHtml(item.unit || 'pcs');
+                            const isGalonFg = (item.unit === 'galon' || (item.name || '').toLowerCase().includes('galon')) && item.product_type === 'FINISHED_GOODS';
+                            const isCapRaw = (item.sku === 'RAW-089' || item.sku === 'RAW-020' || (item.name || '').toLowerCase().includes('tutup galon'));
+
+                            let sopBadge = '';
+                            let placeholderText = '0';
+                            if (isGalonFg) {
+                                sopBadge = `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">🎯 Standar Closing: 10 Galon (Wajib Standby)</span>`;
+                                placeholderText = '10';
+                            } else if (isCapRaw) {
+                                sopBadge = `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300">🔄 Sisa Fisik Diretur ke Gudang</span>`;
+                                placeholderText = 'Sisa retur...';
+                            }
 
                             return `
                                 <div class="bg-white/90 p-2.5 sm:p-3 rounded-2xl border border-slate-200 shadow-2xs grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
@@ -10274,6 +10289,7 @@ try {
                                         <div class="flex items-center gap-1.5 flex-wrap">
                                             <span class="text-xs font-black text-slate-800 uppercase leading-snug break-words">${itemName}</span>
                                             <span class="text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded font-bold shrink-0">${itemUnit}</span>
+                                            ${sopBadge}
                                         </div>
                                         <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${item.sku}</span>
                                         <span class="block text-[10px] text-indigo-700 font-semibold mt-0.5">Stok Awal Pagi: <b>${item.opening_qty} ${itemUnit}</b></span>
@@ -10286,7 +10302,7 @@ try {
                                     </div>
                                     <div class="sm:col-span-4">
                                         <div class="relative">
-                                            <input type="number" ${legacyId} data-product-id="${item.product_id}" data-product-name="${itemName}" data-unit="${itemUnit}" data-opening-qty="${item.opening_qty}" min="0" value="" placeholder="0" class="shift-closing-item-input w-full text-center py-2 px-3 bg-white border border-rose-200 rounded-xl font-black text-slate-900 text-sm focus:ring-2 focus:ring-rose-500 shadow-inner">
+                                            <input type="number" ${legacyId} data-product-id="${item.product_id}" data-product-name="${itemName}" data-unit="${itemUnit}" data-opening-qty="${item.opening_qty}" min="0" value="" placeholder="${placeholderText}" class="shift-closing-item-input w-full text-center py-2 px-3 bg-white border border-rose-200 rounded-xl font-black text-slate-900 text-sm focus:ring-2 focus:ring-rose-500 shadow-inner">
                                         </div>
                                     </div>
                                 </div>
@@ -10443,6 +10459,37 @@ try {
                         <!-- Baris Item Komparasi -->
                         <div class="space-y-2.5">
                             ${closingItemsRows}
+                        </div>
+
+                        <!-- Kartu Rekonsiliasi Tutup Galon & Target Stok Galon (Live Audit SOP Card) -->
+                        <div class="p-3.5 bg-gradient-to-r from-emerald-50 via-teal-50/50 to-sky-50 rounded-2xl border border-emerald-200 text-xs space-y-2">
+                            <div class="flex items-center justify-between border-b border-emerald-200/60 pb-1.5 flex-wrap gap-1">
+                                <div class="flex items-center space-x-1.5 font-black text-emerald-950">
+                                    <span>📊</span>
+                                    <span>Rekonsiliasi Tutup Galon & Kepatuhan Stok Malam:</span>
+                                </div>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">SOP Standar 10 Galon Standby</span>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px]">
+                                <div class="bg-white/90 p-2 rounded-xl border border-emerald-100 shadow-2xs">
+                                    <span class="text-[10px] text-slate-500 block uppercase font-bold">Total Galon Terjual</span>
+                                    <span class="font-mono font-black text-sm text-indigo-700">${totalGalonSold} Galon</span>
+                                    <span class="text-[9px] text-slate-400 block mt-0.5">Penjualan POS Shift Ini</span>
+                                </div>
+                                <div class="bg-white/90 p-2 rounded-xl border border-emerald-100 shadow-2xs">
+                                    <span class="text-[10px] text-slate-500 block uppercase font-bold">Tutup Terpakai</span>
+                                    <span class="font-mono font-black text-sm text-emerald-700">${totalGalonSold} Pcs</span>
+                                    <span class="text-[9px] text-slate-400 block mt-0.5">1 Galon = 1 Tutup Baru</span>
+                                </div>
+                                <div class="bg-white/90 p-2 rounded-xl border border-emerald-100 shadow-2xs">
+                                    <span class="text-[10px] text-slate-500 block uppercase font-bold">Stok Produk Jadi Malam</span>
+                                    <span class="font-mono font-black text-sm text-emerald-900">10 Galon (Wajib)</span>
+                                    <span class="text-[9px] text-emerald-600 block mt-0.5">Siap Buka Shift Esok Hari</span>
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-slate-600 leading-relaxed italic pt-0.5">
+                                💡 <b>Catatan SOP:</b> Sisa fisik bahan baku Tutup Galon yang belum terpakai diinput pada tabel di atas untuk <b>diretur ke gudang</b> saat Tutup Toko, sehingga stok cabang esok pagi dimulai bersih dari 0 pcs.
+                            </p>
                         </div>
 
                         <div class="p-3 bg-amber-50/80 rounded-2xl border border-amber-200 text-[11px] text-amber-900 flex items-start space-x-2">
