@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.42",
-  "build": "20261025-01",
+  "version": "1.2.43",
+  "build": "20261025-02",
   "release_date": "2026-10-25",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.43",
+      "commit": "HEAD",
+      "date": "2026-10-25",
+      "title": "Optimasi Pemotongan BOM On-Demand Proporsional Terhadap Stok Produk Jadi Tersedia",
+      "description": "Menyempurnakan kalkulasi pemotongan bahan baku BOM (Base BOM & Variant BOM) pada transaksi penjualan kasir (checkout_sale): (1) Memisahkan pemenuhan pesanan antara stok produk jadi yang sudah tersedia di toko dengan kebutuhan produksi on-demand: onDemandQty = max(0, qty - currentStock). (2) Unit penjualan yang dipenuhi langsung dari stok produk jadi yang sudah ada TIDAK memotong bahan baku lagi karena bahan bakunya sudah dikonsumsi pada proses produksi/shift sebelumnya. (3) Bahan baku BOM (air baku, tutup galon, tisu) HANYA dipotong sebesar kuantitas yang diproduksi on-demand (onDemandQty > 0), mengeliminasi pemotongan ganda (over-deduction). (4) Pada pembatalan transaksi Super Admin (void_sale), pengembalian bahan baku BOM diselaraskan persis sesuai log pemotongan aktual yang tercatat pada kartu mutasi stok (stock_movements). (5) Mengoreksi saldo persediaan riil pada pengujian sebelumnya menjadi Air Baku 99.800 L, Tisu 990 pcs, dan Tutup Mineral 40 pcs.",
+      "rollback_command": "git checkout v1.2.42"
+    },
     {
       "version": "1.2.42",
       "commit": "HEAD",

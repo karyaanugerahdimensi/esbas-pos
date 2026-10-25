@@ -5623,8 +5623,16 @@ try {
                 }
 
                 // Deduct finished goods stock if item tracks physical stock (Mode 1 Wajib Di-Stok atau Mode 2 Hibrida)
+                $onDemandQty = (float)$qty;
+                $fromStockQty = 0;
+
                 if ($tracksPhysicalStock) {
                     $currentStock = (float)$stockRow['stock'];
+                    // Kuantitas yang dipenuhi langsung dari stok fisik barang jadi yang sudah tersedia di toko
+                    $fromStockQty = min($currentStock, (float)$qty);
+                    // Kuantitas yang diproduksi on-demand (memerlukan konsumsi bahan baku aktif hari ini)
+                    $onDemandQty = max(0, (float)$qty - $currentStock);
+
                     // Sesuai aturan kombinasi stok on-demand: jika penjualan melebihi stok yang ada,
                     // stok akhir produk jadi tidak menjadi minus, melainkan tetap di-0 kan.
                     $newStock = max(0, $currentStock - $qty);
@@ -5666,8 +5674,10 @@ try {
 
                 // ==========================================
                 // LAYER 1: BASE BOM AUTO DEDUCTION FOR RAW MATERIALS
+                // HANYA dipotong untuk kuantitas on-demand ($onDemandQty > 0)
+                // Kuantitas yang diambil dari stok fisik produk jadi kemarin TIDAK memotong BOM lagi
                 // ==========================================
-                if (!empty($stockRow['has_bom'])) {
+                if (!empty($stockRow['has_bom']) && $onDemandQty > 0) {
                     $stmtRecipe = $pdo->prepare("
                         SELECT pr.ingredient_product_id, pr.qty_needed, pr.unit, p.name as ing_name, p.sku as ing_sku, bs.stock as ing_stock
                         FROM product_recipes pr
@@ -5692,7 +5702,7 @@ try {
                             continue;
                         }
 
-                        $totalIngNeeded = $r['qty_needed'] * $qty;
+                        $totalIngNeeded = $r['qty_needed'] * $onDemandQty;
                         $curIngStock = (float)$r['ing_stock'];
                         $newIngStock = max(0, $curIngStock - $totalIngNeeded);
 
@@ -5701,22 +5711,27 @@ try {
                             ->execute([$totalIngNeeded, $branchId, $ingId]);
 
                         // Record Stock Movement for Ingredient
+                        $noteText = ($onDemandQty < $qty)
+                            ? "Konsumsi Base BOM ({$onDemandQty}x on-demand, {$fromStockQty}x dari stok produk jadi) untuk {$qty}x {$dispItemName}"
+                            : "Konsumsi Base BOM untuk {$qty}x {$dispItemName}";
+
                         $pdo->prepare("
                             INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
                             VALUES (?, ?, 'BOM_DEDUCTION', ?, ?, ?, ?, ?, ?)
                         ")->execute([
                             $branchId, $ingId, -$totalIngNeeded, $curIngStock, $newIngStock,
-                            $invoiceNumber, "Konsumsi Base BOM untuk {$qty}x {$dispItemName}", $userId
+                            $invoiceNumber, $noteText, $userId
                         ]);
                     }
                 }
 
                 // ==========================================
                 // LAYER 2: VARIANT BOM AUTO DEDUCTION (Pilihan Varian Potong BOM)
+                // HANYA dipotong untuk kuantitas on-demand ($onDemandQty > 0)
                 // ==========================================
-                if (!empty($varRecipes)) {
+                if (!empty($varRecipes) && $onDemandQty > 0) {
                     foreach ($varRecipes as $vr) {
-                        $totalVarIngNeeded = $vr['qty_needed'] * $qty;
+                        $totalVarIngNeeded = $vr['qty_needed'] * $onDemandQty;
                         $varIngId = (int)$vr['ingredient_product_id'];
                         // Ambil saldo aktual terbaru di cabang
                         $stmtCurStock = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
@@ -5729,12 +5744,16 @@ try {
                             ->execute([$totalVarIngNeeded, $branchId, $varIngId]);
 
                         // Record Stock Movement for Variant Ingredient
+                        $noteVarText = ($onDemandQty < $qty)
+                            ? "Konsumsi BOM Varian [{$variantName}] ({$onDemandQty}x on-demand, {$fromStockQty}x dari stok produk jadi) untuk {$qty}x {$stockRow['name']}"
+                            : "Konsumsi BOM Varian [{$variantName}] untuk {$qty}x {$stockRow['name']}";
+
                         $pdo->prepare("
                             INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
                             VALUES (?, ?, 'BOM_DEDUCTION', ?, ?, ?, ?, ?, ?)
                         ")->execute([
                             $branchId, $varIngId, -$totalVarIngNeeded, $curVarIngStock, $newVarIngStock,
-                            $invoiceNumber, "Konsumsi BOM Varian [{$variantName}] untuk {$qty}x {$stockRow['name']}", $userId
+                            $invoiceNumber, $noteVarText, $userId
                         ]);
                     }
                 }
@@ -9947,86 +9966,42 @@ try {
                 ]);
 
                 $restockedItemsSummary[] = "{$qty}x {$pName}";
+            }
 
-                // Pre-fetch variant recipes for deduplication
-                $varIngredientIds = [];
-                $varRecipes = [];
-                if ($variantId) {
-                    $stmtVarRecipe = $pdo->prepare("
-                        SELECT vr.ingredient_product_id, vr.qty_needed, vr.unit, vr.notes,
-                               p.name as ing_name, p.sku as ing_sku, bs.stock as ing_stock
-                        FROM variant_recipes vr
-                        JOIN products p ON p.id = vr.ingredient_product_id
-                        JOIN branch_stocks bs ON bs.product_id = vr.ingredient_product_id AND bs.branch_id = ?
-                        WHERE vr.variant_id = ?
-                    ");
-                    $stmtVarRecipe->execute([$realBranchId, $variantId]);
-                    $varRecipes = $stmtVarRecipe->fetchAll(PDO::FETCH_ASSOC);
-                    foreach ($varRecipes as $vr) {
-                        $varIngredientIds[(int)$vr['ingredient_product_id']] = true;
-                    }
-                }
+            // D. Kembalikan stok bahan baku BOM persis sesuai yang terpotong pada transaksi ini
+            $stmtActualBom = $pdo->prepare("
+                SELECT sm.product_id, SUM(ABS(sm.qty_change)) as total_deducted, p.name as ing_name
+                FROM stock_movements sm
+                JOIN products p ON p.id = sm.product_id
+                WHERE sm.reference_no = ? AND sm.movement_type = 'BOM_DEDUCTION' AND sm.branch_id = ?
+                GROUP BY sm.product_id, p.name
+            ");
+            $stmtActualBom->execute([$invNo, $realBranchId]);
+            $actualBomDeductions = $stmtActualBom->fetchAll(PDO::FETCH_ASSOC);
 
-                // D. Kembalikan stok bahan baku Base BOM jika ada
-                if (!empty($item['has_bom'])) {
-                    $stmtRecipe = $pdo->prepare("
-                        SELECT pr.ingredient_product_id, pr.qty_needed, pr.unit, p.name as ing_name, p.sku as ing_sku, bs.stock as ing_stock
-                        FROM product_recipes pr
-                        JOIN products p ON p.id = pr.ingredient_product_id
-                        JOIN branch_stocks bs ON bs.product_id = pr.ingredient_product_id AND bs.branch_id = ?
-                        WHERE pr.finished_product_id = ?
-                    ");
-                    $stmtRecipe->execute([$realBranchId, $pId]);
-                    $recipes = $stmtRecipe->fetchAll(PDO::FETCH_ASSOC);
+            if (!empty($actualBomDeductions)) {
+                foreach ($actualBomDeductions as $bdr) {
+                    $ingId = (int)$bdr['product_id'];
+                    $totalIngReturn = (float)$bdr['total_deducted'];
+                    if ($totalIngReturn <= 0) continue;
 
-                    foreach ($recipes as $r) {
-                        $ingId = (int)$r['ingredient_product_id'];
+                    $stmtCurIng = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                    $stmtCurIng->execute([$realBranchId, $ingId]);
+                    $curIngStock = (float)$stmtCurIng->fetchColumn();
+                    $newIngStock = $curIngStock + $totalIngReturn;
 
-                        // Proteksi Deduplikasi: Jika bahan baku ini diatur spesifik pada Resep Varian, abaikan di Base BOM
-                        if (isset($varIngredientIds[$ingId])) continue;
-                        $isLid = (stripos($r['ing_name'], 'tutup') !== false || in_array($r['ing_sku'], ['RAW-089', 'RAW-020']));
-                        if ($variantName && stripos($variantName, 'tanpa tutup') !== false && $isLid) continue;
+                    // Tambah stok bahan baku kembali
+                    $pdo->prepare("UPDATE branch_stocks SET stock = stock + ?, last_updated = datetime('now', 'localtime') WHERE branch_id = ? AND product_id = ?")
+                        ->execute([$totalIngReturn, $realBranchId, $ingId]);
 
-                        $totalIngReturn = $r['qty_needed'] * $qty;
-                        $curIngStock = (float)$r['ing_stock'];
-                        $newIngStock = $curIngStock + $totalIngReturn;
-
-                        // Tambah stok bahan baku kembali
-                        $pdo->prepare("UPDATE branch_stocks SET stock = stock + ?, last_updated = datetime('now', 'localtime') WHERE branch_id = ? AND product_id = ?")
-                            ->execute([$totalIngReturn, $realBranchId, $ingId]);
-
-                        // Catat Stock Movement untuk Bahan Baku BOM
-                        $pdo->prepare("
-                            INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
-                            VALUES (?, ?, 'BOM_RESTOCK_VOID', ?, ?, ?, ?, ?, ?)
-                        ")->execute([
-                            $realBranchId, $ingId, $totalIngReturn, $curIngStock, $newIngStock,
-                            $invNo, "Pengembalian bahan baku Base BOM ({$r['ing_name']}) karena transaksi {$invNo} dibatalkan", $superadminId
-                        ]);
-                    }
-                }
-
-                // E. Kembalikan stok bahan baku Variant BOM jika ada
-                if (!empty($varRecipes)) {
-                    foreach ($varRecipes as $vr) {
-                        $totalVarIngReturn = $vr['qty_needed'] * $qty;
-                        $varIngId = (int)$vr['ingredient_product_id'];
-                        $curVarIngStock = (float)$vr['ing_stock'];
-                        $newVarIngStock = $curVarIngStock + $totalVarIngReturn;
-
-                        // Tambah stok bahan varian kembali
-                        $pdo->prepare("UPDATE branch_stocks SET stock = stock + ?, last_updated = datetime('now', 'localtime') WHERE branch_id = ? AND product_id = ?")
-                            ->execute([$totalVarIngReturn, $realBranchId, $varIngId]);
-
-                        // Catat Stock Movement untuk Bahan Varian
-                        $pdo->prepare("
-                            INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
-                            VALUES (?, ?, 'BOM_RESTOCK_VOID', ?, ?, ?, ?, ?, ?)
-                        ")->execute([
-                            $realBranchId, $varIngId, $totalVarIngReturn, $curVarIngStock, $newVarIngStock,
-                            $invNo, "Pengembalian bahan baku BOM Varian ({$vr['ing_name']}) karena transaksi {$invNo} dibatalkan", $superadminId
-                        ]);
-                    }
+                    // Catat Stock Movement untuk Pengembalian Bahan BOM
+                    $pdo->prepare("
+                        INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
+                        VALUES (?, ?, 'BOM_RESTOCK_VOID', ?, ?, ?, ?, ?, ?)
+                    ")->execute([
+                        $realBranchId, $ingId, $totalIngReturn, $curIngStock, $newIngStock,
+                        $invNo, "Pengembalian bahan baku BOM ({$bdr['ing_name']}) karena transaksi {$invNo} dibatalkan", $superadminId
+                    ]);
                 }
             }
 
