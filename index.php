@@ -25844,17 +25844,6 @@ Manager / Supervisor: __________________
             }
         }
 
-                lucide.createIcons();
-            } catch (err) {
-                console.error('Error loading executive dashboard:', err);
-                if (!isAutoRefresh) alert('Terjadi kesalahan saat memuat data dashboard eksekutif.');
-            } finally {
-                if (refreshIcon) {
-                    setTimeout(() => { refreshIcon.classList.remove('animate-spin'); }, 400);
-                }
-            }
-        }
-
         // Keyboard Shortcut: F12 for Checkout
         window.addEventListener('keydown', (e) => {
             if (e.key === 'F12' && state.currentTab === 'pos') {
