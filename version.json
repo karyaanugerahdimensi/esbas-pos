@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.51",
-  "build": "20261026-06",
+  "version": "1.2.52",
+  "build": "20261026-07",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.52",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Konfirmasi Alert Closing Day pada Penutupan Shift Lanjutan & Aktivasi Kondisional Meteran Air",
+      "description": "Menyempurnakan alur penutupan shift lanjutan (Shift 2, Shift 3, dst): (1) Menampilkan alert konfirmasi saat Tutup Shift lanjutan untuk menanyakan apakah akan melakukan Closing Day (Tutup Toko Hari Ini). (2) Jika dipilih Closing Day (atau opsi Closing Day dicentang aktif), input meteran air mesin isi ulang otomatis aktif dan operasional hari ini berakhir saat disimpan. (3) Jika dipilih Tidak (opsi Closing Day tidak dicentang), input meteran air dinonaktifkan dan shift ditutup sebagai serah terima ke shift berikutnya (masih ada shift lanjutan di hari yang sama). (4) Memastikan pada sisi backend (api.php) bahwa Closing Day hanya berakhir selama opsi is_final_shift dicentang aktif (1), bukan berdasarkan nomor urut shift >= 2.",
+      "rollback_command": "git checkout v1.2.51"
+    },
     {
       "version": "1.2.51",
       "commit": "HEAD",

@@ -4759,7 +4759,8 @@ try {
             $expectedCash = ($shift['initial_cash'] + $cashSales) - $totalDisbursements;
             $diff = $actualCash - $expectedCash;
 
-            $isFinalShift = isset($input['is_final_shift']) ? (int)$input['is_final_shift'] : (($shift['shift_number'] >= 2) ? 1 : 0);
+            // Closing Day (is_final_shift) HANYA berakhir selama opsi Closing Day dicentang aktif (1)
+            $isFinalShift = !empty($input['is_final_shift']) ? 1 : 0;
 
             $pdo->beginTransaction();
             try {
@@ -4853,18 +4854,18 @@ try {
                     'total_disbursements' => $totalDisbursements
                 ];
 
-                // Parse Meteran Air Display Counter Input
-                $meterToday = (isset($input['meter_today']) && $input['meter_today'] !== '') ? (float)$input['meter_today'] : null;
-                $meterYesterday = (isset($input['meter_yesterday']) && $input['meter_yesterday'] !== '') ? (float)$input['meter_yesterday'] : null;
-                $meterAdjustment = isset($input['meter_adjustment']) ? (float)$input['meter_adjustment'] : 0;
+                // Parse Meteran Air Display Counter Input (Hanya aktif jika opsi Closing Day / isFinalShift dicentang aktif)
+                $meterToday = ($isFinalShift === 1 && isset($input['meter_today']) && $input['meter_today'] !== '') ? (float)$input['meter_today'] : null;
+                $meterYesterday = ($isFinalShift === 1 && isset($input['meter_yesterday']) && $input['meter_yesterday'] !== '') ? (float)$input['meter_yesterday'] : null;
+                $meterAdjustment = ($isFinalShift === 1 && isset($input['meter_adjustment'])) ? (float)$input['meter_adjustment'] : 0;
                 $adjustmentType = trim($input['adjustment_type'] ?? 'PULSE');
                 if (!in_array($adjustmentType, ['PULSE', 'GALON'])) $adjustmentType = 'PULSE';
-                $adjustmentReason = trim($input['adjustment_reason'] ?? '');
+                $adjustmentReason = ($isFinalShift === 1) ? trim($input['adjustment_reason'] ?? '') : '';
 
                 $meterDiff = null;
                 $dispensedGalon = null;
 
-                if ($meterToday !== null) {
+                if ($isFinalShift === 1 && $meterToday !== null) {
                     if ($meterYesterday === null) {
                         try {
                             $stmtPrevM = $pdo->prepare("SELECT meter_today FROM water_meter_logs WHERE branch_id = ? ORDER BY id DESC LIMIT 1");
@@ -5050,79 +5051,81 @@ try {
                         ]);
                     }
 
-                    // B. Potong Otomatis Bahan Baku BOM Sesuai Kuantitas Fisik Produk Jadi yang Dibuat
-                    $variantIngredientsUsed = [];
+                    // B. Potong Otomatis Bahan Baku BOM Sesuai Kuantitas Fisik Produk Jadi yang Dibuat (Khusus saat Closing Day / isFinalShift aktif)
+                    if ($isFinalShift === 1) {
+                        $variantIngredientsUsed = [];
 
-                    // 1. Variant BOM (Tutup Galon Mineral / Tutup Galon RO dsb)
-                    $stmtVR = $pdo->prepare("
-                        SELECT vr.ingredient_product_id, vr.qty_needed, vr.unit, p.name as ing_name, p.sku as ing_sku, pv.variant_name
-                        FROM product_variants pv
-                        JOIN variant_recipes vr ON vr.variant_id = pv.id
-                        JOIN products p ON p.id = vr.ingredient_product_id
-                        WHERE pv.product_id = ?
-                    ");
-                    $stmtVR->execute([$fgId]);
-                    $varRecipes = $stmtVR->fetchAll(PDO::FETCH_ASSOC);
+                        // 1. Variant BOM (Tutup Galon Mineral / Tutup Galon RO dsb)
+                        $stmtVR = $pdo->prepare("
+                            SELECT vr.ingredient_product_id, vr.qty_needed, vr.unit, p.name as ing_name, p.sku as ing_sku, pv.variant_name
+                            FROM product_variants pv
+                            JOIN variant_recipes vr ON vr.variant_id = pv.id
+                            JOIN products p ON p.id = vr.ingredient_product_id
+                            WHERE pv.product_id = ?
+                        ");
+                        $stmtVR->execute([$fgId]);
+                        $varRecipes = $stmtVR->fetchAll(PDO::FETCH_ASSOC);
 
-                    foreach ($varRecipes as $vr) {
-                        $varIngId = (int)$vr['ingredient_product_id'];
-                        $variantIngredientsUsed[$varIngId] = true;
-                        $totalNeeded = (float)$vr['qty_needed'] * $fgQty;
-                        if ($totalNeeded <= 0) continue;
+                        foreach ($varRecipes as $vr) {
+                            $varIngId = (int)$vr['ingredient_product_id'];
+                            $variantIngredientsUsed[$varIngId] = true;
+                            $totalNeeded = (float)$vr['qty_needed'] * $fgQty;
+                            if ($totalNeeded <= 0) continue;
 
-                        $stmtCurVar = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
-                        $stmtCurVar->execute([$shift['branch_id'], $varIngId]);
-                        $curVarStock = (float)($stmtCurVar->fetchColumn() ?: 0);
-                        $newVarStock = max(0, $curVarStock - $totalNeeded);
+                            $stmtCurVar = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                            $stmtCurVar->execute([$shift['branch_id'], $varIngId]);
+                            $curVarStock = (float)($stmtCurVar->fetchColumn() ?: 0);
+                            $newVarStock = max(0, $curVarStock - $totalNeeded);
 
-                        $pdo->prepare("UPDATE branch_stocks SET stock = stock - ? WHERE branch_id = ? AND product_id = ?")
-                            ->execute([$totalNeeded, $shift['branch_id'], $varIngId]);
+                            $pdo->prepare("UPDATE branch_stocks SET stock = stock - ? WHERE branch_id = ? AND product_id = ?")
+                                ->execute([$totalNeeded, $shift['branch_id'], $varIngId]);
 
-                        $noteVar = "Konsumsi Variant BOM [{$vr['variant_name']}] ({$fgQty}x {$pInfo['name']}) untuk stok standby tutup toko";
-                        $pdo->prepare("
-                            INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
-                            VALUES (?, ?, 'BOM_DEDUCTION', ?, ?, ?, ?, ?, ?)
-                        ")->execute([
-                            $shift['branch_id'], $varIngId, -$totalNeeded, $curVarStock, $newVarStock,
-                            'CLOSING-SHIFT-' . $shiftId, $noteVar, $shift['user_id']
-                        ]);
-                    }
-
-                    // 2. Base BOM (Air Baku, Tisu Galon, dsb)
-                    $stmtBR = $pdo->prepare("
-                        SELECT pr.ingredient_product_id, pr.qty_needed, pr.unit, p.name as ing_name, p.sku as ing_sku
-                        FROM product_recipes pr
-                        JOIN products p ON p.id = pr.ingredient_product_id
-                        WHERE pr.finished_product_id = ?
-                    ");
-                    $stmtBR->execute([$fgId]);
-                    $baseRecipes = $stmtBR->fetchAll(PDO::FETCH_ASSOC);
-
-                    foreach ($baseRecipes as $br) {
-                        $ingId = (int)$br['ingredient_product_id'];
-                        if (isset($variantIngredientsUsed[$ingId])) {
-                            continue;
+                            $noteVar = "Konsumsi Variant BOM [{$vr['variant_name']}] ({$fgQty}x {$pInfo['name']}) untuk stok standby tutup toko";
+                            $pdo->prepare("
+                                INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
+                                VALUES (?, ?, 'BOM_DEDUCTION', ?, ?, ?, ?, ?, ?)
+                            ")->execute([
+                                $shift['branch_id'], $varIngId, -$totalNeeded, $curVarStock, $newVarStock,
+                                'CLOSING-SHIFT-' . $shiftId, $noteVar, $shift['user_id']
+                            ]);
                         }
 
-                        $totalNeeded = (float)$br['qty_needed'] * $fgQty;
-                        if ($totalNeeded <= 0) continue;
+                        // 2. Base BOM (Air Baku, Tisu Galon, dsb)
+                        $stmtBR = $pdo->prepare("
+                            SELECT pr.ingredient_product_id, pr.qty_needed, pr.unit, p.name as ing_name, p.sku as ing_sku
+                            FROM product_recipes pr
+                            JOIN products p ON p.id = pr.ingredient_product_id
+                            WHERE pr.finished_product_id = ?
+                        ");
+                        $stmtBR->execute([$fgId]);
+                        $baseRecipes = $stmtBR->fetchAll(PDO::FETCH_ASSOC);
 
-                        $stmtCurIng = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
-                        $stmtCurIng->execute([$shift['branch_id'], $ingId]);
-                        $curIngStock = (float)($stmtCurIng->fetchColumn() ?: 0);
-                        $newIngStock = max(0, $curIngStock - $totalNeeded);
+                        foreach ($baseRecipes as $br) {
+                            $ingId = (int)$br['ingredient_product_id'];
+                            if (isset($variantIngredientsUsed[$ingId])) {
+                                continue;
+                            }
 
-                        $pdo->prepare("UPDATE branch_stocks SET stock = stock - ? WHERE branch_id = ? AND product_id = ?")
-                            ->execute([$totalNeeded, $shift['branch_id'], $ingId]);
+                            $totalNeeded = (float)$br['qty_needed'] * $fgQty;
+                            if ($totalNeeded <= 0) continue;
 
-                        $noteBase = "Konsumsi Base BOM ({$fgQty}x {$pInfo['name']}) untuk stok standby tutup toko";
-                        $pdo->prepare("
-                            INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
-                            VALUES (?, ?, 'BOM_DEDUCTION', ?, ?, ?, ?, ?, ?)
-                        ")->execute([
-                            $shift['branch_id'], $ingId, -$totalNeeded, $curIngStock, $newIngStock,
-                            'CLOSING-SHIFT-' . $shiftId, $noteBase, $shift['user_id']
-                        ]);
+                            $stmtCurIng = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                            $stmtCurIng->execute([$shift['branch_id'], $ingId]);
+                            $curIngStock = (float)($stmtCurIng->fetchColumn() ?: 0);
+                            $newIngStock = max(0, $curIngStock - $totalNeeded);
+
+                            $pdo->prepare("UPDATE branch_stocks SET stock = stock - ? WHERE branch_id = ? AND product_id = ?")
+                                ->execute([$totalNeeded, $shift['branch_id'], $ingId]);
+
+                            $noteBase = "Konsumsi Base BOM ({$fgQty}x {$pInfo['name']}) untuk stok standby tutup toko";
+                            $pdo->prepare("
+                                INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
+                                VALUES (?, ?, 'BOM_DEDUCTION', ?, ?, ?, ?, ?, ?)
+                            ")->execute([
+                                $shift['branch_id'], $ingId, -$totalNeeded, $curIngStock, $newIngStock,
+                                'CLOSING-SHIFT-' . $shiftId, $noteBase, $shift['user_id']
+                            ]);
+                        }
                     }
                 }
 
@@ -5681,8 +5684,8 @@ try {
                     $dailyTotals['total_cash_difference'] += $diffCash;
                 }
 
-                // Cek apakah ini shift terakhir / penutupan toko malam
-                if ($s['status'] === 'CLOSED' && ((int)($s['is_final_shift'] ?? 0) === 1 || (int)($s['shift_number'] ?? 1) >= 2)) {
+                // Cek apakah ini shift terakhir / penutupan toko malam (HANYA jika opsi Closing Day / is_final_shift dicentang aktif)
+                if ($s['status'] === 'CLOSED' && (int)($s['is_final_shift'] ?? 0) === 1) {
                     $dailyTotals['is_store_closed'] = true;
                     $dailyTotals['final_closing_time'] = $s['end_time'];
                     $dailyTotals['final_cashier_name'] = $s['cashier_name'];

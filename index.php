@@ -10264,20 +10264,28 @@ try {
                 // ==========================================
                 // CLOSING SHIFT (TUTUP PENJUALAN / SHIFT TERAKHIR)
                 // ==========================================
-                const shiftNum = state.activeShift.shift_number || 1;
+                const shiftNum = parseInt(state.activeShift.shift_number) || 1;
                 const shiftName = state.activeShift.shift_name || ('Shift ' + shiftNum);
-                const isFinalCandidate = shiftNum >= 2;
+                let isFinalCandidate = false;
+                if (shiftNum >= 2) {
+                    isFinalCandidate = confirm(
+                        `KONFIRMASI PENUTUPAN ${shiftName.toUpperCase()}:\n\n` +
+                        `Apakah penutupan shift ini sekaligus untuk CLOSING DAY (Tutup Toko Hari Ini)?\n\n` +
+                        `• Klik [OK] jika YA (Closing Day / Tutup Toko Akhir Malam) → Opsi Closing Day dicentang aktif, Input Meteran Air menjadi aktif, dan operasional hari ini berakhir.\n` +
+                        `• Klik [Cancel / Batal] jika TIDAK → Masih ada shift berikutnya (Serah Terima ke Shift ${shiftNum + 1}) dan Input Meteran Air tetap nonaktif.`
+                    );
+                }
 
                 title.innerHTML = `
                     <div class="flex items-center space-x-2 flex-wrap">
                         <span>Closing ${escapeHtml(shiftName)}</span>
-                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black ${isFinalCandidate ? 'bg-rose-100 text-rose-800' : 'bg-indigo-100 text-indigo-800'} uppercase tracking-wider">
-                            ${isFinalCandidate ? 'Shift Terakhir / Tutup Toko Malam 🌙' : 'Serah Terima Antar Kasir (Shift 1) 🔄'}
+                        <span id="closing-shift-mode-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-black ${isFinalCandidate ? 'bg-rose-100 text-rose-800' : 'bg-indigo-100 text-indigo-800'} uppercase tracking-wider">
+                            ${isFinalCandidate ? 'Closing Day / Tutup Toko Malam 🌙' : `Serah Terima Antar Kasir (${escapeHtml(shiftName)} → Shift ${shiftNum + 1}) 🔄`}
                         </span>
                     </div>
                 `;
                 desc.innerText = `Cabang: ${state.currentBranch?.name || 'Cabang'} • Kasir: ${state.currentUser?.name || 'Kasir'} • Mulai: ${state.activeShift.start_time || '-'}`;
-                btn.innerText = isFinalCandidate ? 'Tutup Toko & Simpan Rekap Malam' : 'Tutup Shift 1 & Serah Terima Kasir';
+                btn.innerText = isFinalCandidate ? 'Tutup Toko (Closing Day) & Simpan Rekap Malam' : `Tutup ${shiftName} & Serah Terima (Lanjut Shift ${shiftNum + 1})`;
                 btn.className = 'py-3.5 px-5 bg-rose-600 hover:bg-rose-700 rounded-2xl text-xs font-black text-white shadow-lg shadow-rose-200 transition-all uppercase tracking-wider';
 
                 body.innerHTML = `
@@ -10594,12 +10602,12 @@ try {
                             <div class="sm:col-span-4 space-y-1">
                                 <label class="text-[11px] font-black text-sky-950 uppercase flex items-center justify-between">
                                     <span>Meter Hari Ini (Display):</span>
-                                    <span class="text-[10px] text-rose-500 font-bold">*Wajib shift akhir</span>
+                                    <span class="text-[10px] text-rose-500 font-bold">*Wajib Closing Day</span>
                                 </label>
                                 <div class="relative">
-                                    <input type="number" step="any" id="closing-meter-today" oninput="calculateWaterMeterOutput()" placeholder="Catat angka counter..." class="w-full py-2.5 px-3 bg-white border-2 border-sky-400 rounded-xl font-mono font-black text-sky-950 text-sm sm:text-base focus:ring-2 focus:ring-sky-500 shadow-inner">
+                                    <input type="number" step="any" id="closing-meter-today" ${isFinalCandidate ? '' : 'disabled'} oninput="calculateWaterMeterOutput()" placeholder="Catat angka counter..." class="w-full py-2.5 px-3 bg-white border-2 border-sky-400 rounded-xl font-mono font-black text-sky-950 text-sm sm:text-base focus:ring-2 focus:ring-sky-500 shadow-inner disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
                                 </div>
-                                <span class="block text-[9px] text-slate-400">Angka meteran saat penutupan shift</span>
+                                <span class="block text-[9px] text-slate-400">Angka meteran saat penutupan toko (Closing Day)</span>
                             </div>
 
                             <!-- Hasil Pengeluaran Air (Galon) -->
@@ -11312,7 +11320,12 @@ try {
         function toggleFinalShiftWaterMeter() {
             const chk = document.getElementById('check-is-final-shift');
             const meterSection = document.getElementById('closing-water-meter-section');
+            const meterTodayInput = document.getElementById('closing-meter-today');
+            const modeBadge = document.getElementById('closing-shift-mode-badge');
             const isChecked = chk ? chk.checked : false;
+            const shiftNum = parseInt(state.activeShift?.shift_number) || 1;
+            const shiftName = state.activeShift?.shift_name || ('Shift ' + shiftNum);
+
             if (meterSection) {
                 if (isChecked) {
                     meterSection.classList.remove('hidden');
@@ -11320,9 +11333,26 @@ try {
                     meterSection.classList.add('hidden');
                 }
             }
+            if (meterTodayInput) {
+                meterTodayInput.disabled = !isChecked;
+                if (!isChecked) {
+                    meterTodayInput.value = '';
+                    calculateWaterMeterOutput();
+                } else {
+                    setTimeout(() => meterTodayInput.focus(), 50);
+                }
+            }
+            if (modeBadge) {
+                modeBadge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-black ${isChecked ? 'bg-rose-100 text-rose-800' : 'bg-indigo-100 text-indigo-800'} uppercase tracking-wider`;
+                modeBadge.innerText = isChecked
+                    ? 'Closing Day / Tutup Toko Malam 🌙'
+                    : `Serah Terima Antar Kasir (${shiftName} → Shift ${shiftNum + 1}) 🔄`;
+            }
             const btn = document.getElementById('shift-modal-action-btn');
             if (btn) {
-                btn.innerText = isChecked ? 'TUTUP TOKO & SIMPAN REKAP MALAM' : 'TUTUP SHIFT 1 & SERAH TERIMA KASIR';
+                btn.innerText = isChecked
+                    ? 'TUTUP TOKO (CLOSING DAY) & SIMPAN REKAP MALAM'
+                    : `TUTUP ${shiftName.toUpperCase()} & SERAH TERIMA (LANJUT SHIFT ${shiftNum + 1})`;
             }
         }
 
@@ -12412,14 +12442,14 @@ try {
 
             container.innerHTML = shifts.map(s => {
                 const isOpen = s.status === 'OPEN';
-                const isFinal = s.is_final_shift === 1 || s.shift_number >= 2;
+                const isFinal = Number(s.is_final_shift) === 1;
                 const statusBadge = isOpen
                     ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">SEDANG BERJALAN 🟢</span>'
                     : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-200">SELESAI DITUTUP 🔒</span>';
 
                 const shiftTypeBadge = s.shift_number === 1
                     ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200">Shift 1 (Pagi) 🌅</span>'
-                    : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-200">Shift 2 (Siang/Malam) 🌤️</span>';
+                    : `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-200">${escapeHtml(s.shift_name || ('Shift ' + s.shift_number + ' (Siang/Malam)'))} 🌤️</span>`;
 
                 const finalBadge = isFinal && !isOpen
                     ? '<span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-50 text-rose-700 border border-rose-200">Tutup Toko Malam 🌙</span>'
