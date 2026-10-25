@@ -9672,6 +9672,604 @@ try {
         // ==========================================
         // 9b. MODUL LAPORAN & PELUNASAN PIUTANG USAHA (ACCOUNTS RECEIVABLE)
         // ==========================================
+        // ==========================================
+        // 10b. MODUL LAPORAN PENJUALAN MITRA (B2B PARTNER SALES REPORT)
+        // ==========================================
+        case 'partner_sales_report':
+            $curUser = $_SESSION['user'] ?? null;
+            $roleClean = strtoupper(str_replace('_', '', $curUser['role'] ?? ''));
+            $isSuperAdmin = in_array($roleClean, ['SUPERADMIN', 'SUPER_ADMIN']) || ($curUser['assigned_branch_ids'] ?? '') === 'ALL';
+            $isBranchManager = in_array($roleClean, ['BRANCHMANAGER', 'BRANCH_MANAGER', 'MANAGER']);
+
+            $periodType = strtolower(trim($_GET['period_type'] ?? 'monthly'));
+            $startDate = trim($_GET['start_date'] ?? '');
+            $endDate = trim($_GET['end_date'] ?? '');
+            $periodLabel = '';
+
+            if ($periodType === 'weekly') {
+                if (!empty($_GET['week_date'])) {
+                    $refTime = strtotime($_GET['week_date']);
+                } else if (!empty($startDate)) {
+                    $refTime = strtotime($startDate);
+                } else {
+                    $refTime = time();
+                }
+                $dayOfWeek = (int)date('N', $refTime);
+                $startDate = date('Y-m-d', strtotime('-' . ($dayOfWeek - 1) . ' days', $refTime));
+                $endDate = date('Y-m-d', strtotime('+' . (7 - $dayOfWeek) . ' days', $refTime));
+                $periodLabel = "Mingguan (" . date('d/m/Y', strtotime($startDate)) . " s/d " . date('d/m/Y', strtotime($endDate)) . ")";
+            } else if ($periodType === 'quarter') {
+                $q = isset($_GET['quarter']) ? (int)$_GET['quarter'] : (int)ceil(date('n') / 3);
+                $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
+                if ($q === 1) {
+                    $startDate = "$year-01-01";
+                    $endDate = "$year-03-31";
+                    $periodLabel = "Kuartal 1 (Jan - Mar $year)";
+                } else if ($q === 2) {
+                    $startDate = "$year-04-01";
+                    $endDate = "$year-06-30";
+                    $periodLabel = "Kuartal 2 (Apr - Jun $year)";
+                } else if ($q === 3) {
+                    $startDate = "$year-07-01";
+                    $endDate = "$year-09-30";
+                    $periodLabel = "Kuartal 3 (Jul - Sep $year)";
+                } else {
+                    $q = 4;
+                    $startDate = "$year-10-01";
+                    $endDate = "$year-12-31";
+                    $periodLabel = "Kuartal 4 (Okt - Des $year)";
+                }
+            } else if ($periodType === 'semester') {
+                $sem = isset($_GET['semester']) ? (int)$_GET['semester'] : (date('n') <= 6 ? 1 : 2);
+                $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
+                if ($sem === 1) {
+                    $startDate = "$year-01-01";
+                    $endDate = "$year-06-30";
+                    $periodLabel = "Semester 1 (Jan - Jun $year)";
+                } else {
+                    $startDate = "$year-07-01";
+                    $endDate = "$year-12-31";
+                    $periodLabel = "Semester 2 (Jul - Des $year)";
+                }
+            } else if ($periodType === 'yearly') {
+                $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
+                $startDate = "$year-01-01";
+                $endDate = "$year-12-31";
+                $periodLabel = "Tahun $year (01/01/$year s/d 31/12/$year)";
+            } else if ($periodType === 'custom') {
+                if (empty($startDate)) $startDate = date('Y-m-01');
+                if (empty($endDate)) $endDate = date('Y-m-d');
+                $periodLabel = "Rentang Kustom (" . date('d/m/Y', strtotime($startDate)) . " s/d " . date('d/m/Y', strtotime($endDate)) . ")";
+            } else {
+                $periodType = 'monthly';
+                $monthVal = trim($_GET['month'] ?? date('Y-m'));
+                if (!empty($monthVal) && preg_match('/^\d{4}-\d{2}$/', $monthVal)) {
+                    $startDate = $monthVal . '-01';
+                    $endDate = date('Y-m-t', strtotime($startDate));
+                } else {
+                    if (empty($startDate)) $startDate = date('Y-m-01');
+                    if (empty($endDate)) $endDate = date('Y-m-t', strtotime($startDate));
+                }
+                $indonesianMonths = [
+                    '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
+                    '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus',
+                    '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+                ];
+                $mCode = date('m', strtotime($startDate));
+                $yCode = date('Y', strtotime($startDate));
+                $periodLabel = "Bulan " . ($indonesianMonths[$mCode] ?? $mCode) . " $yCode";
+            }
+
+            $whereClause = "WHERE date(s.created_at) BETWEEN ? AND ? AND (s.status IS NULL OR s.status != 'CANCELLED') AND (UPPER(COALESCE(s.customer_category, '')) = 'MITRA' OR UPPER(COALESCE(c.category, '')) = 'MITRA' OR UPPER(COALESCE(s.sales_type, '')) LIKE '%MITRA%')";
+            $params = [$startDate, $endDate];
+
+            $branchId = !empty($_GET['branch_id']) && $_GET['branch_id'] !== 'ALL' ? (int)$_GET['branch_id'] : null;
+            if ($branchId) {
+                $whereClause .= " AND s.branch_id = ?";
+                $params[] = $branchId;
+            } else if ($isBranchManager && !$isSuperAdmin) {
+                $assignedIds = [];
+                if (!empty($curUser['assigned_branch_ids'])) {
+                    $dec = json_decode($curUser['assigned_branch_ids'], true);
+                    if (is_array($dec)) $assignedIds = array_map('intval', $dec);
+                }
+                if (empty($assignedIds) && !empty($curUser['branch_id'])) {
+                    $assignedIds = [(int)$curUser['branch_id']];
+                }
+                if (!empty($assignedIds)) {
+                    $inPlaceholders = implode(',', array_fill(0, count($assignedIds), '?'));
+                    $whereClause .= " AND s.branch_id IN ($inPlaceholders)";
+                    foreach ($assignedIds as $bId) $params[] = $bId;
+                }
+            }
+
+            $customerId = !empty($_GET['customer_id']) && $_GET['customer_id'] !== 'ALL' ? (int)$_GET['customer_id'] : null;
+            if ($customerId) {
+                $whereClause .= " AND s.customer_id = ?";
+                $params[] = $customerId;
+            }
+
+            $paymentStatus = strtoupper(trim($_GET['payment_status'] ?? 'ALL'));
+            if ($paymentStatus === 'PAID') {
+                $whereClause .= " AND (s.payment_status = 'PAID' OR (s.payment_method != 'PIUTANG' AND (s.payment_status IS NULL OR s.payment_status = '')))";
+            } else if ($paymentStatus === 'UNPAID') {
+                $whereClause .= " AND (s.payment_status = 'UNPAID' OR s.payment_method = 'PIUTANG')";
+            }
+
+            $paymentMethod = strtoupper(trim($_GET['payment_method'] ?? 'ALL'));
+            if ($paymentMethod !== 'ALL' && !empty($paymentMethod)) {
+                $whereClause .= " AND UPPER(s.payment_method) = ?";
+                $params[] = $paymentMethod;
+            }
+
+            // 1. KPI Summary
+            $stmtKpi = $pdo->prepare("
+                SELECT 
+                    COUNT(s.id) as total_orders,
+                    COUNT(DISTINCT s.customer_id) as total_mitra_active,
+                    COALESCE(SUM(s.subtotal), 0) as gross_sales,
+                    COALESCE(SUM(s.discount), 0) as total_discount,
+                    COALESCE(SUM(s.delivery_fee), 0) as total_delivery_fee,
+                    COALESCE(SUM(s.tax), 0) as total_tax,
+                    COALESCE(SUM(s.grand_total), 0) as total_revenue,
+                    COALESCE(SUM(s.total_cogs), 0) as total_cogs,
+                    COALESCE(SUM(CASE WHEN s.payment_status = 'UNPAID' OR s.payment_method = 'PIUTANG' THEN s.grand_total ELSE 0 END), 0) as total_receivables,
+                    COALESCE(SUM(CASE WHEN s.payment_status != 'UNPAID' AND s.payment_method != 'PIUTANG' THEN s.grand_total ELSE 0 END), 0) as total_paid
+                FROM sales s
+                LEFT JOIN customers c ON c.id = s.customer_id
+                $whereClause
+            ");
+            $stmtKpi->execute($params);
+            $kpiRow = $stmtKpi->fetch();
+
+            $grossSales = (float)$kpiRow['gross_sales'];
+            $totalDiscount = (float)$kpiRow['total_discount'];
+            $totalDelivery = (float)$kpiRow['total_delivery_fee'];
+            $totalRevenue = (float)$kpiRow['total_revenue'];
+            $totalCogs = (float)$kpiRow['total_cogs'];
+            $totalReceivables = (float)$kpiRow['total_receivables'];
+            $totalPaid = (float)$kpiRow['total_paid'];
+            $grossProfit = $totalRevenue - $totalCogs;
+            $grossMargin = $totalRevenue > 0 ? round(($grossProfit / $totalRevenue) * 100, 1) : 0;
+
+            // Total Items Sold
+            $stmtItemsCount = $pdo->prepare("
+                SELECT COALESCE(SUM(si.qty), 0) as total_items_sold
+                FROM sale_items si
+                JOIN sales s ON s.id = si.sale_id
+                LEFT JOIN customers c ON c.id = s.customer_id
+                $whereClause
+            ");
+            $stmtItemsCount->execute($params);
+            $totalItemsSold = (float)$stmtItemsCount->fetchColumn();
+
+            // 2. Top Partners Leaderboard
+            $stmtTop = $pdo->prepare("
+                SELECT 
+                    s.customer_id,
+                    COALESCE(c.name, s.customer_name, 'Mitra Tanpa Nama') as customer_name,
+                    COALESCE(c.phone, '-') as phone,
+                    COALESCE(c.address, '-') as address,
+                    COUNT(s.id) as order_count,
+                    COALESCE(SUM(s.grand_total), 0) as total_spend,
+                    COALESCE(SUM(s.total_cogs), 0) as total_cogs,
+                    (COALESCE(SUM(s.grand_total), 0) - COALESCE(SUM(s.total_cogs), 0)) as gross_profit,
+                    COALESCE(SUM(CASE WHEN s.payment_status = 'UNPAID' OR s.payment_method = 'PIUTANG' THEN s.grand_total ELSE 0 END), 0) as receivable_amount
+                FROM sales s
+                LEFT JOIN customers c ON c.id = s.customer_id
+                $whereClause
+                GROUP BY s.customer_id, COALESCE(c.name, s.customer_name)
+                ORDER BY total_spend DESC
+                LIMIT 8
+            ");
+            $stmtTop->execute($params);
+            $topPartners = $stmtTop->fetchAll();
+
+            // 3. Detailed Orders List
+            $stmtOrders = $pdo->prepare("
+                SELECT 
+                    s.id,
+                    s.invoice_number,
+                    s.created_at,
+                    s.branch_id,
+                    b.name as branch_name,
+                    s.customer_id,
+                    COALESCE(c.name, s.customer_name, 'Mitra B2B') as customer_name,
+                    COALESCE(c.phone, '-') as customer_phone,
+                    COALESCE(c.address, '-') as customer_address,
+                    u.name as cashier_name,
+                    s.subtotal,
+                    s.discount,
+                    s.tax,
+                    s.delivery_fee,
+                    s.delivery_distance_km,
+                    s.driver_name,
+                    s.delivery_status,
+                    s.grand_total,
+                    s.total_cogs,
+                    (s.grand_total - s.total_cogs) as profit,
+                    s.payment_method,
+                    COALESCE(s.payment_status, CASE WHEN s.payment_method = 'PIUTANG' THEN 'UNPAID' ELSE 'PAID' END) as payment_status,
+                    s.sales_type
+                FROM sales s
+                LEFT JOIN customers c ON c.id = s.customer_id
+                LEFT JOIN branches b ON b.id = s.branch_id
+                LEFT JOIN users u ON u.id = s.user_id
+                $whereClause
+                ORDER BY s.created_at DESC, s.id DESC
+                LIMIT 250
+            ");
+            $stmtOrders->execute($params);
+            $orders = $stmtOrders->fetchAll();
+
+            // Attach detailed items to each order
+            $saleIds = array_column($orders, 'id');
+            $itemsBySale = [];
+            if (!empty($saleIds)) {
+                $inPlaceholders = implode(',', array_fill(0, count($saleIds), '?'));
+                $stmtItems = $pdo->prepare("
+                    SELECT 
+                        si.sale_id,
+                        si.id,
+                        si.product_id,
+                        si.product_name,
+                        si.variant_id,
+                        si.variant_name,
+                        si.qty,
+                        si.unit_price,
+                        si.unit_cogs,
+                        si.subtotal_price,
+                        si.subtotal_cogs,
+                        (si.subtotal_price - si.subtotal_cogs) as profit,
+                        p.unit as product_unit
+                    FROM sale_items si
+                    LEFT JOIN products p ON p.id = si.product_id
+                    WHERE si.sale_id IN ($inPlaceholders)
+                    ORDER BY si.id ASC
+                ");
+                $stmtItems->execute($saleIds);
+                $allOrderItems = $stmtItems->fetchAll();
+                foreach ($allOrderItems as $item) {
+                    $itemsBySale[$item['sale_id']][] = $item;
+                }
+            }
+
+            foreach ($orders as &$ord) {
+                $ordItems = $itemsBySale[$ord['id']] ?? [];
+                $ord['items'] = $ordItems;
+                $ord['items_count'] = count($ordItems);
+                $summaries = [];
+                foreach ($ordItems as $it) {
+                    $vStr = !empty($it['variant_name']) ? ' (' . $it['variant_name'] . ')' : '';
+                    $summaries[] = $it['product_name'] . $vStr . ' x' . $it['qty'];
+                }
+                $ord['items_summary'] = !empty($summaries) ? implode(', ', $summaries) : 'Pesanan Mitra';
+            }
+            unset($ord);
+
+            // 4. Mitra Master List for Filter
+            $stmtMitraList = $pdo->query("SELECT id, name, phone, address FROM customers WHERE UPPER(category) = 'MITRA' ORDER BY name ASC");
+            $mitraList = $stmtMitraList->fetchAll();
+
+            echo json_encode([
+                'success' => true,
+                'filter' => [
+                    'period_type' => $periodType,
+                    'period_label' => $periodLabel,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'branch_id' => $branchId,
+                    'customer_id' => $customerId,
+                    'payment_status' => $paymentStatus,
+                    'payment_method' => $paymentMethod
+                ],
+                'kpi' => [
+                    'total_orders' => (int)$kpiRow['total_orders'],
+                    'total_mitra_active' => (int)$kpiRow['total_mitra_active'],
+                    'total_items_sold' => $totalItemsSold,
+                    'gross_sales' => $grossSales,
+                    'total_discount' => $totalDiscount,
+                    'total_delivery_fee' => $totalDelivery,
+                    'total_revenue' => $totalRevenue,
+                    'total_cogs' => $totalCogs,
+                    'gross_profit' => $grossProfit,
+                    'gross_margin_percent' => $grossMargin,
+                    'total_paid' => $totalPaid,
+                    'total_receivables' => $totalReceivables
+                ],
+                'top_partners' => $topPartners,
+                'orders' => $orders,
+                'mitra_list' => $mitraList
+            ]);
+            break;
+
+        case 'export_partner_sales_excel':
+            $curUser = $_SESSION['user'] ?? null;
+            $roleClean = strtoupper(str_replace('_', '', $curUser['role'] ?? ''));
+            $isSuperAdmin = in_array($roleClean, ['SUPERADMIN', 'SUPER_ADMIN']) || ($curUser['assigned_branch_ids'] ?? '') === 'ALL';
+            $isBranchManager = in_array($roleClean, ['BRANCHMANAGER', 'BRANCH_MANAGER', 'MANAGER']);
+
+            $periodType = strtolower(trim($_GET['period_type'] ?? 'monthly'));
+            $startDate = trim($_GET['start_date'] ?? '');
+            $endDate = trim($_GET['end_date'] ?? '');
+            $periodLabel = '';
+
+            if ($periodType === 'weekly') {
+                if (!empty($_GET['week_date'])) {
+                    $refTime = strtotime($_GET['week_date']);
+                } else if (!empty($startDate)) {
+                    $refTime = strtotime($startDate);
+                } else {
+                    $refTime = time();
+                }
+                $dayOfWeek = (int)date('N', $refTime);
+                $startDate = date('Y-m-d', strtotime('-' . ($dayOfWeek - 1) . ' days', $refTime));
+                $endDate = date('Y-m-d', strtotime('+' . (7 - $dayOfWeek) . ' days', $refTime));
+                $periodLabel = "Mingguan (" . date('d/m/Y', strtotime($startDate)) . " s/d " . date('d/m/Y', strtotime($endDate)) . ")";
+            } else if ($periodType === 'quarter') {
+                $q = isset($_GET['quarter']) ? (int)$_GET['quarter'] : (int)ceil(date('n') / 3);
+                $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
+                if ($q === 1) {
+                    $startDate = "$year-01-01";
+                    $endDate = "$year-03-31";
+                    $periodLabel = "Kuartal 1 $year";
+                } else if ($q === 2) {
+                    $startDate = "$year-04-01";
+                    $endDate = "$year-06-30";
+                    $periodLabel = "Kuartal 2 $year";
+                } else if ($q === 3) {
+                    $startDate = "$year-07-01";
+                    $endDate = "$year-09-30";
+                    $periodLabel = "Kuartal 3 $year";
+                } else {
+                    $startDate = "$year-10-01";
+                    $endDate = "$year-12-31";
+                    $periodLabel = "Kuartal 4 $year";
+                }
+            } else if ($periodType === 'semester') {
+                $sem = isset($_GET['semester']) ? (int)$_GET['semester'] : (date('n') <= 6 ? 1 : 2);
+                $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
+                if ($sem === 1) {
+                    $startDate = "$year-01-01";
+                    $endDate = "$year-06-30";
+                    $periodLabel = "Semester 1 $year";
+                } else {
+                    $startDate = "$year-07-01";
+                    $endDate = "$year-12-31";
+                    $periodLabel = "Semester 2 $year";
+                }
+            } else if ($periodType === 'yearly') {
+                $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
+                $startDate = "$year-01-01";
+                $endDate = "$year-12-31";
+                $periodLabel = "Tahun $year";
+            } else if ($periodType === 'custom') {
+                if (empty($startDate)) $startDate = date('Y-m-01');
+                if (empty($endDate)) $endDate = date('Y-m-d');
+                $periodLabel = "Rentang Kustom (" . date('d/m/Y', strtotime($startDate)) . " s/d " . date('d/m/Y', strtotime($endDate)) . ")";
+            } else {
+                $monthVal = trim($_GET['month'] ?? date('Y-m'));
+                if (!empty($monthVal) && preg_match('/^\d{4}-\d{2}$/', $monthVal)) {
+                    $startDate = $monthVal . '-01';
+                    $endDate = date('Y-m-t', strtotime($startDate));
+                } else {
+                    if (empty($startDate)) $startDate = date('Y-m-01');
+                    if (empty($endDate)) $endDate = date('Y-m-t', strtotime($startDate));
+                }
+                $periodLabel = "Bulan " . date('m/Y', strtotime($startDate));
+            }
+
+            $whereClause = "WHERE date(s.created_at) BETWEEN ? AND ? AND (s.status IS NULL OR s.status != 'CANCELLED') AND (UPPER(COALESCE(s.customer_category, '')) = 'MITRA' OR UPPER(COALESCE(c.category, '')) = 'MITRA' OR UPPER(COALESCE(s.sales_type, '')) LIKE '%MITRA%')";
+            $params = [$startDate, $endDate];
+
+            $branchId = !empty($_GET['branch_id']) && $_GET['branch_id'] !== 'ALL' ? (int)$_GET['branch_id'] : null;
+            if ($branchId) {
+                $whereClause .= " AND s.branch_id = ?";
+                $params[] = $branchId;
+            } else if ($isBranchManager && !$isSuperAdmin) {
+                $assignedIds = [];
+                if (!empty($curUser['assigned_branch_ids'])) {
+                    $dec = json_decode($curUser['assigned_branch_ids'], true);
+                    if (is_array($dec)) $assignedIds = array_map('intval', $dec);
+                }
+                if (empty($assignedIds) && !empty($curUser['branch_id'])) {
+                    $assignedIds = [(int)$curUser['branch_id']];
+                }
+                if (!empty($assignedIds)) {
+                    $inPlaceholders = implode(',', array_fill(0, count($assignedIds), '?'));
+                    $whereClause .= " AND s.branch_id IN ($inPlaceholders)";
+                    foreach ($assignedIds as $bId) $params[] = $bId;
+                }
+            }
+
+            $customerId = !empty($_GET['customer_id']) && $_GET['customer_id'] !== 'ALL' ? (int)$_GET['customer_id'] : null;
+            if ($customerId) {
+                $whereClause .= " AND s.customer_id = ?";
+                $params[] = $customerId;
+            }
+
+            $paymentStatus = strtoupper(trim($_GET['payment_status'] ?? 'ALL'));
+            if ($paymentStatus === 'PAID') {
+                $whereClause .= " AND (s.payment_status = 'PAID' OR (s.payment_method != 'PIUTANG' AND (s.payment_status IS NULL OR s.payment_status = '')))";
+            } else if ($paymentStatus === 'UNPAID') {
+                $whereClause .= " AND (s.payment_status = 'UNPAID' OR s.payment_method = 'PIUTANG')";
+            }
+
+            $paymentMethod = strtoupper(trim($_GET['payment_method'] ?? 'ALL'));
+            if ($paymentMethod !== 'ALL' && !empty($paymentMethod)) {
+                $whereClause .= " AND UPPER(s.payment_method) = ?";
+                $params[] = $paymentMethod;
+            }
+
+            $stmtExport = $pdo->prepare("
+                SELECT 
+                    s.id as sale_id,
+                    s.invoice_number,
+                    s.created_at,
+                    b.name as branch_name,
+                    COALESCE(c.name, s.customer_name, 'Mitra B2B') as customer_name,
+                    COALESCE(c.phone, '-') as customer_phone,
+                    COALESCE(c.address, '-') as customer_address,
+                    u.name as cashier_name,
+                    s.payment_method,
+                    COALESCE(s.payment_status, CASE WHEN s.payment_method = 'PIUTANG' THEN 'UNPAID' ELSE 'PAID' END) as payment_status,
+                    s.subtotal as sale_subtotal,
+                    s.discount as sale_discount,
+                    s.delivery_fee,
+                    s.grand_total,
+                    s.total_cogs as sale_total_cogs,
+                    (s.grand_total - s.total_cogs) as sale_gross_profit,
+                    si.product_name,
+                    si.variant_name,
+                    si.qty,
+                    si.unit_price,
+                    si.unit_cogs,
+                    si.subtotal_price,
+                    si.subtotal_cogs,
+                    (si.subtotal_price - si.subtotal_cogs) as item_profit,
+                    p.unit as product_unit
+                FROM sales s
+                LEFT JOIN customers c ON c.id = s.customer_id
+                LEFT JOIN branches b ON b.id = s.branch_id
+                LEFT JOIN users u ON u.id = s.user_id
+                JOIN sale_items si ON si.sale_id = s.id
+                LEFT JOIN products p ON p.id = si.product_id
+                $whereClause
+                ORDER BY s.created_at DESC, s.id DESC, si.id ASC
+            ");
+            $stmtExport->execute($params);
+            $rows = $stmtExport->fetchAll();
+
+            $cleanPeriod = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $periodType);
+            $filename = "Laporan_Penjualan_Mitra_{$cleanPeriod}_{$startDate}_sd_{$endDate}.xls";
+
+            header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Pragma: no-cache');
+            header('Expires: 0');
+
+            echo "\xEF\xBB\xBF"; // UTF-8 BOM
+            ?>
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head>
+                <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+                <style>
+                    body { font-family: Arial, sans-serif; font-size: 10pt; }
+                    table { border-collapse: collapse; width: 100%; }
+                    th { background-color: #059669; color: #ffffff; font-weight: bold; border: 1px solid #047857; padding: 7px 10px; text-align: center; }
+                    td { border: 1px solid #cbd5e1; padding: 5px 8px; vertical-align: middle; }
+                    .num { text-align: right; mso-number-format: "\#,\#\#0"; }
+                    .center { text-align: center; }
+                    .bold { font-weight: bold; }
+                    .bg-subtotal { background-color: #f1f5f9; font-weight: bold; }
+                    .paid { color: #047857; font-weight: bold; }
+                    .unpaid { color: #b91c1c; font-weight: bold; }
+                </style>
+            </head>
+            <body>
+                <h2 style="margin: 0 0 5px 0; color: #065f46;">LAPORAN PENJUALAN MITRA B2B & DETAIL PESANAN</h2>
+                <p style="margin: 0 0 15px 0; font-size: 10pt; color: #475569;">
+                    Periode: <strong><?= htmlspecialchars($periodLabel) ?></strong> (<?= htmlspecialchars($startDate) ?> s/d <?= htmlspecialchars($endDate) ?>) &bull; 
+                    Waktu Cetak: <?= date('d/m/Y H:i') ?>
+                </p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>No. Invoice</th>
+                            <th>Tanggal & Waktu</th>
+                            <th>Cabang</th>
+                            <th>Nama Mitra B2B</th>
+                            <th>No. Telp / WA</th>
+                            <th>Alamat Mitra</th>
+                            <th>Kasir</th>
+                            <th>Nama Produk</th>
+                            <th>Varian</th>
+                            <th>Qty</th>
+                            <th>Satuan</th>
+                            <th>Harga Satuan (Rp)</th>
+                            <th>Subtotal Item (Rp)</th>
+                            <th>HPP Satuan (Rp)</th>
+                            <th>Total HPP (Rp)</th>
+                            <th>Laba Kotor Item (Rp)</th>
+                            <th>Metode Bayar</th>
+                            <th>Status Pelunasan</th>
+                            <th>Diskon Faktur (Rp)</th>
+                            <th>Ongkir (Rp)</th>
+                            <th>Grand Total Faktur (Rp)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php 
+                        $no = 1;
+                        $totQty = 0;
+                        $totSubtotal = 0;
+                        $totHpp = 0;
+                        $totProfit = 0;
+                        $seenSales = [];
+                        $totGrandTotal = 0;
+                        foreach ($rows as $r): 
+                            $totQty += (float)$r['qty'];
+                            $totSubtotal += (float)$r['subtotal_price'];
+                            $totHpp += (float)$r['subtotal_cogs'];
+                            $totProfit += (float)$r['item_profit'];
+                            if (!isset($seenSales[$r['sale_id']])) {
+                                $seenSales[$r['sale_id']] = true;
+                                $totGrandTotal += (float)$r['grand_total'];
+                            }
+                        ?>
+                        <tr>
+                            <td class="center"><?= $no++ ?></td>
+                            <td class="bold center"><?= htmlspecialchars($r['invoice_number']) ?></td>
+                            <td class="center"><?= htmlspecialchars($r['created_at']) ?></td>
+                            <td><?= htmlspecialchars($r['branch_name'] ?? 'Pusat') ?></td>
+                            <td class="bold"><?= htmlspecialchars($r['customer_name']) ?></td>
+                            <td><?= htmlspecialchars($r['customer_phone'] ?? '-') ?></td>
+                            <td><?= htmlspecialchars($r['customer_address'] ?? '-') ?></td>
+                            <td><?= htmlspecialchars($r['cashier_name'] ?? '-') ?></td>
+                            <td class="bold"><?= htmlspecialchars($r['product_name']) ?></td>
+                            <td><?= htmlspecialchars($r['variant_name'] ?: '-') ?></td>
+                            <td class="num bold"><?= (float)$r['qty'] ?></td>
+                            <td class="center"><?= htmlspecialchars($r['product_unit'] ?: 'pcs') ?></td>
+                            <td class="num"><?= (float)$r['unit_price'] ?></td>
+                            <td class="num bold"><?= (float)$r['subtotal_price'] ?></td>
+                            <td class="num"><?= (float)$r['unit_cogs'] ?></td>
+                            <td class="num"><?= (float)$r['subtotal_cogs'] ?></td>
+                            <td class="num bold" style="color: #047857;"><?= (float)$r['item_profit'] ?></td>
+                            <td class="center"><?= htmlspecialchars($r['payment_method']) ?></td>
+                            <td class="center <?= $r['payment_status'] === 'PAID' ? 'paid' : 'unpaid' ?>">
+                                <?= $r['payment_status'] === 'PAID' ? 'LUNAS' : 'PIUTANG' ?>
+                            </td>
+                            <td class="num"><?= (float)$r['sale_discount'] ?></td>
+                            <td class="num"><?= (float)$r['delivery_fee'] ?></td>
+                            <td class="num bold" style="color: #1e3a8a;"><?= (float)$r['grand_total'] ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php if (empty($rows)): ?>
+                        <tr>
+                            <td colspan="22" class="center" style="padding: 20px; color: #94a3b8;">Tidak ada data penjualan mitra untuk filter kurun waktu ini.</td>
+                        </tr>
+                        <?php else: ?>
+                        <tr class="bg-subtotal">
+                            <td colspan="10" class="center bold">TOTAL KESELURUHAN</td>
+                            <td class="num bold"><?= $totQty ?></td>
+                            <td></td>
+                            <td></td>
+                            <td class="num bold"><?= $totSubtotal ?></td>
+                            <td></td>
+                            <td class="num bold"><?= $totHpp ?></td>
+                            <td class="num bold" style="color: #047857;"><?= $totProfit ?></td>
+                            <td colspan="4"></td>
+                            <td class="num bold" style="color: #1e3a8a;"><?= $totGrandTotal ?></td>
+                        </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </body>
+            </html>
+            <?php
+            exit;
+
         case 'get_receivables':
             $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : null;
             $status = $_GET['status'] ?? 'ALL'; // ALL, BELUM_LUNAS, SEBAGIAN, LUNAS

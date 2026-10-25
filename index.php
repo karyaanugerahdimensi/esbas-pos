@@ -302,6 +302,10 @@ try {
                         <i data-lucide="pie-chart" class="w-4 h-4 shrink-0"></i>
                         <span class="sidebar-label whitespace-nowrap">Laporan Laba Rugi</span>
                     </button>
+                    <button onclick="switchTab('partner-sales')" id="tab-btn-partner-sales" title="Laporan Penjualan Mitra B2B, Detail Pesanan & Analisis Margin" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                        <i data-lucide="handshake" class="w-4 h-4 shrink-0 text-emerald-400"></i>
+                        <span class="sidebar-label whitespace-nowrap">Laporan Penjualan Mitra</span>
+                    </button>
                     <button onclick="switchTab('expenses')" id="tab-btn-expenses" title="Buku Catatan Beban Operasional Cabang & Kategori" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="book-open" class="w-4 h-4 shrink-0"></i>
                         <span class="sidebar-label whitespace-nowrap">Beban Operasional Cabang</span>
@@ -891,6 +895,10 @@ try {
                         <button onclick="setReportSubtab('bom')" id="report-subtab-btn-bom" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="boxes" class="w-4 h-4"></i>
                             <span>Pemakaian Bahan Baku (BOM)</span>
+                        </button>
+                        <button onclick="switchTab('partner-sales')" id="report-subtab-btn-partner" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200" title="Buka Modul Laporan Penjualan Mitra B2B">
+                            <i data-lucide="handshake" class="w-4 h-4 text-emerald-600"></i>
+                            <span>Penjualan Mitra B2B</span>
                         </button>
                     </div>
                 </div>
@@ -2777,14 +2785,251 @@ try {
                     </div>
 
                     <div class="pt-4 border-t flex flex-wrap items-center justify-between gap-3">
-                        <button onclick="switchTab('expenses')" class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-colors">
-                            <i data-lucide="book-open" class="w-4 h-4 text-rose-600"></i>
-                            <span>Buka Buku Catatan Beban Operasional Cabang ➔</span>
-                        </button>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button onclick="switchTab('partner-sales')" class="px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-colors">
+                                <i data-lucide="handshake" class="w-4 h-4 text-emerald-600"></i>
+                                <span>Laporan Penjualan Mitra ➔</span>
+                            </button>
+                            <button onclick="switchTab('expenses')" class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-colors">
+                                <i data-lucide="book-open" class="w-4 h-4 text-rose-600"></i>
+                                <span>Buku Beban Operasional ➔</span>
+                            </button>
+                        </div>
                         <button onclick="window.print()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow">
                             <i data-lucide="printer" class="w-4 h-4"></i>
                             <span>Cetak Laporan Laba Rugi</span>
                         </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ---------------------------------------------------- -->
+            <!-- TAB 8b: MODUL LAPORAN PENJUALAN MITRA (B2B SALES)     -->
+            <!-- ---------------------------------------------------- -->
+            <div id="tab-partner-sales" class="space-y-6 hidden">
+                <!-- Header Banner -->
+                <div class="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-emerald-200 shrink-0">
+                            <i data-lucide="handshake" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <h3 class="font-black text-slate-800 text-lg tracking-tight">Laporan Penjualan Mitra (B2B Partner Sales)</h3>
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200 uppercase tracking-wider">B2B Kemitraan</span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-0.5">Analisis performa penjualan mitra berkontrak, detail pesanan per invoice, pergerakan omzet, dan margin laba kotor.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center flex-wrap gap-2">
+                        <button onclick="exportPartnerSalesExcel()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-2 transition-colors" title="Export seluruh detail transaksi pesanan mitra ke format Excel">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>Export Excel Detail Pesanan</span>
+                        </button>
+                        <button onclick="loadPartnerSalesReport()" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold border border-slate-200 flex items-center space-x-1.5 transition-colors" title="Muat ulang data">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                            <span>Segarkan</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter Panel: Kurun Waktu & Kriteria Spesifik -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-200/90 shadow-2xs space-y-3.5">
+                    <!-- Baris 1: Filter Kurun Waktu (Pills Navigasi) -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="calendar" class="w-4 h-4 text-emerald-600"></i>
+                            <span class="text-xs font-bold text-slate-700">Filter Kurun Waktu:</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <button type="button" onclick="setPartnerPeriod('weekly')" id="partner-pill-weekly" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200">
+                                <span>📅 Mingguan (Weekly)</span>
+                            </button>
+                            <button type="button" onclick="setPartnerPeriod('monthly')" id="partner-pill-monthly" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-emerald-600 text-white shadow-2xs">
+                                <span>🗓️ Bulanan (Monthly)</span>
+                            </button>
+                            <button type="button" onclick="setPartnerPeriod('quarter')" id="partner-pill-quarter" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200">
+                                <span>📊 Kuartal (Quarter)</span>
+                            </button>
+                            <button type="button" onclick="setPartnerPeriod('semester')" id="partner-pill-semester" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200">
+                                <span>📈 Semester</span>
+                            </button>
+                            <button type="button" onclick="setPartnerPeriod('yearly')" id="partner-pill-yearly" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200">
+                                <span>📆 Tahunan (Yearly)</span>
+                            </button>
+                            <button type="button" onclick="setPartnerPeriod('custom')" id="partner-pill-custom" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200">
+                                <span>⚙️ Rentang Kustom</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Baris 2: Dynamic Time Controls Container -->
+                    <div id="partner-time-dynamic-container" class="bg-slate-50/70 p-3 rounded-2xl border border-slate-200/80 flex flex-wrap items-center gap-3 text-xs">
+                        <!-- Rendered dynamically by JavaScript -->
+                    </div>
+
+                    <!-- Baris 3: Filter Kriteria Tambahan (Mitra, Cabang, Status Pembayaran, Metode Bayar) -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 text-xs pt-1">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <!-- Filter Mitra Spesifik -->
+                            <div class="flex items-center space-x-1.5">
+                                <span class="font-bold text-slate-500 text-[11px] whitespace-nowrap">Mitra B2B:</span>
+                                <select id="partner-filter-customer" class="p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                    <option value="ALL">🌐 Semua Mitra Terdaftar</option>
+                                </select>
+                            </div>
+
+                            <!-- Filter Cabang -->
+                            <div class="flex items-center space-x-1.5">
+                                <span class="font-bold text-slate-500 text-[11px] whitespace-nowrap">Cabang:</span>
+                                <select id="partner-filter-branch" class="p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                    <option value="ALL">🌐 Semua Cabang (Konsolidasi)</option>
+                                </select>
+                            </div>
+
+                            <!-- Filter Status Pelunasan -->
+                            <div class="flex items-center space-x-1.5">
+                                <span class="font-bold text-slate-500 text-[11px] whitespace-nowrap">Status:</span>
+                                <select id="partner-filter-status" class="p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                    <option value="ALL">Semua Status Bayar</option>
+                                    <option value="PAID">LUNAS (Paid)</option>
+                                    <option value="UNPAID">PIUTANG (Belum Lunas)</option>
+                                </select>
+                            </div>
+
+                            <!-- Filter Metode Bayar -->
+                            <div class="flex items-center space-x-1.5">
+                                <span class="font-bold text-slate-500 text-[11px] whitespace-nowrap">Metode:</span>
+                                <select id="partner-filter-method" class="p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                    <option value="ALL">Semua Metode</option>
+                                    <option value="PIUTANG">Piutang Cust</option>
+                                    <option value="TRANSFER">Transfer Bank</option>
+                                    <option value="QRIS">QRIS</option>
+                                    <option value="CASH">Tunai (Cash)</option>
+                                    <option value="DEBIT">Debit EDC</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Button Terapkan Filter -->
+                        <button onclick="loadPartnerSalesReport()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-200 flex items-center space-x-1.5 transition-all">
+                            <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                            <span>Terapkan Filter</span>
+                        </button>
+                    </div>
+
+                    <!-- Baris 4: Active Period Banner -->
+                    <div id="partner-active-period-banner" class="p-2.5 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl flex items-center justify-between text-xs text-emerald-950 font-medium">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-base">📌</span>
+                            <span id="partner-active-period-text">Memuat periode...</span>
+                        </div>
+                        <span id="partner-active-orders-count-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-200/80 text-emerald-900 border border-emerald-300">0 Pesanan</span>
+                    </div>
+                </div>
+
+                <!-- KPI Cards (5 Kartu Indikator Kinerja Penjualan Mitra) -->
+                <div class="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
+                    <!-- KPI 1: Omzet Penjualan -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+                        <div class="flex items-center justify-between text-slate-400 mb-1">
+                            <span class="text-[10px] font-black uppercase tracking-wider">Omzet Mitra</span>
+                            <span class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-sm">💰</span>
+                        </div>
+                        <h4 id="partner-kpi-revenue" class="text-lg font-black text-slate-800 font-mono">Rp 0</h4>
+                        <p id="partner-kpi-revenue-sub" class="text-[10px] text-slate-500 mt-0.5">Penjualan Bersih</p>
+                    </div>
+
+                    <!-- KPI 2: Total Pesanan & Item -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+                        <div class="flex items-center justify-between text-slate-400 mb-1">
+                            <span class="text-[10px] font-black uppercase tracking-wider">Pesanan Masuk</span>
+                            <span class="p-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm">📦</span>
+                        </div>
+                        <h4 id="partner-kpi-orders" class="text-lg font-black text-blue-900">0</h4>
+                        <p id="partner-kpi-orders-sub" class="text-[10px] text-blue-700 font-medium mt-0.5">0 Total Item (Pcs/Galon)</p>
+                    </div>
+
+                    <!-- KPI 3: Estimasi Laba Kotor & Margin -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+                        <div class="flex items-center justify-between text-slate-400 mb-1">
+                            <span class="text-[10px] font-black uppercase tracking-wider">Laba Kotor</span>
+                            <span class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm">📈</span>
+                        </div>
+                        <h4 id="partner-kpi-profit" class="text-lg font-black text-indigo-900 font-mono">Rp 0</h4>
+                        <p id="partner-kpi-profit-sub" class="text-[10px] text-indigo-700 font-bold mt-0.5">Margin: 0%</p>
+                    </div>
+
+                    <!-- KPI 4: Kas Masuk / Lunas -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+                        <div class="flex items-center justify-between text-slate-400 mb-1">
+                            <span class="text-[10px] font-black uppercase tracking-wider">Kas Diterima</span>
+                            <span class="p-1.5 bg-teal-50 text-teal-600 rounded-lg text-sm">💵</span>
+                        </div>
+                        <h4 id="partner-kpi-paid" class="text-lg font-black text-teal-900 font-mono">Rp 0</h4>
+                        <p id="partner-kpi-paid-sub" class="text-[10px] text-teal-700 font-medium mt-0.5">Lunas (Tunai/QRIS/TRF)</p>
+                    </div>
+
+                    <!-- KPI 5: Saldo Piutang Mitra -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+                        <div class="flex items-center justify-between text-slate-400 mb-1">
+                            <span class="text-[10px] font-black uppercase tracking-wider">Piutang Berjalan</span>
+                            <span class="p-1.5 bg-amber-50 text-amber-600 rounded-lg text-sm">⏳</span>
+                        </div>
+                        <h4 id="partner-kpi-receivable" class="text-lg font-black text-amber-900 font-mono">Rp 0</h4>
+                        <p id="partner-kpi-receivable-sub" class="text-[10px] text-amber-700 font-bold mt-0.5">Belum Lunas</p>
+                    </div>
+                </div>
+
+                <!-- Leaderboard Mitra Teratas (Top Partners Summary) -->
+                <div class="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="award" class="w-4 h-4 text-amber-500"></i>
+                            <h4 class="font-bold text-slate-800 text-sm">Peringkat Mitra Teratas (Top B2B Partners by Revenue)</h4>
+                        </div>
+                        <span class="text-[11px] text-slate-400">Kontribusi Omzet Tertinggi pada Periode Ini</span>
+                    </div>
+                    <div id="partner-top-leaderboard" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Tabel Utama Detail Pesanan Mitra -->
+                <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden space-y-3 p-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                                <i data-lucide="shopping-cart" class="w-4 h-4 text-emerald-600"></i>
+                                <span>Detail Pesanan & Transaksi Mitra</span>
+                            </h4>
+                            <p class="text-[11px] text-slate-500">Daftar seluruh pesanan penjualan mitra beserta rincian item produk yang dipesan.</p>
+                        </div>
+                        <div class="relative w-full sm:w-64">
+                            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5"></i>
+                            <input type="text" id="partner-orders-search" oninput="renderFilteredPartnerOrdersTable()" placeholder="Cari invoice, mitra, produk..." class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-2xl border border-slate-200/80">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200/80">
+                                <tr>
+                                    <th class="py-3 px-3.5">No. Invoice</th>
+                                    <th class="py-3 px-3">Waktu</th>
+                                    <th class="py-3 px-3.5">Nama Mitra B2B</th>
+                                    <th class="py-3 px-3">Cabang & Kasir</th>
+                                    <th class="py-3 px-4">Detail Pesanan (Item Produk)</th>
+                                    <th class="py-3 px-3 text-center">Metode & Status</th>
+                                    <th class="py-3 px-3 text-right">Total Belanja</th>
+                                    <th class="py-3 px-3 text-right">Laba Kotor</th>
+                                    <th class="py-3 px-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="partner-orders-tbody" class="divide-y divide-slate-100">
+                                <!-- Populated dynamically by JS -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -5314,6 +5559,105 @@ try {
                     <button id="detail-modal-print-btn" onclick="printFromDetailModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-xs font-bold text-white flex items-center space-x-1.5 shadow">
                         <i data-lucide="printer" class="w-3.5 h-3.5"></i>
                         <span>Cetak Struk Thermal</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 1c: Detail Pesanan Item Mitra (B2B Partner Order Detail) -->
+    <div id="partner-order-detail-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col border border-slate-100">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between border-b pb-3 shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-lg">
+                        <i data-lucide="handshake" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h3 id="pod-modal-invoice" class="font-black text-slate-800 text-base font-mono">INV/000000</h3>
+                            <span id="pod-modal-status-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">LUNAS</span>
+                            <span id="pod-modal-method-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">TUNAI</span>
+                        </div>
+                        <p id="pod-modal-subtitle" class="text-xs text-slate-500 mt-0.5">Rincian pesanan produk, kuantitas, harga mitra, modal HPP & margin laba kotor</p>
+                    </div>
+                </div>
+                <button onclick="closePartnerOrderDetailModal()" class="text-slate-400 hover:text-slate-600 p-2 rounded-xl">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Partner Info Banner -->
+            <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/90 text-xs grid grid-cols-1 sm:grid-cols-3 gap-2.5 shrink-0">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 block uppercase">Nama Mitra B2B:</span>
+                    <strong id="pod-modal-partner-name" class="font-bold text-slate-800 text-sm block">Mitra</strong>
+                    <span id="pod-modal-partner-phone" class="text-[11px] text-slate-500 font-mono">-</span>
+                </div>
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 block uppercase">Alamat Mitra:</span>
+                    <p id="pod-modal-partner-address" class="text-slate-700 text-[11px] mt-0.5 line-clamp-2">-</p>
+                </div>
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 block uppercase">Waktu & Cabang:</span>
+                    <div id="pod-modal-datetime" class="font-mono text-slate-700 text-[11px] mt-0.5">-</div>
+                    <div id="pod-modal-branch" class="text-[11px] text-emerald-700 font-bold">-</div>
+                </div>
+            </div>
+
+            <!-- Items Table (Scrollable) -->
+            <div class="flex-1 min-h-0 overflow-y-auto custom-scrollbar border border-slate-200/80 rounded-2xl bg-white">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-600 font-bold border-b sticky top-0 bg-white shadow-2xs">
+                        <tr>
+                            <th class="py-2.5 px-3">No</th>
+                            <th class="py-2.5 px-3">Nama Produk & Varian</th>
+                            <th class="py-2.5 px-2 text-center">Qty</th>
+                            <th class="py-2.5 px-3 text-right">Harga Mitra</th>
+                            <th class="py-2.5 px-3 text-right">Subtotal</th>
+                            <th class="py-2.5 px-3 text-right">HPP Satuan</th>
+                            <th class="py-2.5 px-3 text-right">Total HPP</th>
+                            <th class="py-2.5 px-3 text-right">Laba Kotor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pod-modal-items-tbody" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+
+            <!-- Summary Breakdown -->
+            <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/90 space-y-1.5 text-xs shrink-0 font-mono">
+                <div class="flex justify-between text-slate-600">
+                    <span>Subtotal Produk:</span>
+                    <span id="pod-modal-subtotal" class="font-bold">Rp 0</span>
+                </div>
+                <div class="flex justify-between text-rose-600">
+                    <span>Diskon Mitra:</span>
+                    <span id="pod-modal-discount" class="font-bold">- Rp 0</span>
+                </div>
+                <div class="flex justify-between text-amber-700">
+                    <span>Biaya Ongkos Kirim:</span>
+                    <span id="pod-modal-delivery" class="font-bold">Rp 0</span>
+                </div>
+                <div class="flex justify-between text-sm font-black text-slate-900 border-t border-slate-200 pt-2">
+                    <span>GRAND TOTAL PESANAN:</span>
+                    <span id="pod-modal-grand-total" class="text-emerald-700 font-black text-base">Rp 0</span>
+                </div>
+                <div class="flex justify-between text-indigo-700 text-[11px] pt-1 border-t border-dashed border-slate-200">
+                    <span>Total Estimasi Laba Kotor:</span>
+                    <span id="pod-modal-total-profit" class="font-bold">Rp 0 (Margin: 0%)</span>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="pt-2 border-t border-slate-100 flex items-center justify-between shrink-0">
+                <button type="button" onclick="closePartnerOrderDetailModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-700">
+                    Tutup
+                </button>
+                <div class="flex items-center space-x-2">
+                    <button type="button" id="pod-modal-print-btn" onclick="printReceiptFromPartnerOrder()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-1.5">
+                        <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                        <span>Cetak Struk Transaksi</span>
                     </button>
                 </div>
             </div>
@@ -8767,6 +9111,7 @@ try {
             'bom': { title: 'Formula Resep & Bill of Materials (BOM)', sub: 'Penyusunan komposisi bahan baku dan kalkulasi HPP otomatis' },
             'stocks': { title: 'Manajemen Stok & Kartu Pergerakan', sub: 'Saldo stok cabang aktif & log audit kartu pergerakan stok (Movement Ledger)' },
             'pnl': { title: 'Laporan Laba Rugi (Income Statement)', sub: 'Ikhtisar pendapatan bersih, HPP, beban operasional, dan Laba Bersih Akhir' },
+            'partner-sales': { title: 'Laporan Penjualan Mitra (B2B)', sub: 'Rekapitulasi penjualan mitra, detail pesanan per invoice, filter kurun waktu fleksibel, dan analisis profitabilitas' },
             'expenses': { title: 'Buku Catatan Beban Operasional Cabang', sub: 'Pencatatan pengeluaran operasional outlet &bull; Buku mutasi beban & CRUD master kategori beban' },
             'customers': { title: 'Manajemen Pelanggan, Mitra B2B & Tier Harga', sub: 'Data Pelanggan CRM, Kategori Penjualan, Harga Kontrak Mitra, dan Harga Jual Antar Cabang' },
             'logistics': { title: 'Kurir, Biaya Kirim Dinamis & Armada Motor', sub: 'Peta Geospasial Leaflet, Kalkulator Ongkir Jarak Dinamis, Log BBM Odometer Motor & Servis Armada Masuk Beban Biaya' },
@@ -9274,7 +9619,7 @@ try {
 
         function switchTab(tab) {
             state.currentTab = tab;
-            const tabIds = ['dashboard', 'pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
+            const tabIds = ['dashboard', 'pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'partner-sales', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
             tabIds.forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 const btn = document.getElementById(`tab-btn-${t}`);
@@ -9345,6 +9690,7 @@ try {
             if (tab === 'bom') loadBOMRecipes();
             if (tab === 'stocks') loadStockInventory();
             if (tab === 'pnl') loadProfitLoss();
+            if (tab === 'partner-sales') loadPartnerSalesReport();
             if (tab === 'expenses') loadBranchExpensesModule();
             if (tab === 'customers') {
                 loadCustomers();
@@ -18122,6 +18468,590 @@ Manager / Supervisor: __________________
             if (elArCashProfit) elArCashProfit.innerText = formatRupiah(ar.cash_realized_net_profit || 0);
 
             lucide.createIcons();
+        }
+
+        // ==========================================
+        // 8B. MODUL LAPORAN PENJUALAN MITRA (B2B PARTNER SALES REPORT)
+        // ==========================================
+        let partnerPeriodType = 'monthly';
+        let partnerReportRawData = null;
+        let activePartnerOrder = null;
+
+        function setPartnerPeriod(type) {
+            partnerPeriodType = type;
+            const pills = ['weekly', 'monthly', 'quarter', 'semester', 'yearly', 'custom'];
+            pills.forEach(p => {
+                const btn = document.getElementById(`partner-pill-${p}`);
+                if (!btn) return;
+                if (p === type) {
+                    btn.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-emerald-600 text-white shadow-2xs";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200";
+                }
+            });
+            renderPartnerPeriodControls();
+            loadPartnerSalesReport();
+        }
+
+        function renderPartnerPeriodControls() {
+            const container = document.getElementById('partner-time-dynamic-container');
+            if (!container) return;
+
+            const now = new Date();
+            const curYear = now.getFullYear();
+            const curMonth = now.getMonth() + 1; // 1-12
+
+            let html = '';
+
+            if (partnerPeriodType === 'weekly') {
+                html = `
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-slate-600">Pilihan Minggu:</span>
+                        <select id="partner-control-week-preset" onchange="loadPartnerSalesReport()" class="p-1.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500">
+                            <option value="this_week" selected>Minggu Ini (Senin - Minggu Sekarang)</option>
+                            <option value="last_week">1 Minggu Lalu (Last Week)</option>
+                            <option value="last_2_weeks">2 Minggu Lalu</option>
+                            <option value="last_4_weeks">4 Minggu Terakhir (Trailing 28 Hari)</option>
+                        </select>
+                    </div>
+                `;
+            } else if (partnerPeriodType === 'monthly') {
+                const months = [
+                    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+                ];
+                let mOptions = months.map((m, idx) => {
+                    const val = idx + 1;
+                    return `<option value="${val}" ${val === curMonth ? 'selected' : ''}>${m}</option>`;
+                }).join('');
+
+                let yOptions = '';
+                for (let y = curYear; y >= curYear - 4; y--) {
+                    yOptions += `<option value="${y}" ${y === curYear ? 'selected' : ''}>${y}</option>`;
+                }
+
+                html = `
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-slate-600">Bulan:</span>
+                        <select id="partner-control-month" onchange="loadPartnerSalesReport()" class="p-1.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500">
+                            ${mOptions}
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-slate-600">Tahun:</span>
+                        <select id="partner-control-year" onchange="loadPartnerSalesReport()" class="p-1.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500">
+                            ${yOptions}
+                        </select>
+                    </div>
+                `;
+            } else if (partnerPeriodType === 'quarter') {
+                const curQuarter = Math.ceil(curMonth / 3);
+                let qOptions = [
+                    { val: 1, label: 'Kuartal 1 (Q1: Januari - Maret)' },
+                    { val: 2, label: 'Kuartal 2 (Q2: April - Juni)' },
+                    { val: 3, label: 'Kuartal 3 (Q3: Juli - September)' },
+                    { val: 4, label: 'Kuartal 4 (Q4: Oktober - Desember)' }
+                ].map(q => `<option value="${q.val}" ${q.val === curQuarter ? 'selected' : ''}>${q.label}</option>`).join('');
+
+                let yOptions = '';
+                for (let y = curYear; y >= curYear - 4; y--) {
+                    yOptions += `<option value="${y}" ${y === curYear ? 'selected' : ''}>${y}</option>`;
+                }
+
+                html = `
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-slate-600">Kuartal:</span>
+                        <select id="partner-control-quarter" onchange="loadPartnerSalesReport()" class="p-1.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500">
+                            ${qOptions}
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-slate-600">Tahun:</span>
+                        <select id="partner-control-year" onchange="loadPartnerSalesReport()" class="p-1.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500">
+                            ${yOptions}
+                        </select>
+                    </div>
+                `;
+            } else if (partnerPeriodType === 'semester') {
+                const curSem = curMonth <= 6 ? 1 : 2;
+                let sOptions = [
+                    { val: 1, label: 'Semester 1 (Januari - Juni)' },
+                    { val: 2, label: 'Semester 2 (Juli - Desember)' }
+                ].map(s => `<option value="${s.val}" ${s.val === curSem ? 'selected' : ''}>${s.label}</option>`).join('');
+
+                let yOptions = '';
+                for (let y = curYear; y >= curYear - 4; y--) {
+                    yOptions += `<option value="${y}" ${y === curYear ? 'selected' : ''}>${y}</option>`;
+                }
+
+                html = `
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-slate-600">Semester:</span>
+                        <select id="partner-control-semester" onchange="loadPartnerSalesReport()" class="p-1.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500">
+                            ${sOptions}
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-slate-600">Tahun:</span>
+                        <select id="partner-control-year" onchange="loadPartnerSalesReport()" class="p-1.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500">
+                            ${yOptions}
+                        </select>
+                    </div>
+                `;
+            } else if (partnerPeriodType === 'yearly') {
+                let yOptions = '';
+                for (let y = curYear; y >= curYear - 5; y--) {
+                    yOptions += `<option value="${y}" ${y === curYear ? 'selected' : ''}>Tahun Fiskal ${y}</option>`;
+                }
+
+                html = `
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-slate-600">Pilih Tahun:</span>
+                        <select id="partner-control-year" onchange="loadPartnerSalesReport()" class="p-1.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500">
+                            ${yOptions}
+                        </select>
+                    </div>
+                `;
+            } else if (partnerPeriodType === 'custom') {
+                const todayStr = now.toISOString().split('T')[0];
+                const firstDayStr = new Date(curYear, now.getMonth(), 1).toISOString().split('T')[0];
+                html = `
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-slate-600">Mulai:</span>
+                        <input type="date" id="partner-control-start-date" value="${firstDayStr}" class="p-1.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-slate-600">Sampai:</span>
+                        <input type="date" id="partner-control-end-date" value="${todayStr}" class="p-1.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <button type="button" onclick="loadPartnerSalesReport()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-2xs">Terapkan Tanggal</button>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function populatePartnerBranchesDropdown() {
+            const select = document.getElementById('partner-filter-branch');
+            if (!select) return;
+
+            const curVal = select.value;
+            let optionsHtml = '<option value="ALL">🌐 Semua Cabang (Konsolidasi)</option>';
+
+            if (state.branches && state.branches.length > 0) {
+                state.branches.forEach(b => {
+                    optionsHtml += `<option value="${b.id}">${escapeHtml(b.name)}</option>`;
+                });
+            }
+            select.innerHTML = optionsHtml;
+            if (curVal && select.querySelector(`option[value="${curVal}"]`)) {
+                select.value = curVal;
+            } else if (state.currentBranch && state.currentUser && state.currentUser.role !== 'SUPERADMIN') {
+                select.value = state.currentBranch.id;
+            }
+        }
+
+        function populatePartnerMitraDropdown(mitraList) {
+            const select = document.getElementById('partner-filter-customer');
+            if (!select || !mitraList) return;
+
+            const curVal = select.value;
+            let optionsHtml = '<option value="ALL">🌐 Semua Mitra Terdaftar</option>';
+
+            mitraList.forEach(m => {
+                optionsHtml += `<option value="${m.id}">${escapeHtml(m.name)} (${escapeHtml(m.branch_name || 'Cabang')})</option>`;
+            });
+
+            select.innerHTML = optionsHtml;
+            if (curVal && select.querySelector(`option[value="${curVal}"]`)) {
+                select.value = curVal;
+            }
+        }
+
+        async function loadPartnerSalesReport() {
+            try {
+                // Populate branch dropdown if empty
+                const branchSel = document.getElementById('partner-filter-branch');
+                if (branchSel && branchSel.options.length <= 1) {
+                    populatePartnerBranchesDropdown();
+                }
+
+                // Check period controls
+                const container = document.getElementById('partner-time-dynamic-container');
+                if (container && (!container.innerHTML || container.children.length === 0)) {
+                    renderPartnerPeriodControls();
+                }
+
+                const branchId = branchSel ? branchSel.value : 'ALL';
+                const customerId = document.getElementById('partner-filter-customer')?.value || 'ALL';
+                const paymentStatus = document.getElementById('partner-filter-status')?.value || 'ALL';
+                const paymentMethod = document.getElementById('partner-filter-method')?.value || 'ALL';
+
+                let url = `api.php?action=partner_sales_report&period_type=${encodeURIComponent(partnerPeriodType)}`;
+                if (branchId) url += `&branch_id=${encodeURIComponent(branchId)}`;
+                if (customerId) url += `&customer_id=${encodeURIComponent(customerId)}`;
+                if (paymentStatus) url += `&payment_status=${encodeURIComponent(paymentStatus)}`;
+                if (paymentMethod) url += `&payment_method=${encodeURIComponent(paymentMethod)}`;
+
+                if (partnerPeriodType === 'weekly') {
+                    const preset = document.getElementById('partner-control-week-preset')?.value || 'this_week';
+                    url += `&week_preset=${encodeURIComponent(preset)}`;
+                } else if (partnerPeriodType === 'monthly') {
+                    const m = document.getElementById('partner-control-month')?.value;
+                    const y = document.getElementById('partner-control-year')?.value;
+                    if (m) url += `&month=${m}`;
+                    if (y) url += `&year=${y}`;
+                } else if (partnerPeriodType === 'quarter') {
+                    const q = document.getElementById('partner-control-quarter')?.value;
+                    const y = document.getElementById('partner-control-year')?.value;
+                    if (q) url += `&quarter=${q}`;
+                    if (y) url += `&year=${y}`;
+                } else if (partnerPeriodType === 'semester') {
+                    const s = document.getElementById('partner-control-semester')?.value;
+                    const y = document.getElementById('partner-control-year')?.value;
+                    if (s) url += `&semester=${s}`;
+                    if (y) url += `&year=${y}`;
+                } else if (partnerPeriodType === 'yearly') {
+                    const y = document.getElementById('partner-control-year')?.value;
+                    if (y) url += `&year=${y}`;
+                } else if (partnerPeriodType === 'custom') {
+                    const sDate = document.getElementById('partner-control-start-date')?.value;
+                    const eDate = document.getElementById('partner-control-end-date')?.value;
+                    if (sDate) url += `&start_date=${encodeURIComponent(sDate)}`;
+                    if (eDate) url += `&end_date=${encodeURIComponent(eDate)}`;
+                }
+
+                const res = await fetch(url);
+                const data = await res.json();
+                if (!data.success) {
+                    console.error('Failed to load partner sales report:', data.error);
+                    return;
+                }
+
+                partnerReportRawData = data;
+                renderPartnerSalesReport(data);
+            } catch (err) {
+                console.error('Error loading partner sales report:', err);
+            }
+        }
+
+        function renderPartnerSalesReport(data) {
+            if (!data) return;
+
+            // Period Label
+            const periodLabel = data.period_label || 'Periode Terpilih';
+            const periodTextEl = document.getElementById('partner-active-period-text');
+            if (periodTextEl) {
+                periodTextEl.innerHTML = `<strong>Periode Aktif:</strong> ${escapeHtml(periodLabel)} &bull; Rentang Tanggal: <span class="font-mono text-emerald-800 font-bold">${escapeHtml(data.start_date || '')}</span> s/d <span class="font-mono text-emerald-800 font-bold">${escapeHtml(data.end_date || '')}</span>`;
+            }
+
+            const orders = data.orders || [];
+            const countBadge = document.getElementById('partner-active-orders-count-badge');
+            if (countBadge) countBadge.innerText = `${orders.length} Pesanan Mitra`;
+
+            // Populate Mitra Filter
+            if (data.mitra_list) {
+                populatePartnerMitraDropdown(data.mitra_list);
+            }
+
+            // KPI Cards
+            const kpi = data.kpi || {};
+            const revEl = document.getElementById('partner-kpi-revenue');
+            if (revEl) revEl.innerText = formatRupiah(kpi.total_revenue || 0);
+
+            const revSubEl = document.getElementById('partner-kpi-revenue-sub');
+            if (revSubEl) revSubEl.innerText = `Kotor: ${formatRupiah(kpi.gross_sales || 0)} (Disc: -${formatRupiah(kpi.total_discount || 0)})`;
+
+            const ordEl = document.getElementById('partner-kpi-orders');
+            if (ordEl) ordEl.innerText = (kpi.total_orders || 0).toLocaleString('id-ID');
+
+            const ordSubEl = document.getElementById('partner-kpi-orders-sub');
+            if (ordSubEl) ordSubEl.innerText = `${(kpi.total_items_sold || 0).toLocaleString('id-ID')} Total Item Terjual`;
+
+            const profitEl = document.getElementById('partner-kpi-profit');
+            if (profitEl) profitEl.innerText = formatRupiah(kpi.gross_profit || 0);
+
+            const profitSubEl = document.getElementById('partner-kpi-profit-sub');
+            if (profitSubEl) profitSubEl.innerText = `Margin: ${kpi.margin_percent || 0}% • HPP: ${formatRupiah(kpi.total_cogs || 0)}`;
+
+            const paidEl = document.getElementById('partner-kpi-paid');
+            if (paidEl) paidEl.innerText = formatRupiah(kpi.total_paid || 0);
+
+            const recEl = document.getElementById('partner-kpi-receivable');
+            if (recEl) recEl.innerText = formatRupiah(kpi.total_receivables || 0);
+
+            // Leaderboard Top Partners
+            const topBoard = document.getElementById('partner-top-leaderboard');
+            if (topBoard) {
+                const tops = data.top_partners || [];
+                if (tops.length === 0) {
+                    topBoard.innerHTML = '<div class="col-span-full py-4 text-center text-xs text-slate-400 italic">Belum ada transaksi mitra pada kurun waktu ini.</div>';
+                } else {
+                    topBoard.innerHTML = tops.map((p, idx) => {
+                        const rankMedals = ['🥇', '🥈', '🥉', '🏅'];
+                        const medal = rankMedals[idx] || '⭐';
+                        return `
+                            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 flex items-center space-x-3 hover:bg-slate-100/70 transition-colors">
+                                <span class="text-2xl">${medal}</span>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center justify-between">
+                                        <h5 class="font-bold text-slate-800 text-xs truncate" title="${escapeHtml(p.partner_name)}">${escapeHtml(p.partner_name)}</h5>
+                                        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">${p.total_orders} Order</span>
+                                    </div>
+                                    <div class="text-xs font-black text-slate-900 font-mono mt-0.5">${formatRupiah(p.total_revenue || 0)}</div>
+                                    <div class="text-[10px] text-slate-400 flex items-center justify-between mt-0.5">
+                                        <span>${p.total_items} item</span>
+                                        <span class="text-indigo-600 font-medium">Laba: ${formatRupiah(p.total_profit || 0)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            renderFilteredPartnerOrdersTable();
+            lucide.createIcons();
+        }
+
+        function renderFilteredPartnerOrdersTable() {
+            if (!partnerReportRawData) return;
+            const tbody = document.getElementById('partner-orders-tbody');
+            if (!tbody) return;
+
+            const searchQuery = (document.getElementById('partner-orders-search')?.value || '').toLowerCase().trim();
+            const orders = partnerReportRawData.orders || [];
+
+            const filtered = orders.filter(o => {
+                if (!searchQuery) return true;
+                const inv = (o.invoice_number || '').toLowerCase();
+                const cust = (o.customer_name || '').toLowerCase();
+                const branch = (o.branch_name || '').toLowerCase();
+                const itemsText = (o.items || []).map(i => `${i.product_name} ${i.variant_name || ''}`).join(' ').toLowerCase();
+                return inv.includes(searchQuery) || cust.includes(searchQuery) || branch.includes(searchQuery) || itemsText.includes(searchQuery);
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="py-12 text-center text-slate-400 text-xs">
+                            <i data-lucide="inbox" class="w-8 h-8 mx-auto text-slate-300 mb-2"></i>
+                            <p class="font-bold">Tidak ada transaksi penjualan mitra yang cocok dengan filter / pencarian.</p>
+                        </td>
+                    </tr>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            tbody.innerHTML = filtered.map((o) => {
+                // Status badge
+                let statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">LUNAS</span>';
+                if (o.payment_status === 'UNPAID') {
+                    statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">PIUTANG</span>';
+                }
+
+                // Render items preview
+                const items = o.items || [];
+                let itemsPreview = '';
+                if (items.length === 0) {
+                    itemsPreview = '<span class="text-slate-400 italic text-[11px]">- Tidak ada rincian item -</span>';
+                } else {
+                    const shownItems = items.slice(0, 2);
+                    const itemLines = shownItems.map(it => {
+                        const vText = it.variant_name ? ` (${it.variant_name})` : '';
+                        return `<div class="truncate text-slate-700 font-medium" title="${escapeHtml(it.product_name + vText)}">• <strong>${it.quantity}x</strong> ${escapeHtml(it.product_name + vText)} <span class="text-slate-400 font-mono text-[10px]">@${formatRupiah(it.unit_price)}</span></div>`;
+                    }).join('');
+                    const moreCount = items.length - shownItems.length;
+                    const moreTag = moreCount > 0 ? `<div class="text-[10px] text-emerald-600 font-bold mt-0.5">+${moreCount} item lainnya...</div>` : '';
+                    itemsPreview = itemLines + moreTag;
+                }
+
+                // Profit tag
+                const profitColor = Number(o.profit || 0) >= 0 ? 'text-indigo-700 font-bold' : 'text-rose-600 font-bold';
+
+                return `
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="py-3 px-3.5 font-mono font-bold text-slate-800">
+                            <button type="button" onclick="openSaleDetailModal('${escapeHtml(o.invoice_number)}')" class="text-emerald-700 hover:text-emerald-800 hover:underline flex items-center space-x-1" title="Lihat struk/faktur">
+                                <span>${escapeHtml(o.invoice_number)}</span>
+                                <i data-lucide="external-link" class="w-3 h-3 text-emerald-600"></i>
+                            </button>
+                        </td>
+                        <td class="py-3 px-3 font-mono text-slate-600 text-[11px] whitespace-nowrap">
+                            ${escapeHtml(o.created_at || '-')}
+                        </td>
+                        <td class="py-3 px-3.5">
+                            <div class="font-bold text-slate-900">${escapeHtml(o.customer_name || 'Mitra')}</div>
+                            <div class="text-[10px] text-slate-400 font-mono">${escapeHtml(o.customer_phone || '-')}</div>
+                        </td>
+                        <td class="py-3 px-3">
+                            <div class="font-bold text-slate-800">${escapeHtml(o.branch_name || '-')}</div>
+                            <div class="text-[10px] text-slate-500">Kasir: ${escapeHtml(o.cashier_name || '-')}</div>
+                        </td>
+                        <td class="py-3 px-4 max-w-xs">
+                            ${itemsPreview}
+                        </td>
+                        <td class="py-3 px-3 text-center whitespace-nowrap space-y-1">
+                            <div>${statusBadge}</div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${escapeHtml(o.payment_method || 'CASH')}</span>
+                        </td>
+                        <td class="py-3 px-3 text-right font-mono font-bold text-slate-900">
+                            ${formatRupiah(o.final_total || 0)}
+                        </td>
+                        <td class="py-3 px-3 text-right font-mono ${profitColor}">
+                            <div>${formatRupiah(o.profit || 0)}</div>
+                            <div class="text-[10px] text-slate-400 font-normal">HPP: ${formatRupiah(o.cogs || 0)}</div>
+                        </td>
+                        <td class="py-3 px-3 text-center whitespace-nowrap">
+                            <div class="flex items-center justify-center space-x-1.5">
+                                <button type="button" onclick="openPartnerOrderDetail(${o.id})" class="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold transition-colors" title="Rincian Pesanan Mitra Lengkap">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                                <button type="button" onclick="openSaleDetailModal('${escapeHtml(o.invoice_number)}')" class="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition-colors" title="Cetak Struk / Faktur Kasir">
+                                    <i data-lucide="printer" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function openPartnerOrderDetail(saleId) {
+            if (!partnerReportRawData || !partnerReportRawData.orders) return;
+            const order = partnerReportRawData.orders.find(o => o.id == saleId);
+            if (!order) return;
+
+            activePartnerOrder = order;
+
+            const modal = document.getElementById('partner-order-detail-modal');
+            if (!modal) return;
+
+            // Invoice & Badges
+            document.getElementById('pod-modal-invoice').innerText = order.invoice_number || 'INV/-';
+            
+            const statusEl = document.getElementById('pod-modal-status-badge');
+            if (statusEl) {
+                if (order.payment_status === 'UNPAID') {
+                    statusEl.className = "px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200";
+                    statusEl.innerText = 'PIUTANG (BELUM LUNAS)';
+                } else {
+                    statusEl.className = "px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200";
+                    statusEl.innerText = 'LUNAS';
+                }
+            }
+
+            const methodEl = document.getElementById('pod-modal-method-badge');
+            if (methodEl) {
+                methodEl.innerText = order.payment_method || 'CASH';
+            }
+
+            // Customer & Location info
+            document.getElementById('pod-modal-partner-name').innerText = order.customer_name || 'Mitra B2B';
+            document.getElementById('pod-modal-partner-phone').innerText = `Telp: ${order.customer_phone || '-'}`;
+            document.getElementById('pod-modal-partner-address').innerText = order.customer_address || '-';
+            document.getElementById('pod-modal-datetime').innerText = `${order.created_at || '-'} • Kasir: ${order.cashier_name || '-'}`;
+            document.getElementById('pod-modal-branch').innerText = `Cabang: ${order.branch_name || '-'}`;
+
+            // Items Table
+            const tbody = document.getElementById('pod-modal-items-tbody');
+            const items = order.items || [];
+
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-slate-400 italic">Tidak ada rincian item pesanan.</td></tr>';
+            } else {
+                tbody.innerHTML = items.map((it, idx) => {
+                    const vText = it.variant_name ? ` <span class="text-emerald-700 font-medium">(${escapeHtml(it.variant_name)})</span>` : '';
+                    const profit = Number(it.profit || 0);
+                    const profitClass = profit >= 0 ? 'text-indigo-700 font-bold' : 'text-rose-600 font-bold';
+                    return `
+                        <tr class="hover:bg-slate-50">
+                            <td class="py-2.5 px-3 text-slate-400 font-mono">${idx + 1}</td>
+                            <td class="py-2.5 px-3">
+                                <div class="font-bold text-slate-800">${escapeHtml(it.product_name)}${vText}</div>
+                                <div class="text-[10px] text-slate-400 font-mono">SKU: ${escapeHtml(it.sku || '-')}</div>
+                            </td>
+                            <td class="py-2.5 px-2 text-center font-bold text-slate-900">${it.quantity}</td>
+                            <td class="py-2.5 px-3 text-right font-mono text-slate-700">${formatRupiah(it.unit_price || 0)}</td>
+                            <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900">${formatRupiah(it.subtotal || 0)}</td>
+                            <td class="py-2.5 px-3 text-right font-mono text-slate-500">${formatRupiah(it.cost_price || 0)}</td>
+                            <td class="py-2.5 px-3 text-right font-mono text-slate-600">${formatRupiah(it.total_cogs || 0)}</td>
+                            <td class="py-2.5 px-3 text-right font-mono ${profitClass}">${formatRupiah(profit)}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // Summary Breakdown
+            document.getElementById('pod-modal-subtotal').innerText = formatRupiah(order.total_amount || 0);
+            document.getElementById('pod-modal-discount').innerText = `- ${formatRupiah(order.discount || 0)}`;
+            document.getElementById('pod-modal-delivery').innerText = formatRupiah(order.delivery_fee || 0);
+            document.getElementById('pod-modal-grand-total').innerText = formatRupiah(order.final_total || 0);
+
+            const profitMargin = Number(order.final_total || 0) > 0 ? ((Number(order.profit || 0) / Number(order.final_total)) * 100).toFixed(1) : '0';
+            document.getElementById('pod-modal-total-profit').innerText = `${formatRupiah(order.profit || 0)} (Margin: ${profitMargin}%)`;
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closePartnerOrderDetailModal() {
+            const modal = document.getElementById('partner-order-detail-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function printReceiptFromPartnerOrder() {
+            if (activePartnerOrder && activePartnerOrder.invoice_number) {
+                closePartnerOrderDetailModal();
+                openSaleDetailModal(activePartnerOrder.invoice_number);
+            }
+        }
+
+        function exportPartnerSalesExcel() {
+            const branchSel = document.getElementById('partner-filter-branch');
+            const branchId = branchSel ? branchSel.value : 'ALL';
+            const customerId = document.getElementById('partner-filter-customer')?.value || 'ALL';
+            const paymentStatus = document.getElementById('partner-filter-status')?.value || 'ALL';
+            const paymentMethod = document.getElementById('partner-filter-method')?.value || 'ALL';
+
+            let url = `api.php?action=export_partner_sales_excel&period_type=${encodeURIComponent(partnerPeriodType)}`;
+            if (branchId) url += `&branch_id=${encodeURIComponent(branchId)}`;
+            if (customerId) url += `&customer_id=${encodeURIComponent(customerId)}`;
+            if (paymentStatus) url += `&payment_status=${encodeURIComponent(paymentStatus)}`;
+            if (paymentMethod) url += `&payment_method=${encodeURIComponent(paymentMethod)}`;
+
+            if (partnerPeriodType === 'weekly') {
+                const preset = document.getElementById('partner-control-week-preset')?.value || 'this_week';
+                url += `&week_preset=${encodeURIComponent(preset)}`;
+            } else if (partnerPeriodType === 'monthly') {
+                const m = document.getElementById('partner-control-month')?.value;
+                const y = document.getElementById('partner-control-year')?.value;
+                if (m) url += `&month=${m}`;
+                if (y) url += `&year=${y}`;
+            } else if (partnerPeriodType === 'quarter') {
+                const q = document.getElementById('partner-control-quarter')?.value;
+                const y = document.getElementById('partner-control-year')?.value;
+                if (q) url += `&quarter=${q}`;
+                if (y) url += `&year=${y}`;
+            } else if (partnerPeriodType === 'semester') {
+                const s = document.getElementById('partner-control-semester')?.value;
+                const y = document.getElementById('partner-control-year')?.value;
+                if (s) url += `&semester=${s}`;
+                if (y) url += `&year=${y}`;
+            } else if (partnerPeriodType === 'yearly') {
+                const y = document.getElementById('partner-control-year')?.value;
+                if (y) url += `&year=${y}`;
+            } else if (partnerPeriodType === 'custom') {
+                const sDate = document.getElementById('partner-control-start-date')?.value;
+                const eDate = document.getElementById('partner-control-end-date')?.value;
+                if (sDate) url += `&start_date=${encodeURIComponent(sDate)}`;
+                if (eDate) url += `&end_date=${encodeURIComponent(eDate)}`;
+            }
+
+            window.open(url, '_blank');
         }
 
         // ==========================================
