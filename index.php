@@ -10481,37 +10481,6 @@ try {
                             ${closingItemsRows}
                         </div>
 
-                        <!-- Kartu Rekonsiliasi Tutup Galon & Target Stok Galon (Live Audit SOP Card) -->
-                        <div class="p-3.5 bg-gradient-to-r from-emerald-50 via-teal-50/50 to-sky-50 rounded-2xl border border-emerald-200 text-xs space-y-2">
-                            <div class="flex items-center justify-between border-b border-emerald-200/60 pb-1.5 flex-wrap gap-1">
-                                <div class="flex items-center space-x-1.5 font-black text-emerald-950">
-                                    <span>📊</span>
-                                    <span>Rekonsiliasi Tutup Galon & Kepatuhan Stok Malam:</span>
-                                </div>
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">SOP Standar 10 Galon Standby</span>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px]">
-                                <div class="bg-white/90 p-2 rounded-xl border border-emerald-100 shadow-2xs">
-                                    <span class="text-[10px] text-slate-500 block uppercase font-bold">Total Galon Terjual</span>
-                                    <span class="font-mono font-black text-sm text-indigo-700">${totalGalonSold} Galon</span>
-                                    <span class="text-[9px] text-slate-400 block mt-0.5">Penjualan POS Shift Ini</span>
-                                </div>
-                                <div class="bg-white/90 p-2 rounded-xl border border-emerald-100 shadow-2xs">
-                                    <span class="text-[10px] text-slate-500 block uppercase font-bold">Tutup Terpakai</span>
-                                    <span class="font-mono font-black text-sm text-emerald-700">${totalGalonSold} Pcs</span>
-                                    <span class="text-[9px] text-slate-400 block mt-0.5">1 Galon = 1 Tutup Baru</span>
-                                </div>
-                                <div class="bg-white/90 p-2 rounded-xl border border-emerald-100 shadow-2xs">
-                                    <span class="text-[10px] text-slate-500 block uppercase font-bold">Stok Produk Jadi Malam</span>
-                                    <span class="font-mono font-black text-sm text-emerald-900">10 Galon (Wajib)</span>
-                                    <span class="text-[9px] text-emerald-600 block mt-0.5">Siap Buka Shift Esok Hari</span>
-                                </div>
-                            </div>
-                            <p class="text-[10px] text-slate-600 leading-relaxed italic pt-0.5">
-                                💡 <b>Catatan SOP:</b> Sisa fisik bahan baku Tutup Galon yang belum terpakai diinput pada tabel di atas untuk <b>diretur ke gudang</b> saat Tutup Toko, sehingga stok cabang esok pagi dimulai bersih dari 0 pcs.
-                            </p>
-                        </div>
-
                         <div class="p-3 bg-amber-50/80 rounded-2xl border border-amber-200 text-[11px] text-amber-900 flex items-start space-x-2">
                             <span class="text-base leading-none">🌙</span>
                             <span class="leading-relaxed">
