@@ -2753,7 +2753,7 @@ try {
                 </div>
 
                 <!-- Sub-Navigation Navigation Bar -->
-                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap gap-2 items-center justify-between">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs">
                     <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
                         <button type="button" onclick="setCustomerSubtab('list')" id="subtab-btn-cust-list" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
                             <i data-lucide="users" class="w-4 h-4"></i>
@@ -2776,30 +2776,6 @@ try {
                             <span>Peta Geospasial Pelanggan</span>
                         </button>
                     </div>
-
-                    <!-- Right Action Button (Dinamis per Sub-Tab) -->
-                    <div id="cust-top-actions" class="shrink-0 flex items-center space-x-1.5 sm:space-x-2">
-                        <button id="cust-btn-add-customer" onclick="openCustomerModal()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow transition-colors flex items-center space-x-1.5">
-                            <i data-lucide="user-plus" class="w-4 h-4"></i>
-                            <span>+ Tambah Pelanggan / Mitra</span>
-                        </button>
-                        <button id="cust-btn-add-mitra-price" onclick="openMitraPriceModal()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow transition-colors items-center space-x-1.5 hidden">
-                            <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                            <span>+ Form Set Kontrak Mitra</span>
-                        </button>
-                        <button id="cust-btn-add-branch-price" onclick="openBranchPriceModal()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow transition-colors items-center space-x-1.5 hidden">
-                            <i data-lucide="tags" class="w-4 h-4"></i>
-                            <span>+ Form Atur Harga Cabang</span>
-                        </button>
-                        <button id="cust-btn-add-cust-cat" onclick="openCustomerCategoryModal()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow transition-colors items-center space-x-1.5 hidden">
-                            <i data-lucide="folder-plus" class="w-4 h-4"></i>
-                            <span>+ Tambah Kategori Pelanggan</span>
-                        </button>
-                        <button id="cust-btn-fit-map" onclick="fitCustomerMapBounds()" class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold shadow-xs transition-colors items-center space-x-1.5 hidden">
-                            <i data-lucide="maximize" class="w-4 h-4"></i>
-                            <span>Fokus Semua Titik</span>
-                        </button>
-                    </div>
                 </div>
 
                 <!-- SUBTAB 1: DAFTAR PELANGGAN & MITRA -->
@@ -2809,12 +2785,18 @@ try {
                             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
                             <input type="text" id="cust-search-keyword" oninput="filterCustomerList()" placeholder="Cari nama, no HP, atau kode pelanggan..." class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
                         </div>
-                        <div class="flex gap-1.5 flex-wrap">
-                            <button onclick="setCustCategoryFilter('ALL')" class="cust-cat-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white">Semua</button>
-                            <button onclick="setCustCategoryFilter('REGULER')" class="cust-cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Reguler</button>
-                            <button onclick="setCustCategoryFilter('MEMBER')" class="cust-cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Member</button>
-                            <button onclick="setCustCategoryFilter('RESELLER')" class="cust-cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Reseller</button>
-                            <button onclick="setCustCategoryFilter('MITRA')" class="cust-cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Mitra B2B</button>
+                        <div class="flex gap-2.5 items-center flex-wrap">
+                            <div class="flex gap-1.5 flex-wrap">
+                                <button onclick="setCustCategoryFilter('ALL')" class="cust-cat-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white">Semua</button>
+                                <button onclick="setCustCategoryFilter('REGULER')" class="cust-cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Reguler</button>
+                                <button onclick="setCustCategoryFilter('MEMBER')" class="cust-cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Member</button>
+                                <button onclick="setCustCategoryFilter('RESELLER')" class="cust-cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Reseller</button>
+                                <button onclick="setCustCategoryFilter('MITRA')" class="cust-cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Mitra B2B</button>
+                            </div>
+                            <button id="cust-btn-add-customer" onclick="openCustomerModal()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow transition-colors flex items-center space-x-1.5 shrink-0">
+                                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                <span>+ Tambah Pelanggan / Mitra</span>
+                            </button>
                         </div>
                     </div>
 
@@ -18377,30 +18359,7 @@ Manager / Supervisor: __________________
                 }
             });
 
-            // Dynamic Action Button on Header Navbar per subtab
-            const btnAddCust = document.getElementById('cust-btn-add-customer');
-            const btnAddMitraPrice = document.getElementById('cust-btn-add-mitra-price');
-            const btnAddBranchPrice = document.getElementById('cust-btn-add-branch-price');
-            const btnAddCustCat = document.getElementById('cust-btn-add-cust-cat');
-            const btnFitMap = document.getElementById('cust-btn-fit-map');
-
-            if (btnAddCust) btnAddCust.classList.add('hidden');
-            if (btnAddMitraPrice) btnAddMitraPrice.classList.add('hidden');
-            if (btnAddBranchPrice) btnAddBranchPrice.classList.add('hidden');
-            if (btnAddCustCat) btnAddCustCat.classList.add('hidden');
-            if (btnFitMap) btnFitMap.classList.add('hidden');
-
-            if (subtab === 'list' && btnAddCust) {
-                btnAddCust.classList.remove('hidden');
-            } else if (subtab === 'mitra-pricing' && btnAddMitraPrice) {
-                btnAddMitraPrice.classList.remove('hidden');
-            } else if (subtab === 'branch-pricing' && btnAddBranchPrice) {
-                btnAddBranchPrice.classList.remove('hidden');
-            } else if (subtab === 'category' && btnAddCustCat) {
-                btnAddCustCat.classList.remove('hidden');
-            } else if (subtab === 'maps') {
-                if (btnAddCust) btnAddCust.classList.remove('hidden');
-                if (btnFitMap) btnFitMap.classList.remove('hidden');
+            if (subtab === 'maps') {
                 setTimeout(() => {
                     initCustomerMap();
                 }, 150);
