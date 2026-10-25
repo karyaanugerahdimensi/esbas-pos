@@ -672,7 +672,7 @@ try {
                                 <i data-lucide="download" class="w-4 h-4"></i>
                                 <span>Export Excel Detail</span>
                             </button>
-                            <button onclick="openMasterResetModal({ sales: true })" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-1.5" title="Reset atau bersihkan data penjualan, stok, pemakaian, atau shift toko (Superadmin Only)">
+                            <button id="btn-sales-report-reset" onclick="openMasterResetModal({ sales: true })" style="display: none;" class="hidden px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-1.5" title="Reset atau bersihkan data penjualan, stok, pemakaian, atau shift toko (Superadmin Only)">
                                 <i data-lucide="refresh-ccw" class="w-4 h-4"></i>
                                 <span>Reset Data Toko</span>
                             </button>
@@ -962,7 +962,7 @@ try {
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <button id="btn-shift-report-reset" onclick="openMasterResetModal({ shifts: true })" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all" title="Reset atau hapus riwayat shift kasir cabang (Superadmin Only)">
+                            <button id="btn-shift-report-reset" onclick="openMasterResetModal({ shifts: true })" style="display: none;" class="hidden px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all" title="Reset atau hapus riwayat shift kasir cabang (Superadmin Only)">
                                 <i data-lucide="clock" class="w-4 h-4 text-rose-600"></i>
                                 <span>Reset Shift</span>
                             </button>
@@ -2242,7 +2242,7 @@ try {
                         </button>
                     </div>
                     <div id="bom-base-actions" class="flex items-center space-x-2">
-                        <button onclick="resetAllBaseBOM()" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-2xs transition-all" title="Hapus seluruh formula resep Base BOM semua produk">
+                        <button id="btn-bom-reset-all-base" onclick="resetAllBaseBOM()" style="display: none;" class="hidden px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-2xs transition-all" title="Hapus seluruh formula resep Base BOM semua produk">
                             <i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-600"></i>
                             <span>Hapus Semua Base BOM</span>
                         </button>
@@ -2296,7 +2296,7 @@ try {
                                 <option value="ALL">🌐 Semua Cabang (Konsolidasi Global)</option>
                             </select>
                         </div>
-                        <button onclick="openMasterResetModal({ stocks: true, branch_id: (document.getElementById('stock-branch-select') ? document.getElementById('stock-branch-select').value : 'ALL') })" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-2xs transition-colors" title="Reset persediaan stok fisik menjadi 0 (Superadmin Only)">
+                        <button id="btn-stock-reset-master" onclick="openMasterResetModal({ stocks: true, branch_id: (document.getElementById('stock-branch-select') ? document.getElementById('stock-branch-select').value : 'ALL') })" style="display: none;" class="hidden px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-2xs transition-colors" title="Reset persediaan stok fisik menjadi 0 (Superadmin Only)">
                             <i data-lucide="package-x" class="w-4 h-4 text-rose-600"></i>
                             <span id="btn-stock-reset-label">Reset Stok Cabang</span>
                         </button>
@@ -2551,7 +2551,7 @@ try {
 
                     <!-- Right Action Button (Dinamis per Sub-Tab) -->
                     <div id="exp-top-actions" class="flex items-center space-x-2">
-                        <button id="exp-btn-purge" onclick="openPurgeExpenseModal()" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl shadow-2xs transition-all flex items-center space-x-1.5" title="Hapus data beban operasional per-cabang atau seluruhnya (Superadmin Only)">
+                        <button id="exp-btn-purge" onclick="openPurgeExpenseModal()" style="display: none;" class="hidden px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl shadow-2xs transition-all flex items-center space-x-1.5" title="Hapus data beban operasional per-cabang atau seluruhnya (Superadmin Only)">
                             <i data-lucide="trash-2" class="w-4 h-4 text-rose-600"></i>
                             <span id="exp-btn-purge-label">Hapus Data Beban</span>
                         </button>
@@ -2594,7 +2594,7 @@ try {
                         </div>
 
                         <div class="flex items-center space-x-2">
-                            <button onclick="openPurgeExpenseModal()" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl transition-colors flex items-center space-x-1" title="Hapus catatan beban sesuai cabang terpilih / seluruhnya">
+                            <button id="exp-btn-purge-inline" onclick="openPurgeExpenseModal()" style="display: none;" class="hidden px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl transition-colors flex items-center space-x-1" title="Hapus catatan beban sesuai cabang terpilih / seluruhnya">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-600"></i>
                                 <span>Hapus Beban</span>
                             </button>
@@ -3532,7 +3532,7 @@ try {
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button onclick="openMasterResetModal({ bom: true })" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all" title="Reset atau bersihkan riwayat pemakaian bahan baku BOM (Superadmin Only)">
+                            <button id="btn-bom-report-reset" onclick="openMasterResetModal({ bom: true })" style="display: none;" class="hidden px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all" title="Reset atau bersihkan riwayat pemakaian bahan baku BOM (Superadmin Only)">
                                 <i data-lucide="trash-2" class="w-4 h-4 text-rose-600"></i>
                                 <span>Reset Pemakaian</span>
                             </button>
@@ -4131,7 +4131,7 @@ try {
                                 <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                                 <span>Refresh Data</span>
                             </button>
-                            <button type="button" onclick="openPurgeSalesModal()" class="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black text-white flex items-center space-x-1.5 shadow-sm transition-colors" title="Hapus seluruh data transaksi penjualan di database">
+                            <button id="btn-void-purge-sales" type="button" onclick="openPurgeSalesModal()" style="display: none;" class="hidden px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black text-white flex items-center space-x-1.5 shadow-sm transition-colors" title="Hapus seluruh data transaksi penjualan di database">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                 <span>Hapus Seluruh Data Penjualan</span>
                             </button>
@@ -4213,7 +4213,7 @@ try {
                             <i data-lucide="cloud-download" class="w-4 h-4"></i>
                             <span>Sinkron Master Hosting</span>
                         </button>
-                        <button onclick="openMasterResetModal()" class="px-4 py-2.5 bg-rose-600/90 hover:bg-rose-600 text-white rounded-2xl text-xs font-bold flex items-center space-x-2 shadow-lg transition-all" title="Buka menu pusat reset & pembersihan data cabang (Superadmin Only)">
+                        <button id="btn-settings-reset-store" onclick="openMasterResetModal()" style="display: none;" class="hidden px-4 py-2.5 bg-rose-600/90 hover:bg-rose-600 text-white rounded-2xl text-xs font-bold flex items-center space-x-2 shadow-lg transition-all" title="Buka menu pusat reset & pembersihan data cabang (Superadmin Only)">
                             <i data-lucide="refresh-ccw" class="w-4 h-4"></i>
                             <span>Reset Data Toko</span>
                         </button>
@@ -9030,6 +9030,43 @@ try {
             return (r === 'SUPERADMIN');
         }
 
+        function canUserResetStoreData() {
+            const curUser = state.currentUser || state.loggedInUser;
+            if (!curUser) return false;
+            const userRole = String(curUser.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+            // Blokir mutlak untuk Kasir, Staff, Kurir, dan level operasional cabang
+            if (!userRole || userRole.includes('CASHIER') || userRole.includes('KASIR') || userRole.includes('STAFF') || userRole.includes('STAF') || userRole.includes('KURIR') || userRole.includes('COURIER') || userRole.includes('GUDANG')) {
+                return false;
+            }
+            return (userRole === 'SUPERADMIN');
+        }
+
+        function updateStoreResetButtonsVisibility() {
+            const canReset = canUserResetStoreData();
+            const resetBtnIds = [
+                'btn-sales-report-reset',
+                'btn-shift-report-reset',
+                'btn-bom-report-reset',
+                'btn-bom-reset-all-base',
+                'btn-stock-reset-master',
+                'exp-btn-purge',
+                'exp-btn-purge-inline',
+                'btn-void-purge-sales',
+                'btn-settings-reset-store'
+            ];
+            resetBtnIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (canReset) {
+                    el.classList.remove('hidden');
+                    el.style.display = 'flex';
+                } else {
+                    el.classList.add('hidden');
+                    el.style.display = 'none';
+                }
+            });
+        }
+
         function getUserAssignedBranchId() {
             const curUser = state.currentUser || state.loggedInUser;
             if (curUser && curUser.branch_id) return parseInt(curUser.branch_id);
@@ -11725,6 +11762,7 @@ try {
         // 2. LAPORAN PENJUALAN
         // ==========================================
         async function loadSalesReports() {
+            updateStoreResetButtonsVisibility();
             const start = document.getElementById('report-start-date').value;
             const end = document.getElementById('report-end-date').value;
             const method = document.getElementById('report-payment-filter').value;
@@ -11955,6 +11993,7 @@ try {
         let currentBomUsageData = null;
 
         async function loadBomUsageReport() {
+            updateStoreResetButtonsVisibility();
             let start = document.getElementById('bom-report-start-date').value;
             let end = document.getElementById('bom-report-end-date').value;
             if (!start || !end) {
@@ -12133,19 +12172,11 @@ try {
         let currentDailyShiftReportData = null;
 
         function updateShiftReportSubtabVisibility() {
+            updateStoreResetButtonsVisibility();
             const btnShifts = document.getElementById('report-subtab-btn-shifts');
-            const btnReset = document.getElementById('btn-shift-report-reset');
             const curUser = state.currentUser || state.loggedInUser;
             const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
             const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
-
-            if (btnReset) {
-                if (isManagerOrAdmin) {
-                    btnReset.classList.remove('hidden');
-                } else {
-                    btnReset.classList.add('hidden');
-                }
-            }
 
             if (!btnShifts) return;
 
@@ -16918,14 +16949,7 @@ Manager / Supervisor: __________________
             const isGlobal = canAccessAll && (bId === 'ALL' || bId === '0' || bId === '');
 
             // Sembunyikan tombol Reset Stok jika bukan Superadmin / multi-cabang
-            const btnReset = document.getElementById('btn-stock-reset-label')?.closest('button');
-            if (btnReset) {
-                if (!canAccessAll) {
-                    btnReset.classList.add('hidden');
-                } else {
-                    btnReset.classList.remove('hidden');
-                }
-            }
+            updateStoreResetButtonsVisibility();
 
             // Update Kolom Header
             const headerCol = document.getElementById('stock-col-header-balance');
@@ -17582,21 +17606,14 @@ Manager / Supervisor: __________________
                 }
 
                 // Update label dan kontrol tombol Hapus Data Beban Cabang
-                const purgeBtn = document.getElementById('exp-btn-purge');
+                updateStoreResetButtonsVisibility();
                 const purgeBtnLabel = document.getElementById('exp-btn-purge-label');
-                if (purgeBtn) {
-                    if (!canUserAccessAllBranches()) {
-                        purgeBtn.classList.add('hidden');
+                if (canUserResetStoreData() && purgeBtnLabel) {
+                    if (bId && bId !== 'ALL') {
+                        const br = (state.branches || []).find(b => b.id == bId);
+                        purgeBtnLabel.innerText = br ? `Hapus Beban ${br.name}` : `Hapus Beban Cabang`;
                     } else {
-                        purgeBtn.classList.remove('hidden');
-                        if (purgeBtnLabel) {
-                            if (bId && bId !== 'ALL') {
-                                const br = (state.branches || []).find(b => b.id == bId);
-                                purgeBtnLabel.innerText = br ? `Hapus Beban ${br.name}` : `Hapus Beban Cabang`;
-                            } else {
-                                purgeBtnLabel.innerText = 'Hapus Semua Beban Toko';
-                            }
-                        }
+                        purgeBtnLabel.innerText = 'Hapus Semua Beban Toko';
                     }
                 }
 
@@ -22784,7 +22801,7 @@ Manager / Supervisor: __________________
         }
 
         function openMasterResetModal(preselectOpts = {}) {
-            if (!canUserAccessAllBranches()) {
+            if (!canUserResetStoreData()) {
                 alert('Akses Ditolak: Fitur Reset Data Toko hanya dapat diakses oleh Super Admin.');
                 return;
             }
@@ -23112,6 +23129,7 @@ Manager / Supervisor: __________________
                 }
             });
             updateShiftReportSubtabVisibility();
+            updateStoreResetButtonsVisibility();
         }
 
         state.settingsSelectedBranchId = 0;

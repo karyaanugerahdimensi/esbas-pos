@@ -10448,8 +10448,9 @@ try {
             break;
 
         case 'master_reset_data':
-            if ($sessionUserId > 0 && !$sessionUserCanAccessAll) {
-                echo json_encode(['success' => false, 'message' => 'Akses ditolak: Fitur Reset Data Toko hanya dapat diakses oleh Super Admin.']);
+            $currSessionRole = str_replace('_', '', strtoupper($_SESSION['role'] ?? ($uRole ?? '')));
+            if (($sessionUserId > 0 && !$sessionUserCanAccessAll) || ($currSessionRole !== '' && $currSessionRole !== 'SUPERADMIN')) {
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak: Fitur Reset Data Toko tidak diizinkan untuk Kasir/Staff dan hanya dapat diakses oleh Super Admin.']);
                 break;
             }
             // Endpoint Otorisasi Khusus Superadmin untuk mereset data per cabang atau seluruh cabang (global)

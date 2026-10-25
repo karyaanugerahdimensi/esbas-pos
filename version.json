@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.50",
-  "build": "20261026-05",
+  "version": "1.2.51",
+  "build": "20261026-06",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.51",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Penyembunyian Mutlak Tombol Reset Data Toko untuk Pengguna Level Kasir dan Staff",
+      "description": "Menyembunyikan secara mutlak seluruh tombol Reset Data Toko, Reset Shift, Reset Pemakaian BOM, Reset Stok Cabang, Hapus Data Beban, dan Hapus Semua Base BOM pada antarmuka pengguna (index.php) serta memblokir akses endpoint master_reset_data di api.php bagi pengguna berlevel Kasir (CASHIER) dan Staff (STAFF), sehingga fitur reset data hanya tampil dan dapat diakses khusus oleh Super Admin.",
+      "rollback_command": "git checkout v1.2.50"
+    },
     {
       "version": "1.2.50",
       "commit": "HEAD",
