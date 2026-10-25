@@ -14,6 +14,8 @@ database.sqlite-shm
 *.log
 .DS_Store
 Thumbs.db
+sessions/
+sessions/*
 
 # IDE & Editor files
 .vscode/

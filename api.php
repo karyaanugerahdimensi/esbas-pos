@@ -4,10 +4,22 @@ if (!headers_sent()) {
     header('Access-Control-Allow-Origin: *');
     header('Access-Control-Allow-Headers: Content-Type');
     header('Access-Control-Allow-Methods: GET, POST');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
 }
 
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/version.php';
+
+// Safe session save path handling (ensure writable local directory)
+$sessionSaveDir = __DIR__ . DIRECTORY_SEPARATOR . 'sessions';
+if (!is_dir($sessionSaveDir)) {
+    @mkdir($sessionSaveDir, 0777, true);
+}
+if (is_dir($sessionSaveDir) && is_writable($sessionSaveDir)) {
+    @ini_set('session.save_path', $sessionSaveDir);
+    session_save_path($sessionSaveDir);
+}
 
 // Konfigurasi Masa Aktif Session 12 Jam per Hari (12 jam = 43.200 detik)
 $sessionLifetimeSeconds = 43200; // 12 jam
@@ -652,6 +664,32 @@ try {
             ");
             $stmt->execute([$username, $username]);
             $user = $stmt->fetch();
+
+            if (!$user) {
+                // Extended matching for common alias / roles / names
+                $cleanUser = strtolower(str_replace(['_', '-', ' '], '', $username));
+                if (in_array($cleanUser, ['admin', 'superadmin', 'super_admin', 'ismail', 'muhamadismail', 'adm001'])) {
+                    $stmt = $pdo->prepare("SELECT u.*, b.name as branch_name FROM users u LEFT JOIN branches b ON b.id = u.branch_id WHERE u.nik = 'ADM001' OR UPPER(u.role) LIKE '%SUPER%ADMIN%' LIMIT 1");
+                    $stmt->execute();
+                    $user = $stmt->fetch();
+                } elseif (in_array($cleanUser, ['manager', 'branchmanager', 'nina', 'ninaindrayani', 'hendra', 'mgr001'])) {
+                    $stmt = $pdo->prepare("SELECT u.*, b.name as branch_name FROM users u LEFT JOIN branches b ON b.id = u.branch_id WHERE u.nik = 'MGR001' OR UPPER(u.role) LIKE '%MANAGER%' LIMIT 1");
+                    $stmt->execute();
+                    $user = $stmt->fetch();
+                } elseif (in_array($cleanUser, ['kasir', 'cashier', 'bima', 'csr001'])) {
+                    $stmt = $pdo->prepare("SELECT u.*, b.name as branch_name FROM users u LEFT JOIN branches b ON b.id = u.branch_id WHERE u.nik = 'CSR001' OR UPPER(u.role) LIKE '%CASHIER%' OR UPPER(u.role) LIKE '%KASIR%' LIMIT 1");
+                    $stmt->execute();
+                    $user = $stmt->fetch();
+                } elseif (in_array($cleanUser, ['staff', 'staf', 'keenan', 'rian', 'stf001'])) {
+                    $stmt = $pdo->prepare("SELECT u.*, b.name as branch_name FROM users u LEFT JOIN branches b ON b.id = u.branch_id WHERE u.nik = 'STF001' OR UPPER(u.role) LIKE '%STAFF%' OR UPPER(u.role) LIKE '%STAF%' LIMIT 1");
+                    $stmt->execute();
+                    $user = $stmt->fetch();
+                } else {
+                    $stmt = $pdo->prepare("SELECT u.*, b.name as branch_name FROM users u LEFT JOIN branches b ON b.id = u.branch_id WHERE LOWER(u.name) LIKE ? LIMIT 1");
+                    $stmt->execute(['%' . strtolower($username) . '%']);
+                    $user = $stmt->fetch();
+                }
+            }
 
             if (!$user) {
                 echo json_encode(['success' => false, 'message' => "Akun karyawan '{$username}' tidak ditemukan."]);
