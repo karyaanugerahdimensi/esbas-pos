@@ -617,21 +617,21 @@ try {
             <!-- ---------------------------------------------------- -->
             <div id="tab-reports" class="hidden space-y-6">
                 <!-- Subtab Navigation Bar -->
-                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 w-full">
-                        <button onclick="setReportSubtab('sales')" id="report-subtab-btn-sales" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs">
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <button onclick="setReportSubtab('sales')" id="report-subtab-btn-sales" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
                             <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
                             <span>Laporan Penjualan & Omzet</span>
                         </button>
-                        <button onclick="setReportSubtab('receivables')" id="report-subtab-btn-receivables" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button onclick="setReportSubtab('receivables')" id="report-subtab-btn-receivables" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="book-open-check" class="w-4 h-4"></i>
                             <span>Laporan Piutang Usaha & Pelanggan</span>
                         </button>
-                        <button onclick="setReportSubtab('shifts')" id="report-subtab-btn-shifts" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button onclick="setReportSubtab('shifts')" id="report-subtab-btn-shifts" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="clock" class="w-4 h-4"></i>
                             <span>Laporan Shift Kasir & Tutup Toko</span>
                         </button>
-                        <button onclick="setReportSubtab('bom')" id="report-subtab-btn-bom" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button onclick="setReportSubtab('bom')" id="report-subtab-btn-bom" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="boxes" class="w-4 h-4"></i>
                             <span>Pemakaian Bahan Baku (BOM)</span>
                         </button>
@@ -1116,33 +1116,33 @@ try {
                 </div>
 
                 <!-- ESS Subtabs Navigation Bar -->
-                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 w-full">
-                        <button id="ess-subtab-btn-presensi" onclick="setEssSubtab('presensi')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs">
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <button id="ess-subtab-btn-presensi" onclick="setEssSubtab('presensi')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
                             <i data-lucide="map-pin" class="w-4 h-4"></i>
                             <span>Presensi & Klaim Toko</span>
                         </button>
-                        <button id="ess-subtab-btn-schedules" onclick="setEssSubtab('schedules')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="ess-subtab-btn-schedules" onclick="setEssSubtab('schedules')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="calendar" class="w-4 h-4"></i>
                             <span>Jam Kerja & Roster Bulanan</span>
                         </button>
-                        <button id="ess-subtab-btn-swaps" onclick="setEssSubtab('swaps')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="ess-subtab-btn-swaps" onclick="setEssSubtab('swaps')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="repeat" class="w-4 h-4"></i>
                             <span>Tukar Jadwal (Shift Swap)</span>
                         </button>
-                        <button id="ess-subtab-btn-leaves" onclick="setEssSubtab('leaves')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="ess-subtab-btn-leaves" onclick="setEssSubtab('leaves')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="calendar-off" class="w-4 h-4"></i>
                             <span>Cuti, Izin & Sakit</span>
                         </button>
-                        <button id="ess-subtab-btn-attendance" onclick="setEssSubtab('attendance')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="ess-subtab-btn-attendance" onclick="setEssSubtab('attendance')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="file-bar-chart" class="w-4 h-4"></i>
                             <span>Laporan Kehadiran</span>
                         </button>
-                        <button id="ess-subtab-btn-payslip" onclick="setEssSubtab('payslip')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="ess-subtab-btn-payslip" onclick="setEssSubtab('payslip')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="receipt" class="w-4 h-4"></i>
                             <span>Cetak Slip Gaji Mandiri</span>
                         </button>
-                        <button id="ess-subtab-btn-loans" onclick="setEssSubtab('loans')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="ess-subtab-btn-loans" onclick="setEssSubtab('loans')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="hand-coins" class="w-4 h-4"></i>
                             <span>Pinjaman / Kasbon Gaji</span>
                         </button>
@@ -1983,29 +1983,29 @@ try {
                 </div>
 
                 <!-- Sub-Tab Navigation: 1. Katalog Produk, 2. Kategori, 3. Jenis Produk, 4. Satuan, 5. Master Pajak, 6. Produk Opening Sales -->
-                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 w-full">
-                        <button onclick="switchProductSubTab('catalog')" id="prod-subtab-btn-catalog" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs">
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <button onclick="switchProductSubTab('catalog')" id="prod-subtab-btn-catalog" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
                             <i data-lucide="package" class="w-4 h-4"></i>
                             <span>Katalog Produk & Varian</span>
                         </button>
-                        <button onclick="switchProductSubTab('categories')" id="prod-subtab-btn-categories" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button onclick="switchProductSubTab('categories')" id="prod-subtab-btn-categories" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="folder-tree" class="w-4 h-4"></i>
                             <span>Kategori Produk</span>
                         </button>
-                        <button onclick="switchProductSubTab('types')" id="prod-subtab-btn-types" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button onclick="switchProductSubTab('types')" id="prod-subtab-btn-types" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="tag" class="w-4 h-4"></i>
                             <span>Jenis Produk</span>
                         </button>
-                        <button onclick="switchProductSubTab('units')" id="prod-subtab-btn-units" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button onclick="switchProductSubTab('units')" id="prod-subtab-btn-units" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="scale" class="w-4 h-4"></i>
                             <span>Satuan Produk</span>
                         </button>
-                        <button onclick="switchProductSubTab('taxes')" id="prod-subtab-btn-taxes" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button onclick="switchProductSubTab('taxes')" id="prod-subtab-btn-taxes" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="receipt-percent" class="w-4 h-4"></i>
                             <span>Master Pajak / Taxes</span>
                         </button>
-                        <button onclick="switchProductSubTab('opening_shift')" id="prod-subtab-btn-opening_shift" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button onclick="switchProductSubTab('opening_shift')" id="prod-subtab-btn-opening_shift" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="sunrise" class="w-4 h-4"></i>
                             <span>Produk Opening Sales</span>
                         </button>
@@ -2243,13 +2243,13 @@ try {
                 </div>
 
                 <!-- Sub Navigation: Base Product BOM vs Variant BOM -->
-                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0">
-                        <button onclick="switchBOMSubTab('base')" id="bom-subtab-btn-base" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <button onclick="switchBOMSubTab('base')" id="bom-subtab-btn-base" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
                             <i data-lucide="flask-conical" class="w-4 h-4"></i>
                             <span>Resep Produk Utama (Base BOM)</span>
                         </button>
-                        <button onclick="switchBOMSubTab('variant')" id="bom-subtab-btn-variant" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button onclick="switchBOMSubTab('variant')" id="bom-subtab-btn-variant" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="layers-2" class="w-4 h-4"></i>
                             <span>Resep Pilihan Varian (Variant BOM)</span>
                         </button>
@@ -2321,13 +2321,13 @@ try {
                 </div>
 
                 <!-- Sub Navigation: Saldo Stok vs Kartu Pergerakan -->
-                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 w-full sm:w-auto">
-                        <button onclick="switchStockSubTab('balance')" id="subtab-btn-balance" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs">
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <button onclick="switchStockSubTab('balance')" id="subtab-btn-balance" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
                             <i data-lucide="boxes" class="w-4 h-4"></i>
                             <span>Saldo Stok Cabang</span>
                         </button>
-                        <button onclick="switchStockSubTab('movements')" id="subtab-btn-movements" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button onclick="switchStockSubTab('movements')" id="subtab-btn-movements" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
                             <span>Buku Kartu Pergerakan (Movement Ledger)</span>
                         </button>
@@ -2554,13 +2554,13 @@ try {
                 </div>
 
                 <!-- Sub-Navigation Navigation Bar -->
-                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap sm:flex-nowrap gap-2 items-center justify-between">
-                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0">
-                        <button type="button" onclick="setExpenseSubtab('ledger')" id="subtab-btn-exp-ledger" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-rose-600 text-white shadow-2xs">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap gap-2 items-center justify-between">
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <button type="button" onclick="setExpenseSubtab('ledger')" id="subtab-btn-exp-ledger" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-rose-600 text-white shadow-2xs">
                             <i data-lucide="book-open" class="w-4 h-4"></i>
                             <span>Buku Catatan Beban Operasional</span>
                         </button>
-                        <button type="button" onclick="setExpenseSubtab('category')" id="subtab-btn-exp-category" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button type="button" onclick="setExpenseSubtab('category')" id="subtab-btn-exp-category" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="tags" class="w-4 h-4"></i>
                             <span>Kelola Kategori Beban (CRUD)</span>
                         </button>
@@ -2753,25 +2753,25 @@ try {
                 </div>
 
                 <!-- Sub-Navigation Navigation Bar -->
-                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap sm:flex-nowrap gap-2 items-center justify-between">
-                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0">
-                        <button type="button" onclick="setCustomerSubtab('list')" id="subtab-btn-cust-list" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap gap-2 items-center justify-between">
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <button type="button" onclick="setCustomerSubtab('list')" id="subtab-btn-cust-list" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
                             <i data-lucide="users" class="w-4 h-4"></i>
                             <span>Data Pelanggan & Mitra</span>
                         </button>
-                        <button type="button" onclick="setCustomerSubtab('mitra-pricing')" id="subtab-btn-cust-mitra" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button type="button" onclick="setCustomerSubtab('mitra-pricing')" id="subtab-btn-cust-mitra" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="handshake" class="w-4 h-4"></i>
                             <span>Harga Kontrak Khusus Mitra</span>
                         </button>
-                        <button type="button" onclick="setCustomerSubtab('branch-pricing')" id="subtab-btn-cust-branch" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button type="button" onclick="setCustomerSubtab('branch-pricing')" id="subtab-btn-cust-branch" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="map-pin" class="w-4 h-4"></i>
                             <span>Menu & Harga Cabang</span>
                         </button>
-                        <button type="button" onclick="setCustomerSubtab('category')" id="subtab-btn-cust-category" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button type="button" onclick="setCustomerSubtab('category')" id="subtab-btn-cust-category" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="tags" class="w-4 h-4"></i>
                             <span>Kategori Pelanggan</span>
                         </button>
-                        <button type="button" onclick="setCustomerSubtab('maps')" id="subtab-btn-cust-maps" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button type="button" onclick="setCustomerSubtab('maps')" id="subtab-btn-cust-maps" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="map" class="w-4 h-4"></i>
                             <span>Peta Geospasial Pelanggan</span>
                         </button>
@@ -3190,25 +3190,25 @@ try {
                 </div>
 
                 <!-- Logistics Subtabs Navigation -->
-                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 w-full">
-                        <button type="button" onclick="switchLogisticsSubtab('vehicles')" id="subtab-btn-vehicles" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs">
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <button type="button" onclick="switchLogisticsSubtab('vehicles')" id="subtab-btn-vehicles" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
                             <i data-lucide="bike" class="w-4 h-4"></i>
                             <span>Armada Kendaraan Kurir</span>
                         </button>
-                        <button type="button" onclick="switchLogisticsSubtab('fuel')" id="subtab-btn-fuel" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button type="button" onclick="switchLogisticsSubtab('fuel')" id="subtab-btn-fuel" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="fuel" class="w-4 h-4"></i>
                             <span>Bensin & KM Motor</span>
                         </button>
-                        <button type="button" onclick="switchLogisticsSubtab('service')" id="subtab-btn-service" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button type="button" onclick="switchLogisticsSubtab('service')" id="subtab-btn-service" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="wrench" class="w-4 h-4"></i>
                             <span>Servis & Beban Biaya</span>
                         </button>
-                        <button type="button" onclick="switchLogisticsSubtab('settings')" id="subtab-btn-settings" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button type="button" onclick="switchLogisticsSubtab('settings')" id="subtab-btn-settings" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="sliders" class="w-4 h-4"></i>
                             <span>Tarif Kirim Dinamis</span>
                         </button>
-                        <button type="button" onclick="switchLogisticsSubtab('maps')" id="subtab-btn-maps" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button type="button" onclick="switchLogisticsSubtab('maps')" id="subtab-btn-maps" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="map" class="w-4 h-4"></i>
                             <span>Peta Maps Outlet & Pelanggan</span>
                         </button>
@@ -3717,13 +3717,13 @@ try {
                 </div>
 
                 <!-- Sub-Navigation Bar Cabang -->
-                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 w-full sm:w-auto">
-                        <button type="button" onclick="setBranchSubtab('table')" id="subtab-btn-branch-table" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs">
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <button type="button" onclick="setBranchSubtab('table')" id="subtab-btn-branch-table" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
                             <i data-lucide="list" class="w-4 h-4"></i>
                             <span>Tabel Data Cabang & Koordinat</span>
                         </button>
-                        <button type="button" onclick="setBranchSubtab('maps')" id="subtab-btn-branch-maps" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button type="button" onclick="setBranchSubtab('maps')" id="subtab-btn-branch-maps" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="map" class="w-4 h-4"></i>
                             <span>Peta Geospasial Jaringan Cabang (Outlet Maps)</span>
                         </button>
@@ -4270,27 +4270,27 @@ try {
                 </div>
 
                 <!-- 7 Sub-Tab Navigasi Pills -->
-                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 w-full">
-                        <button id="settings-tab-btn-general" onclick="setSettingsSubtab('general')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs">
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <button id="settings-tab-btn-general" onclick="setSettingsSubtab('general')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
                             <span>🏷️ Identitas & Logo</span>
                         </button>
-                        <button id="settings-tab-btn-roles" onclick="setSettingsSubtab('roles')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="settings-tab-btn-roles" onclick="setSettingsSubtab('roles')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <span>🛡️ Hak Akses Role</span>
                         </button>
-                        <button id="settings-tab-btn-printer" onclick="setSettingsSubtab('printer')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="settings-tab-btn-printer" onclick="setSettingsSubtab('printer')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <span>🖨️ Printer USB / IP</span>
                         </button>
-                        <button id="settings-tab-btn-receipt" onclick="setSettingsSubtab('receipt')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="settings-tab-btn-receipt" onclick="setSettingsSubtab('receipt')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <span>🧾 Layout Nota Struk</span>
                         </button>
-                        <button id="settings-tab-btn-payslip" onclick="setSettingsSubtab('payslip')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="settings-tab-btn-payslip" onclick="setSettingsSubtab('payslip')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <span>💼 Layout Slip Gaji</span>
                         </button>
-                        <button id="settings-tab-btn-notifications" onclick="setSettingsSubtab('notifications')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="settings-tab-btn-notifications" onclick="setSettingsSubtab('notifications')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <span>📱 Nota WA & Telegram</span>
                         </button>
-                        <button id="settings-tab-btn-sync" onclick="setSettingsSubtab('sync')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900" title="Sinkronisasi Database Master Hosting & Lokal">
+                        <button id="settings-tab-btn-sync" onclick="setSettingsSubtab('sync')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900" title="Sinkronisasi Database Master Hosting & Lokal">
                             <span>🌐 Sinkronisasi Hosting</span>
                         </button>
                     </div>
@@ -12271,8 +12271,8 @@ try {
             const viewBOM = document.getElementById('subtab-reports-bom');
 
             // Reset buttons style
-            const inactiveClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
-            const activeClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
+            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
 
             if (btnSales) btnSales.className = inactiveClass;
             if (btnAR) btnAR.className = inactiveClass;
@@ -13367,9 +13367,9 @@ Manager / Supervisor: __________________
                 if (container) container.classList.toggle('hidden', st !== subtab);
                 if (btn) {
                     if (st === subtab) {
-                        btn.className = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
+                        btn.className = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
                     } else {
-                        btn.className = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+                        btn.className = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
                     }
                 }
             });
@@ -15750,8 +15750,8 @@ Manager / Supervisor: __________________
             if (openingShiftView) openingShiftView.classList.add('hidden');
 
             // Reset tab button styles
-            const inactiveClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
-            const activeClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
+            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
 
             if (btnCatalog) btnCatalog.className = inactiveClass;
             if (btnCategories) btnCategories.className = inactiveClass;
@@ -16686,8 +16686,8 @@ Manager / Supervisor: __________________
             const viewVar = document.getElementById('bom-view-variant');
             const actionsBase = document.getElementById('bom-base-actions');
 
-            const activeClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
-            const inactiveClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
+            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
 
             if (sub === 'base') {
                 btnBase.className = activeClass;
@@ -16952,8 +16952,8 @@ Manager / Supervisor: __________________
             const viewBal = document.getElementById('stock-view-balance');
             const viewMov = document.getElementById('stock-view-movements');
 
-            const activeClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
-            const inactiveClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
+            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
 
             if (sub === 'balance') {
                 if (btnBal) btnBal.className = activeClass;
@@ -17557,9 +17557,9 @@ Manager / Supervisor: __________________
             const btnAddExp = document.getElementById('exp-btn-add-expense');
             const btnAddCat = document.getElementById('exp-btn-add-category');
 
-            const activeLedgerClass = "px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-rose-600 text-white shadow-2xs";
-            const activeCatClass = "px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs";
-            const inactiveClass = "px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900";
+            const activeLedgerClass = "px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-rose-600 text-white shadow-2xs";
+            const activeCatClass = "px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs";
+            const inactiveClass = "px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900";
 
             if (subtab === 'ledger') {
                 if (btnLedger) btnLedger.className = activeLedgerClass;
@@ -18362,8 +18362,8 @@ Manager / Supervisor: __________________
                 { key: 'maps', elId: 'subview-cust-maps', btnId: 'subtab-btn-cust-maps' }
             ];
 
-            const activeClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
-            const inactiveClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
+            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
 
             subtabs.forEach(item => {
                 const el = document.getElementById(item.elId);
@@ -20179,8 +20179,8 @@ Manager / Supervisor: __________________
                 { key: 'maps', viewId: 'subtab-logistics-maps', btnId: 'subtab-btn-maps' }
             ];
 
-            const activeClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
-            const inactiveClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
+            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
 
             subtabs.forEach(item => {
                 const view = document.getElementById(item.viewId);
@@ -21447,8 +21447,8 @@ Manager / Supervisor: __________________
             const btnTable = document.getElementById('subtab-btn-branch-table');
             const btnMaps = document.getElementById('subtab-btn-branch-maps');
 
-            const activeClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
-            const inactiveClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
+            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
 
             if (isTable) {
                 if (tableEl) tableEl.classList.remove('hidden');
@@ -23125,8 +23125,8 @@ Manager / Supervisor: __________________
         function setSettingsSubtab(subtab) {
             settingsSubtabActive = subtab;
             const subtabs = ['general', 'roles', 'printer', 'receipt', 'payslip', 'notifications', 'sync'];
-            const activeClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
-            const inactiveClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
+            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
 
             subtabs.forEach(st => {
                 const el = document.getElementById(`settings-subtab-${st}`);
