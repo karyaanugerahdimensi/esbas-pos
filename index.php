@@ -3379,12 +3379,12 @@ try {
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label class="block font-bold text-slate-700 mb-1">Tarif Dasar / Base Fee (Rp):</label>
-                                        <input type="number" id="ds-base-fee" value="10000" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-sm text-indigo-900" required>
+                                        <input type="number" step="any" id="ds-base-fee" value="10000" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-sm text-indigo-900" required>
                                         <p class="text-[10px] text-slate-400 mt-1">Tarif minimum untuk jarak awal.</p>
                                     </div>
                                     <div>
                                         <label class="block font-bold text-slate-700 mb-1">Jarak Dasar Termasuk Base Fee (KM):</label>
-                                        <input type="number" step="0.5" id="ds-base-km" value="3.0" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-sm text-indigo-900" required>
+                                        <input type="number" step="any" id="ds-base-km" value="3" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-sm text-indigo-900" required>
                                         <p class="text-[10px] text-slate-400 mt-1">Contoh: 3 km pertama Rp 10.000.</p>
                                     </div>
                                 </div>
@@ -3392,19 +3392,19 @@ try {
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label class="block font-bold text-slate-700 mb-1">Tarif Tambahan per KM Berikutnya (Rp/KM):</label>
-                                        <input type="number" id="ds-per-km-rate" value="2500" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-sm text-indigo-900" required>
+                                        <input type="number" step="any" id="ds-per-km-rate" value="2500" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-sm text-indigo-900" required>
                                         <p class="text-[10px] text-slate-400 mt-1">Dihitung otomatis untuk setiap km kelebihan.</p>
                                     </div>
                                     <div>
                                         <label class="block font-bold text-slate-700 mb-1">Batas Belanja Gratis Ongkir (Rp):</label>
-                                        <input type="number" id="ds-free-threshold" value="150000" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-sm text-emerald-800" required>
-                                        <p class="text-[10px] text-slate-400 mt-1">Jika subtotal order $\ge$ angka ini, ongkir gratis (0 = off).</p>
+                                        <input type="number" step="any" id="ds-free-threshold" value="150000" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-sm text-emerald-800" required>
+                                        <p class="text-[10px] text-slate-400 mt-1">Jika subtotal order &ge; angka ini, ongkir gratis (0 = off).</p>
                                     </div>
                                 </div>
 
                                 <div>
                                     <label class="block font-bold text-slate-700 mb-1">Radius Jarak Maksimal Pengantaran (KM):</label>
-                                    <input type="number" step="1" id="ds-max-km" value="35" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium">
+                                    <input type="number" step="any" id="ds-max-km" value="35" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium">
                                 </div>
 
                                 <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow transition-colors flex items-center justify-center space-x-2 text-xs">
@@ -3425,7 +3425,7 @@ try {
                                     <input type="range" min="0.5" max="30" step="0.5" id="sim-distance-range" value="5" oninput="updateDeliverySimulator()" class="w-full accent-indigo-400 cursor-pointer">
                                     <div class="flex justify-between text-[11px] font-mono text-indigo-200 mt-1">
                                         <span>0.5 km</span>
-                                        <span id="sim-distance-val" class="font-bold text-amber-300 text-sm">5.0 km</span>
+                                        <span id="sim-distance-val" class="font-bold text-amber-300 text-sm">5 km</span>
                                         <span>30 km</span>
                                     </div>
                                 </div>
@@ -9730,7 +9730,7 @@ try {
                     state.currentDeliveryFee = data.delivery_fee;
                     state.currentDeliveryDistance = data.distance_km;
 
-                    if (distEl) distEl.innerText = `${data.distance_km} km`;
+                    if (distEl) distEl.innerText = `${formatDecimal(data.distance_km)} km`;
                     const isPromoFree = Boolean(data.is_free || data.is_free_delivery);
                     if (feeEl) {
                         feeEl.innerText = isPromoFree ? 'GRATIS (Promo Belanja)' : formatRupiah(data.delivery_fee);
@@ -20286,7 +20286,7 @@ Manager / Supervisor: __________________
 
             tbody.innerHTML = filtered.map(v => {
                 const branchName = state.branches.find(b => b.id === v.branch_id)?.name || 'Semua Cabang';
-                const ratioText = (v.fuel_ratio_unit === 'METER_PER_LITER') ? `${v.fuel_ratio} m/L` : `${v.fuel_ratio} km/L`;
+                const ratioText = (v.fuel_ratio_unit === 'METER_PER_LITER') ? `${formatDecimal(v.fuel_ratio)} m/L` : `${formatDecimal(v.fuel_ratio)} km/L`;
                 
                 let statusBadge = '';
                 if (v.status === 'ACTIVE') {
@@ -20396,8 +20396,8 @@ Manager / Supervisor: __________________
                 document.getElementById('vehicle-name').value = veh.vehicle_name;
                 document.getElementById('vehicle-type').value = veh.vehicle_type || 'MOTOR';
                 document.getElementById('vehicle-driver').value = veh.driver_name || '';
-                document.getElementById('vehicle-odometer').value = veh.current_odometer || 0;
-                document.getElementById('vehicle-fuel-ratio').value = veh.fuel_ratio || 35;
+                document.getElementById('vehicle-odometer').value = formatDecimal(veh.current_odometer || 0);
+                document.getElementById('vehicle-fuel-ratio').value = formatDecimal(veh.fuel_ratio || 35);
                 document.getElementById('vehicle-fuel-ratio-unit').value = veh.fuel_ratio_unit || 'KM_PER_LITER';
                 document.getElementById('vehicle-fuel-type').value = veh.fuel_type || 'Pertalite';
                 document.getElementById('vehicle-status').value = veh.status || 'ACTIVE';
@@ -20527,7 +20527,7 @@ Manager / Supervisor: __________________
                 }
 
                 tbody.innerHTML = filtered.map(l => {
-                    const ratioText = (l.fuel_ratio_unit === 'METER_PER_LITER') ? `${l.configured_ratio} m/L` : `${l.configured_ratio} km/L`;
+                    const ratioText = (l.fuel_ratio_unit === 'METER_PER_LITER') ? `${formatDecimal(l.configured_ratio)} m/L` : `${formatDecimal(l.configured_ratio)} km/L`;
                     const efficiency = Number(l.efficiency_percent || 100);
                     let badgeClass = 'bg-emerald-100 text-emerald-800';
                     if (efficiency < 85) badgeClass = 'bg-rose-100 text-rose-800 font-bold';
@@ -20542,15 +20542,15 @@ Manager / Supervisor: __________________
                             </td>
                             <td class="py-3 px-4 text-slate-700 font-medium">${l.driver_name || '-'}</td>
                             <td class="py-3 px-4 font-mono text-center text-slate-600">
-                                <span class="text-[10px] text-slate-400">${Number(l.last_odometer).toLocaleString()} &rarr;</span>
-                                <span class="font-bold text-slate-800">${Number(l.current_odometer).toLocaleString()} km</span>
+                                <span class="text-[10px] text-slate-400">${Number(l.last_odometer || 0).toLocaleString('id-ID')} &rarr;</span>
+                                <span class="font-bold text-slate-800">${Number(l.current_odometer || 0).toLocaleString('id-ID')} km</span>
                             </td>
-                            <td class="py-3 px-4 font-mono font-black text-indigo-900 text-right text-xs">+${Number(l.distance_traveled).toFixed(1)} km</td>
-                            <td class="py-3 px-4 font-mono font-bold text-slate-800 text-right">${Number(l.liters_bought).toFixed(2)} L</td>
+                            <td class="py-3 px-4 font-mono font-black text-indigo-900 text-right text-xs">+${formatDecimal(l.distance_traveled)} km</td>
+                            <td class="py-3 px-4 font-mono font-bold text-slate-800 text-right">${formatDecimal(l.liters_bought)} L</td>
                             <td class="py-3 px-4 font-mono font-black text-rose-600 text-right text-xs">${formatRupiah(l.total_cost)}</td>
                             <td class="py-3 px-4 text-center font-mono text-[11px] text-slate-700 font-bold">${ratioText}</td>
                             <td class="py-3 px-4 text-center">
-                                <span class="px-2 py-0.5 rounded-full text-[10px] ${badgeClass}">${efficiency}%</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] ${badgeClass}">${formatDecimal(efficiency)}%</span>
                             </td>
                             <td class="py-3 px-4 text-center">
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
@@ -20591,8 +20591,8 @@ Manager / Supervisor: __________________
             const vId = parseInt(document.getElementById('fl-vehicle-select').value);
             const veh = state.vehicles.find(v => v.id === vId);
             if (veh) {
-                document.getElementById('fl-last-odometer').value = veh.current_odometer || 0;
-                document.getElementById('fl-current-odometer').value = veh.current_odometer || 0;
+                document.getElementById('fl-last-odometer').value = formatDecimal(veh.current_odometer || 0);
+                document.getElementById('fl-current-odometer').value = formatDecimal(veh.current_odometer || 0);
             }
             calculateFuelLogPreview();
         }
@@ -20748,7 +20748,7 @@ Manager / Supervisor: __________________
 
             document.getElementById('sl-date').value = new Date().toISOString().split('T')[0];
             const firstVeh = state.vehicles[0];
-            if (firstVeh) document.getElementById('sl-odometer').value = firstVeh.current_odometer || 0;
+            if (firstVeh) document.getElementById('sl-odometer').value = formatDecimal(firstVeh.current_odometer || 0);
             document.getElementById('service-log-modal').classList.remove('hidden');
         }
 
@@ -20829,11 +20829,12 @@ Manager / Supervisor: __________________
                 }
 
                 const s = data.setting;
-                document.getElementById('ds-base-fee').value = s.base_fee;
-                document.getElementById('ds-base-km').value = s.base_distance_km;
-                document.getElementById('ds-per-km-rate').value = s.per_km_rate;
-                document.getElementById('ds-free-threshold').value = s.free_delivery_threshold;
-                document.getElementById('ds-max-km').value = s.max_distance_km;
+                state.currentDeliverySetting = s;
+                document.getElementById('ds-base-fee').value = formatDecimal(s.base_fee);
+                document.getElementById('ds-base-km').value = formatDecimal(s.base_distance_km);
+                document.getElementById('ds-per-km-rate').value = formatDecimal(s.per_km_rate);
+                document.getElementById('ds-free-threshold').value = formatDecimal(s.free_delivery_threshold);
+                document.getElementById('ds-max-km').value = formatDecimal(s.max_distance_km);
 
                 const kpiBaseFee = document.getElementById('logistics-kpi-base-fee');
                 if (kpiBaseFee) kpiBaseFee.innerText = formatRupiah(s.base_fee);
@@ -20860,7 +20861,7 @@ Manager / Supervisor: __________________
             const subtotal = subtotalInput ? parseFloat(subtotalInput.value) : 75000;
 
             const distDisplay = document.getElementById('sim-distance-val');
-            if (distDisplay) distDisplay.innerText = `${distVal.toFixed(1)} km`;
+            if (distDisplay) distDisplay.innerText = `${formatDecimal(distVal)} km`;
 
             let fee = baseFee;
             let formulaDesc = '';
@@ -20870,12 +20871,12 @@ Manager / Supervisor: __________________
                 formulaDesc = `🎉 Promo Gratis Ongkir aktif (Belanja ${formatRupiah(subtotal)} ≥ Minimal ${formatRupiah(freeThreshold)})`;
             } else if (distVal <= baseKm) {
                 fee = baseFee;
-                formulaDesc = `Tarif Dasar: ${formatRupiah(baseFee)} untuk ${baseKm} km pertama`;
+                formulaDesc = `Tarif Dasar: ${formatRupiah(baseFee)} untuk ${formatDecimal(baseKm)} km pertama`;
             } else {
                 const extraKm = Math.ceil(distVal - baseKm);
                 const extraFee = extraKm * perKm;
                 fee = baseFee + extraFee;
-                formulaDesc = `Dasar ${formatRupiah(baseFee)} + (${extraKm} km × ${formatRupiah(perKm)}) = ${formatRupiah(fee)}`;
+                formulaDesc = `Dasar ${formatRupiah(baseFee)} + (${formatDecimal(extraKm)} km × ${formatRupiah(perKm)}) = ${formatRupiah(fee)}`;
             }
 
             const feeResult = document.getElementById('sim-fee-result');
@@ -21074,9 +21075,9 @@ Manager / Supervisor: __________________
                     if (infoCust) infoCust.innerText = `${cust.name} (${cust.category || 'REGULER'})`;
                     if (infoBranchCoords) infoBranchCoords.innerText = `${Number(bLat).toFixed(4)}, ${Number(bLon).toFixed(4)}`;
                     if (infoCustCoords) infoCustCoords.innerText = `${Number(cLat).toFixed(4)}, ${Number(cLon).toFixed(4)}`;
-                    if (infoDist) infoDist.innerText = `${data.distance_km} km`;
+                    if (infoDist) infoDist.innerText = `${formatDecimal(data.distance_km)} km`;
                     if (infoFee) infoFee.innerText = formatRupiah(data.delivery_fee);
-                    if (infoRule) infoRule.innerText = data.free_delivery_reason || `Tarif Jarak ${data.distance_km} km`;
+                    if (infoRule) infoRule.innerText = data.free_delivery_reason || `Tarif Jarak ${formatDecimal(data.distance_km)} km`;
                     if (infoEta) {
                         const minTime = Math.max(5, Math.round(data.distance_km * 3));
                         infoEta.innerText = `~${minTime} - ${minTime + 5} Menit`;

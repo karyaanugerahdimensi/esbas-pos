@@ -944,13 +944,35 @@ try {
                 'free_delivery_threshold' => 150000,
                 'max_distance_km' => 35.0
             ];
+            if ($currentDeliverySetting) {
+                $currentDeliverySetting['base_fee'] = (float)$currentDeliverySetting['base_fee'];
+                $currentDeliverySetting['base_distance_km'] = (float)$currentDeliverySetting['base_distance_km'];
+                $currentDeliverySetting['per_km_rate'] = (float)$currentDeliverySetting['per_km_rate'];
+                $currentDeliverySetting['free_delivery_threshold'] = (float)$currentDeliverySetting['free_delivery_threshold'];
+                $currentDeliverySetting['max_distance_km'] = (float)$currentDeliverySetting['max_distance_km'];
+            }
             $allDeliverySettings = $pdo->query("SELECT ds.*, b.name as branch_name FROM delivery_settings ds JOIN branches b ON ds.branch_id = b.id ORDER BY ds.branch_id ASC")->fetchAll();
+            foreach ($allDeliverySettings as &$ads) {
+                $ads['base_fee'] = (float)$ads['base_fee'];
+                $ads['base_distance_km'] = (float)$ads['base_distance_km'];
+                $ads['per_km_rate'] = (float)$ads['per_km_rate'];
+                $ads['free_delivery_threshold'] = (float)$ads['free_delivery_threshold'];
+                $ads['max_distance_km'] = (float)$ads['max_distance_km'];
+            }
 
             // Courier Vehicles (Armada Kurir Cabang)
             $stmtVehicles = $pdo->prepare("SELECT * FROM courier_vehicles WHERE branch_id = ? AND is_active = 1 ORDER BY id ASC");
             $stmtVehicles->execute([$currentBranch['id']]);
             $branchVehicles = $stmtVehicles->fetchAll();
+            foreach ($branchVehicles as &$bv) {
+                if (isset($bv['fuel_ratio'])) $bv['fuel_ratio'] = (float)$bv['fuel_ratio'];
+                if (isset($bv['current_odometer'])) $bv['current_odometer'] = (float)$bv['current_odometer'];
+            }
             $allVehicles = $pdo->query("SELECT cv.*, b.name as branch_name FROM courier_vehicles cv JOIN branches b ON cv.branch_id = b.id WHERE cv.is_active = 1 ORDER BY cv.branch_id, cv.id ASC")->fetchAll();
+            foreach ($allVehicles as &$av) {
+                if (isset($av['fuel_ratio'])) $av['fuel_ratio'] = (float)$av['fuel_ratio'];
+                if (isset($av['current_odometer'])) $av['current_odometer'] = (float)$av['current_odometer'];
+            }
 
             $allTaxes = $pdo->query("SELECT * FROM taxes ORDER BY id ASC")->fetchAll();
             $allPaymentMethods = $pdo->query("SELECT * FROM payment_methods ORDER BY sort_order ASC, id ASC")->fetchAll();
@@ -9678,10 +9700,23 @@ try {
                         'max_distance_km' => 35.0
                     ];
                 }
+                $setting['base_fee'] = (float)$setting['base_fee'];
+                $setting['base_distance_km'] = (float)$setting['base_distance_km'];
+                $setting['per_km_rate'] = (float)$setting['per_km_rate'];
+                $setting['free_delivery_threshold'] = (float)$setting['free_delivery_threshold'];
+                $setting['max_distance_km'] = (float)$setting['max_distance_km'];
                 echo json_encode(['success' => true, 'setting' => $setting]);
             } else {
                 $stmt = $pdo->query("SELECT ds.*, b.name as branch_name, b.latitude as branch_latitude, b.longitude as branch_longitude FROM delivery_settings ds JOIN branches b ON ds.branch_id = b.id ORDER BY ds.branch_id ASC");
-                echo json_encode(['success' => true, 'settings' => $stmt->fetchAll()]);
+                $settings = $stmt->fetchAll();
+                foreach ($settings as &$st) {
+                    $st['base_fee'] = (float)$st['base_fee'];
+                    $st['base_distance_km'] = (float)$st['base_distance_km'];
+                    $st['per_km_rate'] = (float)$st['per_km_rate'];
+                    $st['free_delivery_threshold'] = (float)$st['free_delivery_threshold'];
+                    $st['max_distance_km'] = (float)$st['max_distance_km'];
+                }
+                echo json_encode(['success' => true, 'settings' => $settings]);
             }
             break;
 
@@ -9772,18 +9807,25 @@ try {
                 'max_distance_km' => 35.0
             ];
 
+            $ds['base_fee'] = (float)$ds['base_fee'];
+            $ds['base_distance_km'] = (float)$ds['base_distance_km'];
+            $ds['per_km_rate'] = (float)$ds['per_km_rate'];
+            $ds['free_delivery_threshold'] = (float)$ds['free_delivery_threshold'];
+            $ds['max_distance_km'] = (float)$ds['max_distance_km'];
+            $baseDistanceFormatted = ($ds['base_distance_km'] == round($ds['base_distance_km'])) ? (int)$ds['base_distance_km'] : $ds['base_distance_km'];
+
             $isFree = false;
             $freeReason = '';
-            if ((float)$ds['free_delivery_threshold'] > 0 && $subtotal >= (float)$ds['free_delivery_threshold']) {
+            if ($ds['free_delivery_threshold'] > 0 && $subtotal >= $ds['free_delivery_threshold']) {
                 $deliveryFee = 0;
                 $isFree = true;
                 $freeReason = "Gratis Ongkir! Total belanja Rp " . number_format($subtotal, 0, ',', '.') . " mencapai batas Rp " . number_format($ds['free_delivery_threshold'], 0, ',', '.');
             } else {
-                if ($distKm <= (float)$ds['base_distance_km']) {
-                    $deliveryFee = (float)$ds['base_fee'];
+                if ($distKm <= $ds['base_distance_km']) {
+                    $deliveryFee = $ds['base_fee'];
                 } else {
-                    $extraKm = ceil($distKm - (float)$ds['base_distance_km']);
-                    $deliveryFee = (float)$ds['base_fee'] + ($extraKm * (float)$ds['per_km_rate']);
+                    $extraKm = ceil($distKm - $ds['base_distance_km']);
+                    $deliveryFee = $ds['base_fee'] + ($extraKm * $ds['per_km_rate']);
                 }
             }
 
@@ -9808,7 +9850,7 @@ try {
                 'is_free' => $isFree,
                 'is_free_delivery' => $isFree,
                 'free_delivery_reason' => $freeReason,
-                'rule_applied' => $freeReason ?: ($distKm <= (float)$ds['base_distance_km'] ? "Tarif dasar (s.d {$ds['base_distance_km']} km)" : "Tarif dasar + tarif per KM"),
+                'rule_applied' => $freeReason ?: ($distKm <= $ds['base_distance_km'] ? "Tarif dasar (s.d {$baseDistanceFormatted} km)" : "Tarif dasar + tarif per KM"),
                 'settings_applied' => $ds
             ]);
             break;
@@ -9834,7 +9876,12 @@ try {
             $sql .= " ORDER BY cv.branch_id ASC, cv.id ASC";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
-            echo json_encode(['success' => true, 'vehicles' => $stmt->fetchAll()]);
+            $rows = $stmt->fetchAll();
+            foreach ($rows as &$r) {
+                if (isset($r['fuel_ratio'])) $r['fuel_ratio'] = (float)$r['fuel_ratio'];
+                if (isset($r['current_odometer'])) $r['current_odometer'] = (float)$r['current_odometer'];
+            }
+            echo json_encode(['success' => true, 'vehicles' => $rows]);
             break;
 
         case 'save_courier_vehicle':
@@ -9934,6 +9981,17 @@ try {
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
             $fuelRows = $stmt->fetchAll();
+            foreach ($fuelRows as &$fr) {
+                if (isset($fr['last_odometer'])) $fr['last_odometer'] = (float)$fr['last_odometer'];
+                if (isset($fr['current_odometer'])) $fr['current_odometer'] = (float)$fr['current_odometer'];
+                if (isset($fr['distance_traveled'])) $fr['distance_traveled'] = (float)$fr['distance_traveled'];
+                if (isset($fr['liters_bought'])) $fr['liters_bought'] = (float)$fr['liters_bought'];
+                if (isset($fr['cost_per_liter'])) $fr['cost_per_liter'] = (float)$fr['cost_per_liter'];
+                if (isset($fr['total_cost'])) $fr['total_cost'] = (float)$fr['total_cost'];
+                if (isset($fr['configured_ratio'])) $fr['configured_ratio'] = (float)$fr['configured_ratio'];
+                if (isset($fr['expected_liters'])) $fr['expected_liters'] = (float)$fr['expected_liters'];
+                if (isset($fr['efficiency_percent'])) $fr['efficiency_percent'] = (float)$fr['efficiency_percent'];
+            }
             echo json_encode(['success' => true, 'fuel_logs' => $fuelRows, 'logs' => $fuelRows]);
             break;
 
@@ -10069,6 +10127,10 @@ try {
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
             $serviceRows = $stmt->fetchAll();
+            foreach ($serviceRows as &$sr) {
+                if (isset($sr['odometer_km'])) $sr['odometer_km'] = (float)$sr['odometer_km'];
+                if (isset($sr['cost'])) $sr['cost'] = (float)$sr['cost'];
+            }
             echo json_encode(['success' => true, 'service_logs' => $serviceRows, 'logs' => $serviceRows]);
             break;
 
