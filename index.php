@@ -71,6 +71,10 @@ try {
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+        /* Utility to hide horizontal scrollbar while keeping native smooth scrolling */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
         /* Mobile Landscape Optimization for POS Screen (Side-by-Side Products & Cart) */
         @media (orientation: landscape) and (max-width: 1023px) {
             #pos-main-grid {
@@ -613,27 +617,28 @@ try {
             <!-- ---------------------------------------------------- -->
             <div id="tab-reports" class="hidden space-y-6">
                 <!-- Subtab Navigation Bar -->
-                <div class="bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
-                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                        <button onclick="setReportSubtab('sales')" id="report-subtab-btn-sales" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1.5">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2 sm:gap-3">
+                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 w-full sm:w-auto">
+                        <button onclick="setReportSubtab('sales')" id="report-subtab-btn-sales" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
                             <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
                             <span>Laporan Penjualan & Omzet</span>
                         </button>
-                        <button onclick="setReportSubtab('receivables')" id="report-subtab-btn-receivables" class="px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-indigo-600 hover:bg-slate-50 flex items-center space-x-1.5">
+                        <button onclick="setReportSubtab('receivables')" id="report-subtab-btn-receivables" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="book-open-check" class="w-4 h-4"></i>
                             <span>Laporan Piutang Usaha & Pelanggan</span>
                         </button>
-                        <button onclick="setReportSubtab('shifts')" id="report-subtab-btn-shifts" class="px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-indigo-600 hover:bg-slate-50 flex items-center space-x-1.5">
+                        <button onclick="setReportSubtab('shifts')" id="report-subtab-btn-shifts" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="clock" class="w-4 h-4"></i>
                             <span>Laporan Shift Kasir & Tutup Toko</span>
                         </button>
-                        <button onclick="setReportSubtab('bom')" id="report-subtab-btn-bom" class="px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-indigo-600 hover:bg-slate-50 flex items-center space-x-1.5">
+                        <button onclick="setReportSubtab('bom')" id="report-subtab-btn-bom" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="boxes" class="w-4 h-4"></i>
                             <span>Pemakaian Bahan Baku (BOM)</span>
                         </button>
                     </div>
-                    <div class="text-xs text-slate-500 font-medium px-2 hidden sm:block">
-                        Modul Pelaporan Keuangan, Piutang & Rekonsiliasi Multi-Shift Terintegrasi
+                    <div class="text-xs text-slate-500 font-medium px-2 hidden lg:flex items-center space-x-1.5 shrink-0 whitespace-nowrap">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-indigo-500"></i>
+                        <span>Modul Pelaporan & Rekonsiliasi</span>
                     </div>
                 </div>
 
@@ -1115,35 +1120,37 @@ try {
                 </div>
 
                 <!-- ESS Subtabs Navigation Bar -->
-                <div class="flex items-center space-x-2 border-b border-slate-200 pb-2 overflow-x-auto text-xs font-bold no-scrollbar">
-                    <button id="ess-subtab-btn-presensi" onclick="setEssSubtab('presensi')" class="px-4 py-2.5 rounded-xl bg-indigo-600 text-white shadow-sm flex items-center space-x-2 transition-all">
-                        <i data-lucide="map-pin" class="w-4 h-4"></i>
-                        <span>Presensi & Klaim Toko</span>
-                    </button>
-                    <button id="ess-subtab-btn-schedules" onclick="setEssSubtab('schedules')" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-2 transition-all">
-                        <i data-lucide="calendar" class="w-4 h-4"></i>
-                        <span>Jam Kerja & Roster Bulanan</span>
-                    </button>
-                    <button id="ess-subtab-btn-swaps" onclick="setEssSubtab('swaps')" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-2 transition-all">
-                        <i data-lucide="repeat" class="w-4 h-4"></i>
-                        <span>Tukar Jadwal (Shift Swap)</span>
-                    </button>
-                    <button id="ess-subtab-btn-leaves" onclick="setEssSubtab('leaves')" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-2 transition-all">
-                        <i data-lucide="calendar-off" class="w-4 h-4"></i>
-                        <span>Cuti, Izin & Sakit</span>
-                    </button>
-                    <button id="ess-subtab-btn-attendance" onclick="setEssSubtab('attendance')" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-2 transition-all">
-                        <i data-lucide="file-bar-chart" class="w-4 h-4"></i>
-                        <span>Laporan Kehadiran</span>
-                    </button>
-                    <button id="ess-subtab-btn-payslip" onclick="setEssSubtab('payslip')" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-2 transition-all">
-                        <i data-lucide="receipt" class="w-4 h-4"></i>
-                        <span>Cetak Slip Gaji Mandiri</span>
-                    </button>
-                    <button id="ess-subtab-btn-loans" onclick="setEssSubtab('loans')" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-2 transition-all">
-                        <i data-lucide="hand-coins" class="w-4 h-4"></i>
-                        <span>Pinjaman / Kasbon Gaji</span>
-                    </button>
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 w-full">
+                        <button id="ess-subtab-btn-presensi" onclick="setEssSubtab('presensi')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                            <span>Presensi & Klaim Toko</span>
+                        </button>
+                        <button id="ess-subtab-btn-schedules" onclick="setEssSubtab('schedules')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                            <span>Jam Kerja & Roster Bulanan</span>
+                        </button>
+                        <button id="ess-subtab-btn-swaps" onclick="setEssSubtab('swaps')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="repeat" class="w-4 h-4"></i>
+                            <span>Tukar Jadwal (Shift Swap)</span>
+                        </button>
+                        <button id="ess-subtab-btn-leaves" onclick="setEssSubtab('leaves')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="calendar-off" class="w-4 h-4"></i>
+                            <span>Cuti, Izin & Sakit</span>
+                        </button>
+                        <button id="ess-subtab-btn-attendance" onclick="setEssSubtab('attendance')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="file-bar-chart" class="w-4 h-4"></i>
+                            <span>Laporan Kehadiran</span>
+                        </button>
+                        <button id="ess-subtab-btn-payslip" onclick="setEssSubtab('payslip')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="receipt" class="w-4 h-4"></i>
+                            <span>Cetak Slip Gaji Mandiri</span>
+                        </button>
+                        <button id="ess-subtab-btn-loans" onclick="setEssSubtab('loans')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="hand-coins" class="w-4 h-4"></i>
+                            <span>Pinjaman / Kasbon Gaji</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- ==================================================== -->
@@ -1980,25 +1987,33 @@ try {
                 </div>
 
                 <!-- Sub-Tab Navigation: 1. Katalog Produk, 2. Kategori, 3. Jenis Produk, 4. Satuan, 5. Master Pajak, 6. Produk Opening Sales -->
-                <div class="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
-                    <button onclick="switchProductSubTab('catalog')" id="prod-subtab-btn-catalog" class="px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold transition-colors">
-                        Katalog Produk & Varian
-                    </button>
-                    <button onclick="switchProductSubTab('categories')" id="prod-subtab-btn-categories" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors">
-                        Kategori Produk
-                    </button>
-                    <button onclick="switchProductSubTab('types')" id="prod-subtab-btn-types" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors">
-                        Jenis Produk
-                    </button>
-                    <button onclick="switchProductSubTab('units')" id="prod-subtab-btn-units" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors">
-                        Satuan Produk
-                    </button>
-                    <button onclick="switchProductSubTab('taxes')" id="prod-subtab-btn-taxes" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors">
-                        Master Pajak / Taxes
-                    </button>
-                    <button onclick="switchProductSubTab('opening_shift')" id="prod-subtab-btn-opening_shift" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors">
-                        Produk Opening Sales
-                    </button>
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 w-full">
+                        <button onclick="switchProductSubTab('catalog')" id="prod-subtab-btn-catalog" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
+                            <i data-lucide="package" class="w-4 h-4"></i>
+                            <span>Katalog Produk & Varian</span>
+                        </button>
+                        <button onclick="switchProductSubTab('categories')" id="prod-subtab-btn-categories" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="folder-tree" class="w-4 h-4"></i>
+                            <span>Kategori Produk</span>
+                        </button>
+                        <button onclick="switchProductSubTab('types')" id="prod-subtab-btn-types" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="tag" class="w-4 h-4"></i>
+                            <span>Jenis Produk</span>
+                        </button>
+                        <button onclick="switchProductSubTab('units')" id="prod-subtab-btn-units" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="scale" class="w-4 h-4"></i>
+                            <span>Satuan Produk</span>
+                        </button>
+                        <button onclick="switchProductSubTab('taxes')" id="prod-subtab-btn-taxes" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="receipt-percent" class="w-4 h-4"></i>
+                            <span>Master Pajak / Taxes</span>
+                        </button>
+                        <button onclick="switchProductSubTab('opening_shift')" id="prod-subtab-btn-opening_shift" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="sunrise" class="w-4 h-4"></i>
+                            <span>Produk Opening Sales</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Sub-Tab 1: Products List with Variants -->
@@ -2232,17 +2247,19 @@ try {
                 </div>
 
                 <!-- Sub Navigation: Base Product BOM vs Variant BOM -->
-                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
-                    <div class="flex space-x-2">
-                        <button onclick="switchBOMSubTab('base')" id="bom-subtab-btn-base" class="px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold transition-colors">
-                            Resep Produk Utama (Base BOM)
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0">
+                        <button onclick="switchBOMSubTab('base')" id="bom-subtab-btn-base" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
+                            <i data-lucide="flask-conical" class="w-4 h-4"></i>
+                            <span>Resep Produk Utama (Base BOM)</span>
                         </button>
-                        <button onclick="switchBOMSubTab('variant')" id="bom-subtab-btn-variant" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors">
-                            Resep Pilihan Varian (Variant BOM)
+                        <button onclick="switchBOMSubTab('variant')" id="bom-subtab-btn-variant" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="layers-2" class="w-4 h-4"></i>
+                            <span>Resep Pilihan Varian (Variant BOM)</span>
                         </button>
                     </div>
-                    <div id="bom-base-actions" class="flex items-center space-x-2">
-                        <button id="btn-bom-reset-all-base" onclick="resetAllBaseBOM()" style="display: none;" class="hidden px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-2xs transition-all" title="Hapus seluruh formula resep Base BOM semua produk">
+                    <div id="bom-base-actions" class="shrink-0 flex items-center space-x-2">
+                        <button id="btn-bom-reset-all-base" onclick="resetAllBaseBOM()" style="display: none;" class="hidden px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-2xs transition-all" title="Hapus seluruh formula resep Base BOM semua produk">
                             <i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-600"></i>
                             <span>Hapus Semua Base BOM</span>
                         </button>
@@ -2308,13 +2325,17 @@ try {
                 </div>
 
                 <!-- Sub Navigation: Saldo Stok vs Kartu Pergerakan -->
-                <div class="flex space-x-2 border-b border-slate-200 pb-2">
-                    <button onclick="switchStockSubTab('balance')" id="subtab-btn-balance" class="px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold">
-                        Saldo Stok Cabang
-                    </button>
-                    <button onclick="switchStockSubTab('movements')" id="subtab-btn-movements" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300">
-                        Buku Kartu Pergerakan (Movement Ledger)
-                    </button>
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 w-full sm:w-auto">
+                        <button onclick="switchStockSubTab('balance')" id="subtab-btn-balance" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
+                            <i data-lucide="boxes" class="w-4 h-4"></i>
+                            <span>Saldo Stok Cabang</span>
+                        </button>
+                        <button onclick="switchStockSubTab('movements')" id="subtab-btn-movements" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
+                            <span>Buku Kartu Pergerakan (Movement Ledger)</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- View 1: Current Stock Balances -->
@@ -2537,20 +2558,20 @@ try {
                 </div>
 
                 <!-- Sub-Navigation Navigation Bar -->
-                <div class="bg-white p-2 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-2 items-center justify-between">
-                    <div class="flex flex-wrap gap-1">
-                        <button type="button" onclick="setExpenseSubtab('ledger')" id="subtab-btn-exp-ledger" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white transition-colors flex items-center space-x-1.5 shadow-2xs">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap sm:flex-nowrap gap-2 items-center justify-between">
+                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0">
+                        <button type="button" onclick="setExpenseSubtab('ledger')" id="subtab-btn-exp-ledger" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-rose-600 text-white shadow-2xs">
                             <i data-lucide="book-open" class="w-4 h-4"></i>
                             <span>Buku Catatan Beban Operasional</span>
                         </button>
-                        <button type="button" onclick="setExpenseSubtab('category')" id="subtab-btn-exp-category" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5">
+                        <button type="button" onclick="setExpenseSubtab('category')" id="subtab-btn-exp-category" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="tags" class="w-4 h-4"></i>
                             <span>Kelola Kategori Beban (CRUD)</span>
                         </button>
                     </div>
 
                     <!-- Right Action Button (Dinamis per Sub-Tab) -->
-                    <div id="exp-top-actions" class="flex items-center space-x-2">
+                    <div id="exp-top-actions" class="shrink-0 flex items-center space-x-1.5 sm:space-x-2">
                         <button id="exp-btn-purge" onclick="openPurgeExpenseModal()" style="display: none;" class="hidden px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl shadow-2xs transition-all flex items-center space-x-1.5" title="Hapus data beban operasional per-cabang atau seluruhnya (Superadmin Only)">
                             <i data-lucide="trash-2" class="w-4 h-4 text-rose-600"></i>
                             <span id="exp-btn-purge-label">Hapus Data Beban</span>
@@ -2736,32 +2757,32 @@ try {
                 </div>
 
                 <!-- Sub-Navigation Navigation Bar -->
-                <div class="bg-white p-2 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-2 items-center justify-between">
-                    <div class="flex flex-wrap gap-1">
-                        <button type="button" onclick="setCustomerSubtab('list')" id="subtab-btn-cust-list" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white transition-colors flex items-center space-x-1.5 shadow-sm">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap sm:flex-nowrap gap-2 items-center justify-between">
+                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0">
+                        <button type="button" onclick="setCustomerSubtab('list')" id="subtab-btn-cust-list" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
                             <i data-lucide="users" class="w-4 h-4"></i>
                             <span>Data Pelanggan & Mitra</span>
                         </button>
-                        <button type="button" onclick="setCustomerSubtab('mitra-pricing')" id="subtab-btn-cust-mitra" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5">
+                        <button type="button" onclick="setCustomerSubtab('mitra-pricing')" id="subtab-btn-cust-mitra" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="handshake" class="w-4 h-4"></i>
                             <span>Harga Kontrak Khusus Mitra</span>
                         </button>
-                        <button type="button" onclick="setCustomerSubtab('branch-pricing')" id="subtab-btn-cust-branch" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5">
+                        <button type="button" onclick="setCustomerSubtab('branch-pricing')" id="subtab-btn-cust-branch" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="map-pin" class="w-4 h-4"></i>
                             <span>Menu & Harga Cabang</span>
                         </button>
-                        <button type="button" onclick="setCustomerSubtab('category')" id="subtab-btn-cust-category" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5">
+                        <button type="button" onclick="setCustomerSubtab('category')" id="subtab-btn-cust-category" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="tags" class="w-4 h-4"></i>
                             <span>Kategori Pelanggan</span>
                         </button>
-                        <button type="button" onclick="setCustomerSubtab('maps')" id="subtab-btn-cust-maps" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5">
+                        <button type="button" onclick="setCustomerSubtab('maps')" id="subtab-btn-cust-maps" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="map" class="w-4 h-4"></i>
                             <span>Peta Geospasial Pelanggan</span>
                         </button>
                     </div>
 
                     <!-- Right Action Button (Dinamis per Sub-Tab) -->
-                    <div id="cust-top-actions" class="flex items-center space-x-1.5">
+                    <div id="cust-top-actions" class="shrink-0 flex items-center space-x-1.5 sm:space-x-2">
                         <button id="cust-btn-add-customer" onclick="openCustomerModal()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow transition-colors flex items-center space-x-1.5">
                             <i data-lucide="user-plus" class="w-4 h-4"></i>
                             <span>+ Tambah Pelanggan / Mitra</span>
@@ -3173,26 +3194,26 @@ try {
                 </div>
 
                 <!-- Logistics Subtabs Navigation -->
-                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-                    <div class="flex flex-wrap gap-2">
-                        <button type="button" onclick="switchLogisticsSubtab('vehicles')" id="subtab-btn-vehicles" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1.5">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 w-full">
+                        <button type="button" onclick="switchLogisticsSubtab('vehicles')" id="subtab-btn-vehicles" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
                             <i data-lucide="bike" class="w-4 h-4"></i>
                             <span>Armada Kendaraan Kurir</span>
                         </button>
-                        <button type="button" onclick="switchLogisticsSubtab('fuel')" id="subtab-btn-fuel" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 flex items-center space-x-1.5">
-                            <i data-lucide="fuel" class="w-4 h-4 text-amber-600"></i>
+                        <button type="button" onclick="switchLogisticsSubtab('fuel')" id="subtab-btn-fuel" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="fuel" class="w-4 h-4"></i>
                             <span>Bensin & KM Motor</span>
                         </button>
-                        <button type="button" onclick="switchLogisticsSubtab('service')" id="subtab-btn-service" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 flex items-center space-x-1.5">
-                            <i data-lucide="wrench" class="w-4 h-4 text-rose-600"></i>
+                        <button type="button" onclick="switchLogisticsSubtab('service')" id="subtab-btn-service" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="wrench" class="w-4 h-4"></i>
                             <span>Servis & Beban Biaya</span>
                         </button>
-                        <button type="button" onclick="switchLogisticsSubtab('settings')" id="subtab-btn-settings" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 flex items-center space-x-1.5">
-                            <i data-lucide="sliders" class="w-4 h-4 text-indigo-600"></i>
+                        <button type="button" onclick="switchLogisticsSubtab('settings')" id="subtab-btn-settings" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="sliders" class="w-4 h-4"></i>
                             <span>Tarif Kirim Dinamis</span>
                         </button>
-                        <button type="button" onclick="switchLogisticsSubtab('maps')" id="subtab-btn-maps" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 flex items-center space-x-1.5">
-                            <i data-lucide="map" class="w-4 h-4 text-emerald-600"></i>
+                        <button type="button" onclick="switchLogisticsSubtab('maps')" id="subtab-btn-maps" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="map" class="w-4 h-4"></i>
                             <span>Peta Maps Outlet & Pelanggan</span>
                         </button>
                     </div>
@@ -3700,13 +3721,13 @@ try {
                 </div>
 
                 <!-- Sub-Navigation Bar Cabang -->
-                <div class="bg-white p-2 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-2 items-center justify-between">
-                    <div class="flex flex-wrap gap-1">
-                        <button type="button" onclick="setBranchSubtab('table')" id="subtab-btn-branch-table" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white transition-colors flex items-center space-x-1.5 shadow-sm">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 w-full sm:w-auto">
+                        <button type="button" onclick="setBranchSubtab('table')" id="subtab-btn-branch-table" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
                             <i data-lucide="list" class="w-4 h-4"></i>
                             <span>Tabel Data Cabang & Koordinat</span>
                         </button>
-                        <button type="button" onclick="setBranchSubtab('maps')" id="subtab-btn-branch-maps" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5">
+                        <button type="button" onclick="setBranchSubtab('maps')" id="subtab-btn-branch-maps" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="map" class="w-4 h-4"></i>
                             <span>Peta Geospasial Jaringan Cabang (Outlet Maps)</span>
                         </button>
@@ -4252,29 +4273,31 @@ try {
                     </div>
                 </div>
 
-                <!-- 5 Sub-Tab Navigasi Pills -->
-                <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
-                    <button id="settings-tab-btn-general" onclick="setSettingsSubtab('general')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1.5">
-                        <span>🏷️ Identitas & Logo</span>
-                    </button>
-                    <button id="settings-tab-btn-roles" onclick="setSettingsSubtab('roles')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-1.5">
-                        <span>🛡️ Hak Akses Role</span>
-                    </button>
-                    <button id="settings-tab-btn-printer" onclick="setSettingsSubtab('printer')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-1.5">
-                        <span>🖨️ Printer USB / IP</span>
-                    </button>
-                    <button id="settings-tab-btn-receipt" onclick="setSettingsSubtab('receipt')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-1.5">
-                        <span>🧾 Layout Nota Struk</span>
-                    </button>
-                    <button id="settings-tab-btn-payslip" onclick="setSettingsSubtab('payslip')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-1.5">
-                        <span>💼 Layout Slip Gaji</span>
-                    </button>
-                    <button id="settings-tab-btn-notifications" onclick="setSettingsSubtab('notifications')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-1.5">
-                        <span>📱 Nota WA & Telegram</span>
-                    </button>
-                    <button id="settings-tab-btn-sync" onclick="setSettingsSubtab('sync')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-1.5" title="Sinkronisasi Database Master Hosting & Lokal">
-                        <span>🌐 Sinkronisasi Hosting</span>
-                    </button>
+                <!-- 7 Sub-Tab Navigasi Pills -->
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 w-full">
+                        <button id="settings-tab-btn-general" onclick="setSettingsSubtab('general')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
+                            <span>🏷️ Identitas & Logo</span>
+                        </button>
+                        <button id="settings-tab-btn-roles" onclick="setSettingsSubtab('roles')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <span>🛡️ Hak Akses Role</span>
+                        </button>
+                        <button id="settings-tab-btn-printer" onclick="setSettingsSubtab('printer')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <span>🖨️ Printer USB / IP</span>
+                        </button>
+                        <button id="settings-tab-btn-receipt" onclick="setSettingsSubtab('receipt')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <span>🧾 Layout Nota Struk</span>
+                        </button>
+                        <button id="settings-tab-btn-payslip" onclick="setSettingsSubtab('payslip')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <span>💼 Layout Slip Gaji</span>
+                        </button>
+                        <button id="settings-tab-btn-notifications" onclick="setSettingsSubtab('notifications')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <span>📱 Nota WA & Telegram</span>
+                        </button>
+                        <button id="settings-tab-btn-sync" onclick="setSettingsSubtab('sync')" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900" title="Sinkronisasi Database Master Hosting & Lokal">
+                            <span>🌐 Sinkronisasi Hosting</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- SUBTAB 1: Identitas & Logo -->
@@ -12252,8 +12275,8 @@ try {
             const viewBOM = document.getElementById('subtab-reports-bom');
 
             // Reset buttons style
-            const inactiveClass = 'px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-indigo-600 hover:bg-slate-50 flex items-center space-x-1.5';
-            const activeClass = 'px-4 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1.5';
+            const inactiveClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const activeClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
 
             if (btnSales) btnSales.className = inactiveClass;
             if (btnAR) btnAR.className = inactiveClass;
@@ -13348,9 +13371,9 @@ Manager / Supervisor: __________________
                 if (container) container.classList.toggle('hidden', st !== subtab);
                 if (btn) {
                     if (st === subtab) {
-                        btn.className = 'px-4 py-2.5 rounded-xl bg-indigo-600 text-white shadow-sm flex items-center space-x-2 transition-all';
+                        btn.className = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
                     } else {
-                        btn.className = 'px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-2 transition-all';
+                        btn.className = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
                     }
                 }
             });
@@ -15731,7 +15754,9 @@ Manager / Supervisor: __________________
             if (openingShiftView) openingShiftView.classList.add('hidden');
 
             // Reset tab button styles
-            const inactiveClass = 'px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors';
+            const inactiveClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const activeClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
+
             if (btnCatalog) btnCatalog.className = inactiveClass;
             if (btnCategories) btnCategories.className = inactiveClass;
             if (btnTypes) btnTypes.className = inactiveClass;
@@ -15749,32 +15774,32 @@ Manager / Supervisor: __________________
 
             if (subTab === 'categories') {
                 if (categoriesView) categoriesView.classList.remove('hidden');
-                if (btnCategories) btnCategories.className = 'px-3.5 py-1.5 bg-purple-600 text-white rounded-xl text-xs font-bold transition-colors';
+                if (btnCategories) btnCategories.className = activeClass;
                 if (btnAddCat) btnAddCat.classList.remove('hidden');
                 loadCategoriesTable();
             } else if (subTab === 'types') {
                 if (typesView) typesView.classList.remove('hidden');
-                if (btnTypes) btnTypes.className = 'px-3.5 py-1.5 bg-teal-600 text-white rounded-xl text-xs font-bold transition-colors';
+                if (btnTypes) btnTypes.className = activeClass;
                 if (btnAddType) btnAddType.classList.remove('hidden');
                 loadProductTypesTable();
             } else if (subTab === 'units') {
                 if (unitsView) unitsView.classList.remove('hidden');
-                if (btnUnits) btnUnits.className = 'px-3.5 py-1.5 bg-sky-600 text-white rounded-xl text-xs font-bold transition-colors';
+                if (btnUnits) btnUnits.className = activeClass;
                 if (btnAddUnit) btnAddUnit.classList.remove('hidden');
                 loadProductUnitsTable();
             } else if (subTab === 'taxes') {
                 if (taxesView) taxesView.classList.remove('hidden');
-                if (btnTaxes) btnTaxes.className = 'px-3.5 py-1.5 bg-amber-600 text-white rounded-xl text-xs font-bold transition-colors';
+                if (btnTaxes) btnTaxes.className = activeClass;
                 if (btnAddTax) btnAddTax.classList.remove('hidden');
                 loadTaxes();
             } else if (subTab === 'opening_shift') {
                 if (openingShiftView) openingShiftView.classList.remove('hidden');
-                if (btnOpeningShift) btnOpeningShift.className = 'px-3.5 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-bold transition-colors';
+                if (btnOpeningShift) btnOpeningShift.className = activeClass;
                 if (btnAddOsp) btnAddOsp.classList.remove('hidden');
                 loadOpeningShiftProductsTable();
             } else {
                 if (catalogView) catalogView.classList.remove('hidden');
-                if (btnCatalog) btnCatalog.className = 'px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold transition-colors';
+                if (btnCatalog) btnCatalog.className = activeClass;
                 if (btnAddProd) btnAddProd.classList.remove('hidden');
                 loadAllProducts();
             }
@@ -16665,21 +16690,25 @@ Manager / Supervisor: __________________
             const viewVar = document.getElementById('bom-view-variant');
             const actionsBase = document.getElementById('bom-base-actions');
 
+            const activeClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
+            const inactiveClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+
             if (sub === 'base') {
-                btnBase.className = 'px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold transition-colors';
-                btnVar.className = 'px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors';
+                btnBase.className = activeClass;
+                btnVar.className = inactiveClass;
                 viewBase.classList.remove('hidden');
                 viewVar.classList.add('hidden');
                 if (actionsBase) actionsBase.classList.remove('hidden');
                 loadBOMRecipes();
             } else {
-                btnVar.className = 'px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold transition-colors';
-                btnBase.className = 'px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300 transition-colors';
+                btnVar.className = activeClass;
+                btnBase.className = inactiveClass;
                 viewVar.classList.remove('hidden');
                 viewBase.classList.add('hidden');
                 if (actionsBase) actionsBase.classList.add('hidden');
                 loadVariantBOMRecipes();
             }
+            lucide.createIcons();
         }
 
         async function loadVariantBOMRecipes() {
@@ -16927,19 +16956,23 @@ Manager / Supervisor: __________________
             const viewBal = document.getElementById('stock-view-balance');
             const viewMov = document.getElementById('stock-view-movements');
 
+            const activeClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
+            const inactiveClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+
             if (sub === 'balance') {
-                btnBal.className = 'px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold';
-                btnMov.className = 'px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300';
-                viewBal.classList.remove('hidden');
-                viewMov.classList.add('hidden');
+                if (btnBal) btnBal.className = activeClass;
+                if (btnMov) btnMov.className = inactiveClass;
+                if (viewBal) viewBal.classList.remove('hidden');
+                if (viewMov) viewMov.classList.add('hidden');
                 loadStockInventory();
             } else {
-                btnMov.className = 'px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold';
-                btnBal.className = 'px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300';
-                viewMov.classList.remove('hidden');
-                viewBal.classList.add('hidden');
+                if (btnMov) btnMov.className = activeClass;
+                if (btnBal) btnBal.className = inactiveClass;
+                if (viewMov) viewMov.classList.remove('hidden');
+                if (viewBal) viewBal.classList.add('hidden');
                 loadStockMovements();
             }
+            lucide.createIcons();
         }
 
         function initStockBranchSelector() {
@@ -17528,25 +17561,21 @@ Manager / Supervisor: __________________
             const btnAddExp = document.getElementById('exp-btn-add-expense');
             const btnAddCat = document.getElementById('exp-btn-add-category');
 
+            const activeLedgerClass = "px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-rose-600 text-white shadow-2xs";
+            const activeCatClass = "px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs";
+            const inactiveClass = "px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900";
+
             if (subtab === 'ledger') {
-                if (btnLedger) {
-                    btnLedger.className = "px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white transition-colors flex items-center space-x-1.5 shadow-2xs";
-                }
-                if (btnCat) {
-                    btnCat.className = "px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5";
-                }
+                if (btnLedger) btnLedger.className = activeLedgerClass;
+                if (btnCat) btnCat.className = inactiveClass;
                 if (viewLedger) viewLedger.classList.remove('hidden');
                 if (viewCat) viewCat.classList.add('hidden');
                 if (btnAddExp) btnAddExp.classList.remove('hidden');
                 if (btnAddCat) btnAddCat.classList.add('hidden');
                 loadBranchExpensesTable();
             } else {
-                if (btnLedger) {
-                    btnLedger.className = "px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5";
-                }
-                if (btnCat) {
-                    btnCat.className = "px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white transition-colors flex items-center space-x-1.5 shadow-2xs";
-                }
+                if (btnLedger) btnLedger.className = inactiveClass;
+                if (btnCat) btnCat.className = activeCatClass;
                 if (viewLedger) viewLedger.classList.add('hidden');
                 if (viewCat) viewCat.classList.remove('hidden');
                 if (btnAddExp) btnAddExp.classList.add('hidden');
@@ -18337,19 +18366,18 @@ Manager / Supervisor: __________________
                 { key: 'maps', elId: 'subview-cust-maps', btnId: 'subtab-btn-cust-maps' }
             ];
 
+            const activeClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
+            const inactiveClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+
             subtabs.forEach(item => {
                 const el = document.getElementById(item.elId);
                 const btn = document.getElementById(item.btnId);
                 if (item.key === subtab) {
                     if (el) el.classList.remove('hidden');
-                    if (btn) {
-                        btn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white transition-colors flex items-center space-x-1.5 shadow-sm';
-                    }
+                    if (btn) btn.className = activeClass;
                 } else {
                     if (el) el.classList.add('hidden');
-                    if (btn) {
-                        btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5';
-                    }
+                    if (btn) btn.className = inactiveClass;
                 }
             });
 
@@ -20155,19 +20183,18 @@ Manager / Supervisor: __________________
                 { key: 'maps', viewId: 'subtab-logistics-maps', btnId: 'subtab-btn-maps' }
             ];
 
+            const activeClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
+            const inactiveClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+
             subtabs.forEach(item => {
                 const view = document.getElementById(item.viewId);
                 const btn = document.getElementById(item.btnId);
                 if (item.key === subtab) {
                     if (view) view.classList.remove('hidden');
-                    if (btn) {
-                        btn.className = 'px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1.5';
-                    }
+                    if (btn) btn.className = activeClass;
                 } else {
                     if (view) view.classList.add('hidden');
-                    if (btn) {
-                        btn.className = 'px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 flex items-center space-x-1.5';
-                    }
+                    if (btn) btn.className = inactiveClass;
                 }
             });
 
@@ -21423,16 +21450,19 @@ Manager / Supervisor: __________________
             const btnTable = document.getElementById('subtab-btn-branch-table');
             const btnMaps = document.getElementById('subtab-btn-branch-maps');
 
+            const activeClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
+            const inactiveClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+
             if (isTable) {
                 if (tableEl) tableEl.classList.remove('hidden');
                 if (mapsEl) mapsEl.classList.add('hidden');
-                if (btnTable) btnTable.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white transition-colors flex items-center space-x-1.5 shadow-sm';
-                if (btnMaps) btnMaps.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5';
+                if (btnTable) btnTable.className = activeClass;
+                if (btnMaps) btnMaps.className = inactiveClass;
             } else {
                 if (tableEl) tableEl.classList.add('hidden');
                 if (mapsEl) mapsEl.classList.remove('hidden');
-                if (btnTable) btnTable.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center space-x-1.5';
-                if (btnMaps) btnMaps.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white transition-colors flex items-center space-x-1.5 shadow-sm';
+                if (btnTable) btnTable.className = inactiveClass;
+                if (btnMaps) btnMaps.className = activeClass;
                 if (!state.branches || state.branches.length === 0) {
                     await loadBranches();
                 }
@@ -23098,19 +23128,18 @@ Manager / Supervisor: __________________
         function setSettingsSubtab(subtab) {
             settingsSubtabActive = subtab;
             const subtabs = ['general', 'roles', 'printer', 'receipt', 'payslip', 'notifications', 'sync'];
+            const activeClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
+            const inactiveClass = 'px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+
             subtabs.forEach(st => {
                 const el = document.getElementById(`settings-subtab-${st}`);
                 const btn = document.getElementById(`settings-tab-btn-${st}`);
                 if (st === subtab) {
                     if (el) el.classList.remove('hidden');
-                    if (btn) {
-                        btn.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1.5';
-                    }
+                    if (btn) btn.className = activeClass;
                 } else {
                     if (el) el.classList.add('hidden');
-                    if (btn) {
-                        btn.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center space-x-1.5';
-                    }
+                    if (btn) btn.className = inactiveClass;
                 }
             });
 
