@@ -235,6 +235,23 @@ try {
             <!-- Navigation Menu Items -->
             <nav class="p-3 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
                 
+                <!-- Section 0: Executive & Real-Time Monitoring (Superadmin & Branch Manager Only) -->
+                <div id="sidebar-sec-executive" class="space-y-1">
+                    <p class="sidebar-label px-3 text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-1 whitespace-nowrap flex items-center justify-between">
+                        <span>Eksekutif & Monitoring</span>
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping mr-1"></span>LIVE
+                        </span>
+                    </p>
+                    <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" title="Dashboard Eksekutif & Live Monitoring Seluruh Cabang" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4 shrink-0 text-amber-400"></i>
+                        <span class="sidebar-label whitespace-nowrap flex items-center justify-between w-full">
+                            <span>Dashboard Eksekutif</span>
+                            <span class="px-1.5 py-0.5 text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded ml-1">MGR+</span>
+                        </span>
+                    </button>
+                </div>
+
                 <!-- Section 1: Transaksi & Laporan -->
                 <div class="space-y-1">
                     <p class="sidebar-label px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 whitespace-nowrap">Transaksi & Penjualan</p>
@@ -420,6 +437,246 @@ try {
 
         <!-- Main Content Viewports Container -->
         <main class="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
+
+            <!-- ---------------------------------------------------- -->
+            <!-- TAB 0: DASHBOARD EKSEKUTIF & LIVE MONITORING         -->
+            <!-- ---------------------------------------------------- -->
+            <div id="tab-dashboard" class="space-y-6 hidden">
+                
+                <!-- Executive Controls & Live Radar Banner -->
+                <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-5 text-white border border-slate-800 shadow-xl flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/20 shrink-0">
+                            ⚡
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2.5">
+                                <h2 class="text-base sm:text-lg font-black tracking-wide text-white">Dashboard Eksekutif & Live Transaction Radar</h2>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping mr-1.5"></span>LIVE
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-300 mt-0.5">Monitoring transaksi realtime, performa seluruh cabang, & arus kas harian terpusat</p>
+                        </div>
+                    </div>
+
+                    <!-- Filter Controls -->
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                        <!-- Branch Selector -->
+                        <div class="relative">
+                            <select id="exec-branch-filter" onchange="onExecBranchFilterChange()" class="bg-slate-800/95 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-sm">
+                                <option value="0">🌐 Semua Cabang (Konsolidasi Global)</option>
+                                <!-- Populated via JS -->
+                            </select>
+                        </div>
+
+                        <!-- Date Presets -->
+                        <div class="flex items-center bg-slate-800/95 p-1 rounded-xl border border-slate-700 text-xs font-bold">
+                            <button type="button" onclick="setExecDateFilter('today')" id="exec-date-btn-today" class="exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500 text-slate-950 transition-colors">Hari Ini</button>
+                            <button type="button" onclick="setExecDateFilter('yesterday')" id="exec-date-btn-yesterday" class="exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-300 hover:text-white transition-colors">Kemarin</button>
+                            <button type="button" onclick="setExecDateFilter('week')" id="exec-date-btn-week" class="exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-300 hover:text-white transition-colors">7 Hari</button>
+                            <button type="button" onclick="setExecDateFilter('month')" id="exec-date-btn-month" class="exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-300 hover:text-white transition-colors">Bulan Ini</button>
+                        </div>
+
+                        <!-- Live Auto-Refresh Toggle -->
+                        <button type="button" id="btn-exec-autorefresh" onclick="toggleExecAutoRefresh()" class="px-3 py-2 bg-emerald-600/30 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors" title="Toggle Auto-Refresh Realtime setiap 10 detik">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span id="exec-autorefresh-label">Live 10d: ON</span>
+                        </button>
+
+                        <!-- Audio Sound Toggle -->
+                        <button type="button" id="btn-exec-sound" onclick="toggleExecSound()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 rounded-xl transition-colors" title="Bunyi audio saat ada transaksi baru masuk">
+                            <i data-lucide="volume-2" id="exec-sound-icon" class="w-4 h-4 text-amber-400"></i>
+                        </button>
+
+                        <!-- Refresh Manual Button -->
+                        <button type="button" onclick="loadExecutiveDashboard(true)" class="p-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl transition-colors shadow" title="Refresh data sekarang">
+                            <i data-lucide="refresh-cw" id="exec-refresh-icon" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Row 1: Executive KPI Cards -->
+                <div class="grid grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
+                    <!-- Card 1: Omzet -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl text-lg">💰</span>
+                            <span id="exec-kpi-rev-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">Gross Sales</span>
+                        </div>
+                        <div class="mt-3">
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Omzet Penjualan</p>
+                            <h3 id="exec-kpi-revenue" class="text-lg sm:text-xl font-black text-slate-800 tracking-tight mt-0.5">Rp 0</h3>
+                            <p id="exec-kpi-revenue-sub" class="text-[10px] text-slate-500 mt-1">Diskon: Rp 0 &bull; Ongkir: Rp 0</p>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Total Transaksi -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl text-lg">🧾</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-800">Invoices</span>
+                        </div>
+                        <div class="mt-3">
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Transaksi</p>
+                            <h3 id="exec-kpi-transactions" class="text-lg sm:text-xl font-black text-indigo-900 tracking-tight mt-0.5">0 Struk</h3>
+                            <p id="exec-kpi-aov" class="text-[10px] text-indigo-600 font-semibold mt-1">Rata-rata: Rp 0 / struk (AOV)</p>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Laba Kotor -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="p-2.5 bg-purple-50 text-purple-600 rounded-xl text-lg">📈</span>
+                            <span id="exec-kpi-margin-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800">0% Margin</span>
+                        </div>
+                        <div class="mt-3">
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Laba Kotor Terestimasi</p>
+                            <h3 id="exec-kpi-profit" class="text-lg sm:text-xl font-black text-purple-900 tracking-tight mt-0.5">Rp 0</h3>
+                            <p id="exec-kpi-cogs" class="text-[10px] text-purple-600 font-medium mt-1">BOM / Modal: Rp 0</p>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Status Cabang Buka -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="p-2.5 bg-amber-50 text-amber-600 rounded-xl text-lg">🏪</span>
+                            <span id="exec-kpi-active-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 flex items-center space-x-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span>Outlet Buka</span>
+                            </span>
+                        </div>
+                        <div class="mt-3">
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Status Outlet Aktif</p>
+                            <h3 id="exec-kpi-branches" class="text-lg sm:text-xl font-black text-slate-800 tracking-tight mt-0.5">0 Cabang</h3>
+                            <p id="exec-kpi-shifts" class="text-[10px] text-slate-500 mt-1">0 Shift Kasir beroperasi</p>
+                        </div>
+                    </div>
+
+                    <!-- Card 5: Arus Kas / Beban -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs relative overflow-hidden col-span-2 lg:col-span-1">
+                        <div class="flex items-center justify-between">
+                            <span class="p-2.5 bg-rose-50 text-rose-600 rounded-xl text-lg">💸</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800">Biaya / Beban</span>
+                        </div>
+                        <div class="mt-3">
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Beban Operasional Toko</p>
+                            <h3 id="exec-kpi-expenses" class="text-lg sm:text-xl font-black text-rose-700 tracking-tight mt-0.5">Rp 0</h3>
+                            <p id="exec-kpi-net-cash" class="text-[10px] text-slate-500 mt-1">Estimasi Kas Bersih: Rp 0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2: Live Transaction Radar & Multi-Branch Leaderboard -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    
+                    <!-- Left Column (7 cols): Real-Time Live Transaction Radar Stream -->
+                    <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
+                        <!-- Header -->
+                        <div class="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50/60">
+                            <div class="flex items-center space-x-2.5">
+                                <span class="p-1.5 bg-emerald-100 text-emerald-800 rounded-lg text-sm">⚡</span>
+                                <div>
+                                    <h3 class="font-extrabold text-xs text-slate-800 uppercase tracking-wider flex items-center space-x-2">
+                                        <span>Live Stream Transaksi Seluruh Cabang</span>
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    </h3>
+                                    <p class="text-[10px] text-slate-500" id="exec-live-count-sub">Memuat stream transaksi...</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs">
+                                <span id="exec-last-synced-time" class="text-[11px] text-slate-400 font-medium">Auto-sync aktif</span>
+                            </div>
+                        </div>
+
+                        <!-- Live Table / Stream Feed -->
+                        <div class="overflow-x-auto max-h-[520px] overflow-y-auto custom-scrollbar">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50/90 text-[10px] uppercase font-bold text-slate-400 tracking-wider sticky top-0 border-b border-slate-200/60 z-10">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Waktu</th>
+                                        <th class="py-2.5 px-3">No. Faktur</th>
+                                        <th class="py-2.5 px-3">Cabang & Kasir</th>
+                                        <th class="py-2.5 px-3">Ringkasan Item</th>
+                                        <th class="py-2.5 px-3 text-right">Total Belanja</th>
+                                        <th class="py-2.5 px-3 text-center">Metode</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="exec-live-transactions-body" class="divide-y divide-slate-100">
+                                    <!-- Dynamic Realtime Rows via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Footer status -->
+                        <div class="p-3 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
+                            <span class="flex items-center space-x-1.5">
+                                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                <span>Data tersinkronisasi langsung dari database transaksi penjualan aktif</span>
+                            </span>
+                            <button type="button" onclick="switchTab('reports')" class="text-indigo-600 hover:text-indigo-800 font-bold hover:underline">Lihat Laporan Lengkap &rarr;</button>
+                        </div>
+                    </div>
+
+                    <!-- Right Column (5 cols): Multi-Branch Performance Leaderboard -->
+                    <div class="lg:col-span-5 space-y-6">
+                        <!-- Branch Performance Card -->
+                        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
+                            <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+                                <div class="flex items-center space-x-2">
+                                    <span class="p-1.5 bg-amber-100 text-amber-800 rounded-lg text-sm">🏆</span>
+                                    <div>
+                                        <h3 class="font-extrabold text-xs text-slate-800 uppercase tracking-wider">Komparasi Kinerja Cabang</h3>
+                                        <p class="text-[10px] text-slate-500">Ranking omzet & kontribusi penjualan hari ini</p>
+                                    </div>
+                                </div>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600" id="exec-branches-ranking-count">0 Cabang</span>
+                            </div>
+
+                            <div class="p-4 space-y-3.5" id="exec-branch-leaderboard-container">
+                                <!-- Populated via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Payment Methods Breakdown Card -->
+                        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
+                            <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+                                <div class="flex items-center space-x-2">
+                                    <span class="p-1.5 bg-indigo-100 text-indigo-800 rounded-lg text-sm">💳</span>
+                                    <div>
+                                        <h3 class="font-extrabold text-xs text-slate-800 uppercase tracking-wider">Saluran Pembayaran Kasir</h3>
+                                        <p class="text-[10px] text-slate-500">Distribusi Tunai, QRIS, Transfer & Piutang</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-4 space-y-3" id="exec-payment-methods-container">
+                                <!-- Populated via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 3: Top Selling Fast-Moving Products Today -->
+                <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+                        <div class="flex items-center space-x-2">
+                            <span class="p-1.5 bg-purple-100 text-purple-800 rounded-lg text-sm">🔥</span>
+                            <div>
+                                <h3 class="font-extrabold text-xs text-slate-800 uppercase tracking-wider">Top 8 Produk Terlaris Hari Ini (Lintas Cabang)</h3>
+                                <p class="text-[10px] text-slate-500">Produk dengan volume penjualan & perputaran tercepat (Fast-Moving)</p>
+                            </div>
+                        </div>
+                        <span class="text-[11px] font-bold text-indigo-600">Konsolidasi Terkini</span>
+                    </div>
+
+                    <div class="p-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5" id="exec-top-products-grid">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- ---------------------------------------------------- -->
             <!-- TAB 1: MODUL PENJUALAN & POS KASIR                   -->
@@ -8424,10 +8681,19 @@ try {
             branchSelectedOnMap: null,
             branchPickerMap: null,
             branchPickerMarker: null,
-            branchPickerCircle: null
+            branchPickerCircle: null,
+            // Executive Dashboard & Real-Time Monitoring Properties
+            execSelectedBranchId: 0,
+            execStartDate: new Date().toISOString().split('T')[0],
+            execEndDate: new Date().toISOString().split('T')[0],
+            execAutoRefreshEnabled: true,
+            execSoundEnabled: true,
+            execAutoRefreshTimer: null,
+            execLastMaxSaleId: 0
         };
 
         const tabTitles = {
+            'dashboard': { title: 'Dashboard Eksekutif & Live Transaction Radar', sub: 'Monitoring transaksi realtime, performa seluruh cabang, & arus kas harian terpusat' },
             'pos': { title: 'Point of Sale (POS Kasir)', sub: 'Operasional transaksi kasir &bull; Tier harga & bahan baku BOM terpotong otomatis' },
             'reports': { title: 'Laporan Penjualan', sub: 'Omzet bersih, HPP riil, Laba Kotor, dan 10 produk terlaris' },
             'ess': { title: 'Employee Self Service (ESS)', sub: 'Presensi GPS Geofencing, Shift Swap, Komisi, dan Reimbursement Toko' },
@@ -8943,7 +9209,7 @@ try {
 
         function switchTab(tab) {
             state.currentTab = tab;
-            const tabIds = ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
+            const tabIds = ['dashboard', 'pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
             tabIds.forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 const btn = document.getElementById(`tab-btn-${t}`);
@@ -8971,6 +9237,21 @@ try {
             if (!backdrop.classList.contains('hidden')) {
                 sidebar.classList.add('-translate-x-full');
                 backdrop.classList.add('hidden');
+            }
+
+            if (tab === 'dashboard') {
+                const curUser = state.currentUser || state.loggedInUser;
+                const role = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+                const isAllowed = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(role);
+                if (!isAllowed) {
+                    alert('Akses Ditolak: Halaman Dashboard Eksekutif hanya dapat diakses oleh Superadmin dan Branch Manager.');
+                    switchTab('pos');
+                    return;
+                }
+                loadExecutiveDashboard();
+                startExecAutoRefresh();
+            } else {
+                stopExecAutoRefresh();
             }
 
             if (tab === 'reports') {
@@ -23145,16 +23426,18 @@ Manager / Supervisor: __________________
 
             // Ambil izin menu role
             const userPerms = state.userPermissions || {};
-            const allMenus = ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
+            const allMenus = ['dashboard', 'pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
 
             allMenus.forEach(mKey => {
                 const btn = document.getElementById(`tab-btn-${mKey}`);
                 if (!btn) return;
 
-                // Superadmin SELALU memiliki akses penuh ke seluruh menu (1 s/d 15)
+                // Superadmin SELALU memiliki akses penuh ke seluruh menu
                 let canAccess = true;
                 if (!isSuperAdmin) {
-                    if (userPerms[mKey] !== undefined) {
+                    if (mKey === 'dashboard') {
+                        canAccess = (role === 'MANAGER' || role === 'BRANCH_MANAGER');
+                    } else if (userPerms[mKey] !== undefined) {
                         canAccess = (userPerms[mKey] == 1);
                     } else if (role === 'MANAGER' || role === 'BRANCH_MANAGER') {
                         canAccess = (mKey !== 'sale-cancellations');
@@ -23171,6 +23454,18 @@ Manager / Supervisor: __________________
                     btn.style.display = 'none';
                 }
             });
+
+            // Toggle Section Eksekutif container
+            const secExec = document.getElementById('sidebar-sec-executive');
+            if (secExec) {
+                if (isSuperAdmin || role === 'MANAGER' || role === 'BRANCH_MANAGER') {
+                    secExec.classList.remove('hidden');
+                    secExec.style.display = 'block';
+                } else {
+                    secExec.classList.add('hidden');
+                    secExec.style.display = 'none';
+                }
+            }
             updateShiftReportSubtabVisibility();
             updateStoreResetButtonsVisibility();
         }
@@ -23797,6 +24092,486 @@ Manager / Supervisor: __________________
                 alert('Notifikasi Telegram:\n' + data.message);
             } catch (err) {
                 alert('Gagal mengirim Telegram.');
+            }
+        }
+
+        /* ======================================================== */
+        /* EXECUTIVE DASHBOARD & REAL-TIME TRANSACTION MONITORING   */
+        /* ======================================================== */
+
+        function playNewTransactionBeep() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const now = ctx.currentTime;
+                
+                // Tone 1: 587.33 Hz (D5)
+                const osc1 = ctx.createOscillator();
+                const gain1 = ctx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(587.33, now);
+                gain1.gain.setValueAtTime(0.12, now);
+                gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+                osc1.connect(gain1);
+                gain1.connect(ctx.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.18);
+
+                // Tone 2: 880.00 Hz (A5)
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(880.0, now + 0.10);
+                gain2.gain.setValueAtTime(0.15, now + 0.10);
+                gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.start(now + 0.10);
+                osc2.stop(now + 0.35);
+            } catch (e) {
+                // AudioContext may be restricted by autoplay policy before user interaction
+            }
+        }
+
+        function toggleExecSound() {
+            state.execSoundEnabled = !state.execSoundEnabled;
+            const btn = document.getElementById('btn-exec-sound');
+            const icon = document.getElementById('exec-sound-icon');
+            if (state.execSoundEnabled) {
+                if (btn) btn.classList.remove('opacity-50');
+                if (icon) {
+                    icon.classList.remove('text-slate-500');
+                    icon.classList.add('text-amber-400');
+                }
+                playNewTransactionBeep();
+            } else {
+                if (btn) btn.classList.add('opacity-50');
+                if (icon) {
+                    icon.classList.remove('text-amber-400');
+                    icon.classList.add('text-slate-500');
+                }
+            }
+        }
+
+        function toggleExecAutoRefresh() {
+            state.execAutoRefreshEnabled = !state.execAutoRefreshEnabled;
+            const label = document.getElementById('exec-autorefresh-label');
+            const btn = document.getElementById('btn-exec-autorefresh');
+            if (state.execAutoRefreshEnabled) {
+                if (label) label.innerText = 'Live 10d: ON';
+                if (btn) {
+                    btn.className = 'px-3 py-2 bg-emerald-600/30 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors';
+                }
+                startExecAutoRefresh();
+            } else {
+                if (label) label.innerText = 'Live: PAUSED';
+                if (btn) {
+                    btn.className = 'px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors';
+                }
+                stopExecAutoRefresh();
+            }
+        }
+
+        function startExecAutoRefresh() {
+            stopExecAutoRefresh();
+            if (!state.execAutoRefreshEnabled) return;
+            state.execAutoRefreshTimer = setInterval(() => {
+                if (state.currentTab === 'dashboard') {
+                    loadExecutiveDashboard(true);
+                }
+            }, 10000);
+        }
+
+        function stopExecAutoRefresh() {
+            if (state.execAutoRefreshTimer) {
+                clearInterval(state.execAutoRefreshTimer);
+                state.execAutoRefreshTimer = null;
+            }
+        }
+
+        function setExecDateFilter(preset) {
+            const now = new Date();
+            let start = '';
+            let end = '';
+
+            const formatDate = (d) => {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            if (preset === 'today') {
+                start = end = formatDate(now);
+            } else if (preset === 'yesterday') {
+                const y = new Date(now);
+                y.setDate(y.getDate() - 1);
+                start = end = formatDate(y);
+            } else if (preset === 'week') {
+                const w = new Date(now);
+                w.setDate(w.getDate() - 6);
+                start = formatDate(w);
+                end = formatDate(now);
+            } else if (preset === 'month') {
+                const m = new Date(now.getFullYear(), now.getMonth(), 1);
+                start = formatDate(m);
+                end = formatDate(now);
+            }
+
+            state.execStartDate = start;
+            state.execEndDate = end;
+
+            // Highlight button
+            const presets = ['today', 'yesterday', 'week', 'month'];
+            presets.forEach(p => {
+                const b = document.getElementById(`exec-date-btn-${p}`);
+                if (!b) return;
+                if (p === preset) {
+                    b.className = 'exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500 text-slate-950 transition-colors';
+                } else {
+                    b.className = 'exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-300 hover:text-white transition-colors';
+                }
+            });
+
+            loadExecutiveDashboard(false);
+        }
+
+        function onExecBranchFilterChange() {
+            const el = document.getElementById('exec-branch-filter');
+            if (el) {
+                state.execSelectedBranchId = parseInt(el.value, 10) || 0;
+            }
+            loadExecutiveDashboard(false);
+        }
+
+        function formatRelativeTime(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr.replace(' ', 'T'));
+            if (isNaN(d.getTime())) return dateStr;
+            const now = new Date();
+            const diffSec = Math.floor((now.getTime() - d.getTime()) / 1000);
+            if (diffSec < 15) return 'Baru saja';
+            if (diffSec < 60) return `${diffSec} dtk lalu`;
+            const diffMin = Math.floor(diffSec / 60);
+            if (diffMin < 60) return `${diffMin} mnt lalu`;
+            const diffHour = Math.floor(diffMin / 60);
+            if (diffHour < 24) return `${diffHour} jam lalu`;
+            return dateStr.split(' ')[1] || dateStr;
+        }
+
+        async function loadExecutiveDashboard(isAutoRefresh = false) {
+            const curUser = state.currentUser || state.loggedInUser;
+            if (!curUser) return;
+
+            // Visual spinner on refresh icon if manual
+            const refreshIcon = document.getElementById('exec-refresh-icon');
+            if (!isAutoRefresh && refreshIcon) {
+                refreshIcon.classList.add('animate-spin');
+            }
+
+            try {
+                const branchId = state.execSelectedBranchId || 0;
+                const startDate = state.execStartDate || new Date().toISOString().split('T')[0];
+                const endDate = state.execEndDate || new Date().toISOString().split('T')[0];
+                const userId = curUser.id || 0;
+
+                const res = await fetch(`api.php?action=executive_dashboard&branch_id=${branchId}&start_date=${startDate}&end_date=${endDate}&user_id=${userId}`);
+                const json = await res.json();
+
+                if (!json.success && json.status !== 'success') {
+                    if (!isAutoRefresh) alert(json.message || 'Gagal memuat dashboard eksekutif.');
+                    return;
+                }
+
+                const data = json.data || json;
+                const kpis = data.kpis || {};
+
+                // 1. Update Sync Time
+                const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const syncEl = document.getElementById('exec-last-synced-time');
+                if (syncEl) syncEl.innerText = `Sinkronisasi: ${nowTime} WIB`;
+
+                // 2. Populate Branch Select if needed
+                const branchSelect = document.getElementById('exec-branch-filter');
+                const canAccessAll = json.is_super_admin !== undefined ? json.is_super_admin : (data.can_access_all_branches || canUserAccessAllBranches());
+                const branchList = data.branches || (data.branch_performance ? data.branch_performance.map(b => ({ id: b.branch_id, code: b.branch_code, name: b.branch_name })) : state.branches) || [];
+
+                if (branchSelect && branchSelect.options.length <= 1 && branchList.length > 0) {
+                    branchSelect.innerHTML = '';
+                    if (canAccessAll) {
+                        const optAll = document.createElement('option');
+                        optAll.value = '0';
+                        optAll.innerText = '🌐 Semua Cabang (Konsolidasi Global)';
+                        branchSelect.appendChild(optAll);
+                    }
+                    branchList.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        opt.innerText = `🏪 ${b.name} (${b.code})`;
+                        branchSelect.appendChild(opt);
+                    });
+                    branchSelect.value = String(state.execSelectedBranchId || (canAccessAll ? 0 : branchList[0]?.id || 0));
+                    if (!canAccessAll) {
+                        branchSelect.disabled = true;
+                        branchSelect.classList.add('opacity-80', 'cursor-not-allowed');
+                    }
+                }
+
+                // 3. Update KPI Cards
+                const revVal = kpis.total_revenue || 0;
+                const elRev = document.getElementById('exec-kpi-revenue');
+                if (elRev) elRev.innerText = formatRupiah(revVal);
+
+                const discountVal = kpis.total_discounts !== undefined ? kpis.total_discounts : (kpis.total_discount || 0);
+                const deliveryVal = kpis.total_delivery_fees !== undefined ? kpis.total_delivery_fees : (kpis.total_delivery_fee || 0);
+                const elRevSub = document.getElementById('exec-kpi-revenue-sub');
+                if (elRevSub) {
+                    elRevSub.innerText = `Diskon: ${formatRupiah(discountVal)} • Ongkir: ${formatRupiah(deliveryVal)}`;
+                }
+
+                const txCountVal = kpis.total_transactions || 0;
+                const elTx = document.getElementById('exec-kpi-transactions');
+                if (elTx) elTx.innerText = `${txCountVal.toLocaleString('id-ID')} Struk`;
+
+                const aovVal = kpis.avg_order_value !== undefined ? kpis.avg_order_value : (kpis.average_order_value || 0);
+                const elAov = document.getElementById('exec-kpi-aov');
+                if (elAov) elAov.innerText = `Rata-rata: ${formatRupiah(aovVal)} / struk (AOV)`;
+
+                const marginVal = kpis.gross_margin_pct !== undefined ? kpis.gross_margin_pct : (kpis.margin_percentage || 0);
+                const elMargin = document.getElementById('exec-kpi-margin-badge');
+                if (elMargin) elMargin.innerText = `${marginVal}% Margin`;
+
+                const elProfit = document.getElementById('exec-kpi-profit');
+                if (elProfit) elProfit.innerText = formatRupiah(kpis.gross_profit || 0);
+
+                const elCogs = document.getElementById('exec-kpi-cogs');
+                if (elCogs) elCogs.innerText = `BOM / Modal: ${formatRupiah(kpis.total_cogs || 0)}`;
+
+                const elBranches = document.getElementById('exec-kpi-branches');
+                if (elBranches) elBranches.innerText = `${kpis.active_branches_count || 0} Cabang Aktif`;
+
+                const elShifts = document.getElementById('exec-kpi-shifts');
+                if (elShifts) elShifts.innerText = `${kpis.active_shifts_count || 0} Shift Kasir Beroperasi`;
+
+                const elExpenses = document.getElementById('exec-kpi-expenses');
+                if (elExpenses) elExpenses.innerText = formatRupiah(kpis.total_expenses || 0);
+
+                const netCashVal = kpis.net_estimated_cash !== undefined ? kpis.net_estimated_cash : (kpis.net_cash_flow || 0);
+                const elNetCash = document.getElementById('exec-kpi-net-cash');
+                if (elNetCash) elNetCash.innerText = `Estimasi Kas Bersih: ${formatRupiah(netCashVal)}`;
+
+                // 4. Update Live Stream Transactions Radar
+                const txBody = document.getElementById('exec-live-transactions-body');
+                const liveCountSub = document.getElementById('exec-live-count-sub');
+                const recentTx = data.realtime_transactions || data.recent_transactions || [];
+
+                if (liveCountSub) {
+                    const filterName = (data.filters && data.filters.branch_name) || (data.filter && data.filter.branch_name) || 'Semua Cabang';
+                    liveCountSub.innerText = `${recentTx.length} transaksi terakhir termonitor (${filterName})`;
+                }
+
+                // Chime Sound Detection for New Transactions
+                if (recentTx.length > 0) {
+                    const latestId = Math.max(...recentTx.map(t => Number(t.id || 0)));
+                    if (state.execLastMaxSaleId > 0 && latestId > state.execLastMaxSaleId && state.execSoundEnabled) {
+                        playNewTransactionBeep();
+                    }
+                    state.execLastMaxSaleId = Math.max(state.execLastMaxSaleId, latestId);
+                }
+
+                if (txBody) {
+                    if (recentTx.length === 0) {
+                        txBody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="py-12 text-center text-slate-400">
+                                    <div class="flex flex-col items-center justify-center space-y-2">
+                                        <span class="text-3xl">📭</span>
+                                        <p class="font-bold text-xs">Belum ada aktivitas transaksi pada periode ini</p>
+                                        <p class="text-[11px] text-slate-400">Transaksi kasir akan otomatis muncul secara live di sini saat diselesaikan.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        txBody.innerHTML = recentTx.map((tx, idx) => {
+                            const isNew = idx === 0 && isAutoRefresh;
+                            const txDate = tx.created_at || tx.sale_date || '';
+                            const relTime = tx.time_ago || formatRelativeTime(txDate);
+                            const items = tx.items || [];
+                            const itemsSummary = tx.items_summary || (items.map(it => `${it.product_name} (${formatDecimal(it.quantity)}x)`).join(', '));
+                            const shortSummary = itemsSummary.length > 40 ? itemsSummary.substring(0, 38) + '...' : itemsSummary;
+                            
+                            // Badge payment
+                            const pMethod = (tx.payment_method || 'CASH').toUpperCase();
+                            let pBadgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                            if (pMethod.includes('QRIS')) pBadgeClass = 'bg-blue-100 text-blue-800 border-blue-200';
+                            else if (pMethod.includes('TRANSFER')) pBadgeClass = 'bg-indigo-100 text-indigo-800 border-indigo-200';
+                            else if (pMethod.includes('DEBIT') || pMethod.includes('EDC')) pBadgeClass = 'bg-purple-100 text-purple-800 border-purple-200';
+                            else if (pMethod.includes('TEMPO') || pMethod.includes('PIUTANG')) pBadgeClass = 'bg-amber-100 text-amber-800 border-amber-200';
+
+                            const isDelivery = (tx.delivery_method === 'DELIVERY') || (tx.delivery_status && tx.delivery_status !== 'PICKUP') || (Number(tx.delivery_fee || 0) > 0);
+                            const totalAmount = tx.grand_total !== undefined ? tx.grand_total : (tx.final_amount !== undefined ? tx.final_amount : (tx.total_amount || 0));
+
+                            return `
+                                <tr class="hover:bg-amber-50/40 transition-colors ${isNew ? 'bg-emerald-50/60 animate-pulse' : ''}">
+                                    <td class="py-2.5 px-3 whitespace-nowrap">
+                                        <div class="flex flex-col">
+                                            <span class="font-black text-slate-800 text-[11px]">${relTime}</span>
+                                            <span class="text-[10px] text-slate-400 font-mono">${tx.time_formatted || (txDate.split(' ')[1] || '')}</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-2.5 px-3 whitespace-nowrap">
+                                        <button type="button" onclick="openSaleDetailModal('${escapeHtml(tx.invoice_number)}')" class="font-mono font-bold text-indigo-600 hover:text-indigo-800 hover:underline flex items-center space-x-1" title="Buka Detail Nota Transaksi">
+                                            <span>#${escapeHtml(tx.invoice_number)}</span>
+                                            <i data-lucide="external-link" class="w-3 h-3"></i>
+                                        </button>
+                                        <span class="text-[10px] text-slate-400 block">${escapeHtml(tx.customer_name || 'Pelanggan Umum')}</span>
+                                    </td>
+                                    <td class="py-2.5 px-3 whitespace-nowrap">
+                                        <div class="flex items-center space-x-1.5">
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">${escapeHtml(tx.branch_name || '-')}</span>
+                                            ${isDelivery ? '<span class="px-1 py-0.2 rounded text-[9px] font-bold bg-purple-100 text-purple-700 border border-purple-200" title="Pesanan Dikirim Kurir">🛵 Kurir</span>' : ''}
+                                        </div>
+                                        <span class="text-[10px] text-slate-400 mt-0.5 block">Kasir: ${escapeHtml(tx.cashier_name || '-')}</span>
+                                    </td>
+                                    <td class="py-2.5 px-3 max-w-[220px]">
+                                        <span class="text-[11px] text-slate-700 font-medium truncate block" title="${escapeHtml(itemsSummary)}">${escapeHtml(shortSummary || '-')}</span>
+                                        <span class="text-[10px] text-slate-400">${tx.total_items_qty || items.length || 0} qty produk</span>
+                                    </td>
+                                    <td class="py-2.5 px-3 text-right whitespace-nowrap">
+                                        <span class="font-black text-slate-900 text-xs sm:text-sm">${formatRupiah(totalAmount)}</span>
+                                    </td>
+                                    <td class="py-2.5 px-3 text-center whitespace-nowrap">
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${pBadgeClass}">${escapeHtml(pMethod)}</span>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+                    }
+                }
+
+                // 5. Update Multi-Branch Leaderboard
+                const rankingContainer = document.getElementById('exec-branch-leaderboard-container');
+                const rankingCountBadge = document.getElementById('exec-branches-ranking-count');
+                const branchRanking = data.branch_performance || data.branch_ranking || [];
+
+                if (rankingCountBadge) rankingCountBadge.innerText = `${branchRanking.length} Cabang`;
+
+                if (rankingContainer) {
+                    if (branchRanking.length === 0) {
+                        rankingContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Belum ada data penjualan per cabang pada filter ini.</p>`;
+                    } else {
+                        const topRevenue = Math.max(...branchRanking.map(b => Number(b.revenue || b.total_revenue || 0)), 1);
+                        rankingContainer.innerHTML = branchRanking.map((b, idx) => {
+                            const rev = Number(b.revenue || b.total_revenue || 0);
+                            const txCount = Number(b.transactions || b.total_transactions || 0);
+                            const aovB = Number(b.aov || 0);
+                            const pct = b.revenue_share_pct !== undefined ? Number(b.revenue_share_pct) : Math.min(100, Math.round((rev / topRevenue) * 100));
+                            
+                            let rankBadge = `<span class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-black text-xs flex items-center justify-center shrink-0">#${idx + 1}</span>`;
+                            if (idx === 0) rankBadge = `<span class="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center shrink-0 shadow-sm shadow-amber-400/40">🥇</span>`;
+                            else if (idx === 1) rankBadge = `<span class="w-6 h-6 rounded-full bg-slate-300 text-slate-900 font-black text-xs flex items-center justify-center shrink-0">🥈</span>`;
+                            else if (idx === 2) rankBadge = `<span class="w-6 h-6 rounded-full bg-amber-700/40 text-amber-900 font-black text-xs flex items-center justify-center shrink-0">🥉</span>`;
+
+                            return `
+                                <div class="p-2.5 rounded-2xl bg-slate-50/80 hover:bg-slate-100/80 transition-colors border border-slate-100 space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-2.5">
+                                            ${rankBadge}
+                                            <div>
+                                                <h4 class="font-extrabold text-xs text-slate-800">${escapeHtml(b.branch_name)} <span class="text-slate-400 font-mono text-[10px]">(${escapeHtml(b.branch_code)})</span></h4>
+                                                <p class="text-[10px] text-slate-500">${txCount.toLocaleString('id-ID')} transaksi &bull; AOV: ${formatRupiah(aovB)}</p>
+                                            </div>
+                                        </div>
+                                        <span class="font-black text-xs text-slate-900">${formatRupiah(rev)}</span>
+                                    </div>
+                                    <!-- Progress bar -->
+                                    <div class="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
+
+                // 6. Update Payment Distribution
+                const paymentContainer = document.getElementById('exec-payment-methods-container');
+                const pDist = data.payment_methods || data.payment_distribution || [];
+                if (paymentContainer) {
+                    if (pDist.length === 0) {
+                        paymentContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Belum ada data saluran pembayaran.</p>`;
+                    } else {
+                        const totalPayRev = pDist.reduce((acc, p) => acc + Number(p.total_amount || 0), 0) || 1;
+                        paymentContainer.innerHTML = pDist.map(p => {
+                            const pNominal = Number(p.total_amount || 0);
+                            const pCount = Number(p.count || p.tx_count || 0);
+                            const pShare = p.percentage !== undefined ? Number(p.percentage) : Math.round((pNominal / totalPayRev) * 100);
+                            const pMethod = (p.payment_method || 'CASH').toUpperCase();
+
+                            return `
+                                <div class="space-y-1">
+                                    <div class="flex items-center justify-between text-xs font-bold">
+                                        <span class="text-slate-700 flex items-center space-x-1.5">
+                                            <span>${escapeHtml(pMethod)}</span>
+                                            <span class="text-[10px] font-normal text-slate-400">(${pCount} trx)</span>
+                                        </span>
+                                        <span class="text-slate-900">${formatRupiah(pNominal)} <span class="text-[10px] text-slate-400 font-normal">(${pShare}%)</span></span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                        <div class="h-full bg-indigo-600 rounded-full transition-all duration-500" style="width: ${pShare}%"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
+
+                // 7. Update Top Products Grid
+                const topProdGrid = document.getElementById('exec-top-products-grid');
+                const topProducts = data.top_products || [];
+                if (topProdGrid) {
+                    if (topProducts.length === 0) {
+                        topProdGrid.innerHTML = `<div class="col-span-full text-center py-6 text-xs text-slate-400">Belum ada produk terjual pada periode ini.</div>`;
+                    } else {
+                        topProdGrid.innerHTML = topProducts.map((p, idx) => {
+                            const salesVal = p.total_sales !== undefined ? p.total_sales : (p.total_revenue || 0);
+                            return `
+                                <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-purple-300 transition-all flex items-start space-x-3">
+                                    <span class="w-7 h-7 rounded-xl bg-purple-100 text-purple-800 font-black text-xs flex items-center justify-center shrink-0">#${idx + 1}</span>
+                                    <div class="min-w-0 flex-1">
+                                        <h4 class="font-bold text-xs text-slate-800 truncate" title="${escapeHtml(p.product_name)}">${escapeHtml(p.product_name)}</h4>
+                                        <div class="flex items-center space-x-2 mt-1">
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">${formatDecimal(p.total_qty)} Terjual</span>
+                                            <span class="text-[10px] text-slate-400 font-medium">${formatRupiah(salesVal)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
+
+                lucide.createIcons();
+            } catch (err) {
+                console.error('Error loading executive dashboard:', err);
+                if (!isAutoRefresh) alert('Terjadi kesalahan saat memuat data dashboard eksekutif.');
+            } finally {
+                if (refreshIcon) {
+                    setTimeout(() => { refreshIcon.classList.remove('animate-spin'); }, 400);
+                }
+            }
+        }
+
+                lucide.createIcons();
+            } catch (err) {
+                console.error('Error loading executive dashboard:', err);
+                if (!isAutoRefresh) alert('Terjadi kesalahan saat memuat data dashboard eksekutif.');
+            } finally {
+                if (refreshIcon) {
+                    setTimeout(() => { refreshIcon.classList.remove('animate-spin'); }, 400);
+                }
             }
         }
 

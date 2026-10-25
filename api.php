@@ -6412,6 +6412,331 @@ try {
             break;
 
         // ==========================================
+        // 0. DASHBOARD EKSEKUTIF & REALTIME MONITORING (SUPERADMIN & BRANCH MANAGER ONLY)
+        // ==========================================
+        case 'executive_dashboard':
+            // 1. Validasi Autentikasi & Role Akses
+            $reqUserId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : (!empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 1);
+            $stmtUserAuth = $pdo->prepare("SELECT id, name, role, branch_id FROM users WHERE id = ?");
+            $stmtUserAuth->execute([$reqUserId]);
+            $userAuth = $stmtUserAuth->fetch();
+
+            $userRole = strtoupper(trim($userAuth['role'] ?? 'CASHIER'));
+            $normRole = str_replace(['_', ' '], '', $userRole);
+            $isSuperAdmin = ($normRole === 'SUPERADMIN');
+            $isManager = ($normRole === 'MANAGER' || $normRole === 'BRANCHMANAGER');
+
+            if (!$isSuperAdmin && !$isManager) {
+                http_response_code(403);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Akses ditolak: Hanya Superadmin dan Branch Manager yang berwenang mengakses Dashboard Eksekutif.'
+                ]);
+                exit;
+            }
+
+            // 2. Filter Cabang & Tanggal
+            $reqBranchId = isset($_GET['branch_id']) ? (int)$_GET['branch_id'] : 0;
+            // Jika Branch Manager, kunci ke cabang penugasannya jika tidak berhak multi-cabang
+            if (!$isSuperAdmin && !empty($userAuth['branch_id'])) {
+                $reqBranchId = (int)$userAuth['branch_id'];
+            }
+
+            $startDate = !empty($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-d');
+            $endDate = !empty($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
+
+            // 3. Query KPI Summary
+            $whereSales = "WHERE date(s.created_at) BETWEEN ? AND ? AND (s.status IS NULL OR s.status != 'CANCELLED')";
+            $paramsSales = [$startDate, $endDate];
+
+            if ($reqBranchId > 0) {
+                $whereSales .= " AND s.branch_id = ?";
+                $paramsSales[] = $reqBranchId;
+            }
+
+            $stmtKpi = $pdo->prepare("
+                SELECT 
+                    COUNT(s.id) as total_transactions,
+                    COALESCE(SUM(s.subtotal), 0) as gross_sales,
+                    COALESCE(SUM(s.discount), 0) as total_discount,
+                    COALESCE(SUM(s.delivery_fee), 0) as total_delivery_fees,
+                    COALESCE(SUM(s.tax), 0) as total_tax,
+                    COALESCE(SUM(s.grand_total), 0) as total_revenue,
+                    COALESCE(SUM(s.total_cogs), 0) as total_cogs
+                FROM sales s
+                $whereSales
+            ");
+            $stmtKpi->execute($paramsSales);
+            $kpiRaw = $stmtKpi->fetch();
+
+            $totalRevenue = (float)($kpiRaw['total_revenue'] ?? 0);
+            $totalTransactions = (int)($kpiRaw['total_transactions'] ?? 0);
+            $totalCogs = (float)($kpiRaw['total_cogs'] ?? 0);
+            $totalDiscount = (float)($kpiRaw['total_discount'] ?? 0);
+            $totalDelivery = (float)($kpiRaw['total_delivery_fees'] ?? 0);
+            $grossProfit = $totalRevenue - $totalCogs;
+            $grossMarginPct = $totalRevenue > 0 ? round(($grossProfit / $totalRevenue) * 100, 1) : 0;
+            $avgOrderValue = $totalTransactions > 0 ? round($totalRevenue / $totalTransactions) : 0;
+
+            // Beban Operasional Cabang
+            $whereExp = "WHERE date(expense_date) BETWEEN ? AND ?";
+            $paramsExp = [$startDate, $endDate];
+            if ($reqBranchId > 0) {
+                $whereExp .= " AND branch_id = ?";
+                $paramsExp[] = $reqBranchId;
+            }
+            $stmtExp = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) as total_expense FROM branch_expenses $whereExp");
+            $stmtExp->execute($paramsExp);
+            $totalExpenses = (float)($stmtExp->fetchColumn() ?: 0);
+
+            // Active Branches & Shifts Status
+            $allBranchesStmt = $pdo->query("SELECT id, code, name, address, phone FROM branches WHERE is_active = 1 ORDER BY id ASC");
+            $branchesList = $allBranchesStmt->fetchAll();
+
+            $openShiftsStmt = $pdo->query("
+                SELECT cs.id, cs.branch_id, cs.user_id, cs.shift_number, cs.start_time as opened_at, cs.status, u.name as cashier_name, b.name as branch_name
+                FROM cashier_shifts cs
+                JOIN users u ON u.id = cs.user_id
+                JOIN branches b ON b.id = cs.branch_id
+                WHERE cs.status = 'OPEN'
+            ");
+            $openShifts = $openShiftsStmt->fetchAll();
+            $openShiftsByBranch = [];
+            foreach ($openShifts as $os) {
+                $openShiftsByBranch[$os['branch_id']] = $os;
+            }
+
+            // 4. Multi-Branch Performance Ranking (Leaderboard)
+            $branchPerformance = [];
+            $totalConsolidatedRevenue = max(1, $totalRevenue);
+
+            foreach ($branchesList as $b) {
+                $bId = (int)$b['id'];
+                if ($reqBranchId > 0 && $bId !== $reqBranchId) {
+                    continue;
+                }
+
+                $stmtBRev = $pdo->prepare("
+                    SELECT 
+                        COUNT(id) as trx_count,
+                        COALESCE(SUM(grand_total), 0) as branch_revenue,
+                        COALESCE(SUM(total_cogs), 0) as branch_cogs
+                    FROM sales
+                    WHERE branch_id = ? AND date(created_at) BETWEEN ? AND ? AND (status IS NULL OR status != 'CANCELLED')
+                ");
+                $stmtBRev->execute([$bId, $startDate, $endDate]);
+                $bRev = $stmtBRev->fetch();
+
+                $bRevenue = (float)($bRev['branch_revenue'] ?? 0);
+                $bTrx = (int)($bRev['trx_count'] ?? 0);
+                $bAov = $bTrx > 0 ? round($bRevenue / $bTrx) : 0;
+                $bShare = round(($bRevenue / $totalConsolidatedRevenue) * 100, 1);
+
+                // Most common payment method in this branch
+                $stmtTopPay = $pdo->prepare("
+                    SELECT payment_method, COUNT(id) as cnt
+                    FROM sales
+                    WHERE branch_id = ? AND date(created_at) BETWEEN ? AND ? AND (status IS NULL OR status != 'CANCELLED')
+                    GROUP BY payment_method
+                    ORDER BY cnt DESC
+                    LIMIT 1
+                ");
+                $stmtTopPay->execute([$bId, $startDate, $endDate]);
+                $topPay = $stmtTopPay->fetchColumn() ?: 'TUNAI';
+
+                $branchPerformance[] = [
+                    'branch_id' => $bId,
+                    'branch_code' => $b['code'],
+                    'branch_name' => $b['name'],
+                    'address' => $b['address'] ?? '',
+                    'revenue' => $bRevenue,
+                    'transactions' => $bTrx,
+                    'aov' => $bAov,
+                    'revenue_share_pct' => $bShare,
+                    'is_open' => isset($openShiftsByBranch[$bId]),
+                    'active_shift' => $openShiftsByBranch[$bId] ?? null,
+                    'top_payment_method' => $topPay
+                ];
+            }
+
+            // Sort leaderboard by revenue DESC
+            usort($branchPerformance, function($a, $b) {
+                return $b['revenue'] <=> $a['revenue'];
+            });
+
+            // 5. Real-Time Recent Transactions Stream (Up to 30)
+            $stmtRecent = $pdo->prepare("
+                SELECT 
+                    s.id, s.invoice_number, s.created_at, s.grand_total, s.subtotal, s.discount, s.total_cogs,
+                    s.payment_method, s.payment_status, s.delivery_fee, s.delivery_status, s.status,
+                    s.customer_name, s.customer_category,
+                    b.name as branch_name, b.code as branch_code,
+                    u.name as cashier_name
+                FROM sales s
+                JOIN branches b ON b.id = s.branch_id
+                JOIN users u ON u.id = s.user_id
+                $whereSales
+                ORDER BY s.id DESC
+                LIMIT 30
+            ");
+            $stmtRecent->execute($paramsSales);
+            $rawRecent = $stmtRecent->fetchAll();
+
+            $recentTransactions = [];
+            foreach ($rawRecent as $row) {
+                // Fetch brief items summary
+                $stmtItems = $pdo->prepare("
+                    SELECT product_name, qty, unit_price
+                    FROM sale_items
+                    WHERE sale_id = ?
+                    LIMIT 3
+                ");
+                $stmtItems->execute([$row['id']]);
+                $items = $stmtItems->fetchAll();
+
+                $itemNames = [];
+                $totalQty = 0;
+                foreach ($items as $it) {
+                    $itemNames[] = $it['product_name'] . ' (' . (int)$it['qty'] . 'x)';
+                    $totalQty += (int)$it['qty'];
+                }
+                $itemSummary = !empty($itemNames) ? implode(', ', $itemNames) : '1 Item';
+
+                // Count if more
+                $stmtCountMore = $pdo->prepare("SELECT COUNT(*) FROM sale_items WHERE sale_id = ?");
+                $stmtCountMore->execute([$row['id']]);
+                $totalItemLines = (int)$stmtCountMore->fetchColumn();
+                if ($totalItemLines > count($items)) {
+                    $itemSummary .= ' +' . ($totalItemLines - count($items)) . ' lainnya';
+                }
+
+                // Time ago
+                $saleTime = strtotime($row['created_at']);
+                $diff = time() - $saleTime;
+                if ($diff < 60) {
+                    $timeAgo = 'Baru saja';
+                } elseif ($diff < 3600) {
+                    $timeAgo = floor($diff / 60) . ' mnt lalu';
+                } elseif ($diff < 86400) {
+                    $timeAgo = floor($diff / 3600) . ' jam lalu';
+                } else {
+                    $timeAgo = date('d/m H:i', $saleTime);
+                }
+
+                $recentTransactions[] = [
+                    'id' => (int)$row['id'],
+                    'invoice_number' => $row['invoice_number'],
+                    'created_at' => $row['created_at'],
+                    'time_formatted' => date('H:i:s', $saleTime),
+                    'time_ago' => $timeAgo,
+                    'grand_total' => (float)$row['grand_total'],
+                    'subtotal' => (float)$row['subtotal'],
+                    'discount' => (float)$row['discount'],
+                    'gross_profit' => (float)($row['grand_total'] - $row['total_cogs']),
+                    'payment_method' => $row['payment_method'],
+                    'payment_status' => $row['payment_status'] ?? 'PAID',
+                    'delivery_status' => $row['delivery_status'] ?? 'NONE',
+                    'status' => $row['status'] ?? 'COMPLETED',
+                    'customer_name' => $row['customer_name'] ?: 'Pelanggan Umum',
+                    'customer_category' => $row['customer_category'] ?: 'REGULER',
+                    'branch_name' => $row['branch_name'],
+                    'branch_code' => $row['branch_code'],
+                    'cashier_name' => $row['cashier_name'],
+                    'items_summary' => $itemSummary,
+                    'total_items_qty' => $totalQty
+                ];
+            }
+
+            // 6. Top 8 Fast-Moving Products
+            $stmtTop = $pdo->prepare("
+                SELECT 
+                    si.product_name,
+                    SUM(si.qty) as total_qty,
+                    SUM(si.subtotal_price) as total_sales,
+                    (SUM(si.subtotal_price) - SUM(si.subtotal_cogs)) as profit
+                FROM sale_items si
+                JOIN sales s ON s.id = si.sale_id
+                $whereSales
+                GROUP BY si.product_name
+                ORDER BY total_qty DESC
+                LIMIT 8
+            ");
+            $stmtTop->execute($paramsSales);
+            $topProducts = [];
+            foreach ($stmtTop->fetchAll() as $tp) {
+                $topProducts[] = [
+                    'product_name' => $tp['product_name'],
+                    'total_qty' => (int)$tp['total_qty'],
+                    'total_sales' => (float)$tp['total_sales'],
+                    'profit' => (float)$tp['profit']
+                ];
+            }
+
+            // 7. Payment Methods Distribution
+            $stmtPay = $pdo->prepare("
+                SELECT s.payment_method, COUNT(s.id) as count, SUM(s.grand_total) as total
+                FROM sales s
+                $whereSales
+                GROUP BY s.payment_method
+                ORDER BY total DESC
+            ");
+            $stmtPay->execute($paramsSales);
+            $paymentMethods = [];
+            foreach ($stmtPay->fetchAll() as $pm) {
+                $pmTotal = (float)$pm['total'];
+                $paymentMethods[] = [
+                    'payment_method' => $pm['payment_method'],
+                    'count' => (int)$pm['count'],
+                    'total_amount' => $pmTotal,
+                    'percentage' => $totalRevenue > 0 ? round(($pmTotal / $totalRevenue) * 100, 1) : 0
+                ];
+            }
+
+            // Current Branch Name for Title
+            $selectedBranchName = 'Semua Cabang (Konsolidasi Global)';
+            if ($reqBranchId > 0) {
+                foreach ($branchesList as $b) {
+                    if ((int)$b['id'] === $reqBranchId) {
+                        $selectedBranchName = $b['name'];
+                        break;
+                    }
+                }
+            }
+
+            echo json_encode([
+                'success' => true,
+                'server_time' => date('Y-m-d H:i:s'),
+                'is_super_admin' => $isSuperAdmin,
+                'can_switch_branch' => $isSuperAdmin,
+                'filters' => [
+                    'branch_id' => $reqBranchId,
+                    'branch_name' => $selectedBranchName,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
+                ],
+                'kpis' => [
+                    'total_revenue' => $totalRevenue,
+                    'total_transactions' => $totalTransactions,
+                    'total_cogs' => $totalCogs,
+                    'gross_profit' => $grossProfit,
+                    'gross_margin_pct' => $grossMarginPct,
+                    'avg_order_value' => $avgOrderValue,
+                    'total_discounts' => $totalDiscount,
+                    'total_delivery_fees' => $totalDelivery,
+                    'total_expenses' => $totalExpenses,
+                    'net_estimated_cash' => ($totalRevenue - $totalExpenses),
+                    'active_branches_count' => count($openShiftsByBranch),
+                    'total_branches_count' => count($branchesList),
+                    'active_shifts_count' => count($openShifts)
+                ],
+                'branch_performance' => $branchPerformance,
+                'realtime_transactions' => $recentTransactions,
+                'top_products' => $topProducts,
+                'payment_methods' => $paymentMethods
+            ]);
+            break;
+
+        // ==========================================
         // 7. MODUL LAPORAN PENJUALAN
         // ==========================================
         case 'sales_reports':
