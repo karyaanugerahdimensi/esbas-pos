@@ -1623,12 +1623,13 @@ function autoMigrateAndSync($pdo) {
         FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
     )");
 
-    // Seed default 3 produk bahan baku utama jika tabel konfigurasi masih kosong
+    // Seed default 4 produk operasional utama jika tabel konfigurasi masih kosong
     $ospCount = $pdo->query("SELECT COUNT(*) FROM opening_shift_products")->fetchColumn();
     if ($ospCount == 0) {
         $pMineral = $pdo->query("SELECT id FROM products WHERE sku = 'RAW-089'")->fetchColumn();
         $pRo = $pdo->query("SELECT id FROM products WHERE sku = 'RAW-020'")->fetchColumn();
-        $pPlastik = $pdo->query("SELECT id FROM products WHERE sku = 'RAW-00092'")->fetchColumn();
+        $pMineralGalon = $pdo->query("SELECT id FROM products WHERE sku = 'PRD-00001'")->fetchColumn();
+        $pRoGalon = $pdo->query("SELECT id FROM products WHERE sku = 'PRD-00002'")->fetchColumn();
 
         if ($pMineral) {
             $pdo->exec("INSERT OR IGNORE INTO opening_shift_products (product_id, sort_order, is_active) VALUES ($pMineral, 1, 1)");
@@ -1636,8 +1637,11 @@ function autoMigrateAndSync($pdo) {
         if ($pRo) {
             $pdo->exec("INSERT OR IGNORE INTO opening_shift_products (product_id, sort_order, is_active) VALUES ($pRo, 2, 1)");
         }
-        if ($pPlastik) {
-            $pdo->exec("INSERT OR IGNORE INTO opening_shift_products (product_id, sort_order, is_active) VALUES ($pPlastik, 3, 1)");
+        if ($pMineralGalon) {
+            $pdo->exec("INSERT OR IGNORE INTO opening_shift_products (product_id, sort_order, is_active) VALUES ($pMineralGalon, 3, 1)");
+        }
+        if ($pRoGalon) {
+            $pdo->exec("INSERT OR IGNORE INTO opening_shift_products (product_id, sort_order, is_active) VALUES ($pRoGalon, 4, 1)");
         }
     }
 
@@ -2282,7 +2286,8 @@ function autoMigrateMysql($pdo) {
         if ($ospCount == 0) {
             $pMineral = $pdo->query("SELECT id FROM `products` WHERE `sku` = 'RAW-089'")->fetchColumn();
             $pRo = $pdo->query("SELECT id FROM `products` WHERE `sku` = 'RAW-020'")->fetchColumn();
-            $pPlastik = $pdo->query("SELECT id FROM `products` WHERE `sku` = 'RAW-00092'")->fetchColumn();
+            $pMineralGalon = $pdo->query("SELECT id FROM `products` WHERE `sku` = 'PRD-00001'")->fetchColumn();
+            $pRoGalon = $pdo->query("SELECT id FROM `products` WHERE `sku` = 'PRD-00002'")->fetchColumn();
 
             if ($pMineral) {
                 $pdo->exec("INSERT IGNORE INTO `opening_shift_products` (`product_id`, `sort_order`, `is_active`) VALUES ($pMineral, 1, 1)");
@@ -2290,8 +2295,11 @@ function autoMigrateMysql($pdo) {
             if ($pRo) {
                 $pdo->exec("INSERT IGNORE INTO `opening_shift_products` (`product_id`, `sort_order`, `is_active`) VALUES ($pRo, 2, 1)");
             }
-            if ($pPlastik) {
-                $pdo->exec("INSERT IGNORE INTO `opening_shift_products` (`product_id`, `sort_order`, `is_active`) VALUES ($pPlastik, 3, 1)");
+            if ($pMineralGalon) {
+                $pdo->exec("INSERT IGNORE INTO `opening_shift_products` (`product_id`, `sort_order`, `is_active`) VALUES ($pMineralGalon, 3, 1)");
+            }
+            if ($pRoGalon) {
+                $pdo->exec("INSERT IGNORE INTO `opening_shift_products` (`product_id`, `sort_order`, `is_active`) VALUES ($pRoGalon, 4, 1)");
             }
         }
     } catch (Exception $e) {}

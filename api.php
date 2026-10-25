@@ -3991,29 +3991,7 @@ try {
                 }
             } catch (Exception $eOsp) {}
 
-            // 2b. Gabungkan dengan seluruh produk yang distok (is_stockable = 1) yang aktif di cabang ini
-            try {
-                $stmtStockable = $pdo->prepare("
-                    SELECT 0 as tracking_id, p.id as product_id, 999 as sort_order,
-                           p.sku, p.name, p.unit, p.product_type, p.category, p.image_emoji,
-                           COALESCE(bs.stock, 0) as branch_stock
-                    FROM products p
-                    JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
-                    WHERE p.is_active = 1 
-                      AND COALESCE(p.is_stockable, 1) IN (1, 2)
-                      AND COALESCE(bs.is_active, 1) = 1
-                    ORDER BY p.name ASC
-                ");
-                $stmtStockable->execute([$branchId]);
-                foreach ($stmtStockable->fetchAll() as $st) {
-                    $pid = (int)$st['product_id'];
-                    if (isset($seenTrackedIds[$pid])) continue;
-                    $seenTrackedIds[$pid] = true;
-                    $trackedRows[] = $st;
-                }
-            } catch (Exception $eStk) {}
-
-            // 2c. Fallback default jika daftar masih kosong
+            // 2b. Fallback default HANYA jika konfigurasi opening_shift_products masih kosong
             if (empty($trackedRows)) {
                 try {
                     $stmtFallback = $pdo->prepare("
@@ -4022,8 +4000,8 @@ try {
                                COALESCE(bs.stock, 0) as branch_stock
                         FROM products p
                         LEFT JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
-                        WHERE p.is_active = 1 AND COALESCE(p.is_stockable, 1) IN (1, 2)
-                        ORDER BY p.name ASC
+                        WHERE p.is_active = 1 AND p.sku IN ('RAW-089', 'RAW-020', 'PRD-00001', 'PRD-00002')
+                        ORDER BY p.id ASC
                     ");
                     $stmtFallback->execute([$branchId]);
                     foreach ($stmtFallback->fetchAll() as $fb) {
@@ -4434,27 +4412,27 @@ try {
                 }
             } catch (Exception $eOsp) {}
 
-            // 2. Gabungkan dengan SELURUH produk yang distok (is_stockable = 1) yang aktif di cabang ini
-            try {
-                $stmtStockable = $pdo->prepare("
-                    SELECT p.id as product_id, 999 as sort_order,
-                           p.sku, p.name, p.unit, p.product_type, p.category, p.image_emoji,
-                           COALESCE(bs.stock, 0) as branch_stock
-                    FROM products p
-                    JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
-                    WHERE p.is_active = 1 
-                      AND COALESCE(p.is_stockable, 1) IN (1, 2)
-                      AND COALESCE(bs.is_active, 1) = 1
-                    ORDER BY p.name ASC
-                ");
-                $stmtStockable->execute([$shift['branch_id']]);
-                foreach ($stmtStockable->fetchAll() as $st) {
-                    $pid = (int)$st['product_id'];
-                    if (isset($seenTrackedIds[$pid])) continue;
-                    $seenTrackedIds[$pid] = true;
-                    $trackedRows[] = $st;
-                }
-            } catch (Exception $eStk) {}
+            // 2. Fallback default HANYA jika konfigurasi opening_shift_products masih kosong
+            if (empty($trackedRows)) {
+                try {
+                    $stmtFallback = $pdo->prepare("
+                        SELECT p.id as product_id, 1000 as sort_order,
+                               p.sku, p.name, p.unit, p.product_type, p.category, p.image_emoji,
+                               COALESCE(bs.stock, 0) as branch_stock
+                        FROM products p
+                        LEFT JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
+                        WHERE p.is_active = 1 AND p.sku IN ('RAW-089', 'RAW-020', 'PRD-00001', 'PRD-00002')
+                        ORDER BY p.id ASC
+                    ");
+                    $stmtFallback->execute([$shift['branch_id']]);
+                    foreach ($stmtFallback->fetchAll() as $fb) {
+                        $pid = (int)$fb['product_id'];
+                        if (isset($seenTrackedIds[$pid])) continue;
+                        $seenTrackedIds[$pid] = true;
+                        $trackedRows[] = $fb;
+                    }
+                } catch (Exception $eFb) {}
+            }
 
             // 3. Pastikan seluruh produk yang tercatat di opening_items_json shift ini juga termuat
             if (!empty($openingItems)) {
@@ -4631,20 +4609,11 @@ try {
             // Dynamic closing items from frontend
             $dynamicItems = $input['items'] ?? [];
             $closingMap = [];
-            if (is_array($dynamicItems)) {
-                foreach ($dynamicItems as $k => $v) {
-                    if (is_array($v)) {
-                        $pId = (int)($v['product_id'] ?? 0);
-                        if ($pId) $closingMap[$pId] = (int)($v['closing_qty'] ?? 0);
-                    } else {
-                        $closingMap[$k] = (int)$v;
-                    }
-                }
-            }
+            $explicitlyUpdated = [];
 
-            $closingMineral = isset($input['closing_raw_mineral']) ? (int)$input['closing_raw_mineral'] : ($closingMap[89] ?? null);
-            $closingRo = isset($input['closing_raw_ro']) ? (int)$input['closing_raw_ro'] : ($closingMap[88] ?? null);
-            $closingPlastik = isset($input['closing_raw_plastik']) ? (int)$input['closing_raw_plastik'] : ($closingMap[105] ?? null);
+            $closingMineral = isset($input['closing_raw_mineral']) ? (int)$input['closing_raw_mineral'] : null;
+            $closingRo = isset($input['closing_raw_ro']) ? (int)$input['closing_raw_ro'] : null;
+            $closingPlastik = isset($input['closing_raw_plastik']) ? (int)$input['closing_raw_plastik'] : null;
             $shiftNotes = trim($input['shift_notes'] ?? '');
 
             $stmtShift = $pdo->prepare("SELECT * FROM cashier_shifts WHERE id = ?");
@@ -4655,6 +4624,46 @@ try {
                 echo json_encode(['success' => false, 'message' => 'Shift tidak ditemukan atau sudah ditutup.']);
                 exit;
             }
+
+            // Ambil snapshot stok berjalan saat ini di cabang untuk seluruh produk
+            $stmtCurStocks = $pdo->prepare("SELECT product_id, stock FROM branch_stocks WHERE branch_id = ?");
+            $stmtCurStocks->execute([$shift['branch_id'] ?? 1]);
+            $currentBranchStocks = [];
+            while ($rStk = $stmtCurStocks->fetch(PDO::FETCH_ASSOC)) {
+                $currentBranchStocks[(int)$rStk['product_id']] = (float)$rStk['stock'];
+            }
+
+            if (is_array($dynamicItems)) {
+                foreach ($dynamicItems as $k => $v) {
+                    if (is_array($v)) {
+                        $pId = (int)($v['product_id'] ?? 0);
+                        if ($pId) {
+                            $hasVal = (isset($v['closing_qty']) && $v['closing_qty'] !== '' && $v['closing_qty'] !== null);
+                            if ($hasVal) {
+                                $closingMap[$pId] = (float)$v['closing_qty'];
+                                $explicitlyUpdated[$pId] = true;
+                            } else {
+                                // Jika tidak diisi oleh kasir, pertahankan stok riil sistem yang sudah ada!
+                                $closingMap[$pId] = $currentBranchStocks[$pId] ?? 0;
+                                $explicitlyUpdated[$pId] = false;
+                            }
+                        }
+                    } else {
+                        $pId = (int)$k;
+                        if ($v !== '' && $v !== null) {
+                            $closingMap[$pId] = (float)$v;
+                            $explicitlyUpdated[$pId] = true;
+                        } else {
+                            $closingMap[$pId] = $currentBranchStocks[$pId] ?? 0;
+                            $explicitlyUpdated[$pId] = false;
+                        }
+                    }
+                }
+            }
+
+            if ($closingMineral === null && isset($closingMap[89])) $closingMineral = (int)$closingMap[89];
+            if ($closingRo === null && isset($closingMap[88])) $closingRo = (int)$closingMap[88];
+            if ($closingPlastik === null && isset($closingMap[105])) $closingPlastik = (int)$closingMap[105];
 
             $stmtSales = $pdo->prepare("SELECT COALESCE(SUM(grand_total), 0) FROM sales WHERE shift_id = ? AND payment_method = 'CASH'");
             $stmtSales->execute([$shiftId]);
@@ -4983,7 +4992,13 @@ try {
                             ]);
                         }
                     } else {
-                        // Untuk produk jadi (misal 10 galon) atau item lainnya, simpan stok fisik sesuai laporan closing
+                        // Jika item TIDAK diisi oleh kasir (explicitlyUpdated == false),
+                        // JANGAN ubah saldo stok cabang di branch_stocks (tetap mengikuti saldo pemotongan sistem berjalan)!
+                        if (empty($explicitlyUpdated[$pId])) {
+                            continue;
+                        }
+
+                        // Untuk produk jadi (misal 10 galon) atau item lainnya yang diisi fisik kasir, simpan stok fisik
                         $stmtCheckBs->execute([$shift['branch_id'], $pId]);
                         if ($stmtCheckBs->fetchColumn()) {
                             $stmtUpdBs->execute([$closeQty, $shift['branch_id'], $pId]);

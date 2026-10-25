@@ -11472,9 +11472,11 @@ try {
                 document.querySelectorAll('.shift-closing-item-input').forEach(input => {
                     const pId = parseInt(input.getAttribute('data-product-id')) || 0;
                     if (pId > 0) {
+                        const hasVal = (input.value !== '' && input.value !== null && input.value.trim() !== '');
+                        const rawVal = hasVal ? parseInt(input.value) : null;
                         dynamicClosingItems.push({
                             product_id: pId,
-                            closing_qty: parseInt(input.value) || 0
+                            closing_qty: (rawVal !== null && !isNaN(rawVal)) ? rawVal : null
                         });
                     }
                 });

@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.44",
-  "build": "20261025-03",
+  "version": "1.2.45",
+  "build": "20261025-04",
   "release_date": "2026-10-25",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.45",
+      "commit": "HEAD",
+      "date": "2026-10-25",
+      "title": "Isolasi Produk Shift Sesuai Konfigurasi Master Sub-Tab 6 & Proteksi Pelestarian Saldo Closing",
+      "description": "Menyempurnakan alur kerja produk pelacakan shift dan proteksi saldo persediaan: (1) Membatasi modal Opening Shift dan Closing Shift kasir agar HANYA menampilkan produk-produk yang terdaftar dan aktif pada Menu Master Data Produk -> Sub-Tab 6 (opening_shift_products), mengeliminasi pemaksaan seluruh produk stok cabang sehingga barang curah (Air Baku tangki, Tisu, Gas, Es Kristal) tidak lagi membebani kasir. (2) Menerapkan prinsip pelestarian stok pada closing shift (close_shift): jika kotak input sisa fisik tidak diisi (null / kosong), sistem secara mutlak mempertahankan saldo stok berjalan yang ada di cabang (Air Baku tetap 99.800 L, Tisu tetap 990 pcs) tanpa pernah dinolkan. (3) Menstandarisasikan 4 produk operasional utama di Sub-Tab 6: Tutup Galon Mineral, Tutup Galon RO, Air Mineral Galon 19L, dan Air RO Galon 19L.",
+      "rollback_command": "git checkout v1.2.44"
+    },
     {
       "version": "1.2.44",
       "commit": "HEAD",
