@@ -2164,6 +2164,26 @@ try {
                     </div>
                 </div>
 
+                <!-- Toolbar Filter Cabang & Pencarian Karyawan -->
+                <div class="bg-white p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap items-center justify-between gap-2.5 text-xs">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Filter Cabang Penugasan -->
+                        <div class="flex items-center space-x-1.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-indigo-600 shrink-0"></i>
+                            <span class="text-[11px] font-bold text-slate-500 whitespace-nowrap">Filter Lokasi:</span>
+                            <select id="emp-table-branch-filter" onchange="renderFilteredEmployeesTable()" class="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
+                                <option value="ALL">🌐 Semua Penempatan (Global & Seluruh Cabang)</option>
+                                <option value="GLOBAL">🌐 Penempatan Global Saja (Super Admin)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Pencarian Cepat -->
+                    <div class="relative w-full sm:w-64">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                        <input type="text" id="emp-table-search" oninput="renderFilteredEmployeesTable()" placeholder="Cari NIK, Nama, atau Role..." class="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+
                 <!-- Employee Table -->
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                     <div class="overflow-x-auto">
@@ -5322,7 +5342,7 @@ try {
 
     <!-- Modal 3: Karyawan CRUD Modal -->
     <div id="employee-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <h3 id="emp-modal-title" class="font-bold text-slate-800 text-base">Tambah Karyawan Baru</h3>
             <form onsubmit="saveEmployeeForm(event)" class="space-y-3 text-xs">
                 <input type="hidden" id="emp-id">
@@ -5355,25 +5375,70 @@ try {
                         <input type="text" id="emp-phone" placeholder="0812345678" class="w-full p-2.5 bg-slate-50 border rounded-xl">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Cabang Penempatan:</label>
-                        <select id="emp-branch" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium"></select>
+
+                <!-- Penempatan Cabang Dinamis Berdasarkan Role -->
+                <div class="border-t border-slate-100 pt-2.5 space-y-2">
+                    <!-- Option A: Global Placement (Superadmin) -->
+                    <div id="emp-branch-global-group" class="hidden space-y-1">
+                        <label class="block font-bold text-slate-700 text-xs flex items-center justify-between">
+                            <span>Wilayah Penempatan Tugas:</span>
+                            <span class="text-[10px] text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">Akses Global</span>
+                        </label>
+                        <div class="p-3 bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50 border border-purple-200/90 rounded-2xl text-purple-950 flex items-start space-x-2.5 shadow-2xs">
+                            <span class="text-2xl shrink-0 mt-0.5">🌐</span>
+                            <div class="text-xs">
+                                <strong class="font-bold text-purple-900 block">Penempatan Global (Seluruh Cabang / Kantor Pusat)</strong>
+                                <p class="text-[11px] text-purple-700 mt-0.5 leading-snug">Super Admin memiliki wewenang operasional terpusat ke seluruh unit toko dan tidak merujuk ke satu lokasi cabang fisik spesifik.</p>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Option B: Multi-Branch Placement (Branch Manager) -->
+                    <div id="emp-branch-multi-group" class="hidden space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <label class="font-bold text-slate-700 text-xs flex items-center space-x-1.5">
+                                <span>Penempatan Multi-Cabang:</span>
+                                <span id="emp-multi-branch-count-badge" class="text-[10px] text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">0 Cabang</span>
+                            </label>
+                            <div class="flex items-center space-x-2 text-[11px]">
+                                <button type="button" onclick="selectAllEmployeeBranches(true)" class="text-indigo-600 hover:text-indigo-800 font-bold hover:underline">Pilih Semua</button>
+                                <span class="text-slate-300">&bull;</span>
+                                <button type="button" onclick="selectAllEmployeeBranches(false)" class="text-slate-500 hover:text-slate-700 font-medium hover:underline">Hapus Pilihan</button>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                            <p class="text-[11px] text-slate-500 font-medium">Centang lokasi cabang yang menjadi wewenang tugas Branch Manager ini:</p>
+                            <div id="emp-multi-branch-checkboxes" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto custom-scrollbar p-1.5 bg-white rounded-xl border border-slate-200/80">
+                                <!-- Populated dynamically via JS -->
+                            </div>
+                            <p class="text-[10px] text-slate-400 italic">Branch Manager dapat memantau dan mengelola operasional pada seluruh cabang yang dicentang di atas.</p>
+                        </div>
+                    </div>
+
+                    <!-- Option C: Single Branch Placement (Kasir, Staf, Kurir) -->
+                    <div id="emp-branch-single-group" class="space-y-1">
+                        <label class="block font-bold text-slate-700 text-xs flex items-center justify-between">
+                            <span>Cabang Penempatan:</span>
+                            <span class="text-[10px] text-slate-500 font-semibold">1 Outlet Fisik</span>
+                        </label>
+                        <select id="emp-branch" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500"></select>
+                        <p class="text-[10px] text-slate-400">Karyawan kasir/staf bertugas secara spesifik di outlet ini.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">Rate Komisi (%):</label>
                         <input type="number" step="0.1" id="emp-commission" value="1.5" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium">
                     </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">PIN Cepat (6-Digit):</label>
                         <input type="text" id="emp-pin" value="123456" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono">
                     </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Kata Sandi:</label>
-                        <input type="password" id="emp-password" placeholder="Kosongkan jika tetap" class="w-full p-2.5 bg-slate-50 border rounded-xl">
-                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Kata Sandi (Password):</label>
+                    <input type="password" id="emp-password" placeholder="Kosongkan jika tetap" class="w-full p-2.5 bg-slate-50 border rounded-xl">
                 </div>
 
                 <!-- Shift Kerja Bawaan (Default Work Shift) -->
@@ -9364,21 +9429,39 @@ try {
         function renderBranchOptions() {
             const select = document.getElementById('branch-select');
             if (!select) return;
-            const canSwitchBranch = canUserAccessAllBranches();
+            const curUser = state.currentUser || state.loggedInUser;
+            const isSuper = canUserAccessAllBranches();
+            const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const isManager = ['BRANCHMANAGER', 'MANAGER'].includes(userRole);
 
-            if (!canSwitchBranch) {
-                const userBranch = getUserAssignedBranch();
-                select.innerHTML = `<option value="${userBranch.id}" selected>🔒 ${userBranch.name} (Terkunci)</option>`;
+            // Tentukan cabang yang diizinkan untuk diakses user ini
+            let allowedBranches = state.branches || [];
+            if (!isSuper) {
+                if (isManager && Array.isArray(curUser?.assigned_branch_ids) && curUser.assigned_branch_ids.length > 0) {
+                    const assignedSet = new Set(curUser.assigned_branch_ids.map(Number));
+                    allowedBranches = (state.branches || []).filter(b => assignedSet.has(Number(b.id)));
+                } else if (isManager && Array.isArray(curUser?.assigned_branches) && curUser.assigned_branches.length > 0) {
+                    allowedBranches = curUser.assigned_branches;
+                } else {
+                    const userBranch = getUserAssignedBranch();
+                    allowedBranches = userBranch ? [userBranch] : [];
+                }
+            }
+
+            if (allowedBranches.length <= 1) {
+                const b = allowedBranches[0] || getUserAssignedBranch();
+                select.innerHTML = `<option value="${b.id}" selected>🔒 ${b.name} (Terkunci)</option>`;
                 select.disabled = true;
                 select.title = "Lokasi operasional Anda terkunci pada cabang penugasan.";
-                if (state.currentBranch && state.currentBranch.id !== userBranch.id) {
-                    state.currentBranch = userBranch;
+                if (state.currentBranch && state.currentBranch.id !== b.id) {
+                    state.currentBranch = b;
                 }
             } else {
                 select.disabled = false;
-                select.title = "Pilih cabang untuk memantau/mengelola operasional";
-                select.innerHTML = (state.branches || []).map(b => 
-                    `<option value="${b.id}" ${b.id === (state.currentBranch ? state.currentBranch.id : 1) ? 'selected' : ''}>${b.name}</option>`
+                select.title = isSuper ? "Pilih cabang untuk memantau/mengelola operasional (Akses Global)" : "Pilih cabang tugas Anda (Multi-Cabang Manager)";
+                const activeBId = state.currentBranch ? state.currentBranch.id : allowedBranches[0]?.id;
+                select.innerHTML = allowedBranches.map(b => 
+                    `<option value="${b.id}" ${b.id === activeBId ? 'selected' : ''}>${b.name}</option>`
                 ).join('');
             }
         }
@@ -14627,6 +14710,7 @@ Manager / Supervisor: __________________
         // ==========================================
         // 4. KARYAWAN CRUD (EMPLOYEES) & SHIFT MAPPING
         // ==========================================
+        let allEmployeesData = [];
         let currentEditingEmployee = null;
         let currentScheduleEmployee = null;
         let currentEmployeeScheduleData = null;
@@ -14646,17 +14730,86 @@ Manager / Supervisor: __________________
             return essWorkShiftsList;
         }
 
-        async function loadEmployees() {
-            await ensureWorkShiftsLoaded();
-            const res = await fetch('api.php?action=get_employees');
-            const data = await res.json();
-            if (!data.success) {
-                    console.error('Bootstrap failed:', data.error || 'Unknown error');
-                    return;
+        function populateEmployeeTableBranchFilter() {
+            const filterSelect = document.getElementById('emp-table-branch-filter');
+            if (!filterSelect) return;
+            const currentVal = filterSelect.value || 'ALL';
+            let opts = [
+                '<option value="ALL">🌐 Semua Penempatan (Global & Seluruh Cabang)</option>',
+                '<option value="GLOBAL">🌐 Penempatan Global Saja (Super Admin)</option>'
+            ];
+            (state.branches || []).forEach(b => {
+                opts.push(`<option value="${b.id}">🏪 Cabang: ${b.name}</option>`);
+            });
+            filterSelect.innerHTML = opts.join('');
+            if (opts.some(o => o.includes(`value="${currentVal}"`))) {
+                filterSelect.value = currentVal;
+            } else {
+                filterSelect.value = 'ALL';
+            }
+        }
+
+        function renderFilteredEmployeesTable() {
+            const tbody = document.getElementById('employee-table-body');
+            if (!tbody) return;
+
+            const q = (document.getElementById('emp-table-search')?.value || '').toLowerCase().trim();
+            const branchFilter = document.getElementById('emp-table-branch-filter')?.value || 'ALL';
+
+            const filtered = (allEmployeesData || []).filter(e => {
+                // Search filter
+                if (q) {
+                    const matchNik = (e.nik || '').toLowerCase().includes(q);
+                    const matchName = (e.name || '').toLowerCase().includes(q);
+                    const matchRole = (e.role || '').toLowerCase().includes(q);
+                    const matchEmail = (e.email || '').toLowerCase().includes(q);
+                    const matchPhone = (e.phone || '').toLowerCase().includes(q);
+                    const matchBranch = (e.branch_name || '').toLowerCase().includes(q);
+                    if (!matchNik && !matchName && !matchRole && !matchEmail && !matchPhone && !matchBranch) {
+                        return false;
+                    }
                 }
 
-            document.getElementById('employee-table-body').innerHTML = data.employees.map(e => {
-                const isExempt = ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'].includes(e.role);
+                // Branch placement filter
+                const roleClean = (e.role || '').toUpperCase().replace(/_/g, '');
+                const isSuper = ['SUPERADMIN', 'SUPER_ADMIN'].includes(roleClean) || e.assigned_branch_ids === 'ALL';
+
+                if (branchFilter === 'GLOBAL') {
+                    return isSuper;
+                } else if (branchFilter !== 'ALL') {
+                    const targetBId = parseInt(branchFilter);
+                    if (isSuper) {
+                        return false; // Global placement doesn't tie to single physical branch filter
+                    }
+                    if (Array.isArray(e.assigned_branch_ids)) {
+                        return e.assigned_branch_ids.includes(targetBId);
+                    }
+                    return parseInt(e.branch_id) === targetBId;
+                }
+
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="py-8 text-center text-slate-400">
+                            <i data-lucide="users" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+                            <p class="font-bold text-xs">Tidak ada data karyawan yang sesuai filter / pencarian.</p>
+                        </td>
+                    </tr>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(e => {
+                const roleClean = (e.role || '').toUpperCase().replace(/_/g, '');
+                const isSuper = ['SUPERADMIN', 'SUPER_ADMIN'].includes(roleClean) || e.assigned_branch_ids === 'ALL';
+                const isManager = ['BRANCHMANAGER', 'BRANCH_MANAGER', 'MANAGER'].includes(roleClean);
+                const isExempt = isSuper || isManager;
+
+                // Shift badge
                 let shiftBadge = '';
                 if (isExempt) {
                     shiftBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">Fleksibel (Manajerial)</span>`;
@@ -14666,12 +14819,53 @@ Manager / Supervisor: __________________
                     shiftBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Belum Diset</span>`;
                 }
 
+                // Branch placement badge
+                let branchPlacementHtml = '';
+                if (isSuper) {
+                    branchPlacementHtml = `
+                        <div class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[10px] font-black bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-900 border border-purple-200 shadow-2xs">
+                            <span>🌐</span>
+                            <span>Global (Seluruh Cabang)</span>
+                        </div>
+                    `;
+                } else if (isManager) {
+                    const assignedBranches = Array.isArray(e.assigned_branches) ? e.assigned_branches : [];
+                    const count = assignedBranches.length;
+                    if (count > 0) {
+                        const names = assignedBranches.map(b => b.name).join(', ');
+                        branchPlacementHtml = `
+                            <div class="space-y-1">
+                                <div class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-blue-100 text-blue-900 border border-blue-200" title="${names}">
+                                    <i data-lucide="building-2" class="w-3 h-3 text-blue-700"></i>
+                                    <span>${count} Cabang Terhubung</span>
+                                </div>
+                                <div class="text-[10px] text-slate-600 font-medium truncate max-w-[200px]" title="${names}">
+                                    ${names}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        branchPlacementHtml = `
+                            <div class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                <span>${e.branch_name || 'Belum Diset'}</span>
+                            </div>
+                        `;
+                    }
+                } else {
+                    branchPlacementHtml = `
+                        <div class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-800 border border-slate-200">
+                            <i data-lucide="map-pin" class="w-2.5 h-2.5 text-indigo-500"></i>
+                            <span>${e.branch_name || 'Semua Cabang'}</span>
+                        </div>
+                    `;
+                }
+
                 return `
-                <tr class="hover:bg-slate-50">
+                <tr class="hover:bg-slate-50 transition-colors">
                     <td class="py-2.5 px-4 font-mono font-bold text-indigo-700">${e.nik}</td>
                     <td class="py-2.5 px-4 font-semibold text-slate-800">${e.name}</td>
-                    <td class="py-2.5 px-4"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${e.role === 'SUPER_ADMIN' ? 'bg-purple-100 text-purple-800' : (e.role === 'BRANCH_MANAGER' ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-700')}">${e.role}</span></td>
-                    <td class="py-2.5 px-4 text-slate-600">${e.branch_name || 'Semua Cabang'}</td>
+                    <td class="py-2.5 px-4"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${isSuper ? 'bg-purple-100 text-purple-800' : (isManager ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-700')}">${e.role}</span></td>
+                    <td class="py-2.5 px-4">${branchPlacementHtml}</td>
                     <td class="py-2.5 px-4 text-slate-500">${e.email || '-'} / ${e.phone || '-'}</td>
                     <td class="py-2.5 px-4">${shiftBadge}</td>
                     <td class="py-2.5 px-4 font-bold text-amber-700">${(e.commission_rate * 100).toFixed(1)}%</td>
@@ -14681,13 +14875,73 @@ Manager / Supervisor: __________________
                         </span>
                     </td>
                     <td class="py-2.5 px-4 text-center space-x-1 whitespace-nowrap">
-                        <button onclick='editEmployee(${JSON.stringify(e)})' class="px-2.5 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-[11px] font-bold">Edit</button>
-                        <button onclick='openEmployeeScheduleModal(${JSON.stringify(e)})' class="px-2.5 py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg text-[11px] font-bold" title="Detail & Petakan Jadwal Shift">🗓️ Jadwal Shift</button>
+                        <button onclick="editEmployeeById(${e.id})" class="px-2.5 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-[11px] font-bold">Edit</button>
+                        <button onclick="openEmployeeScheduleModalById(${e.id})" class="px-2.5 py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg text-[11px] font-bold" title="Detail & Petakan Jadwal Shift">🗓️ Jadwal Shift</button>
                         ${e.id !== 1 ? `<button onclick="deleteEmployee(${e.id})" class="px-2.5 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-[11px] font-bold">Nonaktifkan</button>` : ''}
                     </td>
                 </tr>
             `}).join('');
             lucide.createIcons();
+        }
+
+        async function loadEmployees() {
+            await ensureWorkShiftsLoaded();
+            populateEmployeeTableBranchFilter();
+            try {
+                const res = await fetch('api.php?action=get_employees');
+                const data = await res.json();
+                if (!data.success) {
+                    console.error('Fetch employees failed:', data.error || 'Unknown error');
+                    return;
+                }
+                allEmployeesData = data.employees || [];
+                renderFilteredEmployeesTable();
+            } catch (err) {
+                console.error('Load employees error:', err);
+            }
+        }
+
+        function editEmployeeById(id) {
+            const emp = (allEmployeesData || []).find(u => u.id == id);
+            if (emp) editEmployee(emp);
+        }
+
+        function openEmployeeScheduleModalById(id) {
+            const emp = (allEmployeesData || []).find(u => u.id == id);
+            if (emp) openEmployeeScheduleModal(emp);
+        }
+
+        function renderEmployeeMultiBranchCheckboxes(selectedIds = []) {
+            const container = document.getElementById('emp-multi-branch-checkboxes');
+            if (!container) return;
+            const branches = state.branches || [];
+            const selSet = new Set((selectedIds || []).map(x => parseInt(x)));
+
+            container.innerHTML = branches.map(b => {
+                const isChecked = selSet.has(parseInt(b.id));
+                return `
+                    <label class="flex items-center space-x-2 p-2 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer text-xs select-none transition-colors">
+                        <input type="checkbox" name="emp_multi_branch_cb" value="${b.id}" ${isChecked ? 'checked' : ''} onchange="updateEmployeeMultiBranchCount()" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300">
+                        <span class="font-bold text-slate-700">${b.name}</span>
+                    </label>
+                `;
+            }).join('');
+
+            updateEmployeeMultiBranchCount();
+        }
+
+        function updateEmployeeMultiBranchCount() {
+            const checked = document.querySelectorAll('input[name="emp_multi_branch_cb"]:checked');
+            const badge = document.getElementById('emp-multi-branch-count-badge');
+            if (badge) {
+                badge.innerText = `${checked.length} Cabang`;
+            }
+        }
+
+        function selectAllEmployeeBranches(check = true) {
+            const checkboxes = document.querySelectorAll('input[name="emp_multi_branch_cb"]');
+            checkboxes.forEach(cb => { cb.checked = check; });
+            updateEmployeeMultiBranchCount();
         }
 
         async function openEmployeeModal() {
@@ -14722,6 +14976,10 @@ Manager / Supervisor: __________________
                     `<option value="${b.id}" ${b.id === (state.currentBranch ? state.currentBranch.id : 1) ? 'selected' : ''}>${b.name}</option>`
                 ).join('');
             }
+
+            // Reset multi-branch checkboxes
+            renderEmployeeMultiBranchCheckboxes([]);
+
             // Populate default shifts & courier vehicles
             renderEmployeeModalShiftOptions();
             renderEmployeeModalVehicleOptions(state.currentBranch ? state.currentBranch.id : 1);
@@ -14763,8 +15021,11 @@ Manager / Supervisor: __________________
         }
 
         function handleEmployeeRoleChange() {
-            const role = document.getElementById('emp-role').value;
-            const isExempt = ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'].includes(role);
+            const role = (document.getElementById('emp-role').value || '').toUpperCase().replace(/_/g, '');
+            const isSuper = ['SUPERADMIN', 'SUPER_ADMIN'].includes(role);
+            const isManager = ['BRANCHMANAGER', 'BRANCH_MANAGER', 'MANAGER'].includes(role);
+            const isExempt = isSuper || isManager;
+
             const pickerGroup = document.getElementById('emp-shift-picker-group');
             const exemptNotice = document.getElementById('emp-shift-exempt-notice');
             const detailAction = document.getElementById('emp-shift-detail-action');
@@ -14773,7 +15034,8 @@ Manager / Supervisor: __________________
                 if (pickerGroup) pickerGroup.classList.add('hidden');
                 if (exemptNotice) exemptNotice.classList.remove('hidden');
                 if (detailAction) detailAction.classList.add('hidden');
-                document.getElementById('emp-default-shift').value = '';
+                const defShift = document.getElementById('emp-default-shift');
+                if (defShift) defShift.value = '';
             } else {
                 if (pickerGroup) pickerGroup.classList.remove('hidden');
                 if (exemptNotice) exemptNotice.classList.add('hidden');
@@ -14783,6 +15045,26 @@ Manager / Supervisor: __________________
                     if (detailAction) detailAction.classList.add('hidden');
                 }
             }
+
+            // Branch Placement UI toggling
+            const globalGroup = document.getElementById('emp-branch-global-group');
+            const multiGroup = document.getElementById('emp-branch-multi-group');
+            const singleGroup = document.getElementById('emp-branch-single-group');
+
+            if (isSuper) {
+                if (globalGroup) globalGroup.classList.remove('hidden');
+                if (multiGroup) multiGroup.classList.add('hidden');
+                if (singleGroup) singleGroup.classList.add('hidden');
+            } else if (isManager) {
+                if (globalGroup) globalGroup.classList.add('hidden');
+                if (multiGroup) multiGroup.classList.remove('hidden');
+                if (singleGroup) singleGroup.classList.add('hidden');
+            } else {
+                if (globalGroup) globalGroup.classList.add('hidden');
+                if (multiGroup) multiGroup.classList.add('hidden');
+                if (singleGroup) singleGroup.classList.remove('hidden');
+            }
+
             lucide.createIcons();
         }
 
@@ -14808,6 +15090,17 @@ Manager / Supervisor: __________________
             document.getElementById('emp-commission').value = (emp.commission_rate * 100).toFixed(1);
             document.getElementById('emp-modal-title').innerText = 'Edit Karyawan: ' + emp.name;
 
+            // Multi-branch selection initialization for Branch Manager
+            let selectedBranchIds = [];
+            if (Array.isArray(emp.assigned_branch_ids)) {
+                selectedBranchIds = emp.assigned_branch_ids;
+            } else if (typeof emp.assigned_branch_ids === 'string' && emp.assigned_branch_ids.startsWith('[')) {
+                try { selectedBranchIds = JSON.parse(emp.assigned_branch_ids); } catch (e) {}
+            } else if (emp.branch_id) {
+                selectedBranchIds = [parseInt(emp.branch_id)];
+            }
+            renderEmployeeMultiBranchCheckboxes(selectedBranchIds);
+
             renderEmployeeModalShiftOptions(emp.default_work_shift_id);
             renderEmployeeModalVehicleOptions(emp.branch_id || 1, emp.assigned_vehicle_id);
             handleEmployeeRoleChange();
@@ -14828,16 +15121,39 @@ Manager / Supervisor: __________________
             e.preventDefault();
             const id = document.getElementById('emp-id').value;
             const role = document.getElementById('emp-role').value;
-            const isExempt = ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'].includes(role);
+            const roleClean = (role || '').toUpperCase().replace(/_/g, '');
+            const isSuper = ['SUPERADMIN', 'SUPER_ADMIN'].includes(roleClean);
+            const isManager = ['BRANCHMANAGER', 'BRANCH_MANAGER', 'MANAGER'].includes(roleClean);
+            const isExempt = isSuper || isManager;
             const defaultShiftId = (!isExempt && document.getElementById('emp-default-shift').value) ? parseInt(document.getElementById('emp-default-shift').value) : null;
             const assignedVehicleId = document.getElementById('emp-assigned-vehicle')?.value ? parseInt(document.getElementById('emp-assigned-vehicle').value) : null;
+
+            let branchId = null;
+            let assignedBranchIds = null;
+
+            if (isSuper) {
+                branchId = null;
+                assignedBranchIds = 'ALL';
+            } else if (isManager) {
+                const selectedCbs = Array.from(document.querySelectorAll('input[name="emp_multi_branch_cb"]:checked')).map(cb => parseInt(cb.value));
+                if (selectedCbs.length === 0) {
+                    alert('Harap pilih minimal 1 cabang penempatan wewenang untuk Branch Manager!');
+                    return;
+                }
+                assignedBranchIds = selectedCbs;
+                branchId = selectedCbs[0];
+            } else {
+                branchId = parseInt(document.getElementById('emp-branch').value) || 1;
+                assignedBranchIds = [branchId];
+            }
 
             const payload = {
                 id: id ? parseInt(id) : null,
                 nik: document.getElementById('emp-nik').value,
                 name: document.getElementById('emp-name').value,
                 role: role,
-                branch_id: parseInt(document.getElementById('emp-branch').value),
+                branch_id: branchId,
+                assigned_branch_ids: assignedBranchIds,
                 email: document.getElementById('emp-email').value,
                 phone: document.getElementById('emp-phone').value,
                 pin: document.getElementById('emp-pin').value,

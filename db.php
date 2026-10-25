@@ -829,14 +829,33 @@ function autoMigrateAndSync($pdo) {
             $pdo->exec("ALTER TABLE users ADD COLUMN assigned_vehicle_id INT DEFAULT NULL");
         }
     } catch (Exception $e) {}
+    try {
+        if (!in_array('assigned_branch_ids', $userCols)) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN assigned_branch_ids TEXT DEFAULT NULL");
+        }
+    } catch (Exception $e) {}
+
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS user_branches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            branch_id INTEGER NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, branch_id)
+        )");
+    } catch (Exception $e) {}
 
     // Inisialisasi kredensial default & branch awal HANYA jika belum diset (mencegah penimpaan perubahan user)
     $pdo->exec("UPDATE users SET password = '999999' WHERE nik = 'ADM001' AND (password IS NULL OR password = '')");
     $pdo->exec("UPDATE users SET pin = '999999' WHERE nik = 'ADM001' AND (pin IS NULL OR pin = '')");
+    // Superadmin: Penempatan Global (tidak merujuk ke satu lokasi cabang)
+    $pdo->exec("UPDATE users SET branch_id = NULL, assigned_branch_ids = 'ALL' WHERE role IN ('SUPER_ADMIN', 'SUPERADMIN') OR nik = 'ADM001'");
 
     $pdo->exec("UPDATE users SET password = 'manager123' WHERE nik = 'MGR001' AND (password IS NULL OR password = '')");
     $pdo->exec("UPDATE users SET pin = '888888' WHERE nik = 'MGR001' AND (pin IS NULL OR pin = '')");
     $pdo->exec("UPDATE users SET branch_id = 1 WHERE nik = 'MGR001' AND (branch_id IS NULL OR branch_id = 0)");
+    $pdo->exec("UPDATE users SET assigned_branch_ids = '[1]' WHERE (role IN ('BRANCH_MANAGER', 'MANAGER') OR nik = 'MGR001') AND (assigned_branch_ids IS NULL OR assigned_branch_ids = '')");
+    $pdo->exec("INSERT OR IGNORE INTO user_branches (user_id, branch_id) SELECT id, COALESCE(branch_id, 1) FROM users WHERE role IN ('BRANCH_MANAGER', 'MANAGER') OR nik = 'MGR001'");
 
     $pdo->exec("UPDATE users SET password = 'kasir123' WHERE nik = 'CSR001' AND (password IS NULL OR password = '')");
     $pdo->exec("UPDATE users SET pin = '123456' WHERE nik = 'CSR001' AND (pin IS NULL OR pin = '')");
@@ -1988,7 +2007,7 @@ function autoMigrateAndSync($pdo) {
 
 if (!function_exists('autoMigrateMysql')) {
 function autoMigrateMysql($pdo) {
-    // 1. Kolom default_work_shift_id pada tabel users
+    // 1. Kolom default_work_shift_id & assigned_branch_ids pada tabel users
     try {
         $cols = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'default_work_shift_id'")->fetchAll();
         if (empty($cols)) {
@@ -1999,6 +2018,27 @@ function autoMigrateMysql($pdo) {
                 $pdo->exec("UPDATE `users` SET default_work_shift_id = {$firstShiftId} WHERE role IN ('CASHIER', 'STAFF') AND default_work_shift_id IS NULL");
             }
         }
+    } catch (Exception $e) {}
+
+    try {
+        $cols = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'assigned_branch_ids'")->fetchAll();
+        if (empty($cols)) {
+            $pdo->exec("ALTER TABLE `users` ADD COLUMN `assigned_branch_ids` TEXT DEFAULT NULL");
+        }
+    } catch (Exception $e) {}
+
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `user_branches` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `user_id` INT NOT NULL,
+            `branch_id` INT NOT NULL,
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY `uniq_user_branch` (`user_id`, `branch_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    } catch (Exception $e) {}
+
+    try {
+        $pdo->exec("UPDATE `users` SET `branch_id` = NULL, `assigned_branch_ids` = 'ALL' WHERE `role` IN ('SUPER_ADMIN', 'SUPERADMIN') OR `nik` = 'ADM001'");
     } catch (Exception $e) {}
 
     // 2. Kolom-kolom shift & water meter pada cashier_shifts di MySQL

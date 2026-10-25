@@ -815,22 +815,53 @@ try {
             unset($currentUser['password']);
 
             $curUserRole = $currentUser['role'] ?? 'CASHIER';
-            $normCurUserRole = str_replace('_', '', strtoupper($curUserRole));
+            $normCurUserRole = str_replace(['_', ' '], '', strtoupper($curUserRole));
             $isSuper = in_array($normCurUserRole, ['SUPERADMIN']);
-            $roleMultiBranch = 0;
-            foreach ($userRoles as $ur) {
-                if ($ur['code'] === $curUserRole || str_replace('_', '', strtoupper($ur['code'])) === $normCurUserRole) {
-                    $roleMultiBranch = (int)($ur['can_access_all_branches'] ?? 0);
-                    break;
-                }
-            }
-            $canAccessAllBranches = ($isSuper || $roleMultiBranch === 1) ? 1 : 0;
-            $currentUser['can_access_all_branches'] = $canAccessAllBranches;
+            $isManager = in_array($normCurUserRole, ['BRANCHMANAGER', 'MANAGER']);
 
-            // Keterkaitan Lokasi: Jika bukan Super Admin / multi-cabang, kunci mutlak ke cabang penugasan karyawan!
-            if (!$canAccessAllBranches && !empty($currentUser['branch_id'])) {
-                $branchId = (int)$currentUser['branch_id'];
+            $assignedBranchIds = [];
+            if ($isSuper) {
+                $canAccessAllBranches = 1;
+                $currentUser['branch_id'] = null;
+                $currentUser['assigned_branch_ids'] = 'ALL';
+                $currentUser['assigned_branches'] = $branches;
+            } else if ($isManager) {
+                // Ambil daftar penugasan multi-cabang untuk Branch Manager
+                try {
+                    $stmtUb = $pdo->prepare("SELECT branch_id FROM user_branches WHERE user_id = ?");
+                    $stmtUb->execute([$currentUser['id']]);
+                    $assignedBranchIds = $stmtUb->fetchAll(PDO::FETCH_COLUMN);
+                } catch (Exception $eUb) {}
+
+                if (empty($assignedBranchIds) && !empty($currentUser['assigned_branch_ids']) && $currentUser['assigned_branch_ids'] !== 'ALL') {
+                    $dec = json_decode($currentUser['assigned_branch_ids'], true);
+                    if (is_array($dec)) $assignedBranchIds = array_map('intval', $dec);
+                }
+                if (empty($assignedBranchIds) && !empty($currentUser['branch_id'])) {
+                    $assignedBranchIds = [(int)$currentUser['branch_id']];
+                }
+                if (empty($assignedBranchIds)) {
+                    $assignedBranchIds = [1];
+                }
+
+                $assignedBranchIds = array_values(array_unique(array_map('intval', $assignedBranchIds)));
+                $currentUser['assigned_branch_ids'] = $assignedBranchIds;
+                $currentUser['assigned_branches'] = array_values(array_filter($branches, fn($b) => in_array((int)$b['id'], $assignedBranchIds)));
+                $canAccessAllBranches = 0;
+
+                // Jika branchId aktif tidak termasuk dalam cabang penugasan manager, arahkan ke cabang penugasan pertama
+                if (!in_array($branchId, $assignedBranchIds)) {
+                    $branchId = $assignedBranchIds[0];
+                }
+            } else {
+                $bId = (int)($currentUser['branch_id'] ?? 1);
+                $currentUser['assigned_branch_ids'] = [$bId];
+                $currentUser['assigned_branches'] = array_values(array_filter($branches, fn($b) => (int)$b['id'] === $bId));
+                $canAccessAllBranches = 0;
+                $branchId = $bId;
             }
+
+            $currentUser['can_access_all_branches'] = $canAccessAllBranches;
 
             $stmtBranch = $pdo->prepare("SELECT * FROM branches WHERE id = ?");
             $stmtBranch->execute([$branchId]);
@@ -1190,13 +1221,47 @@ try {
         // ==========================================
         case 'get_employees':
             try {
+                // Pastikan kolom assigned_branch_ids & tabel user_branches tersedia
+                try {
+                    $pdo->exec("ALTER TABLE users ADD COLUMN assigned_branch_ids TEXT DEFAULT NULL");
+                } catch (Exception $eCol) {}
+                try {
+                    $pdo->exec("CREATE TABLE IF NOT EXISTS user_branches (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INT NOT NULL,
+                        branch_id INT NOT NULL,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE(user_id, branch_id)
+                    )");
+                } catch (Exception $eTb) {}
+
+                // Ambil daftar seluruh cabang untuk lookup
+                $stmtAllBranches = $pdo->query("SELECT id, name, code FROM branches ORDER BY id ASC");
+                $allBranchesMap = [];
+                while ($b = $stmtAllBranches->fetch(PDO::FETCH_ASSOC)) {
+                    $allBranchesMap[(int)$b['id']] = $b;
+                }
+
+                // Ambil relasi user_branches
+                $userBranchesMap = [];
+                try {
+                    $stmtUb = $pdo->query("SELECT user_id, branch_id FROM user_branches ORDER BY branch_id ASC");
+                    while ($ub = $stmtUb->fetch(PDO::FETCH_ASSOC)) {
+                        $uid = (int)$ub['user_id'];
+                        $bid = (int)$ub['branch_id'];
+                        if (isset($allBranchesMap[$bid])) {
+                            $userBranchesMap[$uid][] = $allBranchesMap[$bid];
+                        }
+                    }
+                } catch (Exception $eUb) {}
+
                 $stmt = $pdo->query("
-                    SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.email, u.phone, u.commission_rate, u.is_active, u.pin,
+                    SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.assigned_branch_ids, u.email, u.phone, u.commission_rate, u.is_active, u.pin,
                            u.base_salary, u.allowance, u.daily_transport,
                            u.default_work_shift_id,
                            u.assigned_vehicle_id,
                            ws.name as default_shift_name, ws.code as default_shift_code, ws.start_time as default_shift_start, ws.end_time as default_shift_end, ws.color_tag as default_shift_color,
-                           b.name as branch_name,
+                           b.name as branch_name, b.code as branch_code,
                            cv.plate_number as assigned_vehicle_plate, cv.vehicle_name as assigned_vehicle_name
                     FROM users u
                     LEFT JOIN branches b ON b.id = u.branch_id
@@ -1205,7 +1270,52 @@ try {
                     GROUP BY u.id
                     ORDER BY u.id ASC
                 ");
-                echo json_encode(['success' => true, 'employees' => $stmt->fetchAll()]);
+                $rawEmployees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                $formattedEmployees = array_map(function($e) use ($userBranchesMap, $allBranchesMap) {
+                    $normRole = str_replace(['_', ' '], '', strtoupper($e['role'] ?? ''));
+                    $isSuper = ($normRole === 'SUPERADMIN');
+                    $isManager = ($normRole === 'BRANCHMANAGER' || $normRole === 'MANAGER');
+
+                    if ($isSuper) {
+                        $e['branch_id'] = null;
+                        $e['assigned_branch_ids'] = 'ALL';
+                        $e['assigned_branches'] = array_values($allBranchesMap);
+                        $e['branch_name'] = 'Global (Seluruh Cabang)';
+                    } else if ($isManager) {
+                        $branchesList = $userBranchesMap[(int)$e['id']] ?? [];
+                        if (empty($branchesList) && !empty($e['assigned_branch_ids']) && $e['assigned_branch_ids'] !== 'ALL') {
+                            $dec = json_decode($e['assigned_branch_ids'], true);
+                            if (is_array($dec)) {
+                                foreach ($dec as $bId) {
+                                    if (isset($allBranchesMap[(int)$bId])) {
+                                        $branchesList[] = $allBranchesMap[(int)$bId];
+                                    }
+                                }
+                            }
+                        }
+                        if (empty($branchesList) && !empty($e['branch_id']) && isset($allBranchesMap[(int)$e['branch_id']])) {
+                            $branchesList[] = $allBranchesMap[(int)$e['branch_id']];
+                        }
+                        $e['assigned_branches'] = $branchesList;
+                        $e['assigned_branch_ids'] = array_map(fn($b) => (int)$b['id'], $branchesList);
+                        if (!empty($branchesList)) {
+                            $e['branch_name'] = implode(', ', array_column($branchesList, 'name'));
+                        } else {
+                            $e['branch_name'] = 'Belum Ditugaskan';
+                        }
+                    } else {
+                        // Karyawan Kasir, Staf, Kurir: 1 Cabang Spesifik
+                        $bId = (int)($e['branch_id'] ?? 1);
+                        $singleBranch = isset($allBranchesMap[$bId]) ? [$allBranchesMap[$bId]] : [];
+                        $e['assigned_branches'] = $singleBranch;
+                        $e['assigned_branch_ids'] = [$bId];
+                        $e['branch_name'] = $singleBranch[0]['name'] ?? ($e['branch_name'] ?: 'Cabang 1');
+                    }
+                    return $e;
+                }, $rawEmployees);
+
+                echo json_encode(['success' => true, 'employees' => $formattedEmployees]);
             } catch (Exception $e) {
                 // Auto-healing: Tambahkan kolom default_work_shift_id & assigned_vehicle_id jika belum ada
                 try {
@@ -1214,10 +1324,13 @@ try {
                 try {
                     $pdo->exec("ALTER TABLE users ADD COLUMN assigned_vehicle_id INT DEFAULT NULL");
                 } catch (Exception $eCol) {}
+                try {
+                    $pdo->exec("ALTER TABLE users ADD COLUMN assigned_branch_ids TEXT DEFAULT NULL");
+                } catch (Exception $eCol) {}
 
                 try {
                     $stmt = $pdo->query("
-                        SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.email, u.phone, u.commission_rate, u.is_active, u.pin,
+                        SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.assigned_branch_ids, u.email, u.phone, u.commission_rate, u.is_active, u.pin,
                                u.base_salary, u.allowance, u.daily_transport,
                                u.default_work_shift_id,
                                u.assigned_vehicle_id,
@@ -1235,7 +1348,7 @@ try {
                 } catch (Exception $e2) {
                     // Fallback query
                     $stmt = $pdo->query("
-                        SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.email, u.phone, u.commission_rate, u.is_active, u.pin,
+                        SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.assigned_branch_ids, u.email, u.phone, u.commission_rate, u.is_active, u.pin,
                                u.base_salary, u.allowance, u.daily_transport,
                                NULL as default_work_shift_id,
                                NULL as assigned_vehicle_id,
@@ -1256,7 +1369,6 @@ try {
             $nik = trim($input['nik'] ?? '');
             $name = trim($input['name'] ?? '');
             $role = trim($input['role'] ?? 'CASHIER');
-            $branchId = (int)($input['branch_id'] ?? 1);
             $email = trim($input['email'] ?? '');
             $phone = trim($input['phone'] ?? '');
             $password = trim($input['password'] ?? 'password123');
@@ -1269,8 +1381,37 @@ try {
                 exit;
             }
 
-            // Role Super Admin & Branch Manager tidak dimapping ke shift kerja
-            $isManagerialExempt = in_array(strtoupper($role), ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+            // Normalisasi Role
+            $normRole = str_replace(['_', ' '], '', strtoupper($role));
+            $isSuperAdminRole = ($normRole === 'SUPERADMIN');
+            $isBranchManagerRole = ($normRole === 'BRANCHMANAGER' || $normRole === 'MANAGER');
+            $isManagerialExempt = ($isSuperAdminRole || $isBranchManagerRole);
+
+            // Logika Penempatan Cabang:
+            // 1. Super Admin: Penempatan Global (tidak merujuk ke satu lokasi cabang)
+            // 2. Branch Manager: Penempatan Multi-Lokasi (bisa beberapa cabang sekaligus)
+            // 3. Kasir / Staf: Penempatan Single Branch
+            $assignedBranchIds = [];
+            if ($isSuperAdminRole) {
+                $branchId = null;
+                $assignedBranchIdsJson = 'ALL';
+            } else if ($isBranchManagerRole) {
+                if (!empty($input['assigned_branch_ids']) && is_array($input['assigned_branch_ids'])) {
+                    $assignedBranchIds = array_values(array_filter(array_map('intval', $input['assigned_branch_ids'])));
+                } else if (!empty($input['branch_id'])) {
+                    $assignedBranchIds = [(int)$input['branch_id']];
+                }
+                if (empty($assignedBranchIds)) {
+                    $assignedBranchIds = [1];
+                }
+                $branchId = $assignedBranchIds[0];
+                $assignedBranchIdsJson = json_encode($assignedBranchIds);
+            } else {
+                $branchId = (int)($input['branch_id'] ?? 1);
+                $assignedBranchIds = [$branchId];
+                $assignedBranchIdsJson = json_encode($assignedBranchIds);
+            }
+
             $defaultWorkShiftId = (!$isManagerialExempt && !empty($input['default_work_shift_id'])) ? (int)$input['default_work_shift_id'] : null;
             $assignedVehicleId = !empty($input['assigned_vehicle_id']) ? (int)$input['assigned_vehicle_id'] : null;
 
@@ -1282,12 +1423,12 @@ try {
                 // Update
                 $stmt = $pdo->prepare("
                     UPDATE users 
-                    SET nik = ?, name = ?, role = ?, branch_id = ?, email = ?, phone = ?, 
+                    SET nik = ?, name = ?, role = ?, branch_id = ?, assigned_branch_ids = ?, email = ?, phone = ?, 
                         pin = ?, commission_rate = ?, is_active = ?, base_salary = ?, allowance = ?, daily_transport = ?,
                         default_work_shift_id = ?, assigned_vehicle_id = ? " . (!empty($input['password']) ? ", password = ?" : "") . "
                     WHERE id = ?
                 ");
-                $params = [$nik, $name, $role, $branchId, $email, $phone, $pin, $commRate, $isActive, $baseSalary, $allowance, $dailyTransport, $defaultWorkShiftId, $assignedVehicleId];
+                $params = [$nik, $name, $role, $branchId, $assignedBranchIdsJson, $email, $phone, $pin, $commRate, $isActive, $baseSalary, $allowance, $dailyTransport, $defaultWorkShiftId, $assignedVehicleId];
                 if (!empty($input['password'])) $params[] = $password;
                 $params[] = $id;
                 $stmt->execute($params);
@@ -1296,13 +1437,24 @@ try {
             } else {
                 // Insert
                 $stmt = $pdo->prepare("
-                    INSERT INTO users (nik, name, role, branch_id, email, phone, password, pin, commission_rate, is_active, base_salary, allowance, daily_transport, default_work_shift_id, assigned_vehicle_id)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO users (nik, name, role, branch_id, assigned_branch_ids, email, phone, password, pin, commission_rate, is_active, base_salary, allowance, daily_transport, default_work_shift_id, assigned_vehicle_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
-                $stmt->execute([$nik, $name, $role, $branchId, $email, $phone, $password, $pin, $commRate, $isActive, $baseSalary, $allowance, $dailyTransport, $defaultWorkShiftId, $assignedVehicleId]);
+                $stmt->execute([$nik, $name, $role, $branchId, $assignedBranchIdsJson, $email, $phone, $password, $pin, $commRate, $isActive, $baseSalary, $allowance, $dailyTransport, $defaultWorkShiftId, $assignedVehicleId]);
                 $savedUserId = (int)$pdo->lastInsertId();
                 $msg = "Karyawan '{$name}' berhasil ditambahkan.";
             }
+
+            // Sinkronisasi tabel relasi user_branches
+            try {
+                $pdo->prepare("DELETE FROM user_branches WHERE user_id = ?")->execute([$savedUserId]);
+                if (!$isSuperAdminRole && !empty($assignedBranchIds)) {
+                    $stmtInsUb = $pdo->prepare("INSERT INTO user_branches (user_id, branch_id) VALUES (?, ?)");
+                    foreach ($assignedBranchIds as $bId) {
+                        if ($bId > 0) $stmtInsUb->execute([$savedUserId, $bId]);
+                    }
+                }
+            } catch (Exception $eUb) {}
 
             // Sinkronisasi dua arah ke armada kurir (courier_vehicles)
             if ($assignedVehicleId) {
@@ -6437,9 +6589,33 @@ try {
 
             // 2. Filter Cabang & Tanggal
             $reqBranchId = isset($_GET['branch_id']) ? (int)$_GET['branch_id'] : 0;
-            // Jika Branch Manager, kunci ke cabang penugasannya jika tidak berhak multi-cabang
-            if (!$isSuperAdmin && !empty($userAuth['branch_id'])) {
-                $reqBranchId = (int)$userAuth['branch_id'];
+            
+            // Ambil daftar penugasan multi-cabang jika bukan Superadmin
+            $managerBranchIds = [];
+            if (!$isSuperAdmin) {
+                try {
+                    $stmtUbAuth = $pdo->prepare("SELECT branch_id FROM user_branches WHERE user_id = ?");
+                    $stmtUbAuth->execute([$reqUserId]);
+                    $managerBranchIds = $stmtUbAuth->fetchAll(PDO::FETCH_COLUMN);
+                } catch (Exception $eUb) {}
+
+                if (empty($managerBranchIds) && !empty($userAuth['assigned_branch_ids']) && $userAuth['assigned_branch_ids'] !== 'ALL') {
+                    $dec = json_decode($userAuth['assigned_branch_ids'], true);
+                    if (is_array($dec)) $managerBranchIds = array_map('intval', $dec);
+                }
+                if (empty($managerBranchIds) && !empty($userAuth['branch_id'])) {
+                    $managerBranchIds = [(int)$userAuth['branch_id']];
+                }
+                if (empty($managerBranchIds)) {
+                    $managerBranchIds = [1];
+                }
+
+                $managerBranchIds = array_values(array_unique(array_map('intval', $managerBranchIds)));
+
+                // Jika reqBranchId ditentukan tapi tidak termasuk cabang penugasan manager, kunci ke cabang penugasan pertama
+                if ($reqBranchId > 0 && !in_array($reqBranchId, $managerBranchIds)) {
+                    $reqBranchId = $managerBranchIds[0];
+                }
             }
 
             $startDate = !empty($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-d');
@@ -6452,6 +6628,9 @@ try {
             if ($reqBranchId > 0) {
                 $whereSales .= " AND s.branch_id = ?";
                 $paramsSales[] = $reqBranchId;
+            } else if (!$isSuperAdmin && !empty($managerBranchIds)) {
+                $inList = implode(',', $managerBranchIds);
+                $whereSales .= " AND s.branch_id IN ($inList)";
             }
 
             $stmtKpi = $pdo->prepare("
@@ -6484,6 +6663,9 @@ try {
             if ($reqBranchId > 0) {
                 $whereExp .= " AND branch_id = ?";
                 $paramsExp[] = $reqBranchId;
+            } else if (!$isSuperAdmin && !empty($managerBranchIds)) {
+                $inList = implode(',', $managerBranchIds);
+                $whereExp .= " AND branch_id IN ($inList)";
             }
             $stmtExp = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) as total_expense FROM branch_expenses $whereExp");
             $stmtExp->execute($paramsExp);
@@ -6492,6 +6674,9 @@ try {
             // Active Branches & Shifts Status
             $allBranchesStmt = $pdo->query("SELECT id, code, name, address, phone FROM branches WHERE is_active = 1 ORDER BY id ASC");
             $branchesList = $allBranchesStmt->fetchAll();
+            if (!$isSuperAdmin && !empty($managerBranchIds)) {
+                $branchesList = array_values(array_filter($branchesList, fn($b) => in_array((int)$b['id'], $managerBranchIds)));
+            }
 
             $openShiftsStmt = $pdo->query("
                 SELECT cs.id, cs.branch_id, cs.user_id, cs.shift_number, cs.start_time as opened_at, cs.status, u.name as cashier_name, b.name as branch_name
@@ -6707,7 +6892,9 @@ try {
                 'success' => true,
                 'server_time' => date('Y-m-d H:i:s'),
                 'is_super_admin' => $isSuperAdmin,
-                'can_switch_branch' => $isSuperAdmin,
+                'can_switch_branch' => ($isSuperAdmin || count($managerBranchIds) > 1),
+                'can_access_all_branches' => $isSuperAdmin,
+                'branches' => $branchesList,
                 'filters' => [
                     'branch_id' => $reqBranchId,
                     'branch_name' => $selectedBranchName,
