@@ -831,7 +831,7 @@ function autoMigrateAndSync($pdo) {
     } catch (Exception $e) {}
 
     // Inisialisasi kredensial default & branch awal HANYA jika belum diset (mencegah penimpaan perubahan user)
-    $pdo->exec("UPDATE users SET password = 'admin123' WHERE nik = 'ADM001' AND (password IS NULL OR password = '')");
+    $pdo->exec("UPDATE users SET password = '999999' WHERE nik = 'ADM001' AND (password IS NULL OR password = '')");
     $pdo->exec("UPDATE users SET pin = '999999' WHERE nik = 'ADM001' AND (pin IS NULL OR pin = '')");
 
     $pdo->exec("UPDATE users SET password = 'manager123' WHERE nik = 'MGR001' AND (password IS NULL OR password = '')");

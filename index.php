@@ -11636,8 +11636,10 @@ try {
                         const nightStock = (nightStockAttr !== null && !isNaN(parseInt(nightStockAttr)))
                             ? parseInt(nightStockAttr)
                             : (nightInputsMap[pId] !== undefined ? nightInputsMap[pId] : 0);
-                        const addedQty = parseInt(input.value) || 0;
-                        const openingQty = nightStock + addedQty;
+                        const hasVal = (input.value !== '' && input.value !== null);
+                        const rawVal = hasVal ? parseInt(input.value) : null;
+                        const addedQty = (rawVal !== null && !isNaN(rawVal) && rawVal > 0) ? rawVal : null;
+                        const openingQty = (addedQty !== null) ? (nightStock + addedQty) : nightStock;
 
                         if (pId > 0) {
                             dynamicOpeningItems.push({

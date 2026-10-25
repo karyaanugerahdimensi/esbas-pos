@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.41",
-  "build": "20261024-22",
-  "release_date": "2026-10-24",
+  "version": "1.2.42",
+  "build": "20261025-01",
+  "release_date": "2026-10-25",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.42",
+      "commit": "HEAD",
+      "date": "2026-10-25",
+      "title": "Penyelarasan Sandi Super Admin 999999 & Proteksi Stok Lama yang Tidak Diisi Saat Opening Shift",
+      "description": "Menyempurnakan kredensial pengguna dan perlindungan persediaan pada pembukaan shift kasir: (1) Memperbarui kata sandi dan PIN Super Admin (ADM001 & MGR001) secara terpadu menjadi '999999' sehingga akses login Super Admin dapat kembali digunakan dengan normal. (2) Memulihkan saldo fisik Air Baku (RAW-091) di Cabang 1 menjadi 100.000 liter. (3) Memperbaiki logika backend api.php pada open_shift: jika kasir saat membuka shift hanya menginput penambahan untuk item tertentu (misal Tutup Galon baru masuk), seluruh item lainnya yang tidak diisi penambahan (added_qty kosong / 0) DIABAIKAN dan secara mutlak tetap mempertahankan saldo stok cabang yang sudah ada sebelumnya (branch_stocks), mencegah item lain seperti Air Baku atau Gas ter-reset menjadi 0. (4) Penyelarasan get_opening_shift_data di mana produk yang tidak diisi pada closing malam kemarin tetap merujuk ke saldo fisik cabang yang aktif di inventori sistem.",
+      "rollback_command": "git checkout v1.2.41"
+    },
     {
       "version": "1.2.41",
       "commit": "HEAD",

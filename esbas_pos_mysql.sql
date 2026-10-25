@@ -1,6 +1,6 @@
 -- ========================================================
 -- ESBAS POS Database Export (MySQL / MariaDB Compatible)
--- Generated: 2026-10-24 13:44:18
+-- Generated: 2026-10-25 13:03:49
 -- ========================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -435,8 +435,8 @@ CREATE TABLE `users` (
 
 -- Dumping data for table `users`
 INSERT INTO `users` (`id`, `nik`, `name`, `role`, `branch_id`, `email`, `phone`, `pin`, `commission_rate`, `password`, `is_active`, `base_salary`, `allowance`, `daily_transport`, `default_work_shift_id`, `assigned_vehicle_id`) VALUES
-(1, 'ADM001', 'Muhamad Ismail', 'SUPER_ADMIN', 1, 'mailmamenster@gmail.com', '08111000111', '123456', 0, 'password123', 1, 3000000, 500000, 25000, NULL, NULL),
-(2, 'MGR001', 'Nina Indrayani', 'SUPER_ADMIN', 1, 'hendra@jkt.retail.com', '08122000222', '123456', 0, 'password123', 1, 3000000, 500000, 25000, NULL, NULL),
+(1, 'ADM001', 'Muhamad Ismail', 'SUPER_ADMIN', 1, 'mailmamenster@gmail.com', '08111000111', '999999', 0, '999999', 1, 3000000, 500000, 25000, NULL, NULL),
+(2, 'MGR001', 'Nina Indrayani', 'SUPER_ADMIN', 1, 'hendra@jkt.retail.com', '08122000222', '999999', 0, '999999', 1, 3000000, 500000, 25000, NULL, NULL),
 (3, 'CSR001', 'Bima', 'CASHIER', 1, 'bima@gmail.com', '08133000333', '123456', 0, 'password123', 1, 3000000, 500000, 25000, 1, 1),
 (4, 'CSR002', 'Abdul Latif', 'CASHIER', 1, 'abdul@gmail.com', '0822113344', '123456', 0.015, 'password123', 1, 3000000, 500000, 25000, 1, 3),
 (5, 'CSR003', 'Shafiqa', 'CASHIER', 3, 'anisa@sby.retail.com', '08155000555', '123456', 0, 'password123', 1, 3000000, 500000, 25000, 1, 4),
@@ -587,10 +587,10 @@ INSERT INTO `branch_stocks` (`id`, `branch_id`, `product_id`, `stock`, `local_co
 (295, 3, 89, 0, 90, 0, NULL, 1, NULL, NULL),
 (297, 2, 89, 0, 90, 0, NULL, 1, NULL, NULL),
 (298, 3, 90, 0, 85, 0, NULL, 1, NULL, NULL),
-(299, 1, 90, 0, 85, 0, '2026-10-24 13:25:34', 1, NULL, NULL),
+(299, 1, 90, 0, 85, 0, '2026-10-25 12:53:56', 1, NULL, NULL),
 (300, 2, 90, 0, 85, 0, NULL, 1, NULL, NULL),
 (301, 3, 91, 0, 45, 0, NULL, 1, NULL, NULL),
-(302, 1, 91, 0, 45, 0, '2026-10-24 13:25:28', 1, NULL, NULL),
+(302, 1, 91, 100000, 45, 0, '2026-10-25 12:53:48', 1, NULL, NULL),
 (303, 2, 91, 0, 45, 0, NULL, 1, NULL, NULL),
 (316, 3, 98, 0, 985, 5000, '2026-10-11 22:36:49', 1, NULL, NULL),
 (317, 1, 98, 10, 985, 4500, '2026-10-24 13:25:18', 1, 2, 1),
@@ -632,7 +632,7 @@ INSERT INTO `branch_stocks` (`id`, `branch_id`, `product_id`, `stock`, `local_co
 (354, 6, 106, 0, 2675, 12000, NULL, 1, NULL, NULL),
 (355, 1, 106, 0, 2675, 12000, '2026-10-24 16:31:01', 1, 1, 0),
 (356, 2, 106, 0, 2675, 12000, '2026-10-11 22:46:14', 1, 0, NULL),
-(644, 1, 89, 0, 90, 0, '2026-10-24 16:32:31', 1, 0, 0),
+(644, 1, 89, 50, 90, 0, '2026-10-24 16:32:31', 1, 0, 0),
 (783, 1, 88, 0, 90, 0, '2026-10-24 16:32:37', 1, 0, 0),
 (794, 2, 107, 0, 25000, 35000, NULL, 1, NULL, NULL),
 (795, 2, 108, 0, 15000, 25000, NULL, 1, NULL, NULL),
@@ -797,7 +797,8 @@ CREATE TABLE `cashier_shifts` (
 
 -- Dumping data for table `cashier_shifts`
 INSERT INTO `cashier_shifts` (`id`, `branch_id`, `user_id`, `start_time`, `end_time`, `initial_cash`, `expected_cash`, `actual_cash`, `cash_difference`, `status`, `opening_raw_mineral`, `opening_raw_ro`, `opening_raw_plastik`, `closing_night_mineral`, `closing_night_ro`, `closing_night_plastik`, `closing_raw_mineral`, `closing_raw_ro`, `closing_raw_plastik`, `shift_notes`, `opening_items_json`, `closing_items_json`, `shift_number`, `shift_name`, `shift_type`, `is_final_shift`, `total_expenses`, `total_kasbon`, `total_meal_allowance`, `shift_disbursements_json`, `water_meter_yesterday`, `water_meter_today`, `water_meter_difference`, `water_meter_adjustment`, `water_meter_adjustment_type`, `water_meter_adjustment_reason`, `water_meter_dispensed_galon`) VALUES
-(81, 1, 3, '2026-10-24 13:26:04', '2026-10-24 13:29:39', 300000, 390000, 390000, 0, 'CLOSED', 50, 0, 0, 0, 0, 0, 30, 0, 0, '', '{\"89\":50,\"88\":0,\"105\":0,\"103\":0,\"102\":0,\"91\":100000,\"98\":10,\"99\":0,\"104\":0,\"107\":0,\"108\":0,\"90\":1000}', '{\"89\":30,\"88\":0,\"105\":0,\"103\":0,\"102\":0,\"91\":0,\"98\":10,\"99\":0,\"104\":0,\"107\":0,\"108\":0,\"90\":0}', 1, 'Shift 1 (Pagi)', 'SHIFT_1', 1, 0, 0, 0, '{\"expenses\":[],\"loans\":[],\"meals\":[],\"total_expenses\":0,\"total_loans\":0,\"total_meals\":0,\"total_disbursements\":0}', 0, 16000, 16000, 0, 'PULSE', NULL, 20.46);
+(81, 1, 3, '2026-10-24 13:26:04', '2026-10-24 13:29:39', 300000, 390000, 390000, 0, 'CLOSED', 50, 0, 0, 0, 0, 0, 30, 0, 0, '', '{\"89\":50,\"88\":0,\"105\":0,\"103\":0,\"102\":0,\"91\":100000,\"98\":10,\"99\":0,\"104\":0,\"107\":0,\"108\":0,\"90\":1000}', '{\"89\":30,\"88\":0,\"105\":0,\"103\":0,\"102\":0,\"91\":0,\"98\":10,\"99\":0,\"104\":0,\"107\":0,\"108\":0,\"90\":0}', 1, 'Shift 1 (Pagi)', 'SHIFT_1', 1, 0, 0, 0, '{\"expenses\":[],\"loans\":[],\"meals\":[],\"total_expenses\":0,\"total_loans\":0,\"total_meals\":0,\"total_disbursements\":0}', 0, 16000, 16000, 0, 'PULSE', NULL, 20.46),
+(82, 1, 3, '2026-10-25 12:55:03', NULL, 300000, 0, 0, 0, 'OPEN', 50, 0, 0, 0, 0, 0, NULL, NULL, NULL, '', '{\"89\":50,\"88\":0,\"105\":0,\"103\":0,\"102\":0,\"91\":0,\"98\":10,\"99\":0,\"104\":0,\"107\":0,\"108\":0,\"90\":0}', NULL, 1, 'Shift 1 (Pagi)', 'SHIFT_1', 0, 0, 0, 0, NULL, NULL, NULL, NULL, 0, 'PULSE', NULL, NULL);
 
 -- --------------------------------------------------------
 -- Table structure for `water_meter_logs`
@@ -935,7 +936,9 @@ INSERT INTO `stock_movements` (`id`, `branch_id`, `product_id`, `movement_type`,
 (439, 1, 91, 'BOM_DEDUCTION', -400, 100000, 99600, 'INV/JKT-01/20261024/0001', 'Konsumsi Base BOM untuk 20x Air Mineral Galon 19 Liter [Pakai Tutup Mineral]', 3, '2026-10-24 11:26:32'),
 (440, 1, 90, 'BOM_DEDUCTION', -20, 1000, 980, 'INV/JKT-01/20261024/0001', 'Konsumsi Base BOM untuk 20x Air Mineral Galon 19 Liter [Pakai Tutup Mineral]', 3, '2026-10-24 11:26:32'),
 (441, 1, 89, 'BOM_DEDUCTION', -20, 50, 30, 'INV/JKT-01/20261024/0001', 'Konsumsi BOM Varian [Pakai Tutup Mineral] untuk 20x Air Mineral Galon 19 Liter', 3, '2026-10-24 11:26:32'),
-(442, 1, 89, 'STOCK_OUT_RETURN', -30, 30, 0, 'RETUR-SHIFT-81', 'Retur fisik sisa 30 pcs Tutup Galon Mineral ke gudang saat tutup toko', 3, '2026-10-24 11:29:39');
+(442, 1, 89, 'STOCK_OUT_RETURN', -30, 30, 0, 'RETUR-SHIFT-81', 'Retur fisik sisa 30 pcs Tutup Galon Mineral ke gudang saat tutup toko', 3, '2026-10-24 11:29:39'),
+(443, 1, 91, 'INITIAL_STOCK', 100000, 0, 100000, 'INIT-20261025-125348', 'Setel stok awal cabang', 1, '2026-10-25 11:53:48'),
+(444, 1, 90, 'INITIAL_STOCK', 1000, 0, 1000, 'INIT-20261025-125356', 'Setel stok awal cabang', 1, '2026-10-25 11:53:56');
 
 -- --------------------------------------------------------
 -- Table structure for `attendance_logs`
