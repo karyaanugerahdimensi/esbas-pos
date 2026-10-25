@@ -9098,10 +9098,14 @@ try {
             $cashRealizedNetProfit = $cashRealizedSales - $cogs - $totalOperatingExpenses - $estimatedTax;
             $receivableRatioPercent = $netRevenue > 0 ? round(($receivableSales / $netRevenue) * 100, 1) : 0;
 
+            $resolvedSettings = getResolvedAppSettings($pdo, $branchId);
+            $companyName = !empty($resolvedSettings['company_name']) ? $resolvedSettings['company_name'] : (!empty($resolvedSettings['app_name']) ? $resolvedSettings['app_name'] : 'ESBAS RETAIL INDONESIA');
+
             echo json_encode([
                 'success' => true,
                 'period' => ['start' => $startDate, 'end' => $endDate],
                 'branch_id' => $branchId,
+                'company_name' => $companyName,
                 'income_statement' => [
                     'gross_sales' => $grossSales,
                     'discount' => $totalDiscount,

@@ -1652,7 +1652,7 @@ try {
                             <!-- Header Slip -->
                             <div class="flex items-start justify-between border-b-2 border-slate-800 pb-4">
                                 <div>
-                                    <h2 class="text-lg font-black text-slate-900 tracking-tight">PT. ESBAS RETAIL NUSANTARA</h2>
+                                    <h2 id="slip-company-name" class="text-lg font-black text-slate-900 tracking-tight">PT. ESBAS RETAIL NUSANTARA</h2>
                                     <p id="slip-branch-name" class="text-xs font-bold text-slate-600">Cabang Bandung Juanda</p>
                                     <p id="slip-branch-address" class="text-[11px] text-slate-500">Jl. Ir. H. Juanda No. 128, Bandung</p>
                                 </div>
@@ -2369,7 +2369,7 @@ try {
             <div id="tab-pnl" class="hidden space-y-6">
                 <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm max-w-4xl mx-auto space-y-6">
                     <div class="text-center border-b pb-4">
-                        <h2 class="text-lg sm:text-xl font-black text-slate-800 tracking-wide uppercase">PT RETAIL MULTI NUSANTARA</h2>
+                        <h2 id="pnl-header-company" class="text-lg sm:text-xl font-black text-slate-800 tracking-wide uppercase">PT RETAIL MULTI NUSANTARA</h2>
                         <h3 class="text-sm sm:text-base font-bold text-indigo-900 mt-0.5">LAPORAN LABA RUGI (STATEMENT OF PROFIT OR LOSS)</h3>
                         <p id="pnl-header-meta" class="text-xs text-slate-500 mt-1">Periode: Bulan Berjalan &bull; Cabang: Jakarta Pusat</p>
                     </div>
@@ -14118,6 +14118,13 @@ Manager / Supervisor: __________________
                 const p = data.payroll;
                 const u = data.user;
 
+                const s = state.appSettings || {};
+                const payslipCompName = (s.payslip_company_name && s.payslip_company_name.trim())
+                    ? s.payslip_company_name.trim()
+                    : (s.company_name || 'PT ESBAS RETAIL NUSANTARA');
+                const slipCompEl = document.getElementById('slip-company-name');
+                if (slipCompEl) slipCompEl.innerText = payslipCompName.toUpperCase();
+
                 document.getElementById('slip-branch-name').innerText = u.branch_name || state.currentBranch.name;
                 document.getElementById('slip-branch-address').innerText = u.branch_address || 'Outlet Resmi ESBAS POS';
                 document.getElementById('slip-period-label').innerText = `Periode: ${mVal}`;
@@ -17447,6 +17454,14 @@ Manager / Supervisor: __________________
 
             const pnl = data.income_statement;
             const ar = pnl.receivables_analysis || {};
+
+            const pnlCompany = (data.company_name && data.company_name.trim())
+                ? data.company_name.trim()
+                : ((state.appSettings && state.appSettings.company_name && state.appSettings.company_name.trim())
+                    ? state.appSettings.company_name.trim()
+                    : ((state.appSettings && state.appSettings.app_name) ? state.appSettings.app_name : 'ESBAS RETAIL INDONESIA'));
+            const pnlCompEl = document.getElementById('pnl-header-company');
+            if (pnlCompEl) pnlCompEl.innerText = pnlCompany.toUpperCase();
 
             document.getElementById('pnl-header-meta').innerText = `Cabang: ${state.currentBranch.name} • Periode: ${data.period.start} s/d ${data.period.end}`;
             document.getElementById('pnl-net-revenue').innerText = formatRupiah(pnl.net_revenue);
@@ -23119,6 +23134,19 @@ Manager / Supervisor: __________________
             const subEl = document.getElementById('sidebar-app-subtitle');
             if (nameEl) nameEl.innerText = appName;
             if (subEl) subEl.innerText = appSubtitle;
+
+            // 3. Ubah Nama Perusahaan pada Dokumen Resmi (Laporan Laba Rugi & Slip Gaji)
+            const companyName = (s.company_name && s.company_name.trim()) 
+                ? s.company_name.trim() 
+                : ((s.app_name && s.app_name.trim()) ? s.app_name.trim() : 'ESBAS RETAIL INDONESIA');
+            const pnlCompEl = document.getElementById('pnl-header-company');
+            if (pnlCompEl) pnlCompEl.innerText = companyName.toUpperCase();
+
+            const payslipCompName = (s.payslip_company_name && s.payslip_company_name.trim())
+                ? s.payslip_company_name.trim()
+                : companyName;
+            const slipCompEl = document.getElementById('slip-company-name');
+            if (slipCompEl) slipCompEl.innerText = payslipCompName.toUpperCase();
 
             // Dokumen Title
             document.title = `${appName} - ${appSubtitle}`;
