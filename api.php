@@ -4028,13 +4028,14 @@ try {
                 $isPrevFinal = $lastShift && !empty($lastShift['is_final_shift']);
                 $isCapSku = ($sku === 'RAW-089' || $sku === 'RAW-020' || stripos($r['name'] ?? '', 'Tutup Galon') !== false);
                 $isGallonProduct = in_array($pId, [98, 99]) || in_array($sku, ['PRD-00001', 'PRD-00002']);
+                $isNewDayOrShift1 = (!$isContinuation || $nextShiftNumber == 1);
 
-                if ($isPrevFinal && $isCapSku && !$isContinuation) {
-                    // Sisa tutup semalam telah diretur ke gudang, sehingga stok fisik semalam di toko bersih 0
+                if ($isCapSku && $isNewDayOrShift1) {
+                    // Sisa tutup semalam telah diretur ke gudang saat tutup toko, sehingga stok fisik semalam di toko bersih 0
                     $refQty = 0;
-                } elseif ($isPrevFinal && $isGallonProduct && !$isContinuation) {
-                    // Produk jadi galon standar closing malam standby 10 galon
-                    $refQty = 10;
+                } elseif ($isGallonProduct && $isNewDayOrShift1) {
+                    // Produk jadi galon standar closing malam standby 10 galon (atau dari closing kemarin)
+                    $refQty = (!empty($lastClosingItems[$pId]) && (float)$lastClosingItems[$pId] > 0) ? (float)$lastClosingItems[$pId] : 10;
                 } elseif (!empty($lastClosingItems) && isset($lastClosingItems[$pId]) && $lastClosingItems[$pId] !== '' && $lastClosingItems[$pId] !== null) {
                     $cQty = (float)$lastClosingItems[$pId];
                     // Jika di closing bernilai 0 tapi bStock > 0 dan bukan tutup galon, tetap pertahankan bStock cabang yang sudah ada
@@ -4043,7 +4044,7 @@ try {
                     $cQty = (float)$lastClosingItems[$sku];
                     $refQty = ($cQty == 0 && $bStock > 0 && !$isCapSku) ? $bStock : $cQty;
                 } else {
-                    $refQty = $bStock;
+                    $refQty = ($isCapSku && $isNewDayOrShift1) ? 0 : $bStock;
                 }
 
                 $dynamicItems[] = [
@@ -4210,6 +4211,18 @@ try {
                             $hasAddedInput = (isset($v['added_qty']) && $v['added_qty'] !== '' && $v['added_qty'] !== null);
                             $addedVal = $hasAddedInput ? (float)$v['added_qty'] : 0;
 
+                            $stmtProdMeta = $pdo->prepare("SELECT sku, name FROM products WHERE id = ?");
+                            $stmtProdMeta->execute([$pId]);
+                            $prodMeta = $stmtProdMeta->fetch(PDO::FETCH_ASSOC);
+                            $isCap = $prodMeta && ($prodMeta['sku'] === 'RAW-089' || $prodMeta['sku'] === 'RAW-020' || stripos($prodMeta['name'], 'Tutup Galon') !== false);
+
+                            // Aturan Bisnis SOP:
+                            // Pada Shift 1 (Pagi / Awal Hari Baru), sisa tutup galon malam kemarin selalu dianggap sudah diretur ke gudang (stok malam = 0)!
+                            // Sehingga jika ada pasokan tutup baru pagi (misal 50), Stok Awal Pagi MURNI 50 (bukan penjumlahan sisa kemarin yang diretur + 50).
+                            if ($isCap && ($shiftNumber == 1 || $lastWasFinal == 1)) {
+                                $nightVal = 0;
+                            }
+
                             // Aturan Bisnis SOP:
                             // Jika kasir TIDAK menginput penambahan stok baru (added_qty kosong atau <= 0),
                             // maka stok TIDAK BOLEH dinolkan, melainkan DIABAIKAN dan mengikuti stok yang sudah ada sebelumnya!
@@ -4325,14 +4338,15 @@ try {
                         $oldStk = $existingBs ? (float)$existingBs['stock'] : 0;
                         $stmtSm = $pdo->prepare("
                             INSERT INTO stock_movements (
-                                branch_id, product_id, movement_type, qty,
-                                stock_before, stock_after, reference_type, reference_id, notes, created_at
-                            ) VALUES (?, ?, 'IN', ?, ?, ?, 'OPENING_SHIFT', ?, ?, ?)
+                                branch_id, product_id, movement_type, qty_change,
+                                stock_before, stock_after, reference_no, notes, user_id, created_at
+                            ) VALUES (?, ?, 'STOCK_IN_RESTOCK', ?, ?, ?, ?, ?, ?, ?)
                         ");
                         $stmtSm->execute([
                             $branchId, $pId, $addedQty,
-                            $oldStk, $openQty, $newShiftId,
+                            $oldStk, $openQty, "OPENING-SHIFT-{$newShiftId}",
                             "Pasokan Baru Masuk Pagi saat Buka Shift ($shiftName)",
+                            $userId,
                             $now
                         ]);
                     } catch (Exception $eSm) {}

@@ -10952,8 +10952,11 @@ try {
             addedInputs.forEach(input => {
                 const pId = input.getAttribute('data-product-id');
                 const pName = input.getAttribute('data-product-name') || 'Produk';
+                const sku = input.getAttribute('data-sku') || '';
                 const unit = input.getAttribute('data-unit') || 'pcs';
-                const nightVal = parseInt(input.getAttribute('data-night-stock')) || 0;
+                const isCap = (sku === 'RAW-089' || sku === 'RAW-020' || pName.toLowerCase().includes('tutup galon'));
+                let nightVal = parseInt(input.getAttribute('data-night-stock')) || 0;
+                if (isCap) nightVal = 0;
                 const addedVal = Math.max(0, parseInt(input.value) || 0);
                 const totalOpeningVal = nightVal + addedVal;
 
@@ -11624,10 +11627,14 @@ try {
                     document.querySelectorAll('.shift-added-item-input').forEach(input => {
                         const pId = parseInt(input.getAttribute('data-product-id')) || 0;
                         const sku = input.getAttribute('data-sku') || '';
+                        const isCap = (sku === 'RAW-089' || sku === 'RAW-020' || (input.getAttribute('data-product-name') || '').toLowerCase().includes('tutup galon'));
                         const nightStockAttr = input.getAttribute('data-night-stock');
-                        const nightStock = (nightStockAttr !== null && !isNaN(parseInt(nightStockAttr)))
+                        let nightStock = (nightStockAttr !== null && !isNaN(parseInt(nightStockAttr)))
                             ? parseInt(nightStockAttr)
                             : (nightInputsMap[pId] !== undefined ? nightInputsMap[pId] : 0);
+                        if (isCap && nextNum === 1) {
+                            nightStock = 0;
+                        }
                         const hasVal = (input.value !== '' && input.value !== null);
                         const rawVal = hasVal ? parseInt(input.value) : null;
                         const addedQty = (rawVal !== null && !isNaN(rawVal) && rawVal > 0) ? rawVal : null;

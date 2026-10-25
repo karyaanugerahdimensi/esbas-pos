@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.48",
-  "build": "20261026-03",
+  "version": "1.2.49",
+  "build": "20261026-04",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.49",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Penyelarasan Stok Awal Hari Baru: Eliminasi Akumulasi Sisa Tutup Galon yang Diretur & Penetapan Bersih Pasokan Baru Pagi",
+      "description": "Memperbaiki kalkulasi stok awal shift kasir pada api.php (get_opening_shift_data & open_shift) serta index.php: (1) Menjamin bahwa pada pembukaan Shift 1 (Pagi / Awal Hari Baru), sisa bahan baku tutup galon (Tutup Galon Mineral RAW-089 & Tutup Galon RO RAW-020) dari hari kemarin secara mutlak bernilai 0 (night_stock = 0) karena sisa fisik telah diretur ke gudang saat penutupan hari. (2) Menghilangkan akumulasi/penjumlahan keliru antara sisa tutup kemarin yang diretur dengan pasokan baru masuk (misal 38 + 50 = 88); ketika kasir menginput pasokan tutup baru 50 pcs, stok awal pagi dan stok cabang di inventori secara presisi disetel murni 50 pcs. (3) Menyelaraskan tabel laporan closing shift (get_closing_shift_data) agar kolom 'Stok Awal Pagi' menampilkan angka murni 50 pcs sesuai pasokan awal pembukaan. (4) Memperbaiki query pencatatan kartu mutasi stok masuk pagi (STOCK_IN_RESTOCK) pada open_shift agar presisi sesuai skema database stock_movements. (5) Menormalkan data Shift 88 dan saldo Tutup Galon Cabang 1 di database menjadi Stok Awal 50 pcs dan sisa berjalan 40 pcs (setelah penjualan on-demand 10 galon).",
+      "rollback_command": "git checkout v1.2.48"
+    },
     {
       "version": "1.2.48",
       "commit": "HEAD",
