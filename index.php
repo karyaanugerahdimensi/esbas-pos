@@ -160,10 +160,13 @@ try {
                 </button>
             </form>
 
-            <!-- Quick Account Selection (Manual Password Required) -->
+            <!-- Quick Account Selection (1-Click Instant Login / Auto PIN) -->
             <div class="pt-4 border-t border-slate-100">
-                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center mb-1">Pilih Cepat Akun (Tetap Wajib Isi Sandi):</p>
-                <p class="text-[10px] text-slate-500 text-center mb-2.5">Pilih profil NIK di bawah, lalu masukkan kata sandi / PIN Anda</p>
+                <div class="flex items-center justify-between mb-1.5">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-600">Pilih Cepat Akun (1-Klik Masuk):</p>
+                    <span class="text-[9px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">1-Click Login</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mb-2.5">Klik salah satu profil akun di bawah untuk langsung masuk ke sistem secara instan</p>
                 <div id="quick-accounts-grid" class="grid grid-cols-2 gap-2 text-xs">
                     <?php if (!empty($quickUsers)): ?>
                         <?php foreach ($quickUsers as $qu): 
@@ -172,15 +175,20 @@ try {
                             $displayNik = htmlspecialchars($qu['nik']);
                             $escapedName = htmlspecialchars(addslashes($qu['name']));
                             $branchName = !empty($qu['branch_name']) ? htmlspecialchars($qu['branch_name']) : '';
+                            $cleanRole = strtoupper(str_replace('_', '', $qu['role'] ?? ''));
+                            $defaultPin = (strpos($cleanRole, 'SUPERADMIN') !== false || $qu['nik'] === 'ADM001' || $qu['nik'] === 'MGR001') ? '999999' : '123456';
                         ?>
-                            <button type="button" onclick="selectQuickAccount('<?= $displayNik ?>', '<?= $escapedName ?>')" class="p-2.5 bg-slate-50 hover:bg-indigo-50/70 border border-slate-200 hover:border-indigo-200 rounded-xl text-left transition-colors group">
+                            <button type="button" onclick="selectQuickAccount('<?= $displayNik ?>', '<?= $escapedName ?>', '<?= $defaultPin ?>', true)" class="p-2.5 bg-slate-50 hover:bg-indigo-50/80 border border-slate-200 hover:border-indigo-300 rounded-xl text-left transition-all group shadow-2xs hover:shadow-xs cursor-pointer">
                                 <div class="flex items-center justify-between">
                                     <p class="font-bold text-slate-800 group-hover:text-indigo-900 text-[11px] truncate"><?= $roleMeta['emoji'] ?> <?= htmlspecialchars($roleMeta['label']) ?></p>
+                                    <span class="text-[9px] font-mono font-bold text-indigo-700 bg-indigo-50 group-hover:bg-indigo-100 px-1.5 py-0.5 rounded border border-indigo-200 shrink-0">PIN: <?= $defaultPin ?></span>
+                                </div>
+                                <div class="flex items-center justify-between mt-1">
+                                    <p class="text-[10px] text-slate-500 group-hover:text-indigo-700 font-medium truncate"><?= $displayName ?> (<?= $displayNik ?>)</p>
                                     <?php if (!empty($branchName)): ?>
-                                        <span class="text-[9px] text-slate-400 group-hover:text-indigo-500 truncate max-w-[70px]"><?= $branchName ?></span>
+                                        <span class="text-[9px] text-slate-400 group-hover:text-indigo-500 truncate max-w-[65px] ml-1 shrink-0"><?= $branchName ?></span>
                                     <?php endif; ?>
                                 </div>
-                                <p class="text-[10px] text-slate-500 group-hover:text-indigo-600 font-medium truncate mt-0.5"><?= $displayName ?> (<?= $displayNik ?>)</p>
                             </button>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -9301,13 +9309,17 @@ try {
                     const safeNik = (u.nik || '').replace(/'/g, "\\'");
                     const branchText = u.branch_name ? `<span class="text-[9px] text-slate-400 group-hover:text-indigo-500 truncate max-w-[70px]">${escapeHtml(u.branch_name)}</span>` : '';
 
+                    const defaultPin = (c.includes('SUPERADMIN') || u.nik === 'ADM001' || u.nik === 'MGR001') ? '999999' : '123456';
                     return `
-                        <button type="button" onclick="selectQuickAccount('${safeNik}', '${safeName}')" class="p-2.5 bg-slate-50 hover:bg-indigo-50/70 border border-slate-200 hover:border-indigo-200 rounded-xl text-left transition-colors group">
+                        <button type="button" onclick="selectQuickAccount('${safeNik}', '${safeName}', '${defaultPin}', true)" class="p-2.5 bg-slate-50 hover:bg-indigo-50/80 border border-slate-200 hover:border-indigo-300 rounded-xl text-left transition-all group shadow-2xs hover:shadow-xs cursor-pointer">
                             <div class="flex items-center justify-between">
                                 <p class="font-bold text-slate-800 group-hover:text-indigo-900 text-[11px] truncate">${badge} ${escapeHtml(roleLabel)}</p>
+                                <span class="text-[9px] font-mono font-bold text-indigo-700 bg-indigo-50 group-hover:bg-indigo-100 px-1.5 py-0.5 rounded border border-indigo-200 shrink-0">PIN: ${defaultPin}</span>
+                            </div>
+                            <div class="flex items-center justify-between mt-1">
+                                <p class="text-[10px] text-slate-500 group-hover:text-indigo-700 font-medium truncate">${escapeHtml(u.name)} (${escapeHtml(u.nik)})</p>
                                 ${branchText}
                             </div>
-                            <p class="text-[10px] text-slate-500 group-hover:text-indigo-600 font-medium truncate mt-0.5">${escapeHtml(u.name)} (${escapeHtml(u.nik)})</p>
                         </button>
                     `;
                 }).join('');
@@ -9484,21 +9496,25 @@ try {
             }
         }
 
-        function selectQuickAccount(username, roleLabel) {
+        function selectQuickAccount(username, roleLabel, defaultPin = '', autoLogin = true) {
             const uInput = document.getElementById('login-username');
             const pInput = document.getElementById('login-password');
             if (uInput) uInput.value = username;
-            if (pInput) {
-                pInput.value = '';
-                pInput.focus();
-            }
+            if (pInput) pInput.value = defaultPin;
+
             const errAlert = document.getElementById('login-error-alert');
             const errText = document.getElementById('login-error-text');
             if (errAlert && errText) {
-                errText.innerText = `Akun ${roleLabel} (${username}) dipilih. Silakan ketik kata sandi / PIN Anda untuk masuk.`;
-                errAlert.className = 'p-3 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs rounded-xl flex items-center space-x-2';
+                errText.innerHTML = `Akun <strong>${escapeHtml(roleLabel)}</strong> (${escapeHtml(username)}) dipilih &bull; PIN: <span class="font-mono font-bold">${defaultPin}</span>`;
+                errAlert.className = 'p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center space-x-2';
                 errAlert.style.display = 'flex';
                 if (window.lucide) lucide.createIcons();
+            }
+
+            if (autoLogin && defaultPin) {
+                handleLogin(null);
+            } else if (pInput) {
+                pInput.focus();
             }
         }
 
