@@ -617,8 +617,8 @@ try {
             <!-- ---------------------------------------------------- -->
             <div id="tab-reports" class="hidden space-y-6">
                 <!-- Subtab Navigation Bar -->
-                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2 sm:gap-3">
-                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 w-full sm:w-auto">
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 w-full">
                         <button onclick="setReportSubtab('sales')" id="report-subtab-btn-sales" class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
                             <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
                             <span>Laporan Penjualan & Omzet</span>
@@ -635,10 +635,6 @@ try {
                             <i data-lucide="boxes" class="w-4 h-4"></i>
                             <span>Pemakaian Bahan Baku (BOM)</span>
                         </button>
-                    </div>
-                    <div class="text-xs text-slate-500 font-medium px-2 hidden lg:flex items-center space-x-1.5 shrink-0 whitespace-nowrap">
-                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-indigo-500"></i>
-                        <span>Modul Pelaporan & Rekonsiliasi</span>
                     </div>
                 </div>
 
