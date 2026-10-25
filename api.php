@@ -4027,24 +4027,21 @@ try {
                 $refQty = $bStock;
                 $isPrevFinal = $lastShift && !empty($lastShift['is_final_shift']);
                 $isCapSku = ($sku === 'RAW-089' || $sku === 'RAW-020' || stripos($r['name'] ?? '', 'Tutup Galon') !== false);
-                $isGallonProduct = in_array($pId, [98, 99]) || in_array($sku, ['PRD-00001', 'PRD-00002']);
                 $isNewDayOrShift1 = (!$isContinuation || $nextShiftNumber == 1);
 
                 if ($isCapSku && $isNewDayOrShift1) {
                     // Sisa tutup semalam telah diretur ke gudang saat tutup toko, sehingga stok fisik semalam di toko bersih 0
                     $refQty = 0;
-                } elseif ($isGallonProduct && $isNewDayOrShift1) {
-                    // Produk jadi galon standar closing malam standby 10 galon (atau dari closing kemarin)
-                    $refQty = (!empty($lastClosingItems[$pId]) && (float)$lastClosingItems[$pId] > 0) ? (float)$lastClosingItems[$pId] : 10;
-                } elseif (!empty($lastClosingItems) && isset($lastClosingItems[$pId]) && $lastClosingItems[$pId] !== '' && $lastClosingItems[$pId] !== null) {
+                } elseif (!$isNewDayOrShift1 && !empty($lastClosingItems) && isset($lastClosingItems[$pId]) && $lastClosingItems[$pId] !== '' && $lastClosingItems[$pId] !== null) {
+                    // Serah terima antar shift di hari yang sama (Shift 1 -> Shift 2)
                     $cQty = (float)$lastClosingItems[$pId];
-                    // Jika di closing bernilai 0 tapi bStock > 0 dan bukan tutup galon, tetap pertahankan bStock cabang yang sudah ada
                     $refQty = ($cQty == 0 && $bStock > 0 && !$isCapSku) ? $bStock : $cQty;
-                } elseif (!empty($lastClosingItems) && isset($lastClosingItems[$sku]) && $lastClosingItems[$sku] !== '' && $lastClosingItems[$sku] !== null) {
+                } elseif (!$isNewDayOrShift1 && !empty($lastClosingItems) && isset($lastClosingItems[$sku]) && $lastClosingItems[$sku] !== '' && $lastClosingItems[$sku] !== null) {
                     $cQty = (float)$lastClosingItems[$sku];
                     $refQty = ($cQty == 0 && $bStock > 0 && !$isCapSku) ? $bStock : $cQty;
                 } else {
-                    $refQty = ($isCapSku && $isNewDayOrShift1) ? 0 : $bStock;
+                    // Mengacu murni pada saldo stok fisik aktual cabang di Menu Stok (branch_stocks)
+                    $refQty = $bStock;
                 }
 
                 $dynamicItems[] = [

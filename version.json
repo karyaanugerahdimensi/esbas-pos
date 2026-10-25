@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.49",
-  "build": "20261026-04",
+  "version": "1.2.50",
+  "build": "20261026-05",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.50",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Sinkronisasi Penuh Stok Malam Opening Shift dengan Saldo Riil Menu Stok Cabang",
+      "description": "Memperbaiki resolusi nilai Stok Malam Kemarin (night_stock / refQty) pada endpoint get_opening_shift_data di api.php: (1) Menghapus nilai fallback hardcoded ': 10' untuk produk galon (PRD-00001 & PRD-00002) yang menyebabkan produk dengan stok 0 di Menu Stok (seperti Air RO Galon 19 Liter) tetap memunculkan angka 10 semu pada Form Opening Shift. (2) Menjadikan saldo stok fisik aktual cabang di tabel branch_stocks ($bStock) sebagai sumber kebenaran tunggal (Single Source of Truth) untuk seluruh produk jadi pada pembukaan Shift 1 (Pagi), sehingga Air Mineral Galon 19L (stok 10) tampil 10 galon dan Air RO Galon 19L (stok 0) tampil 0 galon secara sinkron 100%.",
+      "rollback_command": "git checkout v1.2.49"
+    },
     {
       "version": "1.2.49",
       "commit": "HEAD",
