@@ -1,11 +1,91 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.52",
-  "build": "20261026-07",
+  "version": "1.2.62",
+  "build": "20261026-17",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.62",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Laporan Penjualan Mitra B2B dengan Rincian Pesanan & Filter Kurun Waktu Fleksibel (FR-ACC-05)",
+      "description": "Menghadirkan Modul Laporan Penjualan Mitra B2B pada Laporan Keuangan: (1) Detail pesanan per faktur lengkap dengan item produk, varian, SKU, kuantitas, harga mitra, modal HPP, subtotal, dan margin laba. (2) Filter kurun waktu fleksibel: Mingguan (weekly), Bulanan (monthly), Kuartal (quarter), Semester, Tahunan (yearly), dan Rentang Kustom (custom date range). (3) Filter mitra spesifik, cabang, status pelunasan, dan metode pembayaran. (4) 5 KPI Cards, Top B2B Partners Leaderboard, Modal Detail Pesanan Mitra, dan Ekspor Excel komprehensif.",
+      "rollback_command": "git checkout v1.2.61"
+    },
+    {
+      "version": "1.2.61",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Penempatan Multi-Cabang untuk Branch Manager & Penempatan Global Non-Lokasi untuk Superadmin (FR-US-04)",
+      "description": "Menyempurnakan sistem penempatan cabang pada menu Kelola Karyawan: (1) Opsi Multi-Cabang untuk Branch Manager dengan pilihan checkbox multi-cabang (tabel user_branches & assigned_branch_ids). (2) Opsi Penempatan Global untuk Superadmin tanpa terikat satu cabang fisik. (3) Filter lokasi dan badge penempatan pada tabel karyawan.",
+      "rollback_command": "git checkout v1.2.60"
+    },
+    {
+      "version": "1.2.60",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Dashboard Eksekutif & Monitoring Transaksi Realtime Seluruh Cabang (FR-DASH-01)",
+      "description": "Menghadirkan Dashboard Eksekutif & Live Transaction Radar untuk peran Superadmin dan Branch Manager: 5 KPI finansial & operasional, stream transaksi langsung dengan auto-refresh 10 detik & audio chime, perbandingan performa antar-cabang, Top 8 Fast-Moving Products, dan sebaran metode bayar.",
+      "rollback_command": "git checkout v1.2.59"
+    },
+    {
+      "version": "1.2.59",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Pemisahan Tombol Aksi Tambah Pelanggan dari Bilah Navigasi Sub-Tab CRM (FR-CRM-08)",
+      "description": "Memisahkan tombol aksi '+ Tambah Pelanggan / Mitra' dari bilah navigasi sub-tab CRM ke toolbar tabel pelanggan guna mengeliminasi tumpang tindih tata letak dan memastikan bilah sub-tab tampil rapi bebas pemotongan teks.",
+      "rollback_command": "git checkout v1.2.58"
+    },
+    {
+      "version": "1.2.58",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Standardisasi Sub-Tab Navigasi Anti-Clipping Berbasis Multi-Row Flex-Wrap (FR-UI-01)",
+      "description": "Mengimplementasikan multi-row flex-wrap dan padding presisi pada seluruh navigasi sub-tab di 10 modul menu aplikasi, mencegah tombol terpotong pada layar laptop standar atau perangkat resolusi menengah.",
+      "rollback_command": "git checkout v1.2.57"
+    },
+    {
+      "version": "1.2.57",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Eliminasi Label Redundan Sub-Tab Laporan Penjualan & Optimalisasi Lebar Bilah Navigasi",
+      "description": "Menghapus elemen label redundan '🛡️ Modul Pelaporan & Rekonsiliasi' pada bilah sub-tab Laporan Penjualan agar ruang tombol sub-tab lebih longgar dan terhindar dari pemotongan teks.",
+      "rollback_command": "git checkout v1.2.56"
+    },
+    {
+      "version": "1.2.56",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Pembersihan Angka Desimal Nol Trailing pada Konfigurasi Tarif Kirim Dinamis & Armada Kurir (FR-LOG-05)",
+      "description": "Sanitasi desimal nol trailing pada tarif dasar, jarak, dan radius pengiriman logistik baik di backend api.php maupun formulir input index.php.",
+      "rollback_command": "git checkout v1.2.55"
+    },
+    {
+      "version": "1.2.55",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Standardisasi Sub-Tab Navigasi Presisi & Responsif Seluruh Menu Aplikasi (FR-UI-01)",
+      "description": "Standardisasi kontainer sub-tab, transisi tombol aktif/inaktif, dan integrasi ikon Lucide pada seluruh 10 modul aplikasi.",
+      "rollback_command": "git checkout v1.2.54"
+    },
+    {
+      "version": "1.2.54",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Sinkronisasi Dinamis Nama Perusahaan / Judul PT pada Dokumen Resmi Laporan Laba Rugi & Slip Gaji (FR-ACC-04)",
+      "description": "Menghubungkan heading nama PT pada lembar Laba Rugi dan Slip Gaji ESS dengan konfigurasi sistem terpusat dan override cabang.",
+      "rollback_command": "git checkout v1.2.53"
+    },
+    {
+      "version": "1.2.53",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Penyelarasan Pemotongan Bahan Baku BOM di Setiap Tutup Shift & Preservasi Sisa Tutup Galon (FR-POS-29)",
+      "description": "Pemotongan otomatis bahan baku BOM pada setiap penutupan shift kasir, preservasi sisa tutup galon untuk shift non-closing day, dan proteksi saldo persediaan produk jadi.",
+      "rollback_command": "git checkout v1.2.52"
+    },
     {
       "version": "1.2.52",
       "commit": "HEAD",
