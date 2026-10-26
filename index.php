@@ -20568,10 +20568,7 @@ Manager / Supervisor: __________________
 
             select.innerHTML = filteredCusts.map(c => {
                 const isSelected = state.selectedCustomer && state.selectedCustomer.id === c.id;
-                const catObj = (state.customerCategories || []).find(cat => cat.code === c.category || cat.name === c.category);
-                const tier = (catObj && catObj.default_tier) ? catObj.default_tier : c.category;
-                const catLabel = tier === 'MITRA' ? '🤝 MITRA' : (tier === 'MEMBER' ? '⭐ MEMBER' : (tier === 'RESELLER' ? '📦 RESELLER' : 'RITEL'));
-                return `<option value="${c.id}" ${isSelected ? 'selected' : ''}>${c.name} [${catLabel}]</option>`;
+                return `<option value="${c.id}" ${isSelected ? 'selected' : ''}>${escapeHtml(c.name)}</option>`;
             }).join('');
 
             // Set value select ke customer yang terpilih

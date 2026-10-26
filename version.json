@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.79",
-  "build": "20261026-34",
+  "version": "1.2.80",
+  "build": "20261026-35",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.80",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Penyederhanaan Tampilan Dropdown Pelanggan POS: Eliminasi Tag Kategori [RITEL] / [TIER] (FR-POS-38)",
+      "description": "Menghilangkan sufiks tag tier/kategori seperti '[RITEL]', '[🤝 MITRA]', '[⭐ MEMBER]', '[📦 RESELLER]' dari label nama pelanggan pada elemen dropdown pemilihan pelanggan aktif di POS Kasir (#pos-customer-select). Hal ini membuat opsi dropdown menjadi bersih dan hanya menampilkan nama pelanggan secara utuh tanpa teks berulang, mengingat kategori pelanggan aktif sudah tertera jelas pada lencana kategori di samping dropdown.",
+      "rollback_command": "git checkout v1.2.79"
+    },
     {
       "version": "1.2.79",
       "commit": "HEAD",
