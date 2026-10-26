@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.68",
-  "build": "20261026-23",
+  "version": "1.2.69",
+  "build": "20261026-24",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.69",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Penyederhanaan Tampilan Panel Delivery POS Kasir (FR-POS-32)",
+      "description": "Menyederhanakan desain antarmuka panel pengantaran kurir (pos-delivery-box) pada POS Kasir agar lebih ringkas, elegan, dan fokus pada 3 data esensial: (1) Jarak (misal: 1.82 km). (2) Ongkir (GRATIS atau nominal Rp 2.000). (3) Driver (nama kurir dan plat nomor kendaraan dalam 1 baris bersih, misal: Bima (D 5116 OZ)). Mengeliminasi label ganda terduplikasi, badge 'Terkunci', dropdown select bertumpuk, dan teks catatan berulang yang membebani ruang vertikal keranjang kasir.",
+      "rollback_command": "git checkout v1.2.68"
+    },
     {
       "version": "1.2.68",
       "commit": "HEAD",

@@ -806,32 +806,47 @@ try {
                                         <input type="checkbox" id="check-delivery-mode" onchange="onDeliveryToggleChange()" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
                                         <span>🛵 Antar Kurir (Delivery)</span>
                                     </label>
-                                    <span id="pos-delivery-badge" class="hidden px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300">Antar Kurir</span>
+                                    <span id="pos-delivery-badge" class="hidden px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-800 border border-indigo-200">Aktif</span>
                                 </div>
-                                <div id="pos-delivery-box" class="hidden mt-2 p-2.5 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-1.5 text-xs">
+                                <div id="pos-delivery-box" class="hidden mt-2 p-2.5 bg-indigo-50/70 border border-indigo-200/90 rounded-xl space-y-1.5 text-xs">
+                                    <!-- Baris 1: Jarak -->
                                     <div class="flex justify-between items-center text-slate-700">
-                                        <span class="flex items-center space-x-1"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-indigo-600"></i><span>Jarak Outlet &bull; Pelanggan:</span></span>
-                                        <span id="pos-delivery-distance" class="font-bold text-indigo-950 font-mono">0.0 km</span>
+                                        <span class="flex items-center space-x-1.5 text-slate-600 font-medium">
+                                            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-indigo-600"></i>
+                                            <span>Jarak:</span>
+                                        </span>
+                                        <span id="pos-delivery-distance" class="font-bold text-slate-800 font-mono">0 km</span>
                                     </div>
+                                    <!-- Baris 2: Ongkir -->
                                     <div class="flex justify-between items-center text-slate-700">
-                                        <span>Biaya Kirim Dinamis:</span>
-                                        <span id="pos-delivery-fee-display" class="font-black text-amber-700 font-mono">Rp 0</span>
+                                        <span class="flex items-center space-x-1.5 text-slate-600 font-medium">
+                                            <i data-lucide="tag" class="w-3.5 h-3.5 text-indigo-600"></i>
+                                            <span>Ongkir:</span>
+                                        </span>
+                                        <span id="pos-delivery-fee-display" class="font-black text-emerald-600 font-mono">GRATIS</span>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <label id="pos-driver-label" class="block text-[10px] font-bold text-slate-500 mb-0.5">Nama Driver / Kurir:</label>
-                                            <select id="pos-driver-employee-select" onchange="onPosDriverEmployeeChange()" class="w-full bg-white border border-indigo-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800">
-                                                <!-- Populated from branch employees via JS -->
+                                    <!-- Baris 3: Driver -->
+                                    <div class="flex justify-between items-center text-slate-700 pt-1 border-t border-indigo-100">
+                                        <span class="flex items-center space-x-1.5 text-slate-600 font-medium">
+                                            <i data-lucide="user" class="w-3.5 h-3.5 text-indigo-600"></i>
+                                            <span>Driver:</span>
+                                        </span>
+                                        <!-- Tampilan Terkunci (Kasir / Staf) -->
+                                        <div id="pos-driver-locked-view" class="font-bold text-slate-800 text-xs text-right">
+                                            <span id="pos-driver-display-name">-</span>
+                                            <span id="pos-driver-display-vehicle" class="text-[11px] text-slate-500 font-normal"></span>
+                                        </div>
+                                        <!-- Tampilan Dropdown Fleksibel (Admin / Manager) -->
+                                        <div id="pos-driver-select-grid" class="hidden flex items-center space-x-1.5">
+                                            <label id="pos-driver-label" class="hidden"></label>
+                                            <label id="pos-vehicle-label" class="hidden"></label>
+                                            <select id="pos-driver-employee-select" onchange="onPosDriverEmployeeChange()" class="bg-white border border-indigo-300 rounded-lg px-2 py-0.5 text-xs font-semibold text-slate-800">
+                                            </select>
+                                            <select id="pos-courier-select" class="bg-white border border-indigo-300 rounded-lg px-2 py-0.5 text-xs font-semibold text-slate-800">
                                             </select>
                                         </div>
-                                        <div>
-                                            <label id="pos-vehicle-label" class="block text-[10px] font-bold text-slate-500 mb-0.5">Armada Kendaraan:</label>
-                                            <select id="pos-courier-select" class="w-full bg-white border border-indigo-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800">
-                                                <!-- Populated via JS -->
-                                            </select>
-                                        </div>
                                     </div>
-                                    <p id="pos-delivery-note" class="text-[10px] text-indigo-700 italic"></p>
+                                    <p id="pos-delivery-note" class="hidden text-[10px] text-amber-700 font-medium pt-0.5"></p>
                                 </div>
                             </div>
 
@@ -10249,7 +10264,10 @@ try {
             state.currentPosVehicleId = null;
 
             const noteEl = document.getElementById('pos-delivery-note');
-            if (noteEl) noteEl.innerHTML = '';
+            if (noteEl) {
+                noteEl.innerHTML = '';
+                noteEl.classList.add('hidden');
+            }
 
             const distEl = document.getElementById('pos-delivery-distance');
             if (distEl) distEl.innerText = '-';
@@ -10257,7 +10275,7 @@ try {
             const feeEl = document.getElementById('pos-delivery-fee-display');
             if (feeEl) {
                 feeEl.innerText = 'Rp 0';
-                feeEl.className = 'font-black text-amber-700 font-mono';
+                feeEl.className = 'font-black text-amber-700 font-mono text-xs';
             }
 
             if (!skipTotalsRecalc) {
@@ -10426,36 +10444,33 @@ try {
                 const driverName = driverObj.name;
                 const driverId = driverObj.id;
 
+                let vehPlate = '';
+                if (linkedVehicle) {
+                    vehPlate = linkedVehicle.plate_number;
+                } else if (branchVehicles.length > 0) {
+                    vehPlate = branchVehicles[0].plate_number;
+                }
+
                 // Kunci Driver Select
                 if (driverSelect) {
-                    driverSelect.innerHTML = `<option value="${driverId}">🔒 ${driverName} (${driverObj.role || 'Kasir'}) - Kurir Otomatis</option>`;
+                    driverSelect.innerHTML = `<option value="${driverId}">${driverName}</option>`;
                     driverSelect.value = driverId;
                     driverSelect.disabled = true;
-                    driverSelect.className = "w-full bg-slate-100 border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 cursor-not-allowed pointer-events-none";
                 }
 
                 // Kunci Vehicle Select
                 if (vehicleSelect) {
                     if (linkedVehicle) {
-                        vehicleSelect.innerHTML = `<option value="${linkedVehicle.id}">🔒 ${linkedVehicle.plate_number} - ${linkedVehicle.vehicle_name}</option>`;
+                        vehicleSelect.innerHTML = `<option value="${linkedVehicle.id}">${linkedVehicle.plate_number}</option>`;
                         vehicleSelect.value = linkedVehicle.id;
                     } else if (branchVehicles.length > 0) {
                         const fallbackVeh = branchVehicles[0];
-                        vehicleSelect.innerHTML = `<option value="${fallbackVeh.id}">🔒 ${fallbackVeh.plate_number} - ${fallbackVeh.vehicle_name}</option>`;
+                        vehicleSelect.innerHTML = `<option value="${fallbackVeh.id}">${fallbackVeh.plate_number}</option>`;
                         vehicleSelect.value = fallbackVeh.id;
                     } else {
-                        vehicleSelect.innerHTML = `<option value="">(Belum ada armada cabang)</option>`;
+                        vehicleSelect.innerHTML = `<option value="">-</option>`;
                     }
                     vehicleSelect.disabled = true;
-                    vehicleSelect.className = "w-full bg-slate-100 border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 cursor-not-allowed pointer-events-none";
-                }
-
-                // Tampilkan label locked
-                if (driverLabel) {
-                    driverLabel.innerHTML = `Nama Driver / Kurir: <span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 ml-0.5">🔒 Terkunci</span>`;
-                }
-                if (vehicleLabel) {
-                    vehicleLabel.innerHTML = `Armada Kendaraan: <span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 ml-0.5">🔒 Terkunci</span>`;
                 }
 
                 // Simpan parameter aktif di state agar saat submit checkout selalu akurat
@@ -10463,47 +10478,62 @@ try {
                 state.currentPosDriverName = driverName;
                 state.currentPosVehicleId = linkedVehicle ? linkedVehicle.id : (vehicleSelect?.value ? parseInt(vehicleSelect.value) : null);
 
+                // Tampilan Ringkas & Bersih
+                const lockedView = document.getElementById('pos-driver-locked-view');
+                const selectGrid = document.getElementById('pos-driver-select-grid');
+                const nameDisplay = document.getElementById('pos-driver-display-name');
+                const vehDisplay = document.getElementById('pos-driver-display-vehicle');
+
+                if (lockedView) lockedView.classList.remove('hidden');
+                if (selectGrid) selectGrid.classList.add('hidden');
+
+                if (nameDisplay) nameDisplay.innerText = driverName;
+                if (vehDisplay) vehDisplay.innerText = vehPlate ? `(${vehPlate})` : '';
+
                 if (noteEl) {
-                    const vehName = linkedVehicle ? `${linkedVehicle.plate_number} (${linkedVehicle.vehicle_name})` : 'Armada Cabang';
-                    noteEl.innerHTML = `<span class="text-emerald-700 font-bold">✓ Kurir pengirim (<b>${driverName}</b>) & armada (<b>${vehName}</b>) terhubung otomatis dan terkunci untuk kasir <b>${currentUser.name}</b>. Kasir tidak dapat memilih kurir lain.</span>`;
+                    noteEl.innerHTML = '';
+                    noteEl.classList.add('hidden');
                 }
                 return;
             }
 
             // KASUS B: SUPER ADMIN / BRANCH MANAGER (Dapat memilih kurir & armada fleksibel)
+            const lockedView = document.getElementById('pos-driver-locked-view');
+            const selectGrid = document.getElementById('pos-driver-select-grid');
+            if (lockedView) lockedView.classList.add('hidden');
+            if (selectGrid) selectGrid.classList.remove('hidden');
+
             if (driverSelect) {
                 driverSelect.disabled = false;
-                driverSelect.className = "w-full bg-white border border-indigo-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800";
+                driverSelect.className = "bg-white border border-indigo-300 rounded-lg px-2 py-0.5 text-xs font-semibold text-slate-800";
                 const candidateDrivers = operationalEmployees.length > 0 ? operationalEmployees : (state.users || []).filter(u => (!u.branch_id || u.branch_id === branchId) && u.is_active != 0);
                 if (candidateDrivers.length === 0) {
-                    driverSelect.innerHTML = '<option value="">(Tidak ada karyawan di cabang ini)</option>';
+                    driverSelect.innerHTML = '<option value="">(Belum ada staf)</option>';
                 } else {
                     driverSelect.innerHTML = candidateDrivers.map(u => 
-                        `<option value="${u.id}">${u.name} (${u.role})</option>`
+                        `<option value="${u.id}">${u.name}</option>`
                     ).join('');
                 }
             }
 
             if (vehicleSelect) {
                 vehicleSelect.disabled = false;
-                vehicleSelect.className = "w-full bg-white border border-indigo-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800";
+                vehicleSelect.className = "bg-white border border-indigo-300 rounded-lg px-2 py-0.5 text-xs font-semibold text-slate-800";
                 if (branchVehicles.length === 0) {
-                    vehicleSelect.innerHTML = '<option value="">(Tidak ada armada aktif - kurir rekanan)</option>';
+                    vehicleSelect.innerHTML = '<option value="">(Tanpa armada)</option>';
                 } else {
                     vehicleSelect.innerHTML = branchVehicles.map(v => 
-                        `<option value="${v.id}">${v.plate_number} - ${v.vehicle_name} (${v.driver_name || 'Driver Cabang'})</option>`
+                        `<option value="${v.id}">${v.plate_number}</option>`
                     ).join('');
                 }
             }
-
-            if (driverLabel) driverLabel.innerHTML = `Nama Driver / Kurir:`;
-            if (vehicleLabel) vehicleLabel.innerHTML = `Armada Kendaraan:`;
 
             // Sinkronkan kendaraan yang cocok jika driver dipilih
             onPosDriverEmployeeChange();
 
             if (noteEl) {
-                noteEl.innerHTML = `<span class="text-slate-500 font-medium">Pilih kurir dan armada pengantaran pesanan untuk cabang ini.</span>`;
+                noteEl.innerHTML = '';
+                noteEl.classList.add('hidden');
             }
         }
 
@@ -10558,6 +10588,7 @@ try {
                 if (box) box.classList.remove('hidden');
                 renderPosCourierSelect();
                 await calculateDeliveryFeeForPOS();
+                lucide.createIcons();
             } else {
                 if (badge) badge.classList.add('hidden');
                 if (box) box.classList.add('hidden');
@@ -10621,30 +10652,27 @@ try {
                 }
 
                 if (isEntirelyFreeDelivery) {
-                    // Kasus 1: Seluruh item dalam keranjang adalah produk GRATIS ONGKIR (Termasuk harga produk)
+                    // Kasus 1: Seluruh item dalam keranjang adalah produk GRATIS ONGKIR
                     state.currentDeliveryFee = 0;
                     if (feeEl) {
-                        feeEl.innerText = 'GRATIS (Termasuk Harga Produk)';
+                        feeEl.innerText = 'GRATIS';
                         feeEl.className = 'font-black text-emerald-600 font-mono text-xs';
                     }
                     if (noteEl) {
-                        const names = freeDeliveryItems.map(i => i.name).join(', ');
-                        if (distKm !== null && distKm > 0) {
-                            noteEl.innerHTML = `<span class="text-emerald-700 font-bold">🎁 Seluruh produk dalam pesanan (${names}) sudah termasuk ongkos kirim (Rp 0). Jarak pengantaran terdeteksi ${formatDecimal(distKm)} km.</span>`;
-                        } else {
-                            noteEl.innerHTML = `<span class="text-emerald-700 font-bold">🎁 Seluruh produk dalam pesanan (${names}) sudah termasuk ongkos kirim (Rp 0). Nama kurir & armada tetap dicatat untuk bukti pengantaran.</span>`;
-                        }
+                        noteEl.innerHTML = '';
+                        noteEl.classList.add('hidden');
                     }
                 } else if (data.success) {
                     // Kasus 2: Berhasil kalkulasi tarif dinamis berdasarkan jarak
                     state.currentDeliveryFee = data.delivery_fee;
                     const isPromoFree = Boolean(data.is_free || data.is_free_delivery);
                     if (feeEl) {
-                        feeEl.innerText = isPromoFree ? 'GRATIS (Promo Belanja)' : formatRupiah(data.delivery_fee);
-                        feeEl.className = isPromoFree ? 'font-black text-emerald-600 font-mono' : 'font-black text-amber-700 font-mono';
+                        feeEl.innerText = isPromoFree ? 'GRATIS' : formatRupiah(data.delivery_fee);
+                        feeEl.className = isPromoFree ? 'font-black text-emerald-600 font-mono text-xs' : 'font-black text-amber-700 font-mono text-xs';
                     }
                     if (noteEl) {
-                        noteEl.innerText = data.rule_applied || (isPromoFree ? 'Memenuhi syarat gratis ongkir' : `Tarif dasar + KM`);
+                        noteEl.innerHTML = '';
+                        noteEl.classList.add('hidden');
                     }
                 } else {
                     // Kasus 3: Titik koordinat pelanggan belum diatur di CRM
@@ -10653,10 +10681,11 @@ try {
                     if (distEl && (localDistKm === null || localDistKm === 0)) distEl.innerText = '-';
                     if (feeEl) {
                         feeEl.innerText = formatRupiah(baseFee);
-                        feeEl.className = 'font-black text-amber-700 font-mono';
+                        feeEl.className = 'font-black text-amber-700 font-mono text-xs';
                     }
                     if (noteEl) {
-                        noteEl.innerHTML = `<span class="text-amber-800 font-semibold">⚠️ ${data.message || 'Titik koordinat belum diatur. Tarif flat dasar diterapkan.'}</span>`;
+                        noteEl.innerHTML = `⚠️ Koordinat belum diatur (Tarif flat)`;
+                        noteEl.classList.remove('hidden');
                     }
                 }
             } catch (err) {
@@ -10664,11 +10693,19 @@ try {
                 if (isEntirelyFreeDelivery) {
                     state.currentDeliveryFee = 0;
                     if (feeEl) {
-                        feeEl.innerText = 'GRATIS (Termasuk Harga Produk)';
+                        feeEl.innerText = 'GRATIS';
                         feeEl.className = 'font-black text-emerald-600 font-mono text-xs';
                     }
                 } else {
                     state.currentDeliveryFee = 10000;
+                    if (feeEl) {
+                        feeEl.innerText = formatRupiah(10000);
+                        feeEl.className = 'font-black text-amber-700 font-mono text-xs';
+                    }
+                }
+                if (noteEl) {
+                    noteEl.innerHTML = '';
+                    noteEl.classList.add('hidden');
                 }
             }
             calculateCartTotals();
