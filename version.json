@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.62",
-  "build": "20261026-17",
+  "version": "1.2.63",
+  "build": "20261026-18",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.63",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Fitur Import Data Pelanggan/Mitra Bulk dengan Geocoding URL Google Maps (FR-CRM-09)",
+      "description": "Menambahkan fitur Import Data Pelanggan/Mitra dari file CSV/Excel atau Copy-Paste langsung ke aplikasi: (1) 5 kolom input: Nama Pelanggan (Mandatory), No Telepon (Mandatory), Alamat (Opsional), Google Maps URL / Koordinat (Opsional), dan Kategori Pelanggan (Opsional, default REGULER). (2) Auto-extractor / parser koordinat Google Maps (mendukung short link maps.app.goo.gl, goo.gl, search query, /@lat,lon, maupun raw lat-long) untuk memetakan pin titik lokasi kurir dan armada. (3) Fitur download template CSV resmi yang kompatibel dengan Microsoft Excel (UTF-8 BOM). (4) Smart deduplication / update nomor telepon pelanggan terdaftar. (5) Live table preview dengan deteksi format delimiter otomatis.",
+      "rollback_command": "git checkout v1.2.62"
+    },
     {
       "version": "1.2.62",
       "commit": "HEAD",

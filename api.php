@@ -10746,6 +10746,273 @@ try {
             echo json_encode(['success' => true, 'customers' => $stmt->fetchAll()]);
             break;
 
+        case 'download_customer_template':
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename="template_import_pelanggan.csv"');
+            $out = fopen('php://output', 'w');
+            // Write UTF-8 BOM so Microsoft Excel correctly displays Indonesian characters
+            fputs($out, "\xEF\xBB\xBF");
+            // Standard 5 columns requested: nama, no telepon, alamat, longlat menggunakan url google, kategori pelanggan
+            fputcsv($out, ['Nama Pelanggan', 'No Telepon', 'Alamat', 'Google Maps URL / Koordinat', 'Kategori Pelanggan']);
+            // Sample rows illustrating mandatory (Nama, No Telepon) and optional fields
+            fputcsv($out, ['Budi Santoso', '081234567890', 'Jl. Jenderal Sudirman Kav. 12 Jakarta Pusat', 'https://maps.google.com/?q=-6.2088,106.8190', 'REGULER']);
+            fputcsv($out, ['Siti Aminah (Member VIP)', '081987654321', 'Jl. Rasuna Said Blok C No. 5 Jakarta Selatan', 'https://www.google.com/maps/@-6.2155,106.8315,16z', 'MEMBER']);
+            fputcsv($out, ['Toko Berkah Grosir', '085611223344', 'Jl. Tebet Raya No. 45 Jakarta Selatan', '-6.2380, 106.8520', 'RESELLER']);
+            fputcsv($out, ['PT Mitra Bahtera Abadi', '081122334455', 'Kawasan Industri MM2100 Cikarang', 'https://www.google.com/maps?q=-6.3088,107.1190', 'MITRA']);
+            fputcsv($out, ['Ahmad Dani (Hanya Nama & HP)', '087812345678', '', '', '']);
+            fclose($out);
+            exit;
+
+        case 'import_customers':
+            $csvString = '';
+            if (!empty($_FILES['file']['tmp_name']) && is_uploaded_file($_FILES['file']['tmp_name'])) {
+                $csvString = file_get_contents($_FILES['file']['tmp_name']);
+            } elseif (!empty($input['csv_content'])) {
+                $csvString = $input['csv_content'];
+            }
+
+            $rows = [];
+            if (!empty($input['rows']) && is_array($input['rows'])) {
+                $rows = $input['rows'];
+            } elseif (!empty($csvString)) {
+                $lines = preg_split("/\r\n|\n|\r/", trim($csvString));
+                if (count($lines) < 1) {
+                    echo json_encode(['success' => false, 'message' => 'Berkas atau teks data pelanggan kosong.']);
+                    exit;
+                }
+
+                // Detect delimiter: tab (\t), semicolon (;), or comma (,)
+                $firstLine = $lines[0];
+                $tabCount = substr_count($firstLine, "\t");
+                $semiCount = substr_count($firstLine, ";");
+                $commaCount = substr_count($firstLine, ",");
+                $delimiter = ',';
+                if ($tabCount > $commaCount && $tabCount > $semiCount) {
+                    $delimiter = "\t";
+                } elseif ($semiCount > $commaCount) {
+                    $delimiter = ';';
+                }
+
+                $rawHeaders = str_getcsv($firstLine, $delimiter);
+                $headerMap = [
+                    'nama' => 'name', 'nama pelanggan' => 'name', 'nama lengkap' => 'name', 'customer name' => 'name', 'name' => 'name',
+                    'no telepon' => 'phone', 'no telp' => 'phone', 'nomor telepon' => 'phone', 'no hp' => 'phone', 'nomor hp' => 'phone',
+                    'telepon' => 'phone', 'phone' => 'phone', 'hp' => 'phone', 'wa' => 'phone', 'whatsapp' => 'phone', 'no whatsapp' => 'phone',
+                    'alamat' => 'address', 'alamat lengkap' => 'address', 'address' => 'address',
+                    'google maps' => 'maps_url', 'url google' => 'maps_url', 'url maps' => 'maps_url', 'link maps' => 'maps_url',
+                    'link google maps' => 'maps_url', 'google maps url' => 'maps_url', 'google maps url / koordinat' => 'maps_url',
+                    'google maps / longlat' => 'maps_url', 'longlat' => 'maps_url', 'koordinat' => 'maps_url', 'latlong' => 'maps_url',
+                    'maps' => 'maps_url', 'url' => 'maps_url', 'location' => 'maps_url', 'lokasi' => 'maps_url',
+                    'kategori' => 'category', 'kategori pelanggan' => 'category', 'category' => 'category', 'customer category' => 'category', 'tier' => 'category'
+                ];
+
+                $canonicalHeaders = [];
+                $isFirstLineHeader = false;
+                foreach ($rawHeaders as $rh) {
+                    $cleaned = strtolower(trim(str_replace(["\xEF\xBB\xBF", '"', "'"], '', $rh)));
+                    if (isset($headerMap[$cleaned])) {
+                        $isFirstLineHeader = true;
+                        $canonicalHeaders[] = $headerMap[$cleaned];
+                    } else {
+                        $canonicalHeaders[] = $cleaned;
+                    }
+                }
+
+                $startIndex = $isFirstLineHeader ? 1 : 0;
+                if (!$isFirstLineHeader) {
+                    $canonicalHeaders = ['name', 'phone', 'address', 'maps_url', 'category'];
+                }
+
+                for ($i = $startIndex; $i < count($lines); $i++) {
+                    $line = trim($lines[$i]);
+                    if (empty($line)) continue;
+                    $data = str_getcsv($line, $delimiter);
+
+                    // Rejoin split maps_url if comma inside URL or coordinates split into two columns
+                    if (count($data) > count($canonicalHeaders)) {
+                        $mapsIdx = array_search('maps_url', $canonicalHeaders);
+                        if ($mapsIdx !== false && isset($data[$mapsIdx]) && isset($data[$mapsIdx + 1])) {
+                            $candidate = $data[$mapsIdx] . ',' . $data[$mapsIdx + 1];
+                            if (preg_match('#(?:[?&]q=|-?\d{1,2}\.\d+)[,+](?:-?\d{1,3}\.\d+)#i', $candidate)) {
+                                $merged = array_slice($data, 0, $mapsIdx);
+                                $merged[] = $candidate;
+                                $merged = array_merge($merged, array_slice($data, $mapsIdx + 2));
+                                $data = $merged;
+                            }
+                        }
+                    }
+
+                    $row = [];
+                    foreach ($canonicalHeaders as $cIdx => $colKey) {
+                        $row[$colKey] = isset($data[$cIdx]) ? trim($data[$cIdx]) : '';
+                    }
+                    $rows[] = $row;
+                }
+            }
+
+            if (empty($rows)) {
+                echo json_encode(['success' => false, 'message' => 'Tidak ada baris data pelanggan yang dapat dibaca.']);
+                exit;
+            }
+
+            // Helper function to extract Lat/Lon from Google Maps URL or raw coordinate string
+            if (!function_exists('parseCustomerGoogleCoords')) {
+                function parseCustomerGoogleCoords($val) {
+                    $val = trim($val ?? '');
+                    if (empty($val)) return [null, null];
+
+                    // Resolusi URL pendek (maps.app.goo.gl atau goo.gl/maps) jika curl aktif
+                    if (preg_match('#https?://(maps\.app\.goo\.gl|goo\.gl/maps)/[a-zA-Z0-9_-]+#i', $val)) {
+                        if (function_exists('curl_init')) {
+                            $ch = curl_init($val);
+                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                            curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+                            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0');
+                            curl_exec($ch);
+                            $effectiveUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+                            curl_close($ch);
+                            if (!empty($effectiveUrl) && $effectiveUrl !== $val) {
+                                $val = $effectiveUrl;
+                            }
+                        }
+                    }
+
+                    // Pola 1: @lat,lon
+                    if (preg_match('#@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)#', $val, $m)) {
+                        return [(float)$m[1], (float)$m[2]];
+                    }
+                    // Pola 2: q=lat,lon atau query=lat,lon atau destination=lat,lon
+                    if (preg_match('#(?:[?&](?:q|query|ll|destination)=(-?\d{1,2}\.\d+)[,+](-?\d{1,3}\.\d+))#i', $val, $m)) {
+                        return [(float)$m[1], (float)$m[2]];
+                    }
+                    // Pola 3: /place/lat,lon
+                    if (preg_match('#/place/(-?\d{1,2}\.\d+)[,+](-?\d{1,3}\.\d+)#i', $val, $m)) {
+                        return [(float)$m[1], (float)$m[2]];
+                    }
+                    // Pola 4: /dir/.../lat,lon
+                    if (preg_match('#/dir/[^/]+/(-?\d{1,2}\.\d+)[,+](-?\d{1,3}\.\d+)#i', $val, $m)) {
+                        return [(float)$m[1], (float)$m[2]];
+                    }
+                    // Pola 5: Raw decimal coordinates "-6.2088, 106.8190"
+                    if (preg_match('#(-?\d{1,2}\.\d{3,})[,\s]+(-?\d{1,3}\.\d{3,})#', $val, $m)) {
+                        $lat = (float)$m[1];
+                        $lon = (float)$m[2];
+                        if ($lat >= -90 && $lat <= 90 && $lon >= -180 && $lon <= 180) {
+                            return [$lat, $lon];
+                        }
+                    }
+                    return [null, null];
+                }
+            }
+
+            // Normalisasi kategori yang diizinkan
+            $validCategories = ['REGULER', 'MEMBER', 'RESELLER', 'MITRA'];
+            try {
+                $dbCats = $pdo->query("SELECT UPPER(code) as code FROM customer_categories WHERE is_active = 1")->fetchAll(PDO::FETCH_COLUMN);
+                if (!empty($dbCats)) {
+                    $validCategories = array_unique(array_merge($validCategories, $dbCats));
+                }
+            } catch (Exception $e) {}
+
+            $stmtFindByPhone = $pdo->prepare("SELECT id, code, name, category, latitude, longitude, address FROM customers WHERE phone = ? LIMIT 1");
+            $stmtUpdate = $pdo->prepare("
+                UPDATE customers 
+                SET name = ?, address = ?, category = ?, 
+                    latitude = COALESCE(?, latitude), longitude = COALESCE(?, longitude)
+                WHERE id = ?
+            ");
+
+            $stmtInsert = $pdo->prepare("
+                INSERT INTO customers (code, name, phone, address, category, latitude, longitude, branch_id, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+            ");
+
+            $inserted = 0;
+            $updated = 0;
+            $skipped = 0;
+            $skippedDetails = [];
+            $branchId = !empty($_SESSION['branch_id']) ? (int)$_SESSION['branch_id'] : 1;
+
+            foreach ($rows as $idx => $r) {
+                $rowNum = $idx + 1;
+                $name = trim($r['name'] ?? '');
+                $phone = trim($r['phone'] ?? '');
+                $address = trim($r['address'] ?? '');
+                $mapsUrl = trim($r['maps_url'] ?? ($r['longlat'] ?? ''));
+                $rawCat = strtoupper(trim($r['category'] ?? ''));
+
+                // MANDATORY VALIDATION: Nama dan No Telepon wajib diisi
+                if (empty($name) || empty($phone)) {
+                    $skipped++;
+                    $skippedDetails[] = "Baris #{$rowNum}: Dilewati karena Nama atau No Telepon kosong.";
+                    continue;
+                }
+
+                // Sanitasi nomor telepon
+                $cleanPhone = preg_replace('/[^\d+]/', '', $phone);
+                if (strlen($cleanPhone) < 6) {
+                    $skipped++;
+                    $skippedDetails[] = "Baris #{$rowNum} ('{$name}'): No Telepon '{$phone}' tidak valid (minimal 6 digit).";
+                    continue;
+                }
+
+                // Resolusi kategori (default REGULER jika kosong)
+                $category = 'REGULER';
+                if (!empty($rawCat)) {
+                    if (strpos($rawCat, 'MITRA') !== false || strpos($rawCat, 'B2B') !== false) {
+                        $category = 'MITRA';
+                    } elseif (strpos($rawCat, 'MEMBER') !== false || strpos($rawCat, 'VIP') !== false) {
+                        $category = 'MEMBER';
+                    } elseif (strpos($rawCat, 'RESELLER') !== false || strpos($rawCat, 'GROSIR') !== false || strpos($rawCat, 'AGEN') !== false) {
+                        $category = 'RESELLER';
+                    } elseif (in_array($rawCat, $validCategories)) {
+                        $category = $rawCat;
+                    }
+                }
+
+                // Ekstraksi koordinat Google Maps
+                list($lat, $lon) = parseCustomerGoogleCoords($mapsUrl);
+
+                // Cek apakah nomor telepon sudah terdaftar untuk deduplikasi
+                $stmtFindByPhone->execute([$cleanPhone]);
+                $existing = $stmtFindByPhone->fetch();
+
+                if ($existing) {
+                    // Update data yang ada
+                    $targetLat = ($lat !== null) ? $lat : $existing['latitude'];
+                    $targetLon = ($lon !== null) ? $lon : $existing['longitude'];
+                    $targetAddr = !empty($address) ? $address : $existing['address'];
+                    $targetCat = !empty($rawCat) ? $category : $existing['category'];
+
+                    $stmtUpdate->execute([$name, $targetAddr, $targetCat, $targetLat, $targetLon, $existing['id']]);
+                    $updated++;
+                } else {
+                    // Buat kode pelanggan baru otomatis
+                    $prefix = ($category === 'MITRA') ? 'MTR-' : (($category === 'MEMBER') ? 'MBR-' : (($category === 'RESELLER') ? 'RSL-' : 'CUST-'));
+                    $code = $prefix . date('ymd') . rand(100, 999);
+
+                    $stmtInsert->execute([$code, $name, $cleanPhone, $address, $category, $lat, $lon, $branchId]);
+                    $inserted++;
+                }
+            }
+
+            $totalProcessed = $inserted + $updated;
+            $msg = "Import data pelanggan selesai! {$totalProcessed} pelanggan berhasil diproses ({$inserted} baru, {$updated} diperbarui).";
+            if ($skipped > 0) {
+                $msg .= " {$skipped} baris dilewati karena Nama atau No Telepon kosong.";
+            }
+
+            echo json_encode([
+                'success' => true,
+                'message' => $msg,
+                'inserted' => $inserted,
+                'updated' => $updated,
+                'skipped' => $skipped,
+                'skipped_details' => $skippedDetails
+            ]);
+            break;
+
         case 'save_customer':
             $id = !empty($input['id']) ? (int)$input['id'] : null;
             $code = trim($input['code'] ?? '');

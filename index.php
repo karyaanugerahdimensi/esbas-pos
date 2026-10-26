@@ -3320,6 +3320,10 @@ try {
                                 <button onclick="setCustCategoryFilter('RESELLER')" class="cust-cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Reseller</button>
                                 <button onclick="setCustCategoryFilter('MITRA')" class="cust-cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Mitra B2B</button>
                             </div>
+                            <button id="cust-btn-import-customer" onclick="openImportCustomerModal()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow transition-colors flex items-center space-x-1.5 shrink-0" title="Import data pelanggan dari file Excel / CSV / Salin Teks">
+                                <i data-lucide="upload" class="w-4 h-4"></i>
+                                <span>Import Pelanggan</span>
+                            </button>
                             <button id="cust-btn-add-customer" onclick="openCustomerModal()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow transition-colors flex items-center space-x-1.5 shrink-0">
                                 <i data-lucide="user-plus" class="w-4 h-4"></i>
                                 <span>+ Tambah Pelanggan / Mitra</span>
@@ -7753,6 +7757,109 @@ try {
                             <span>Simpan Data</span>
                         </button>
                     </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 7B: Import Massal Data Pelanggan & Mitra (Excel / CSV) -->
+    <div id="customer-import-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto hidden">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-3">
+                    <span class="p-2.5 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
+                        <i data-lucide="file-spreadsheet" class="w-5 h-5 text-emerald-600"></i>
+                    </span>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">Import Data Pelanggan & Mitra</h3>
+                        <p class="text-[11px] text-slate-400">Unggah berkas CSV / Excel atau tempel data pelanggan</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeImportCustomerModal()" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Download Template Banner -->
+            <div class="p-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs text-emerald-950">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-1.5 font-bold text-emerald-900">
+                        <i data-lucide="download" class="w-4 h-4 text-emerald-700"></i>
+                        <span>Template Format Excel / CSV Pelanggan:</span>
+                    </div>
+                    <p class="text-[11px] text-emerald-800">
+                        5 Kolom: <code class="bg-emerald-100/90 px-1 py-0.5 rounded text-emerald-900 font-mono font-semibold">Nama Pelanggan, No Telepon, Alamat, Google Maps URL / Koordinat, Kategori Pelanggan</code>
+                    </p>
+                </div>
+                <button type="button" onclick="downloadCustomerImportTemplate()" class="px-3.5 py-2 bg-white hover:bg-emerald-100/60 border border-emerald-300 text-emerald-800 rounded-xl font-bold shadow-2xs flex items-center space-x-1.5 shrink-0 transition-colors">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
+                    <span>Unduh Template CSV</span>
+                </button>
+            </div>
+
+            <!-- Rules & Mandatory Info Box -->
+            <div class="p-3.5 bg-slate-50 border border-slate-200/90 rounded-2xl text-[11px] text-slate-600 space-y-1.5">
+                <p class="font-bold text-slate-800 flex items-center space-x-1.5">
+                    <i data-lucide="info" class="w-3.5 h-3.5 text-indigo-600"></i>
+                    <span>Ketentuan Kolom Data Pelanggan:</span>
+                </p>
+                <ul class="space-y-1 list-disc list-inside text-slate-600 pl-1">
+                    <li><strong class="text-rose-600 font-bold">*Wajib Diisi:</strong> <strong>Nama Pelanggan</strong> dan <strong>No Telepon</strong>.</li>
+                    <li><strong class="text-slate-700 font-semibold">Opsional:</strong> <strong>Alamat</strong>, <strong>Google Maps URL / Koordinat</strong>, dan <strong>Kategori Pelanggan</strong>.</li>
+                    <li><strong>Google Maps URL / Koordinat:</strong> Mendukung link share Google Maps (<code class="font-mono text-[10px] bg-slate-200/60 px-1 py-0.5 rounded">https://maps.google.com/?q=...</code>, link place, atau koordinat langsung <code class="font-mono text-[10px] bg-slate-200/60 px-1 py-0.5 rounded">-6.2088, 106.8190</code>). Sistem otomatis mengekstrak Latitude & Longitude untuk navigasi kurir & peta geospasial.</li>
+                    <li><strong>Kategori Pelanggan:</strong> Pilihan: <code class="font-mono text-[10px] bg-slate-200/60 px-1 py-0.5 rounded">REGULER</code>, <code class="font-mono text-[10px] bg-slate-200/60 px-1 py-0.5 rounded">MEMBER</code>, <code class="font-mono text-[10px] bg-slate-200/60 px-1 py-0.5 rounded">RESELLER</code>, <code class="font-mono text-[10px] bg-slate-200/60 px-1 py-0.5 rounded">MITRA</code>. Jika dikosongkan, otomatis disetel ke <span class="font-semibold text-indigo-700">REGULER</span>.</li>
+                    <li><strong>Deduplikasi Cerdas:</strong> Jika No Telepon sudah terdaftar, profil pelanggan tersebut akan otomatis <em>diperbarui (update)</em> tanpa membuat data ganda.</li>
+                </ul>
+            </div>
+
+            <form onsubmit="submitImportCustomers(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Pilih Berkas CSV / Text (.csv, .txt):</label>
+                    <input type="file" id="cust-import-file-input" accept=".csv, text/plain, text/csv" onchange="handleCustomerImportFileSelect(event)" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
+                </div>
+
+                <div class="relative flex items-center justify-center my-1">
+                    <div class="border-t border-slate-200 w-full"></div>
+                    <span class="bg-white px-3 text-[10px] uppercase font-bold text-slate-400 absolute">Atau Salin & Tempel Langsung</span>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Tempel Baris Data (Bisa Copy-Paste dari Excel / Google Sheets):</label>
+                    <textarea id="cust-import-text-input" rows="5" oninput="handleCustomerImportTextChange()" placeholder="Nama Pelanggan,No Telepon,Alamat,Google Maps URL / Koordinat,Kategori&#10;Budi Santoso,081234567890,Jl. Sudirman Kav 12 Jakarta,https://maps.google.com/?q=-6.2088,106.8190,REGULER&#10;Toko Berkah Grosir,085611223344,Jl. Tebet Raya No 45,-6.2380, 106.8520,RESELLER&#10;Ahmad Dani,087812345678,,," class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-[11px] leading-relaxed focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                </div>
+
+                <!-- Preview container if rows detected -->
+                <div id="cust-import-preview-box" class="hidden space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <span id="cust-import-preview-count" class="font-bold text-slate-700">Pratinjau Data (0 baris):</span>
+                        <span id="cust-import-valid-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Siap Diimport</span>
+                    </div>
+                    <div class="max-h-40 overflow-y-auto border border-slate-200 rounded-xl">
+                        <table class="w-full text-left text-[11px]">
+                            <thead class="bg-slate-100 text-slate-700 sticky top-0 font-bold">
+                                <tr>
+                                    <th class="p-2">#</th>
+                                    <th class="p-2">Nama</th>
+                                    <th class="p-2">No Telepon</th>
+                                    <th class="p-2">Alamat</th>
+                                    <th class="p-2">Google Maps / LongLat</th>
+                                    <th class="p-2">Kategori</th>
+                                    <th class="p-2 text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cust-import-preview-tbody" class="divide-y divide-slate-100 text-slate-700">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" onclick="closeImportCustomerModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700 transition-colors">Batal</button>
+                    <button type="submit" id="btn-submit-import-customers" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md shadow-emerald-100 flex items-center justify-center space-x-1.5 transition-colors">
+                        <i data-lucide="upload" class="w-4 h-4"></i>
+                        <span>Proses Import Pelanggan</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -20814,6 +20921,241 @@ Manager / Supervisor: __________________
             if (data.success) {
                 loadCustomers();
                 initApp();
+            }
+        }
+
+        // ==========================================
+        // IMPORT MASSAL PELANGGAN & MITRA (EXCEL / CSV / TSV)
+        // ==========================================
+        function openImportCustomerModal() {
+            const fileInput = document.getElementById('cust-import-file-input');
+            const textInput = document.getElementById('cust-import-text-input');
+            const previewBox = document.getElementById('cust-import-preview-box');
+            if (fileInput) fileInput.value = '';
+            if (textInput) textInput.value = '';
+            if (previewBox) previewBox.classList.add('hidden');
+            const modal = document.getElementById('customer-import-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.style.setProperty('display', 'flex', 'important');
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function closeImportCustomerModal() {
+            const modal = document.getElementById('customer-import-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.style.setProperty('display', 'none', 'important');
+            }
+        }
+
+        function downloadCustomerImportTemplate() {
+            window.open('api.php?action=download_customer_template', '_blank');
+        }
+
+        function handleCustomerImportFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const text = evt.target.result;
+                const textInput = document.getElementById('cust-import-text-input');
+                if (textInput) {
+                    textInput.value = text;
+                    handleCustomerImportTextChange();
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function extractGoogleCoordsJS(val) {
+            if (!val || typeof val !== 'string') return null;
+            val = val.trim();
+            // Pola 1: @lat,lon
+            let m = val.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/);
+            if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+            // Pola 2: q=lat,lon atau query=lat,lon
+            m = val.match(/(?:[?&](?:q|query|ll|destination)=(-?\d{1,2}\.\d+)[,+](-?\d{1,3}\.\d+))/i);
+            if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+            // Pola 3: /place/lat,lon
+            m = val.match(/\/place\/(-?\d{1,2}\.\d+)[,+](-?\d{1,3}\.\d+)/i);
+            if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+            // Pola 4: Raw decimal coordinates
+            m = val.match(/(-?\d{1,2}\.\d{3,})[,\s]+(-?\d{1,3}\.\d{3,})/);
+            if (m) {
+                const lat = parseFloat(m[1]);
+                const lon = parseFloat(m[2]);
+                if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+                    return { lat, lon };
+                }
+            }
+            return null;
+        }
+
+        function handleCustomerImportTextChange() {
+            const textInput = document.getElementById('cust-import-text-input');
+            const previewBox = document.getElementById('cust-import-preview-box');
+            const tbody = document.getElementById('cust-import-preview-tbody');
+            const countEl = document.getElementById('cust-import-preview-count');
+            const badgeEl = document.getElementById('cust-import-valid-badge');
+            if (!textInput || !previewBox || !tbody) return;
+
+            const text = textInput.value.trim();
+            if (!text) {
+                previewBox.classList.add('hidden');
+                return;
+            }
+
+            const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+            if (lines.length === 0) {
+                previewBox.classList.add('hidden');
+                return;
+            }
+
+            // Detect delimiter
+            const first = lines[0];
+            const tabC = (first.match(/\t/g) || []).length;
+            const semiC = (first.match(/;/g) || []).length;
+            const commaC = (first.match(/,/g) || []).length;
+            let delim = ',';
+            if (tabC > commaC && tabC > semiC) delim = '\t';
+            else if (semiC > commaC) delim = ';';
+
+            // Check header
+            const headerTokens = first.split(delim).map(s => s.trim().replace(/^["']|["']$/g, '').toLowerCase());
+            let isHeader = false;
+            let colMap = { name: 0, phone: 1, address: 2, maps_url: 3, category: 4 };
+
+            headerTokens.forEach((ht, idx) => {
+                if (ht.includes('nama') || ht.includes('name')) { isHeader = true; colMap.name = idx; }
+                else if (ht.includes('telp') || ht.includes('telepon') || ht.includes('phone') || ht.includes('hp') || ht.includes('wa')) { isHeader = true; colMap.phone = idx; }
+                else if (ht.includes('alamat') || ht.includes('address')) { isHeader = true; colMap.address = idx; }
+                else if (ht.includes('map') || ht.includes('koordinat') || ht.includes('longlat') || ht.includes('latlong') || ht.includes('url')) { isHeader = true; colMap.maps_url = idx; }
+                else if (ht.includes('kategori') || ht.includes('category') || ht.includes('tier')) { isHeader = true; colMap.category = idx; }
+            });
+
+            const dataLines = isHeader ? lines.slice(1) : lines;
+            if (dataLines.length === 0) {
+                previewBox.classList.add('hidden');
+                return;
+            }
+
+            let validCount = 0;
+            let invalidCount = 0;
+
+            const rowsHtml = dataLines.slice(0, 15).map((l, idx) => {
+                let cols = l.split(delim).map(s => s.trim().replace(/^["']|["']$/g, ''));
+                
+                // Rejoin unquoted coordinates if split
+                if (cols.length > 5 && colMap.maps_url !== undefined && cols[colMap.maps_url]) {
+                    const candidate = cols[colMap.maps_url] + ',' + (cols[colMap.maps_url + 1] || '');
+                    if (candidate.match(/(?:[?&]q=|-?\d{1,2}\.\d+)[,+](?:-?\d{1,3}\.\d+)/i)) {
+                        const merged = cols.slice(0, colMap.maps_url);
+                        merged.push(candidate);
+                        cols = merged.concat(cols.slice(colMap.maps_url + 2));
+                    }
+                }
+
+                const name = cols[colMap.name] || '';
+                const phone = cols[colMap.phone] || '';
+                const addr = cols[colMap.address] || '-';
+                const gmaps = cols[colMap.maps_url] || '';
+                const cat = cols[colMap.category] || 'REGULER';
+
+                const isValid = (name.length > 0 && phone.replace(/[^\d+]/g, '').length >= 6);
+                if (isValid) validCount++; else invalidCount++;
+
+                const coords = extractGoogleCoordsJS(gmaps);
+                const coordsBadge = coords 
+                    ? `<span class="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 font-mono text-[9px] rounded font-bold" title="${escapeHtml(gmaps)}">📍 ${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}</span>`
+                    : (gmaps ? `<span class="text-slate-400 truncate max-w-[120px] inline-block text-[10px]" title="${escapeHtml(gmaps)}">${escapeHtml(gmaps)}</span>` : '<span class="text-slate-300">-</span>');
+
+                return `
+                    <tr class="${isValid ? 'hover:bg-slate-50' : 'bg-rose-50/50'}">
+                        <td class="p-2 text-slate-400 font-mono">${idx + 1}</td>
+                        <td class="p-2 font-bold ${isValid ? 'text-slate-800' : 'text-rose-600'}">${escapeHtml(name) || '<span class="italic text-rose-500 font-normal">Kosong (Wajib)</span>'}</td>
+                        <td class="p-2 font-mono ${phone.replace(/[^\d+]/g, '').length >= 6 ? 'text-slate-700' : 'text-rose-600'}">${escapeHtml(phone) || '<span class="italic text-rose-500 font-normal">Kosong (Wajib)</span>'}</td>
+                        <td class="p-2 text-slate-500 truncate max-w-[140px]" title="${escapeHtml(addr)}">${escapeHtml(addr)}</td>
+                        <td class="p-2">${coordsBadge}</td>
+                        <td class="p-2"><span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${escapeHtml(cat || 'REGULER')}</span></td>
+                        <td class="p-2 text-center">
+                            ${isValid 
+                                ? '<span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-bold text-[9px]">Valid</span>' 
+                                : '<span class="px-1.5 py-0.5 bg-rose-100 text-rose-800 rounded-full font-bold text-[9px]">Gagal</span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            tbody.innerHTML = rowsHtml;
+            previewBox.classList.remove('hidden');
+
+            const total = dataLines.length;
+            if (countEl) {
+                countEl.innerText = `Pratinjau: ${total} Baris Ditemukan (${validCount} Valid${total > 15 ? ', menampilkan 15 baris pertama' : ''})`;
+            }
+            if (badgeEl) {
+                if (invalidCount === 0) {
+                    badgeEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800';
+                    badgeEl.innerText = `${validCount} Baris Siap Diimport`;
+                } else {
+                    badgeEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800';
+                    badgeEl.innerText = `${validCount} Valid, ${invalidCount} Baris Tidak Lengkap (Akan Dilewati)`;
+                }
+            }
+        }
+
+        async function submitImportCustomers(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('cust-import-file-input');
+            const textInput = document.getElementById('cust-import-text-input');
+            const btnSubmit = document.getElementById('btn-submit-import-customers');
+
+            const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+            const hasText = textInput && textInput.value.trim().length > 0;
+
+            if (!hasFile && !hasText) {
+                alert('Silakan pilih berkas CSV / TXT atau tempel teks data pelanggan terlebih dahulu.');
+                return;
+            }
+
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<span class="inline-block animate-spin mr-1">⏳</span><span>Memproses Import...</span>`;
+
+            try {
+                let res;
+                if (hasFile) {
+                    const formData = new FormData();
+                    formData.append('file', fileInput.files[0]);
+                    res = await fetch('api.php?action=import_customers', {
+                        method: 'POST',
+                        body: formData
+                    });
+                } else {
+                    res = await fetch('api.php?action=import_customers', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ csv_content: textInput.value.trim() })
+                    });
+                }
+
+                const data = await res.json();
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = `<i data-lucide="upload" class="w-4 h-4"></i><span>Proses Import Pelanggan</span>`;
+                if (window.lucide) lucide.createIcons();
+
+                alert(data.message || (data.success ? 'Import pelanggan selesai!' : 'Gagal import pelanggan'));
+                if (data.success) {
+                    closeImportCustomerModal();
+                    await loadCustomers();
+                    await initApp();
+                }
+            } catch (err) {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = `<i data-lucide="upload" class="w-4 h-4"></i><span>Proses Import Pelanggan</span>`;
+                if (window.lucide) lucide.createIcons();
+                alert('Terjadi kesalahan jaringan saat import data pelanggan: ' + err.message);
             }
         }
 
