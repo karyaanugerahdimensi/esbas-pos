@@ -6726,6 +6726,19 @@ try {
             $tax = round($totalTax, 2);
             $deliveryFee = (float)($input['delivery_fee'] ?? 0);
             $deliveryDistanceKm = (float)($input['delivery_distance_km'] ?? 0);
+            // Auto-calculate distance if delivery active but distance <= 0 and customer has coordinates
+            if ($deliveryDistanceKm <= 0 && $customerId) {
+                $stmtBCoords = $pdo->prepare("SELECT latitude, longitude FROM branches WHERE id = ?");
+                $stmtBCoords->execute([$branchId]);
+                $bCoords = $stmtBCoords->fetch();
+                $stmtCCoords = $pdo->prepare("SELECT latitude, longitude FROM customers WHERE id = ?");
+                $stmtCCoords->execute([$customerId]);
+                $cCoords = $stmtCCoords->fetch();
+                if ($bCoords && $cCoords && !empty($bCoords['latitude']) && !empty($cCoords['latitude'])) {
+                    $distM = haversineDistanceMeters((float)$bCoords['latitude'], (float)$bCoords['longitude'], (float)$cCoords['latitude'], (float)$cCoords['longitude']);
+                    $deliveryDistanceKm = round($distM / 1000, 2);
+                }
+            }
             $courierVehicleId = !empty($input['courier_vehicle_id']) ? (int)$input['courier_vehicle_id'] : null;
             $driverUserId = !empty($input['driver_user_id']) ? (int)$input['driver_user_id'] : null;
             $driverName = trim($input['driver_name'] ?? '');

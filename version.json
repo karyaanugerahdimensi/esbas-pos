@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.66",
-  "build": "20261026-21",
+  "version": "1.2.67",
+  "build": "20261026-22",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.67",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Perbaikan Kalkulasi & Penampilan Jarak Real Outlet ke Pelanggan pada POS Kasir (FR-POS-15)",
+      "description": "Menyelesaikan masalah jarak outlet ke pelanggan yang tampil 0 km pada POS kasir saat pesanan memuat produk gratis ongkir/termasuk biaya kirim: (1) Mengoreksi calculateDeliveryFeeForPOS() agar jarak pengantaran riil (Haversine distance) tetap dihitung dan ditampilkan secara presisi (contoh: 1.82 km) ke elemen pos-delivery-distance sekalipun seluruh item produk berstatus gratis ongkir/termasuk biaya kirim (Rp 0). (2) Mengintegrasikan kalkulasi jarak lokal seketika (client-side getHaversineDistanceKm) saat pelanggan atau toggle kurir dipilih sehingga tidak ada jeda antarmuka. (3) Menambahkan fallback auto-kalkulasi jarak pengantaran pada sisi backend api.php saat transaksi checkout disimpan ke tabel sales. (4) Menyelaraskan teks jarak pengantaran pada struk belanja thermal.",
+      "rollback_command": "git checkout v1.2.66"
+    },
     {
       "version": "1.2.66",
       "commit": "HEAD",

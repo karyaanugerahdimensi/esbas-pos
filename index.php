@@ -9247,6 +9247,23 @@ try {
             return String(parseFloat(num.toFixed(maxDecimals)));
         }
 
+        function getHaversineDistanceKm(lat1, lon1, lat2, lon2) {
+            if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
+            const numLat1 = parseFloat(lat1), numLon1 = parseFloat(lon1);
+            const numLat2 = parseFloat(lat2), numLon2 = parseFloat(lon2);
+            if (isNaN(numLat1) || isNaN(numLon1) || isNaN(numLat2) || isNaN(numLon2)) return 0;
+            if (numLat1 === 0 && numLon1 === 0) return 0;
+            if (numLat2 === 0 && numLon2 === 0) return 0;
+            const R = 6371; // Earth's radius in km
+            const dLat = (numLat2 - numLat1) * Math.PI / 180;
+            const dLon = (numLon2 - numLon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(numLat1 * Math.PI / 180) * Math.cos(numLat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return parseFloat((R * c).toFixed(2));
+        }
+
         function escapeHtml(str) {
             if (str === null || str === undefined) return '';
             return String(str)
@@ -10516,30 +10533,32 @@ try {
             const isFreeItem = (c) => Number(c.is_delivery_included) === 1 || Number(c.is_delivery_required) === 2;
             const freeDeliveryItems = (state.cart || []).filter(isFreeItem);
             const chargeableItems = (state.cart || []).filter(c => !isFreeItem(c));
+            const isEntirelyFreeDelivery = (freeDeliveryItems.length > 0 && chargeableItems.length === 0);
 
-            // Kasus 1: Seluruh item dalam keranjang adalah produk GRATIS ONGKIR (Termasuk harga produk)
-            if (freeDeliveryItems.length > 0 && chargeableItems.length === 0) {
-                state.currentDeliveryFee = 0;
-                state.currentDeliveryDistance = 0;
-                if (distEl) distEl.innerText = '0 km';
-                if (feeEl) {
-                    feeEl.innerText = 'GRATIS (Termasuk Harga Produk)';
-                    feeEl.className = 'font-black text-emerald-600 font-mono text-xs';
-                }
-                if (noteEl) {
-                    const names = freeDeliveryItems.map(i => i.name).join(', ');
-                    noteEl.innerHTML = `<span class="text-emerald-700 font-bold">🎁 Seluruh produk dalam pesanan (${names}) sudah termasuk ongkos kirim (Rp 0). Nama kurir & armada tetap wajib dicatat untuk bukti pengantaran.</span>`;
-                }
-                calculateCartTotals();
-                return;
-            }
-
-            // Kasus 2 & 3: Ada barang yang dikenakan ongkos kirim (Pesanan Campuran atau murni produk kena ongkir)
-            // Sesuai ketentuan, ongkos kirim berlaku sesuai dengan jarak mapnya!
-            const subtotal = state.cart.reduce((acc, c) => acc + (c.price * c.qty), 0);
-            const branchId = state.currentBranch ? state.currentBranch.id : 1;
+            const subtotal = (state.cart || []).reduce((acc, c) => acc + (c.price * c.qty), 0);
+            const branch = state.currentBranch;
+            const branchId = branch ? branch.id : 1;
             const cust = state.selectedCustomer;
 
+            // 1. Hitung estimasi jarak lokal seketika (Client-side Haversine) jika koordinat tersedia
+            let branchLat = branch ? parseFloat(branch.latitude) : null;
+            let branchLon = branch ? parseFloat(branch.longitude) : null;
+            let custLat = cust ? parseFloat(cust.latitude) : null;
+            let custLon = cust ? parseFloat(cust.longitude) : null;
+
+            let localDistKm = null;
+            if (branchLat && branchLon && custLat && custLon && 
+                !isNaN(branchLat) && !isNaN(branchLon) && !isNaN(custLat) && !isNaN(custLon) && 
+                !(custLat === 0 && custLon === 0) && !(branchLat === 0 && branchLon === 0)) {
+                localDistKm = getHaversineDistanceKm(branchLat, branchLon, custLat, custLon);
+                state.currentDeliveryDistance = localDistKm;
+                if (distEl) distEl.innerText = `${formatDecimal(localDistKm)} km`;
+            } else {
+                state.currentDeliveryDistance = 0;
+                if (distEl) distEl.innerText = '-';
+            }
+
+            // 2. Hubungi endpoint API untuk kalkulasi dinamis tarif dan jarak presisi
             let url = `api.php?action=calculate_delivery_fee&branch_id=${branchId}&subtotal=${subtotal}`;
             if (cust && cust.id) {
                 url += `&customer_id=${cust.id}`;
@@ -10548,11 +10567,32 @@ try {
             try {
                 const res = await fetch(url);
                 const data = await res.json();
-                if (data.success) {
-                    state.currentDeliveryFee = data.delivery_fee;
-                    state.currentDeliveryDistance = data.distance_km;
+                
+                let distKm = localDistKm;
+                if (data.success && data.has_coordinates && data.distance_km !== undefined) {
+                    distKm = parseFloat(data.distance_km);
+                    state.currentDeliveryDistance = distKm;
+                    if (distEl) distEl.innerText = `${formatDecimal(distKm)} km`;
+                }
 
-                    if (distEl) distEl.innerText = `${formatDecimal(data.distance_km)} km`;
+                if (isEntirelyFreeDelivery) {
+                    // Kasus 1: Seluruh item dalam keranjang adalah produk GRATIS ONGKIR (Termasuk harga produk)
+                    state.currentDeliveryFee = 0;
+                    if (feeEl) {
+                        feeEl.innerText = 'GRATIS (Termasuk Harga Produk)';
+                        feeEl.className = 'font-black text-emerald-600 font-mono text-xs';
+                    }
+                    if (noteEl) {
+                        const names = freeDeliveryItems.map(i => i.name).join(', ');
+                        if (distKm !== null && distKm > 0) {
+                            noteEl.innerHTML = `<span class="text-emerald-700 font-bold">🎁 Seluruh produk dalam pesanan (${names}) sudah termasuk ongkos kirim (Rp 0). Jarak pengantaran terdeteksi ${formatDecimal(distKm)} km.</span>`;
+                        } else {
+                            noteEl.innerHTML = `<span class="text-emerald-700 font-bold">🎁 Seluruh produk dalam pesanan (${names}) sudah termasuk ongkos kirim (Rp 0). Nama kurir & armada tetap dicatat untuk bukti pengantaran.</span>`;
+                        }
+                    }
+                } else if (data.success) {
+                    // Kasus 2: Berhasil kalkulasi tarif dinamis berdasarkan jarak
+                    state.currentDeliveryFee = data.delivery_fee;
                     const isPromoFree = Boolean(data.is_free || data.is_free_delivery);
                     if (feeEl) {
                         feeEl.innerText = isPromoFree ? 'GRATIS (Promo Belanja)' : formatRupiah(data.delivery_fee);
@@ -10562,10 +10602,10 @@ try {
                         noteEl.innerText = data.rule_applied || (isPromoFree ? 'Memenuhi syarat gratis ongkir' : `Tarif dasar + KM`);
                     }
                 } else {
+                    // Kasus 3: Titik koordinat pelanggan belum diatur di CRM
                     const baseFee = state.currentDeliverySetting?.base_fee || 10000;
                     state.currentDeliveryFee = baseFee;
-                    state.currentDeliveryDistance = 0;
-                    if (distEl) distEl.innerText = '-';
+                    if (distEl && (localDistKm === null || localDistKm === 0)) distEl.innerText = '-';
                     if (feeEl) {
                         feeEl.innerText = formatRupiah(baseFee);
                         feeEl.className = 'font-black text-amber-700 font-mono';
@@ -10576,8 +10616,15 @@ try {
                 }
             } catch (err) {
                 console.error('Gagal kalkulasi ongkir:', err);
-                state.currentDeliveryFee = 10000;
-                state.currentDeliveryDistance = 2.0;
+                if (isEntirelyFreeDelivery) {
+                    state.currentDeliveryFee = 0;
+                    if (feeEl) {
+                        feeEl.innerText = 'GRATIS (Termasuk Harga Produk)';
+                        feeEl.className = 'font-black text-emerald-600 font-mono text-xs';
+                    }
+                } else {
+                    state.currentDeliveryFee = 10000;
+                }
             }
             calculateCartTotals();
         }
@@ -11000,7 +11047,7 @@ try {
             } else if (sale.delivery_status && sale.delivery_status !== 'NONE') {
                 itemsHtml += `
                     <div class="flex justify-between text-emerald-800 font-bold border-t border-dashed border-emerald-200 pt-1 mt-1">
-                        <span>🛵 Layanan Antar: Termasuk Biaya Kirim${effectiveDriver ? ` • Kurir: ${effectiveDriver}` : ''}</span>
+                        <span>🛵 Layanan Antar${sale.delivery_distance_km && Number(sale.delivery_distance_km) > 0 ? ` (${sale.delivery_distance_km} km)` : ''}: Termasuk Biaya Kirim${effectiveDriver ? ` • Kurir: ${effectiveDriver}` : ''}</span>
                         <span>Rp 0</span>
                     </div>
                 `;
@@ -19872,6 +19919,9 @@ Manager / Supervisor: __________________
             if (filteredCusts.length === 0) {
                 select.innerHTML = `<option value="">(Belum ada data pelanggan tier ${activeCat})</option>`;
                 updatePosCustomerUI();
+            if (document.getElementById('check-delivery-mode')?.checked) {
+                calculateDeliveryFeeForPOS();
+            }
                 return;
             }
 
@@ -19892,6 +19942,9 @@ Manager / Supervisor: __________________
             }
 
             updatePosCustomerUI();
+            if (document.getElementById('check-delivery-mode')?.checked) {
+                calculateDeliveryFeeForPOS();
+            }
         }
 
         function updatePosCustomerUI() {
@@ -19930,6 +19983,9 @@ Manager / Supervisor: __________________
                 state.selectedCustomerCategory = found.category || 'REGULER';
             }
             updatePosCustomerUI();
+            if (document.getElementById('check-delivery-mode')?.checked) {
+                calculateDeliveryFeeForPOS();
+            }
             recalculateCartPrices();
             renderProducts();
             if (document.getElementById('check-delivery-mode')?.checked) {
