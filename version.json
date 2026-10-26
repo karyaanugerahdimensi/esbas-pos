@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.67",
-  "build": "20261026-22",
+  "version": "1.2.68",
+  "build": "20261026-23",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.68",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Otomatisasi Reset Fitur Delivery POS & Pengosongan Keranjang Saat Ganti Pelanggan (FR-POS-31)",
+      "description": "Menyempurnakan alur kerja POS Kasir: (1) Tombol 'Kosongkan' (clearCart) sekarang otomatis mereset dan mengosongkan fitur delivery (uncheck checkbox delivery, menyembunyikan badge & box delivery, reset ongkir dan jarak tempuh). (2) Saat item di keranjang dihapus satu per satu secara manual hingga keranjang kosong (cart.length === 0), fitur delivery otomatis mati dan disembunyikan. (3) Saat kasir mengganti pelanggan atau tier kategori pelanggan, list order (keranjang) dan fitur delivery otomatis dihilangkan/dikosongkan agar kasir menginput ulang pesanan untuk pelanggan baru.",
+      "rollback_command": "git checkout v1.2.67"
+    },
     {
       "version": "1.2.67",
       "commit": "HEAD",

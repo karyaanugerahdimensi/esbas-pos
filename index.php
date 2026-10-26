@@ -10232,13 +10232,52 @@ try {
             checkMandatoryDeliveryOnCart();
         }
 
+        function resetPosDelivery(skipTotalsRecalc = false) {
+            const delivCheckbox = document.getElementById('check-delivery-mode');
+            if (delivCheckbox) delivCheckbox.checked = false;
+
+            const badge = document.getElementById('pos-delivery-badge');
+            if (badge) badge.classList.add('hidden');
+
+            const box = document.getElementById('pos-delivery-box');
+            if (box) box.classList.add('hidden');
+
+            state.currentDeliveryFee = 0;
+            state.currentDeliveryDistance = 0;
+            state.currentPosDriverUserId = null;
+            state.currentPosDriverName = null;
+            state.currentPosVehicleId = null;
+
+            const noteEl = document.getElementById('pos-delivery-note');
+            if (noteEl) noteEl.innerHTML = '';
+
+            const distEl = document.getElementById('pos-delivery-distance');
+            if (distEl) distEl.innerText = '-';
+
+            const feeEl = document.getElementById('pos-delivery-fee-display');
+            if (feeEl) {
+                feeEl.innerText = 'Rp 0';
+                feeEl.className = 'font-black text-amber-700 font-mono';
+            }
+
+            if (!skipTotalsRecalc) {
+                calculateCartTotals();
+            }
+        }
+
         function checkMandatoryDeliveryOnCart() {
+            const delivCheckbox = document.getElementById('check-delivery-mode');
+            if (!delivCheckbox) return;
+
+            if (!state.cart || state.cart.length === 0) {
+                resetPosDelivery(false);
+                return;
+            }
+
             const isFreeItem = (c) => Number(c.is_delivery_included) === 1 || Number(c.is_delivery_required) === 2;
             const freeDeliveryItems = (state.cart || []).filter(isFreeItem);
             const chargeableItems = (state.cart || []).filter(c => !isFreeItem(c));
             const mandatoryItems = (state.cart || []).filter(c => Number(c.is_delivery_required) === 1);
-            const delivCheckbox = document.getElementById('check-delivery-mode');
-            if (!delivCheckbox) return;
 
             const needsDelivery = (mandatoryItems.length > 0 || freeDeliveryItems.length > 0);
 
@@ -10251,7 +10290,7 @@ try {
         }
 
         function updateCartQty(itemKey, delta) {
-            const item = state.cart.find(c => c.item_key === itemKey);
+            const item = (state.cart || []).find(c => c.item_key === itemKey);
             if (!item) return;
             item.qty += delta;
             if (item.qty <= 0) {
@@ -10267,23 +10306,29 @@ try {
         }
 
         function removeFromCart(itemKey) {
-            state.cart = state.cart.filter(c => c.item_key !== itemKey);
+            state.cart = (state.cart || []).filter(c => c.item_key !== itemKey);
+            if (state.cart.length === 0) {
+                resetPosDelivery(true);
+            }
             renderCart();
             checkMandatoryDeliveryOnCart();
         }
 
         function clearCart() {
             state.cart = [];
-            state.currentDeliveryFee = 0;
-            state.currentDeliveryDistance = 0;
-            const noteEl = document.getElementById('pos-delivery-note');
-            if (noteEl) noteEl.innerHTML = '';
+            resetPosDelivery(true);
+            const discEl = document.getElementById('input-discount');
+            if (discEl) discEl.value = 0;
+            const cashEl = document.getElementById('input-cash-received');
+            if (cashEl) cashEl.value = '';
             renderCart();
         }
 
         function renderCart() {
             const container = document.getElementById('cart-items');
-            if (state.cart.length === 0) {
+            if (!state.cart || state.cart.length === 0) {
+                state.cart = [];
+                resetPosDelivery(true);
                 container.innerHTML = `
                     <div class="h-full flex flex-col items-center justify-center text-slate-400 text-sm py-12">
                         <i data-lucide="shopping-cart" class="w-12 h-12 mb-2 stroke-1"></i>
@@ -19976,21 +20021,24 @@ Manager / Supervisor: __________________
 
         function onPosCustomerChange() {
             const select = document.getElementById('pos-customer-select');
+            if (!select) return;
             const cId = parseInt(select.value);
-            const found = state.customers.find(c => c.id === cId);
+            const prevCustId = state.selectedCustomer ? state.selectedCustomer.id : null;
+            const found = (state.customers || []).find(c => c.id === cId);
             if (found) {
                 state.selectedCustomer = found;
                 state.selectedCustomerCategory = found.category || 'REGULER';
             }
             updatePosCustomerUI();
-            if (document.getElementById('check-delivery-mode')?.checked) {
-                calculateDeliveryFeeForPOS();
+
+            // Jika ganti pelanggan: list order dan fitur delivery dihilangkan agar kasir menginput ulang
+            if (prevCustId !== cId || (state.cart && state.cart.length > 0)) {
+                state.cart = [];
+                resetPosDelivery(true);
+                renderCart();
             }
-            recalculateCartPrices();
+
             renderProducts();
-            if (document.getElementById('check-delivery-mode')?.checked) {
-                calculateDeliveryFeeForPOS();
-            }
         }
 
         function setPosCustomerCategory(cat) {
@@ -20002,9 +20050,12 @@ Manager / Supervisor: __________________
                 return;
             }
 
+            const prevCustId = state.selectedCustomer ? state.selectedCustomer.id : null;
+            const prevCat = state.selectedCustomerCategory;
+
             state.selectedCustomerCategory = cat;
             // Pilih pelanggan pertama yang sesuai dengan kategori tier ini
-            const matchingCust = state.customers.find(c => (c.category || 'REGULER') === cat && c.is_active == 1);
+            const matchingCust = (state.customers || []).find(c => (c.category || 'REGULER') === cat && c.is_active == 1);
             if (matchingCust) {
                 state.selectedCustomer = matchingCust;
             } else {
@@ -20013,11 +20064,16 @@ Manager / Supervisor: __________________
             // Re-render isi dropdown pelanggan agar HANYA memunculkan pelanggan dari tier yang dipilih
             renderPosTierButtons();
             renderPosCustomerSelect();
-            recalculateCartPrices();
-            renderProducts();
-            if (document.getElementById('check-delivery-mode')?.checked) {
-                calculateDeliveryFeeForPOS();
+
+            // Jika ganti pelanggan/kategori: list order dan fitur delivery dihilangkan agar kasir menginput ulang
+            const isCustChanged = (matchingCust && matchingCust.id !== prevCustId) || (prevCat !== cat);
+            if (isCustChanged || (state.cart && state.cart.length > 0)) {
+                state.cart = [];
+                resetPosDelivery(true);
+                renderCart();
             }
+
+            renderProducts();
         }
 
         function recalculateCartPrices() {
