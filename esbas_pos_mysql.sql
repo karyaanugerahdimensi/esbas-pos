@@ -436,7 +436,8 @@ CREATE TABLE `users` (
     `allowance` DECIMAL(15, 2) DEFAULT 500000,
     `daily_transport` DECIMAL(15, 2) DEFAULT 25000,
     `default_work_shift_id` INT DEFAULT NULL,
-    `assigned_vehicle_id` INT DEFAULT NULL
+    `assigned_vehicle_id` INT DEFAULT NULL,
+    `join_date` DATE DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table `users`
@@ -1148,6 +1149,7 @@ CREATE TABLE `employee_payrolls` (
     `net_salary` DECIMAL(15, 2) NOT NULL,
     `payment_status` VARCHAR(255) DEFAULT 'GENERATED',
     `notes` TEXT,
+    `details_json` LONGTEXT DEFAULT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

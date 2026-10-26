@@ -856,6 +856,11 @@ function autoMigrateAndSync($pdo) {
             $pdo->exec("ALTER TABLE users ADD COLUMN assigned_branch_ids TEXT DEFAULT NULL");
         }
     } catch (Exception $e) {}
+    try {
+        if (!in_array('join_date', $userCols)) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN join_date DATE DEFAULT NULL");
+        }
+    } catch (Exception $e) {}
 
     try {
         $pdo->exec("CREATE TABLE IF NOT EXISTS user_branches (
@@ -1819,6 +1824,13 @@ function autoMigrateAndSync($pdo) {
         FOREIGN KEY (user_id) REFERENCES users(id),
         FOREIGN KEY (branch_id) REFERENCES branches(id)
     )");
+    try {
+        $payrollCols = getDbTableColumns($pdo, 'employee_payrolls');
+        if (!in_array('details_json', $payrollCols)) {
+            $pdo->exec("ALTER TABLE employee_payrolls ADD COLUMN details_json TEXT DEFAULT NULL");
+        }
+    } catch (Exception $e) {}
+
     // 42. Ensure app_settings table exists and seed defaults
     $pdo->exec("CREATE TABLE IF NOT EXISTS app_settings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -100,11 +100,13 @@ try {
         @media print {
             body.printing-payslip * { visibility: hidden !important; }
             body.printing-payslip #ess-payslip-printable-area, body.printing-payslip #ess-payslip-printable-area *,
-            body.printing-payslip #modal-payslip-printable-area, body.printing-payslip #modal-payslip-printable-area * {
+            body.printing-payslip #modal-payslip-printable-area, body.printing-payslip #modal-payslip-printable-area *,
+            body.printing-payslip #modal-payslip-starqua-area, body.printing-payslip #modal-payslip-starqua-area * {
                 visibility: visible !important;
             }
             body.printing-payslip #ess-payslip-printable-area,
-            body.printing-payslip #modal-payslip-printable-area {
+            body.printing-payslip #modal-payslip-printable-area,
+            body.printing-payslip #modal-payslip-starqua-area {
                 position: absolute !important;
                 left: 0 !important;
                 top: 0 !important;
@@ -6293,9 +6295,16 @@ try {
                         <input type="text" id="emp-pin" value="123456" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono">
                     </div>
                 </div>
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Kata Sandi (Password):</label>
-                    <input type="password" id="emp-password" placeholder="Kosongkan jika tetap" class="w-full p-2.5 bg-slate-50 border rounded-xl">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Tanggal Masuk Kerja:</label>
+                        <input type="date" id="emp-join-date" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium text-slate-800">
+                        <p class="text-[10px] text-slate-400">Dicetak di kop slip gaji resmi.</p>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Kata Sandi (Password):</label>
+                        <input type="password" id="emp-password" placeholder="Kosongkan jika tetap" class="w-full p-2.5 bg-slate-50 border rounded-xl">
+                    </div>
                 </div>
 
                 <!-- Shift Kerja Bawaan (Default Work Shift) -->
@@ -9757,7 +9766,7 @@ try {
     <!-- MODAL SLIP GAJI KARYAWAN (OFFICIAL PAYSLIP VIEW & PRINT) -->
     <!-- ======================================================== -->
     <div id="payroll-slip-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
             <!-- Modal Bar -->
             <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between shrink-0">
                 <div class="flex items-center space-x-2">
@@ -9779,10 +9788,106 @@ try {
                 </div>
             </div>
 
+            <!-- Template Switcher Sub-bar -->
+            <div class="px-5 py-2.5 bg-slate-800 border-b border-slate-700 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-semibold text-slate-300">Pilihan Tampilan:</span>
+                    <button type="button" id="btn-tpl-starqua" onclick="switchPayslipTemplate('starqua')" class="px-3 py-1 rounded-xl text-xs font-bold transition-all bg-emerald-600 text-white shadow-xs flex items-center space-x-1.5">
+                        <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+                        <span>📋 Format Rinci Starqua</span>
+                    </button>
+                    <button type="button" id="btn-tpl-standard" onclick="switchPayslipTemplate('standard')" class="px-3 py-1 rounded-xl text-xs font-bold transition-all bg-slate-700 text-slate-300 hover:text-white flex items-center space-x-1.5">
+                        <i data-lucide="layout" class="w-3.5 h-3.5"></i>
+                        <span>💳 Format Standar Navy</span>
+                    </button>
+                </div>
+                <span id="badge-tpl-indicator" class="text-[11px] font-mono font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
+                    Template: Rinci Starqua (Formula 1+2-3-4-5)
+                </span>
+            </div>
+
             <!-- Modal Content (Scrollable) -->
-            <div class="p-4 sm:p-6 overflow-y-auto bg-slate-100 dark:bg-slate-950 flex justify-center">
-                <!-- Formal Digital Payslip Document View -->
-                <div id="modal-payslip-printable-area" class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm w-full max-w-2xl space-y-5 font-sans text-slate-800">
+            <div class="p-4 sm:p-6 overflow-y-auto bg-slate-100 dark:bg-slate-950 flex flex-col items-center">
+                <!-- ============================================== -->
+                <!-- 1. TEMPLATE RINCI STARQUA (OFFICIAL PHYSICAL)  -->
+                <!-- ============================================== -->
+                <div id="modal-payslip-starqua-area" class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-300 shadow-sm w-full max-w-2xl font-sans text-slate-900 text-xs space-y-4">
+                    <!-- Kop Slip Starqua -->
+                    <div class="text-center pb-2 border-b-2 border-slate-900">
+                        <h2 id="sq-company-title" class="text-xl sm:text-2xl font-black uppercase tracking-wider text-slate-900">SLIP GAJI STARQUA</h2>
+                        <p id="sq-period-label" class="text-xs font-bold text-slate-700 mt-1">Periode : Agustus 2025</p>
+                    </div>
+
+                    <!-- Identitas Karyawan (Metadata Starqua) -->
+                    <div class="grid grid-cols-2 gap-4 py-2 border-b border-slate-300 text-xs">
+                        <div class="space-y-1">
+                            <div class="flex"><span class="w-24 text-slate-600">Nama</span><span class="mr-2 text-slate-600">:</span><span id="sq-emp-name" class="font-bold text-slate-900">Abdul Latif</span></div>
+                            <div class="flex"><span class="w-24 text-slate-600">Tgl. Masuk</span><span class="mr-2 text-slate-600">:</span><span id="sq-emp-join-date" class="font-bold text-slate-900">13-07-2024</span></div>
+                            <div class="flex"><span class="w-24 text-slate-600">Jabatan</span><span class="mr-2 text-slate-600">:</span><span id="sq-emp-role" class="font-bold text-slate-900">Operasional / Driver</span></div>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex"><span class="w-24 text-slate-600">Cabang</span><span class="mr-2 text-slate-600">:</span><span id="sq-branch-name" class="font-bold text-slate-900">Depo Cimahi</span></div>
+                            <div class="flex"><span class="w-24 text-slate-600">Status</span><span class="mr-2 text-slate-600">:</span><span id="sq-emp-status" class="font-bold text-slate-900">Karyawan Tetap</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Rincian Starqua 4 Kolom -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse text-xs border border-slate-400">
+                            <thead>
+                                <tr class="bg-slate-200 text-slate-900 font-bold border-b border-slate-400">
+                                    <th class="py-2 px-2.5 text-left border-r border-slate-300">KETERANGAN</th>
+                                    <th class="py-2 px-2.5 text-center w-32 border-r border-slate-300">&sum; hari (satuan)</th>
+                                    <th class="py-2 px-2.5 text-right w-32 border-r border-slate-300">Rp/hari (satuan)</th>
+                                    <th class="py-2 px-2.5 text-right w-36">Nilai Rp</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sq-table-body" class="divide-y divide-slate-200">
+                                <!-- Rendered dynamically by JavaScript -->
+                            </tbody>
+                            <tfoot>
+                                <tr class="border-t-2 border-slate-900 bg-slate-900 text-white font-black text-xs sm:text-sm">
+                                    <td colspan="3" class="py-2.5 px-3 text-left uppercase tracking-wide">
+                                        &sum; YANG DIBAYARKAN ( 1 + 2 - 3 - 4 - 5 )
+                                    </td>
+                                    <td id="sq-final-take-home-pay" class="py-2.5 px-3 text-right font-mono text-amber-300 font-black text-sm sm:text-base whitespace-nowrap">
+                                        Rp 2.733.250
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- Catatan & Tanda Tangan -->
+                    <div class="grid grid-cols-2 gap-4 pt-3 border-t border-slate-300 text-xs">
+                        <div>
+                            <p class="font-bold text-slate-900 mb-1">Catatan :</p>
+                            <ul id="sq-notes-list" class="list-decimal list-inside space-y-0.5 text-slate-700">
+                                <li>Lembur 11 Jam</li>
+                                <li>Uang makan diambil harian</li>
+                            </ul>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 text-center">
+                            <div>
+                                <p class="text-slate-600 mb-1">Penerima,</p>
+                                <div class="h-14 flex items-end justify-center">
+                                    <span id="sq-sign-emp" class="font-bold underline text-slate-900">Abdul Latif</span>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-slate-600 mb-1">Pimpinan / Depo,</p>
+                                <div class="h-14 flex items-end justify-center">
+                                    <span id="sq-sign-mgr" class="font-bold underline text-slate-900">Manager Operasional</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================== -->
+                <!-- 2. TEMPLATE STANDAR NAVY (EXISTING COMPACT)   -->
+                <!-- ============================================== -->
+                <div id="modal-payslip-printable-area" class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm w-full max-w-2xl space-y-5 font-sans text-slate-800 hidden">
                     <!-- Header Slip -->
                     <div class="flex items-start justify-between border-b-2 border-slate-800 pb-3">
                         <div>
@@ -9935,7 +10040,7 @@ try {
     <!-- MODAL EDITOR / PENYESUAIAN KOMPONEN GAJI PAYROLL         -->
     <!-- ======================================================== -->
     <div id="payroll-editor-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
             <!-- Modal Header -->
             <div class="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shrink-0">
                 <div class="flex items-center space-x-3">
@@ -9943,12 +10048,24 @@ try {
                         <i data-lucide="edit-3" class="w-4 h-4 text-indigo-400"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-sm">Penyesuaian Komponen Gaji</h3>
-                        <p id="ped-modal-subtitle" class="text-xs text-indigo-300">Karyawan: Bima | Periode: 2026-10</p>
+                        <h3 class="font-bold text-sm">Penyesuaian Komponen Gaji & Slip Rinci</h3>
+                        <p id="ped-modal-subtitle" class="text-xs text-indigo-300">Karyawan: Abdul Latif | Periode: 2025-08</p>
                     </div>
                 </div>
                 <button type="button" onclick="closePayrollEditorModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
                     <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Tab Switcher Header inside Editor -->
+            <div class="flex border-b border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/50 px-5 pt-2.5 space-x-2 shrink-0">
+                <button type="button" id="ped-tab-btn-starqua" onclick="switchPayrollEditorTab('starqua')" class="px-4 py-2 border-b-2 border-indigo-600 font-bold text-xs text-indigo-600 dark:text-indigo-400 flex items-center space-x-1.5 transition-all">
+                    <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+                    <span>Rincian Format Starqua (Resmi)</span>
+                </button>
+                <button type="button" id="ped-tab-btn-standard" onclick="switchPayrollEditorTab('standard')" class="px-4 py-2 border-b-2 border-transparent font-semibold text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 flex items-center space-x-1.5 transition-all">
+                    <i data-lucide="layout" class="w-3.5 h-3.5"></i>
+                    <span>Form Standar Ringkas</span>
                 </button>
             </div>
 
@@ -9957,111 +10074,359 @@ try {
                 <input type="hidden" id="ped-user-id">
                 <input type="hidden" id="ped-branch-id">
                 <input type="hidden" id="ped-period-month">
+                <input type="hidden" id="ped-active-tab" value="starqua">
 
-                <!-- 2 Columns Input: Pendapatan vs Potongan -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Column 1: Pendapatan -->
-                    <div class="p-3.5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 space-y-3">
-                        <h4 class="text-xs font-black uppercase text-emerald-800 dark:text-emerald-400 flex items-center space-x-1.5 border-b border-emerald-200 dark:border-emerald-800/40 pb-2">
-                            <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-emerald-600"></i>
-                            <span>Komponen Pendapatan (Gross)</span>
-                        </h4>
+                <!-- ============================================== -->
+                <!-- PANEL A: FORM RINCI FORMAT STARQUA (RESMI)     -->
+                <!-- ============================================== -->
+                <div id="ped-panel-starqua" class="space-y-4">
+                    <!-- SECTION 1: PENERIMAAN KOTOR -->
+                    <div class="border border-emerald-200 dark:border-emerald-800/50 rounded-2xl bg-emerald-50/30 dark:bg-emerald-950/10 p-4 space-y-3">
+                        <div class="flex items-center justify-between border-b border-emerald-200 dark:border-emerald-800/50 pb-2">
+                            <h4 class="text-xs font-black uppercase text-emerald-800 dark:text-emerald-400 flex items-center space-x-1.5">
+                                <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
+                                <span>PENERIMAAN KOTOR</span>
+                            </h4>
+                            <span id="sq-ed-subtotal-1" class="font-mono text-xs font-black text-emerald-700 dark:text-emerald-300 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-emerald-200">Rp 0</span>
+                        </div>
 
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Gaji Pokok (Rp)</label>
-                            <input type="number" id="ped-base-salary" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Tunjangan Jabatan (Rp)</label>
-                            <input type="number" id="ped-allowance" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500">
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1">Hari Hadir</label>
-                                <input type="number" id="ped-attendance-days" oninput="recalcPayrollEditorTotals()" min="0" max="31" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1">Tarif Transport / Hr</label>
-                                <input type="number" id="ped-daily-transport-rate" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500">
+                        <!-- A. Gaji Pokok -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">A. Gaji Pokok (Bulan)</span>
+                            <div class="sm:col-span-2">
+                                <input type="number" id="sq-ed-base-salary" oninput="recalcStarquaEditor()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500">
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Total Transport (Otomatis: Hari x Tarif)</label>
-                            <input type="number" id="ped-transport-total" readonly class="w-full text-xs font-mono font-bold p-2 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 cursor-not-allowed">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Komisi Penjualan Kasir (Rp)</label>
-                            <input type="number" id="ped-sales-commission" oninput="recalcPayrollEditorTotals()" min="0" step="500" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500">
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1">Uang Lembur (Rp)</label>
-                                <input type="number" id="ped-overtime-pay" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500">
+
+                        <!-- B. Insentif Produk (7 items) -->
+                        <div class="space-y-2 pt-1 border-t border-dashed border-emerald-200 dark:border-emerald-800/40">
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block">B. Insentif Produk (Qty & Tarif Rp 750)</span>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                <!-- 0. Air Mineral -->
+                                <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="w-24 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Air Mineral</span>
+                                    <input type="number" id="sq-ed-inc-qty-0" oninput="recalcStarquaEditor()" placeholder="Qty" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" title="Jumlah Galon">
+                                    <span class="text-[10px] text-slate-400">x</span>
+                                    <input type="number" id="sq-ed-inc-rate-0" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="750">
+                                </div>
+                                <!-- 1. Es Kristal -->
+                                <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="w-24 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Es Kristal</span>
+                                    <input type="number" id="sq-ed-inc-qty-1" oninput="recalcStarquaEditor()" placeholder="Qty" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" title="Jumlah Order">
+                                    <span class="text-[10px] text-slate-400">x</span>
+                                    <input type="number" id="sq-ed-inc-rate-1" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="750">
+                                </div>
+                                <!-- 2. Gas -->
+                                <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="w-24 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Gas</span>
+                                    <input type="number" id="sq-ed-inc-qty-2" oninput="recalcStarquaEditor()" placeholder="Qty" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" title="Jumlah Tabung">
+                                    <span class="text-[10px] text-slate-400">x</span>
+                                    <input type="number" id="sq-ed-inc-rate-2" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="750">
+                                </div>
+                                <!-- 3. RO -->
+                                <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="w-24 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">RO</span>
+                                    <input type="number" id="sq-ed-inc-qty-3" oninput="recalcStarquaEditor()" placeholder="Qty" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" title="Jumlah Galon">
+                                    <span class="text-[10px] text-slate-400">x</span>
+                                    <input type="number" id="sq-ed-inc-rate-3" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="750">
+                                </div>
+                                <!-- 4. Aqua -->
+                                <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="w-24 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Aqua</span>
+                                    <input type="number" id="sq-ed-inc-qty-4" oninput="recalcStarquaEditor()" placeholder="Qty" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" title="Jumlah Galon">
+                                    <span class="text-[10px] text-slate-400">x</span>
+                                    <input type="number" id="sq-ed-inc-rate-4" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="750">
+                                </div>
+                                <!-- 5. Penjualan Depot -->
+                                <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="w-24 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Penjualan Depot</span>
+                                    <input type="number" id="sq-ed-inc-qty-5" oninput="recalcStarquaEditor()" placeholder="Qty" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" title="Hari">
+                                    <span class="text-[10px] text-slate-400">x</span>
+                                    <input type="number" id="sq-ed-inc-rate-5" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="0">
+                                </div>
+                                <!-- 6. Warung -->
+                                <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="w-24 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Warung</span>
+                                    <input type="number" id="sq-ed-inc-qty-6" oninput="recalcStarquaEditor()" placeholder="Qty" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" title="Jumlah Galon">
+                                    <span class="text-[10px] text-slate-400">x</span>
+                                    <input type="number" id="sq-ed-inc-rate-6" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="750">
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1">Bonus / Insentif (Rp)</label>
-                                <input type="number" id="ped-bonus-pay" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500">
+                        </div>
+
+                        <!-- C. Fasilitas-fasilitas -->
+                        <div class="space-y-2 pt-1 border-t border-dashed border-emerald-200 dark:border-emerald-800/40">
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block">C. Fasilitas & Bonus Pencapaian</span>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="w-28 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Uang Makan</span>
+                                    <input type="number" id="sq-ed-fac-qty-0" oninput="recalcStarquaEditor()" placeholder="Hari" class="w-16 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900">
+                                    <span class="text-[10px] text-slate-400">x</span>
+                                    <input type="number" id="sq-ed-fac-rate-0" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-24 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="10000">
+                                </div>
+                                <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="w-28 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">BPJS Kesehatan</span>
+                                    <input type="number" id="sq-ed-fac-qty-1" oninput="recalcStarquaEditor()" placeholder="Bln" class="w-16 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="1">
+                                    <span class="text-[10px] text-slate-400">x</span>
+                                    <input type="number" id="sq-ed-fac-rate-1" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-24 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="50000">
+                                </div>
+                                <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="w-28 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Bonus 600 Galon</span>
+                                    <input type="number" id="sq-ed-fac-qty-2" oninput="recalcStarquaEditor()" placeholder="Tgt" class="w-16 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900">
+                                    <span class="text-[10px] text-slate-400">x</span>
+                                    <input type="number" id="sq-ed-fac-rate-2" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-24 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="150000">
+                                </div>
+                                <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="w-28 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Bonus Es Kristal</span>
+                                    <input type="number" id="sq-ed-fac-qty-3" oninput="recalcStarquaEditor()" placeholder="Tgt" class="w-16 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900">
+                                    <span class="text-[10px] text-slate-400">x</span>
+                                    <input type="number" id="sq-ed-fac-rate-3" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-24 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="150000">
+                                </div>
+                                <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="w-28 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Bonus RO 200 Galon</span>
+                                    <input type="number" id="sq-ed-fac-qty-4" oninput="recalcStarquaEditor()" placeholder="Tgt" class="w-16 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900">
+                                    <span class="text-[10px] text-slate-400">x</span>
+                                    <input type="number" id="sq-ed-fac-rate-4" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-24 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="150000">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- D. Lebihan -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center pt-1 border-t border-dashed border-emerald-200 dark:border-emerald-800/40">
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">D. Lebih Setoran (Rp)</span>
+                            <div class="sm:col-span-2">
+                                <input type="number" id="sq-ed-overage-rate" oninput="recalcStarquaEditor()" min="0" step="500" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Column 2: Potongan -->
-                    <div class="p-3.5 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/40 space-y-3">
-                        <h4 class="text-xs font-black uppercase text-rose-800 dark:text-rose-400 flex items-center space-x-1.5 border-b border-rose-200 dark:border-rose-800/40 pb-2">
-                            <i data-lucide="arrow-down-right" class="w-3.5 h-3.5 text-rose-600"></i>
-                            <span>Komponen Potongan (Deductions)</span>
-                        </h4>
+                    <!-- SECTION 2: PENGGANTIAN BIAYA -->
+                    <div class="border border-sky-200 dark:border-sky-800/50 rounded-2xl bg-sky-50/30 dark:bg-sky-950/10 p-4 space-y-3">
+                        <div class="flex items-center justify-between border-b border-sky-200 dark:border-sky-800/50 pb-2">
+                            <h4 class="text-xs font-black uppercase text-sky-800 dark:text-sky-400 flex items-center space-x-1.5">
+                                <span class="w-5 h-5 rounded-full bg-sky-600 text-white flex items-center justify-center text-[10px] font-bold">2</span>
+                                <span>PENGGANTIAN BIAYA</span>
+                            </h4>
+                            <span id="sq-ed-subtotal-2" class="font-mono text-xs font-black text-sky-700 dark:text-sky-300 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-sky-200">Rp 0</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span class="w-24 text-slate-600 dark:text-slate-400 text-xs font-semibold">Biaya Lembur</span>
+                                <input type="number" id="sq-ed-reimb-qty-0" oninput="recalcStarquaEditor()" placeholder="Jam" class="w-16 text-xs font-mono p-1.5 border rounded-lg dark:bg-slate-900">
+                                <span class="text-xs text-slate-400">x</span>
+                                <input type="number" id="sq-ed-reimb-rate-0" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-24 text-xs font-mono p-1.5 border rounded-lg dark:bg-slate-900" value="5000">
+                            </div>
+                            <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span class="w-24 text-slate-600 dark:text-slate-400 text-xs font-semibold">Biaya Bensin</span>
+                                <input type="number" id="sq-ed-reimb-qty-1" oninput="recalcStarquaEditor()" placeholder="Bon" class="w-16 text-xs font-mono p-1.5 border rounded-lg dark:bg-slate-900">
+                                <span class="text-xs text-slate-400">x</span>
+                                <input type="number" id="sq-ed-reimb-rate-1" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-24 text-xs font-mono p-1.5 border rounded-lg dark:bg-slate-900" value="50000">
+                            </div>
+                        </div>
+                    </div>
 
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Denda Keterlambatan (Rp)</label>
-                            <input type="number" id="ped-late-deduction" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500">
+                    <!-- SECTION 3: POTONGAN KETIDAK HADIRAN -->
+                    <div class="border border-amber-200 dark:border-amber-800/50 rounded-2xl bg-amber-50/30 dark:bg-amber-950/10 p-4 space-y-3">
+                        <div class="flex items-center justify-between border-b border-amber-200 dark:border-amber-800/50 pb-2">
+                            <h4 class="text-xs font-black uppercase text-amber-800 dark:text-amber-400 flex items-center space-x-1.5">
+                                <span class="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center text-[10px] font-bold">3</span>
+                                <span>POTONGAN KETIDAK HADIRAN</span>
+                            </h4>
+                            <span id="sq-ed-subtotal-3" class="font-mono text-xs font-black text-amber-700 dark:text-amber-300 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-amber-200">Rp 0</span>
                         </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Potongan Alpa / Izin (Rp)</label>
-                            <input type="number" id="ped-absence-deduction" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                            <div class="flex items-center space-x-1.5 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span class="w-24 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Terlambat</span>
+                                <input type="number" id="sq-ed-abs-qty-0" oninput="recalcStarquaEditor()" placeholder="Hr" class="w-12 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900">
+                                <span class="text-[10px] text-slate-400">x</span>
+                                <input type="number" id="sq-ed-abs-rate-0" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="10000">
+                            </div>
+                            <div class="flex items-center space-x-1.5 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span class="w-24 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Pulang Awal</span>
+                                <input type="number" id="sq-ed-abs-qty-1" oninput="recalcStarquaEditor()" placeholder="Hr" class="w-12 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900">
+                                <span class="text-[10px] text-slate-400">x</span>
+                                <input type="number" id="sq-ed-abs-rate-1" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="10000">
+                            </div>
+                            <div class="flex items-center space-x-1.5 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span class="w-24 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Absen Alpa</span>
+                                <input type="number" id="sq-ed-abs-qty-2" oninput="recalcStarquaEditor()" placeholder="Hr" class="w-12 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900">
+                                <span class="text-[10px] text-slate-400">x</span>
+                                <input type="number" id="sq-ed-abs-rate-2" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="40385">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Angsuran Pinjaman / Kasbon (Rp)</label>
-                            <input type="number" id="ped-loan-deduction" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500">
+                    </div>
+
+                    <!-- SECTION 4: POTONGAN LAIN-LAIN -->
+                    <div class="border border-rose-200 dark:border-rose-800/50 rounded-2xl bg-rose-50/30 dark:bg-rose-950/10 p-4 space-y-3">
+                        <div class="flex items-center justify-between border-b border-rose-200 dark:border-rose-800/50 pb-2">
+                            <h4 class="text-xs font-black uppercase text-rose-800 dark:text-rose-400 flex items-center space-x-1.5">
+                                <span class="w-5 h-5 rounded-full bg-rose-600 text-white flex items-center justify-center text-[10px] font-bold">4</span>
+                                <span>POTONGAN LAIN-LAIN</span>
+                            </h4>
+                            <span id="sq-ed-subtotal-4" class="font-mono text-xs font-black text-rose-700 dark:text-rose-300 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-rose-200">Rp 0</span>
                         </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Iuran BPJS / Pajak PPh (Rp)</label>
-                            <input type="number" id="ped-tax-deduction" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                            <div class="flex items-center space-x-1.5 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span class="w-24 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Kasbon</span>
+                                <input type="number" id="sq-ed-oth-qty-0" oninput="recalcStarquaEditor()" placeholder="Kali" class="w-12 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900">
+                                <span class="text-[10px] text-slate-400">x</span>
+                                <input type="number" id="sq-ed-oth-rate-0" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="100000">
+                            </div>
+                            <div class="flex items-center space-x-1.5 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span class="w-24 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Selisih Gas</span>
+                                <input type="number" id="sq-ed-oth-qty-1" oninput="recalcStarquaEditor()" placeholder="Pcs" class="w-12 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900">
+                                <span class="text-[10px] text-slate-400">x</span>
+                                <input type="number" id="sq-ed-oth-rate-1" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="25000">
+                            </div>
+                            <div class="flex items-center space-x-1.5 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span class="w-24 text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Selisih RO</span>
+                                <input type="number" id="sq-ed-oth-qty-2" oninput="recalcStarquaEditor()" placeholder="Pcs" class="w-12 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900">
+                                <span class="text-[10px] text-slate-400">x</span>
+                                <input type="number" id="sq-ed-oth-rate-2" oninput="recalcStarquaEditor()" placeholder="Tarif" class="w-20 text-xs font-mono p-1 border rounded-lg dark:bg-slate-900" value="6000">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Potongan Lainnya (Rp)</label>
-                            <input type="number" id="ped-other-deduction" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500">
+                    </div>
+
+                    <!-- SECTION 5: PINJAMAN -->
+                    <div class="border border-purple-200 dark:border-purple-800/50 rounded-2xl bg-purple-50/30 dark:bg-purple-950/10 p-4 space-y-3">
+                        <div class="flex items-center justify-between border-b border-purple-200 dark:border-purple-800/50 pb-2">
+                            <h4 class="text-xs font-black uppercase text-purple-800 dark:text-purple-400 flex items-center space-x-1.5">
+                                <span class="w-5 h-5 rounded-full bg-purple-600 text-white flex items-center justify-center text-[10px] font-bold">5</span>
+                                <span>PINJAMAN</span>
+                            </h4>
+                            <span id="sq-ed-subtotal-5" class="font-mono text-xs font-black text-purple-700 dark:text-purple-300 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-purple-200">Rp 0</span>
                         </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Status Verifikasi</label>
-                            <select id="ped-payment-status" class="w-full text-xs font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500">
-                                <option value="GENERATED">TERVERIFIKASI (Terkunci & Resmi)</option>
-                                <option value="DRAFT">DRAFT (Dalam Penyesuaian)</option>
-                                <option value="PAID">LUNAS / TELAH DITRANSFER</option>
-                            </select>
+                        <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <span class="w-32 text-slate-600 dark:text-slate-400 text-xs font-semibold">Cicilan Pinjaman</span>
+                            <input type="number" id="sq-ed-loan-qty-0" oninput="recalcStarquaEditor()" placeholder="Qty" class="w-16 text-xs font-mono p-1.5 border rounded-lg dark:bg-slate-900" value="1">
+                            <span class="text-xs text-slate-400">x</span>
+                            <input type="number" id="sq-ed-loan-rate-0" oninput="recalcStarquaEditor()" placeholder="Nominal" class="w-32 text-xs font-mono p-1.5 border rounded-lg dark:bg-slate-900" value="0">
+                        </div>
+                    </div>
+
+                    <!-- CATATAN SLIP GAJI -->
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Catatan Pada Slip (1 baris per catatan):</label>
+                        <textarea id="sq-ed-notes-list" rows="2" placeholder="Lembur 11 Jam&#10;Uang makan diambil harian" class="w-full text-xs p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 font-mono"></textarea>
+                    </div>
+                </div>
+
+                <!-- ============================================== -->
+                <!-- PANEL B: FORM STANDAR RINGKAS (COMPACT VIEW)   -->
+                <!-- ============================================== -->
+                <div id="ped-panel-standard" class="hidden space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Column 1: Pendapatan -->
+                        <div class="p-3.5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 space-y-3">
+                            <h4 class="text-xs font-black uppercase text-emerald-800 dark:text-emerald-400 flex items-center space-x-1.5 border-b border-emerald-200 dark:border-emerald-800/40 pb-2">
+                                <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                <span>Komponen Pendapatan (Gross)</span>
+                            </h4>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Gaji Pokok (Rp)</label>
+                                <input type="number" id="ped-base-salary" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Tunjangan Jabatan (Rp)</label>
+                                <input type="number" id="ped-allowance" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1">Hari Hadir</label>
+                                    <input type="number" id="ped-attendance-days" oninput="recalcPayrollEditorTotals()" min="0" max="31" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1">Tarif Transport / Hr</label>
+                                    <input type="number" id="ped-daily-transport-rate" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Total Transport (Otomatis: Hari x Tarif)</label>
+                                <input type="number" id="ped-transport-total" readonly class="w-full text-xs font-mono font-bold p-2 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 cursor-not-allowed">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Komisi Penjualan Kasir (Rp)</label>
+                                <input type="number" id="ped-sales-commission" oninput="recalcPayrollEditorTotals()" min="0" step="500" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1">Uang Lembur (Rp)</label>
+                                    <input type="number" id="ped-overtime-pay" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1">Bonus / Insentif (Rp)</label>
+                                    <input type="number" id="ped-bonus-pay" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Column 2: Potongan -->
+                        <div class="p-3.5 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/40 space-y-3">
+                            <h4 class="text-xs font-black uppercase text-rose-800 dark:text-rose-400 flex items-center space-x-1.5 border-b border-rose-200 dark:border-rose-800/40 pb-2">
+                                <i data-lucide="arrow-down-right" class="w-3.5 h-3.5 text-rose-600"></i>
+                                <span>Komponen Potongan (Deductions)</span>
+                            </h4>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Denda Keterlambatan (Rp)</label>
+                                <input type="number" id="ped-late-deduction" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Potongan Alpa / Izin (Rp)</label>
+                                <input type="number" id="ped-absence-deduction" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Angsuran Pinjaman / Kasbon (Rp)</label>
+                                <input type="number" id="ped-loan-deduction" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Iuran BPJS / Pajak PPh (Rp)</label>
+                                <input type="number" id="ped-tax-deduction" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Potongan Lainnya (Rp)</label>
+                                <input type="number" id="ped-other-deduction" oninput="recalcPayrollEditorTotals()" min="0" step="1000" class="w-full text-xs font-mono font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500">
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Live Summary Cards -->
-                <div class="grid grid-cols-3 gap-3 p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700">
-                    <div class="text-center">
-                        <span class="text-[10px] font-bold uppercase text-slate-400">Total Kotor</span>
-                        <p id="ped-summary-gross" class="text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono">Rp 0</p>
+                <!-- Status & Live Summary Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center pt-2">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Status Verifikasi</label>
+                        <select id="ped-payment-status" class="w-full text-xs font-bold p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                            <option value="GENERATED">TERVERIFIKASI (Terkunci & Resmi)</option>
+                            <option value="DRAFT">DRAFT (Dalam Penyesuaian)</option>
+                            <option value="PAID">LUNAS / TELAH DITRANSFER</option>
+                        </select>
                     </div>
-                    <div class="text-center">
-                        <span class="text-[10px] font-bold uppercase text-slate-400">Total Potongan</span>
-                        <p id="ped-summary-deductions" class="text-sm font-black text-rose-600 dark:text-rose-400 font-mono">Rp 0</p>
-                    </div>
-                    <div class="text-center">
-                        <span class="text-[10px] font-bold uppercase text-indigo-500">Take Home Pay</span>
-                        <p id="ped-summary-net" class="text-sm font-black text-indigo-600 dark:text-indigo-400 font-mono">Rp 0</p>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Catatan Tambahan (Standar)</label>
+                        <input type="text" id="ped-notes" placeholder="Contoh: Penyesuaian slip resmi" class="w-full text-xs p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500">
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Catatan Tambahan (Opsional)</label>
-                    <input type="text" id="ped-notes" placeholder="Contoh: Penyesuaian lembur event promo akhir pekan" class="w-full text-xs p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                <!-- Live Formula Math Summary Card -->
+                <div class="p-3.5 bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-2xl border border-indigo-800/40 space-y-2 shadow-inner">
+                    <div class="flex flex-wrap items-center justify-between text-xs font-mono">
+                        <div class="flex items-center space-x-1">
+                            <span class="text-emerald-400 font-bold" id="ped-summary-gross">1. Rp 0</span>
+                            <span class="text-slate-400">+</span>
+                            <span class="text-sky-400 font-bold" id="ped-summary-reimb">2. Rp 0</span>
+                            <span class="text-slate-400">-</span>
+                            <span class="text-amber-400 font-bold" id="ped-summary-abs">3. Rp 0</span>
+                            <span class="text-slate-400">-</span>
+                            <span class="text-rose-400 font-bold" id="ped-summary-oth">4. Rp 0</span>
+                            <span class="text-slate-400">-</span>
+                            <span class="text-purple-400 font-bold" id="ped-summary-loan">5. Rp 0</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] text-indigo-300 block uppercase font-bold tracking-wide">&sum; YANG DIBAYARKAN</span>
+                            <span id="ped-summary-net" class="text-base font-black text-amber-300 font-mono">Rp 0</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="pt-2 flex items-center justify-end space-x-2">
@@ -10075,9 +10440,7 @@ try {
                 </div>
             </form>
         </div>
-    </div>
-
-    <!-- ======================================================== -->
+    </div>    <!-- ======================================================== -->
     <!-- JAVASCRIPT APP LOGIC                                     -->
     <!-- ======================================================== -->
     <script>
@@ -16935,6 +17298,387 @@ Manager / Supervisor: __________________
             lucide.createIcons();
         }
 
+        function formatIndoMonthYear(monthStr) {
+            if (!monthStr) return '';
+            const parts = monthStr.split('-');
+            if (parts.length < 2) return monthStr;
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            const idx = parseInt(parts[1], 10) - 1;
+            return `${months[idx] || parts[1]} ${parts[0]}`;
+        }
+
+        function formatIndoDate(dateStr) {
+            if (!dateStr) return '-';
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+            return dateStr;
+        }
+
+        function formatCleanNumber(val) {
+            const num = Math.round(parseFloat(val) || 0);
+            return num.toLocaleString('id-ID');
+        }
+
+        function switchPayslipTemplate(tpl) {
+            payrollModuleState.activeTemplate = tpl;
+            const starquaArea = document.getElementById('modal-payslip-starqua-area');
+            const standardArea = document.getElementById('modal-payslip-printable-area');
+            const btnStarqua = document.getElementById('btn-tpl-starqua');
+            const btnStandard = document.getElementById('btn-tpl-standard');
+            const badgeIndicator = document.getElementById('badge-tpl-indicator');
+
+            if (tpl === 'starqua') {
+                if (starquaArea) starquaArea.classList.remove('hidden');
+                if (standardArea) standardArea.classList.add('hidden');
+
+                if (btnStarqua) {
+                    btnStarqua.className = 'px-3 py-1 rounded-xl text-xs font-bold transition-all bg-emerald-600 text-white shadow-xs flex items-center space-x-1.5';
+                }
+                if (btnStandard) {
+                    btnStandard.className = 'px-3 py-1 rounded-xl text-xs font-bold transition-all bg-slate-700 text-slate-300 hover:text-white flex items-center space-x-1.5';
+                }
+                if (badgeIndicator) {
+                    badgeIndicator.innerText = 'Template: Rinci Starqua (Formula 1+2-3-4-5)';
+                    badgeIndicator.className = 'text-[11px] font-mono font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2.5 py-0.5 rounded-full';
+                }
+            } else {
+                if (starquaArea) starquaArea.classList.add('hidden');
+                if (standardArea) standardArea.classList.remove('hidden');
+
+                if (btnStarqua) {
+                    btnStarqua.className = 'px-3 py-1 rounded-xl text-xs font-bold transition-all bg-slate-700 text-slate-300 hover:text-white flex items-center space-x-1.5';
+                }
+                if (btnStandard) {
+                    btnStandard.className = 'px-3 py-1 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-xs flex items-center space-x-1.5';
+                }
+                if (badgeIndicator) {
+                    badgeIndicator.innerText = 'Template: Standar Navy (Ringkas)';
+                    badgeIndicator.className = 'text-[11px] font-mono font-bold text-indigo-300 bg-indigo-950/60 border border-indigo-500/30 px-2.5 py-0.5 rounded-full';
+                }
+            }
+            if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+        }
+
+        function switchPayrollEditorTab(tab) {
+            const inputActiveTab = document.getElementById('ped-active-tab');
+            if (inputActiveTab) inputActiveTab.value = tab;
+
+            const panelStarqua = document.getElementById('ped-panel-starqua');
+            const panelStandard = document.getElementById('ped-panel-standard');
+            const btnStarqua = document.getElementById('ped-tab-btn-starqua');
+            const btnStandard = document.getElementById('ped-tab-btn-standard');
+
+            if (tab === 'starqua') {
+                if (panelStarqua) panelStarqua.classList.remove('hidden');
+                if (panelStandard) panelStandard.classList.add('hidden');
+
+                if (btnStarqua) {
+                    btnStarqua.className = 'px-4 py-2 border-b-2 border-indigo-600 font-bold text-xs text-indigo-600 dark:text-indigo-400 flex items-center space-x-1.5 transition-all';
+                }
+                if (btnStandard) {
+                    btnStandard.className = 'px-4 py-2 border-b-2 border-transparent font-semibold text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 flex items-center space-x-1.5 transition-all';
+                }
+                recalcStarquaEditor();
+            } else {
+                if (panelStarqua) panelStarqua.classList.add('hidden');
+                if (panelStandard) panelStandard.classList.remove('hidden');
+
+                if (btnStarqua) {
+                    btnStarqua.className = 'px-4 py-2 border-b-2 border-transparent font-semibold text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 flex items-center space-x-1.5 transition-all';
+                }
+                if (btnStandard) {
+                    btnStandard.className = 'px-4 py-2 border-b-2 border-indigo-600 font-bold text-xs text-indigo-600 dark:text-indigo-400 flex items-center space-x-1.5 transition-all';
+                }
+                recalcPayrollEditorTotals();
+            }
+            if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+        }
+
+        function renderStarquaSlipTable(details, p, u, mVal) {
+            const s = state.appSettings || {};
+            const compTitle = (s.payslip_company_name && s.payslip_company_name.trim())
+                ? s.payslip_company_name.trim().toUpperCase()
+                : 'SLIP GAJI STARQUA';
+
+            document.getElementById('sq-company-title').innerText = compTitle;
+            document.getElementById('sq-period-label').innerText = `Periode : ${formatIndoMonthYear(mVal)}`;
+
+            // Metadata Identitas
+            document.getElementById('sq-emp-name').innerText = u.name || '-';
+            const joinDateRaw = (details && details.join_date) ? details.join_date : (u.join_date || '2024-07-13');
+            document.getElementById('sq-emp-join-date').innerText = formatIndoDate(joinDateRaw);
+            document.getElementById('sq-emp-role').innerText = u.role ? (u.role === 'OPERATOR' ? 'Operasional / Driver' : u.role) : 'Operasional / Driver';
+            document.getElementById('sq-branch-name').innerText = u.branch_name || (state.currentBranch ? state.currentBranch.name : 'Depo Cimahi');
+            document.getElementById('sq-emp-status').innerText = 'Karyawan Tetap';
+
+            // Data Breakdown
+            const baseSalary = parseFloat(p.base_salary) || 1000000;
+            const incentives = (details && details.incentives && details.incentives.length) ? details.incentives : [
+                { name: 'Air Mineral', qty: 825, unit: 'Galon', rate: 750, total: 618750 },
+                { name: 'Es Kristal', qty: 397, unit: 'Order', rate: 750, total: 297750 },
+                { name: 'Gas', qty: 39, unit: 'Tabung', rate: 750, total: 29250 },
+                { name: 'RO', qty: 169, unit: 'Galon', rate: 750, total: 126750 },
+                { name: 'Aqua', qty: 10, unit: 'Galon', rate: 750, total: 7500 },
+                { name: 'Penjualan Depot', qty: 0, unit: 'Hari', rate: 0, total: 0 },
+                { name: 'Warung', qty: 317, unit: 'Galon', rate: 750, total: 237750 }
+            ];
+
+            const facilities = (details && details.facilities && details.facilities.length) ? details.facilities : [
+                { name: 'Uang Makan', qty: 27, unit: 'Hari', rate: 10000, total: 270000 },
+                { name: 'BPJS Kesehatan', qty: 1, unit: 'Bulan', rate: 50000, total: 50000 },
+                { name: 'Bonus Pencapaian 600 Galon', qty: 1, unit: 'Target', rate: 150000, total: 150000 },
+                { name: 'Bonus Pencapaian Es Kristal', qty: 0, unit: 'Target', rate: 150000, total: 0 },
+                { name: 'Bonus Pencapaian RO 200 Galon', qty: 0, unit: 'Target', rate: 150000, total: 0 }
+            ];
+
+            const overage = (details && details.overage && details.overage.length) ? details.overage : [
+                { name: 'Lebih Setoran', qty: 1, unit: 'Total', rate: 40500, total: 40500 }
+            ];
+
+            const reimbursements = (details && details.reimbursements && details.reimbursements.length) ? details.reimbursements : [
+                { name: 'Biaya Lembur', qty: 11, unit: 'Jam', rate: 5000, total: 55000 },
+                { name: 'Biaya Bensin', qty: 1, unit: 'Bon', rate: 50000, total: 50000 }
+            ];
+
+            const absence = (details && details.absence_deductions && details.absence_deductions.length) ? details.absence_deductions : [
+                { name: 'Keterlambatan', qty: 0, unit: 'Hari', rate: 10000, total: 0 },
+                { name: 'Pulang Awal', qty: 0, unit: 'Hari', rate: 10000, total: 0 },
+                { name: 'Absen Tanpa Surat Dokter', qty: 0, unit: 'Hari', rate: 40385, total: 0 }
+            ];
+
+            const otherDeductions = (details && details.other_deductions && details.other_deductions.length) ? details.other_deductions : [
+                { name: 'Kasbon tgl 7,14,21', qty: 2, unit: 'Tanggal', rate: 100000, total: 200000 },
+                { name: 'selisih gas', qty: 0, unit: 'Pcs', rate: 25000, total: 0 },
+                { name: 'Selisih RO 1', qty: 0, unit: 'Pcs', rate: 6000, total: 0 }
+            ];
+
+            const loans = (details && details.loan_installments && details.loan_installments.length) ? details.loan_installments : [
+                { name: 'Cicilan', qty: 0, unit: 'Tanggal', rate: 0, total: 0 }
+            ];
+
+            // Subtotals
+            let totIncentives = 0;
+            incentives.forEach(item => totIncentives += (parseFloat(item.total) || (parseFloat(item.qty || 0) * parseFloat(item.rate || 0))));
+
+            let totFacilities = 0;
+            facilities.forEach(item => totFacilities += (parseFloat(item.total) || (parseFloat(item.qty || 0) * parseFloat(item.rate || 0))));
+
+            let totOverage = 0;
+            overage.forEach(item => totOverage += (parseFloat(item.total) || (parseFloat(item.qty || 0) * parseFloat(item.rate || 0))));
+
+            const sub1 = baseSalary + totIncentives + totFacilities + totOverage;
+
+            let sub2 = 0;
+            reimbursements.forEach(item => sub2 += (parseFloat(item.total) || (parseFloat(item.qty || 0) * parseFloat(item.rate || 0))));
+
+            let sub3 = 0;
+            absence.forEach(item => sub3 += (parseFloat(item.total) || (parseFloat(item.qty || 0) * parseFloat(item.rate || 0))));
+
+            let sub4 = 0;
+            otherDeductions.forEach(item => sub4 += (parseFloat(item.total) || (parseFloat(item.qty || 0) * parseFloat(item.rate || 0))));
+
+            let sub5 = 0;
+            loans.forEach(item => sub5 += (parseFloat(item.total) || (parseFloat(item.qty || 0) * parseFloat(item.rate || 0))));
+
+            const takeHomePay = Math.max(0, sub1 + sub2 - sub3 - sub4 - sub5);
+
+            // Bangun baris HTML persis sesuai dokumen Starqua
+            let rowsHtml = '';
+
+            // 1. PENERIMAAN KOTOR
+            rowsHtml += `
+                <tr class="bg-slate-100 font-black text-slate-900 border-b border-slate-300">
+                    <td class="py-1 px-2.5 border-r border-slate-300 uppercase">1. PENERIMAAN KOTOR</td>
+                    <td class="py-1 px-2.5 text-center border-r border-slate-300"></td>
+                    <td class="py-1 px-2.5 text-right border-r border-slate-300"></td>
+                    <td class="py-1 px-2.5 text-right font-mono font-bold text-slate-900">${formatCleanNumber(sub1)}</td>
+                </tr>
+                <tr class="text-slate-800">
+                    <td class="py-0.5 px-3 border-r border-slate-300 font-bold">A. Gaji Pokok</td>
+                    <td class="py-0.5 px-2 text-center border-r border-slate-300 font-medium">1 Bulan</td>
+                    <td class="py-0.5 px-2 text-right border-r border-slate-300 font-mono">${formatCleanNumber(baseSalary)}</td>
+                    <td class="py-0.5 px-2 text-right font-mono">${formatCleanNumber(baseSalary)}</td>
+                </tr>
+                <tr class="text-slate-800">
+                    <td colspan="4" class="py-0.5 px-3 border-r border-slate-300 font-bold bg-slate-50">B. Insentif</td>
+                </tr>
+            `;
+
+            incentives.forEach(item => {
+                const q = parseFloat(item.qty) || 0;
+                const r = parseFloat(item.rate) || 0;
+                const tot = q * r;
+                rowsHtml += `
+                    <tr class="text-slate-700 hover:bg-slate-50/50">
+                        <td class="py-0.5 px-5 border-r border-slate-300">${item.name}</td>
+                        <td class="py-0.5 px-2 text-center border-r border-slate-300 font-mono">${q > 0 ? q : '-'}</td>
+                        <td class="py-0.5 px-2 text-right border-r border-slate-300 font-mono">${r > 0 ? formatCleanNumber(r) : '-'}</td>
+                        <td class="py-0.5 px-2 text-right font-mono">${tot > 0 ? formatCleanNumber(tot) : '-'}</td>
+                    </tr>
+                `;
+            });
+
+            rowsHtml += `
+                <tr class="text-slate-800">
+                    <td colspan="4" class="py-0.5 px-3 border-r border-slate-300 font-bold bg-slate-50">C. Fasilitas-fasilitas</td>
+                </tr>
+            `;
+
+            facilities.forEach(item => {
+                const q = parseFloat(item.qty) || 0;
+                const r = parseFloat(item.rate) || 0;
+                const tot = q * r;
+                rowsHtml += `
+                    <tr class="text-slate-700 hover:bg-slate-50/50">
+                        <td class="py-0.5 px-5 border-r border-slate-300">${item.name}</td>
+                        <td class="py-0.5 px-2 text-center border-r border-slate-300 font-mono">${q > 0 ? (item.unit === 'Hari' || item.unit === 'Bulan' ? q : q) : '-'}</td>
+                        <td class="py-0.5 px-2 text-right border-r border-slate-300 font-mono">${r > 0 ? formatCleanNumber(r) : '-'}</td>
+                        <td class="py-0.5 px-2 text-right font-mono">${tot > 0 ? formatCleanNumber(tot) : '-'}</td>
+                    </tr>
+                `;
+            });
+
+            rowsHtml += `
+                <tr class="text-slate-800">
+                    <td colspan="4" class="py-0.5 px-3 border-r border-slate-300 font-bold bg-slate-50">D. Lebihan</td>
+                </tr>
+            `;
+
+            overage.forEach(item => {
+                const q = parseFloat(item.qty) || 1;
+                const r = parseFloat(item.rate) || parseFloat(item.total) || 0;
+                const tot = q * r;
+                rowsHtml += `
+                    <tr class="text-slate-700 hover:bg-slate-50/50">
+                        <td class="py-0.5 px-5 border-r border-slate-300">${item.name}</td>
+                        <td class="py-0.5 px-2 text-center border-r border-slate-300 font-mono">${tot > 0 ? q : '-'}</td>
+                        <td class="py-0.5 px-2 text-right border-r border-slate-300 font-mono">${tot > 0 ? formatCleanNumber(r) : '-'}</td>
+                        <td class="py-0.5 px-2 text-right font-mono">${tot > 0 ? formatCleanNumber(tot) : '-'}</td>
+                    </tr>
+                `;
+            });
+
+            // 2. PENGGANTIAN BIAYA
+            rowsHtml += `
+                <tr class="bg-slate-100 font-black text-slate-900 border-y border-slate-300">
+                    <td class="py-1 px-2.5 border-r border-slate-300 uppercase">2. PENGGANTIAN BIAYA</td>
+                    <td class="py-1 px-2.5 text-center border-r border-slate-300"></td>
+                    <td class="py-1 px-2.5 text-right border-r border-slate-300"></td>
+                    <td class="py-1 px-2.5 text-right font-mono font-bold text-slate-900">${formatCleanNumber(sub2)}</td>
+                </tr>
+            `;
+
+            reimbursements.forEach(item => {
+                const q = parseFloat(item.qty) || 0;
+                const r = parseFloat(item.rate) || 0;
+                const tot = q * r;
+                rowsHtml += `
+                    <tr class="text-slate-700 hover:bg-slate-50/50">
+                        <td class="py-0.5 px-5 border-r border-slate-300">${item.name}</td>
+                        <td class="py-0.5 px-2 text-center border-r border-slate-300 font-mono">${q > 0 ? (q + (item.unit ? ' ' + item.unit : '')) : '-'}</td>
+                        <td class="py-0.5 px-2 text-right border-r border-slate-300 font-mono">${r > 0 ? formatCleanNumber(r) : '-'}</td>
+                        <td class="py-0.5 px-2 text-right font-mono">${tot > 0 ? formatCleanNumber(tot) : '-'}</td>
+                    </tr>
+                `;
+            });
+
+            // 3. POTONGAN KETIDAK HADIRAN
+            rowsHtml += `
+                <tr class="bg-slate-100 font-black text-slate-900 border-y border-slate-300">
+                    <td class="py-1 px-2.5 border-r border-slate-300 uppercase">3. POTONGAN KETIDAK HADIRAN</td>
+                    <td class="py-1 px-2.5 text-center border-r border-slate-300"></td>
+                    <td class="py-1 px-2.5 text-right border-r border-slate-300"></td>
+                    <td class="py-1 px-2.5 text-right font-mono font-bold text-slate-900">${sub3 > 0 ? formatCleanNumber(sub3) : '-'}</td>
+                </tr>
+            `;
+
+            absence.forEach(item => {
+                const q = parseFloat(item.qty) || 0;
+                const r = parseFloat(item.rate) || 0;
+                const tot = q * r;
+                rowsHtml += `
+                    <tr class="text-slate-700 hover:bg-slate-50/50">
+                        <td class="py-0.5 px-5 border-r border-slate-300">${item.name}</td>
+                        <td class="py-0.5 px-2 text-center border-r border-slate-300 font-mono">${q > 0 ? q : '-'}</td>
+                        <td class="py-0.5 px-2 text-right border-r border-slate-300 font-mono">${r > 0 ? formatCleanNumber(r) : '-'}</td>
+                        <td class="py-0.5 px-2 text-right font-mono">${tot > 0 ? formatCleanNumber(tot) : '-'}</td>
+                    </tr>
+                `;
+            });
+
+            // 4. POTONGAN LAIN-LAIN
+            rowsHtml += `
+                <tr class="bg-slate-100 font-black text-slate-900 border-y border-slate-300">
+                    <td class="py-1 px-2.5 border-r border-slate-300 uppercase">4. POTONGAN LAIN-LAIN</td>
+                    <td class="py-1 px-2.5 text-center border-r border-slate-300"></td>
+                    <td class="py-1 px-2.5 text-right border-r border-slate-300"></td>
+                    <td class="py-1 px-2.5 text-right font-mono font-bold text-slate-900">${sub4 > 0 ? formatCleanNumber(sub4) : '-'}</td>
+                </tr>
+            `;
+
+            otherDeductions.forEach(item => {
+                const q = parseFloat(item.qty) || 0;
+                const r = parseFloat(item.rate) || 0;
+                const tot = q * r;
+                rowsHtml += `
+                    <tr class="text-slate-700 hover:bg-slate-50/50">
+                        <td class="py-0.5 px-5 border-r border-slate-300">${item.name}</td>
+                        <td class="py-0.5 px-2 text-center border-r border-slate-300 font-mono">${q > 0 ? (q + (item.unit ? ' ' + item.unit : '')) : '-'}</td>
+                        <td class="py-0.5 px-2 text-right border-r border-slate-300 font-mono">${r > 0 ? formatCleanNumber(r) : '-'}</td>
+                        <td class="py-0.5 px-2 text-right font-mono">${tot > 0 ? formatCleanNumber(tot) : '-'}</td>
+                    </tr>
+                `;
+            });
+
+            // 5. PINJAMAN
+            rowsHtml += `
+                <tr class="bg-slate-100 font-black text-slate-900 border-y border-slate-300">
+                    <td class="py-1 px-2.5 border-r border-slate-300 uppercase">5. PINJAMAN</td>
+                    <td class="py-1 px-2.5 text-center border-r border-slate-300"></td>
+                    <td class="py-1 px-2.5 text-right border-r border-slate-300"></td>
+                    <td class="py-1 px-2.5 text-right font-mono font-bold text-slate-900">${sub5 > 0 ? formatCleanNumber(sub5) : '-'}</td>
+                </tr>
+            `;
+
+            loans.forEach(item => {
+                const q = parseFloat(item.qty) || 0;
+                const r = parseFloat(item.rate) || 0;
+                const tot = q * r;
+                rowsHtml += `
+                    <tr class="text-slate-700 hover:bg-slate-50/50">
+                        <td class="py-0.5 px-5 border-r border-slate-300">${item.name}</td>
+                        <td class="py-0.5 px-2 text-center border-r border-slate-300 font-mono">${q > 0 ? q : '-'}</td>
+                        <td class="py-0.5 px-2 text-right border-r border-slate-300 font-mono">${r > 0 ? formatCleanNumber(r) : '-'}</td>
+                        <td class="py-0.5 px-2 text-right font-mono">${tot > 0 ? formatCleanNumber(tot) : '-'}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('sq-table-body').innerHTML = rowsHtml;
+            document.getElementById('sq-final-take-home-pay').innerText = `Rp ${formatCleanNumber(takeHomePay)}`;
+
+            // Render Notes
+            const notes = (details && details.notes_list && details.notes_list.length) ? details.notes_list : [
+                "Lembur 11 Jam",
+                "Uang makan diambil harian"
+            ];
+            const notesEl = document.getElementById('sq-notes-list');
+            if (notesEl) {
+                notesEl.innerHTML = notes.map(n => `<li>${n}</li>`).join('');
+            }
+
+            // Tanda tangan
+            const signEmp = document.getElementById('sq-sign-emp');
+            if (signEmp) signEmp.innerText = u.name || '-';
+
+            const employeePool = (typeof allEmployeesData !== 'undefined' && allEmployeesData && allEmployeesData.length > 0) ? allEmployeesData : (state.users || []);
+            const mgrUser = employeePool.find(e => ['BRANCH_MANAGER', 'MANAGER'].includes(e.role));
+            const signMgr = document.getElementById('sq-sign-mgr');
+            if (signMgr) signMgr.innerText = mgrUser ? mgrUser.name : 'Manager Operasional';
+        }
+
         async function openPayrollSlipModal(userId, month = null) {
             const mVal = month || payrollModuleState.month || document.getElementById('payroll-month-input')?.value || new Date().toISOString().slice(0, 7);
             const curUser = state.currentUser || state.loggedInUser || { id: 1 };
@@ -16951,8 +17695,12 @@ Manager / Supervisor: __________________
                 const p = data.payroll || {};
                 const u = data.user || {};
                 const s = state.appSettings || {};
+                const details = data.details || {};
 
-                // Header Slip
+                // 1. Render Format Rinci Starqua
+                renderStarquaSlipTable(details, p, u, mVal);
+
+                // 2. Render Format Standar Navy (Backup View)
                 const payslipCompName = (s.payslip_company_name && s.payslip_company_name.trim())
                     ? s.payslip_company_name.trim()
                     : (s.company_name || 'KARYA ANUGERAH DIMENSI TECHNOLOGY');
@@ -16962,7 +17710,6 @@ Manager / Supervisor: __________________
                 document.getElementById('modal-slip-period-label').innerText = `Periode: ${mVal}`;
                 document.getElementById('modal-slip-id-label').innerText = `NO: PAY-${mVal.replace('-', '')}-${String(u.id || 0).padStart(3, '0')}`;
 
-                // Identitas Karyawan
                 document.getElementById('modal-slip-emp-nik').innerText = u.nik || '-';
                 document.getElementById('modal-slip-emp-name').innerText = u.name || '-';
                 document.getElementById('modal-slip-emp-role').innerText = (u.role || '-').toUpperCase();
@@ -16978,7 +17725,6 @@ Manager / Supervisor: __________________
                     statusBadgeEl.innerText = isVerified ? 'TERVERIFIKASI' : (p.payment_status || 'DRAFT');
                 }
 
-                // Pendapatan
                 const baseSal = parseFloat(p.base_salary) || 0;
                 const allow = parseFloat(p.allowance) || 0;
                 const transp = parseFloat(p.transport_total) || 0;
@@ -16995,7 +17741,6 @@ Manager / Supervisor: __________________
                 document.getElementById('modal-slip-meal-allowance-paid').innerText = formatRupiah(meal);
                 document.getElementById('modal-slip-gross-salary').innerText = formatRupiah(gross);
 
-                // Potongan
                 const dLate = parseFloat(p.late_deduction) || 0;
                 const dAbsence = parseFloat(p.absence_deduction) || 0;
                 const dLoan = parseFloat(p.loan_deduction) || 0;
@@ -17010,12 +17755,10 @@ Manager / Supervisor: __________________
                 document.getElementById('modal-slip-deduct-other').innerText = formatRupiah(dOther);
                 document.getElementById('modal-slip-total-deductions').innerText = formatRupiah(totDeduct);
 
-                // Gaji Bersih
                 const netSal = parseFloat(p.net_salary) || (gross - totDeduct);
                 document.getElementById('modal-slip-net-salary').innerText = formatRupiah(netSal);
                 document.getElementById('modal-slip-terbilang-text').innerText = angkaTerbilang(netSal) + " Rupiah";
 
-                // Footer Signatures
                 const empNameEl = document.getElementById('modal-slip-sign-emp-name');
                 if (empNameEl) empNameEl.innerText = u.name || '-';
                 const employeePool = (typeof allEmployeesData !== 'undefined' && allEmployeesData && allEmployeesData.length > 0) ? allEmployeesData : (state.users || []);
@@ -17025,6 +17768,9 @@ Manager / Supervisor: __________________
 
                 const footerStatusEl = document.getElementById('modal-slip-status-footer');
                 if (footerStatusEl) footerStatusEl.innerText = `Status Dokumen: ${isVerified ? 'Terverifikasi (Resmi)' : 'Draft Otomatis'}`;
+
+                // Set default tampilan ke Starqua
+                switchPayslipTemplate(payrollModuleState.activeTemplate || 'starqua');
 
                 const modalEl = document.getElementById('payroll-slip-modal');
                 if (modalEl) modalEl.classList.remove('hidden');
@@ -17055,6 +17801,91 @@ Manager / Supervisor: __________________
             openPayrollEditorModal(u.id, m);
         }
 
+        function recalcStarquaEditor() {
+            const baseSalary = parseFloat(document.getElementById('sq-ed-base-salary')?.value) || 0;
+
+            // Insentif 7 Produk
+            let totIncentives = 0;
+            for (let i = 0; i < 7; i++) {
+                const q = parseFloat(document.getElementById(`sq-ed-inc-qty-${i}`)?.value) || 0;
+                const r = parseFloat(document.getElementById(`sq-ed-inc-rate-${i}`)?.value) || 0;
+                totIncentives += (q * r);
+            }
+
+            // Fasilitas 5 Items
+            let totFacilities = 0;
+            for (let i = 0; i < 5; i++) {
+                const q = parseFloat(document.getElementById(`sq-ed-fac-qty-${i}`)?.value) || 0;
+                const r = parseFloat(document.getElementById(`sq-ed-fac-rate-${i}`)?.value) || 0;
+                totFacilities += (q * r);
+            }
+
+            // Lebihan
+            const overageVal = parseFloat(document.getElementById('sq-ed-overage-rate')?.value) || 0;
+
+            // Subtotal 1 (Penerimaan Kotor)
+            const sub1 = baseSalary + totIncentives + totFacilities + overageVal;
+            const sub1El = document.getElementById('sq-ed-subtotal-1');
+            if (sub1El) sub1El.innerText = formatRupiah(sub1);
+
+            // Subtotal 2 (Penggantian Biaya)
+            let sub2 = 0;
+            for (let i = 0; i < 2; i++) {
+                const q = parseFloat(document.getElementById(`sq-ed-reimb-qty-${i}`)?.value) || 0;
+                const r = parseFloat(document.getElementById(`sq-ed-reimb-rate-${i}`)?.value) || 0;
+                sub2 += (q * r);
+            }
+            const sub2El = document.getElementById('sq-ed-subtotal-2');
+            if (sub2El) sub2El.innerText = formatRupiah(sub2);
+
+            // Subtotal 3 (Potongan Ketidakhadiran)
+            let sub3 = 0;
+            for (let i = 0; i < 3; i++) {
+                const q = parseFloat(document.getElementById(`sq-ed-abs-qty-${i}`)?.value) || 0;
+                const r = parseFloat(document.getElementById(`sq-ed-abs-rate-${i}`)?.value) || 0;
+                sub3 += (q * r);
+            }
+            const sub3El = document.getElementById('sq-ed-subtotal-3');
+            if (sub3El) sub3El.innerText = formatRupiah(sub3);
+
+            // Subtotal 4 (Potongan Lain-lain)
+            let sub4 = 0;
+            for (let i = 0; i < 3; i++) {
+                const q = parseFloat(document.getElementById(`sq-ed-oth-qty-${i}`)?.value) || 0;
+                const r = parseFloat(document.getElementById(`sq-ed-oth-rate-${i}`)?.value) || 0;
+                sub4 += (q * r);
+            }
+            const sub4El = document.getElementById('sq-ed-subtotal-4');
+            if (sub4El) sub4El.innerText = formatRupiah(sub4);
+
+            // Subtotal 5 (Pinjaman)
+            const loanQ = parseFloat(document.getElementById('sq-ed-loan-qty-0')?.value) || 0;
+            const loanR = parseFloat(document.getElementById('sq-ed-loan-rate-0')?.value) || 0;
+            const sub5 = loanQ * loanR;
+            const sub5El = document.getElementById('sq-ed-subtotal-5');
+            if (sub5El) sub5El.innerText = formatRupiah(sub5);
+
+            // Grand Total Take Home Pay
+            const net = Math.max(0, sub1 + sub2 - sub3 - sub4 - sub5);
+
+            // Update formula summary bar
+            document.getElementById('ped-summary-gross').innerText = `1. Rp ${formatCleanNumber(sub1)}`;
+            document.getElementById('ped-summary-reimb').innerText = `2. Rp ${formatCleanNumber(sub2)}`;
+            document.getElementById('ped-summary-abs').innerText = `3. Rp ${formatCleanNumber(sub3)}`;
+            document.getElementById('ped-summary-oth').innerText = `4. Rp ${formatCleanNumber(sub4)}`;
+            document.getElementById('ped-summary-loan').innerText = `5. Rp ${formatCleanNumber(sub5)}`;
+            document.getElementById('ped-summary-net').innerText = formatRupiah(net);
+
+            // Sync ke standard inputs
+            if (document.getElementById('ped-base-salary')) document.getElementById('ped-base-salary').value = baseSalary;
+            if (document.getElementById('ped-sales-commission')) document.getElementById('ped-sales-commission').value = totIncentives;
+            if (document.getElementById('ped-allowance')) document.getElementById('ped-allowance').value = totFacilities;
+            if (document.getElementById('ped-bonus-pay')) document.getElementById('ped-bonus-pay').value = overageVal;
+            if (document.getElementById('ped-overtime-pay')) document.getElementById('ped-overtime-pay').value = sub2;
+            if (document.getElementById('ped-late-deduction')) document.getElementById('ped-late-deduction').value = sub3;
+            if (document.getElementById('ped-loan-deduction')) document.getElementById('ped-loan-deduction').value = sub4 + sub5;
+        }
+
         async function openPayrollEditorModal(userId, month = null) {
             const mVal = month || payrollModuleState.month || document.getElementById('payroll-month-input')?.value || new Date().toISOString().slice(0, 7);
             const curUser = state.currentUser || state.loggedInUser || { id: 1 };
@@ -17070,34 +17901,88 @@ Manager / Supervisor: __________________
                 payrollModuleState.currentPayslip = data;
                 const p = data.payroll || {};
                 const u = data.user || {};
+                const details = data.details || {};
 
-                document.getElementById('ped-modal-subtitle').innerText = `Karyawan: ${u.name} (${u.nik}) | Cabang: ${u.branch_name || 'Pusat'} | Periode: ${mVal}`;
+                document.getElementById('ped-modal-subtitle').innerText = `Karyawan: ${u.name} (${u.nik}) | Cabang: ${u.branch_name || 'Depo Cimahi'} | Periode: ${mVal}`;
 
                 document.getElementById('ped-user-id').value = u.id;
                 document.getElementById('ped-branch-id').value = u.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
                 document.getElementById('ped-period-month').value = mVal;
 
-                // Pendapatan
-                document.getElementById('ped-base-salary').value = parseFloat(p.base_salary) || 0;
-                document.getElementById('ped-allowance').value = parseFloat(p.allowance) || 0;
-                document.getElementById('ped-attendance-days').value = parseInt(p.attendance_days) || 0;
-                document.getElementById('ped-daily-transport-rate').value = parseFloat(p.daily_transport_rate) || 25000;
-                document.getElementById('ped-sales-commission').value = parseFloat(p.sales_commission) || 0;
-                document.getElementById('ped-overtime-pay').value = parseFloat(p.overtime_pay) || 0;
-                document.getElementById('ped-bonus-pay').value = parseFloat(p.bonus_pay) || 0;
+                // Populasi Starqua Form
+                document.getElementById('sq-ed-base-salary').value = parseFloat(p.base_salary) || 1000000;
 
-                // Potongan
-                document.getElementById('ped-late-deduction').value = parseFloat(p.late_deduction) || 0;
-                document.getElementById('ped-absence-deduction').value = parseFloat(p.absence_deduction) || 0;
-                document.getElementById('ped-loan-deduction').value = parseFloat(p.loan_deduction) || 0;
-                document.getElementById('ped-tax-deduction').value = parseFloat(p.tax_deduction) || 0;
-                document.getElementById('ped-other-deduction').value = parseFloat(p.other_deduction) || 0;
+                const inc = (details.incentives && details.incentives.length) ? details.incentives : [
+                    { qty: 825, rate: 750 }, { qty: 397, rate: 750 }, { qty: 39, rate: 750 },
+                    { qty: 169, rate: 750 }, { qty: 10, rate: 750 }, { qty: 0, rate: 0 }, { qty: 317, rate: 750 }
+                ];
+                for (let i = 0; i < 7; i++) {
+                    const row = inc[i] || { qty: 0, rate: 750 };
+                    if (document.getElementById(`sq-ed-inc-qty-${i}`)) document.getElementById(`sq-ed-inc-qty-${i}`).value = row.qty;
+                    if (document.getElementById(`sq-ed-inc-rate-${i}`)) document.getElementById(`sq-ed-inc-rate-${i}`).value = row.rate;
+                }
 
-                // Status & Catatan
+                const fac = (details.facilities && details.facilities.length) ? details.facilities : [
+                    { qty: 27, rate: 10000 }, { qty: 1, rate: 50000 }, { qty: 1, rate: 150000 },
+                    { qty: 0, rate: 150000 }, { qty: 0, rate: 150000 }
+                ];
+                for (let i = 0; i < 5; i++) {
+                    const row = fac[i] || { qty: 0, rate: 0 };
+                    if (document.getElementById(`sq-ed-fac-qty-${i}`)) document.getElementById(`sq-ed-fac-qty-${i}`).value = row.qty;
+                    if (document.getElementById(`sq-ed-fac-rate-${i}`)) document.getElementById(`sq-ed-fac-rate-${i}`).value = row.rate;
+                }
+
+                const overage = (details.overage && details.overage.length) ? details.overage : [{ rate: 40500 }];
+                document.getElementById('sq-ed-overage-rate').value = overage[0]?.rate || 40500;
+
+                const reimb = (details.reimbursements && details.reimbursements.length) ? details.reimbursements : [
+                    { qty: 11, rate: 5000 }, { qty: 1, rate: 50000 }
+                ];
+                for (let i = 0; i < 2; i++) {
+                    const row = reimb[i] || { qty: 0, rate: 0 };
+                    if (document.getElementById(`sq-ed-reimb-qty-${i}`)) document.getElementById(`sq-ed-reimb-qty-${i}`).value = row.qty;
+                    if (document.getElementById(`sq-ed-reimb-rate-${i}`)) document.getElementById(`sq-ed-reimb-rate-${i}`).value = row.rate;
+                }
+
+                const abs = (details.absence_deductions && details.absence_deductions.length) ? details.absence_deductions : [
+                    { qty: 0, rate: 10000 }, { qty: 0, rate: 10000 }, { qty: 0, rate: 40385 }
+                ];
+                for (let i = 0; i < 3; i++) {
+                    const row = abs[i] || { qty: 0, rate: 0 };
+                    if (document.getElementById(`sq-ed-abs-qty-${i}`)) document.getElementById(`sq-ed-abs-qty-${i}`).value = row.qty;
+                    if (document.getElementById(`sq-ed-abs-rate-${i}`)) document.getElementById(`sq-ed-abs-rate-${i}`).value = row.rate;
+                }
+
+                const oth = (details.other_deductions && details.other_deductions.length) ? details.other_deductions : [
+                    { qty: 2, rate: 100000 }, { qty: 0, rate: 25000 }, { qty: 0, rate: 6000 }
+                ];
+                for (let i = 0; i < 3; i++) {
+                    const row = oth[i] || { qty: 0, rate: 0 };
+                    if (document.getElementById(`sq-ed-oth-qty-${i}`)) document.getElementById(`sq-ed-oth-qty-${i}`).value = row.qty;
+                    if (document.getElementById(`sq-ed-oth-rate-${i}`)) document.getElementById(`sq-ed-oth-rate-${i}`).value = row.rate;
+                }
+
+                const loans = (details.loan_installments && details.loan_installments.length) ? details.loan_installments : [
+                    { qty: 0, rate: 0 }
+                ];
+                if (document.getElementById('sq-ed-loan-qty-0')) document.getElementById('sq-ed-loan-qty-0').value = loans[0]?.qty || 0;
+                if (document.getElementById('sq-ed-loan-rate-0')) document.getElementById('sq-ed-loan-rate-0').value = loans[0]?.rate || 0;
+
+                const notes = (details.notes_list && details.notes_list.length) ? details.notes_list : [
+                    "Lembur 11 Jam",
+                    "Uang makan diambil harian"
+                ];
+                if (document.getElementById('sq-ed-notes-list')) {
+                    document.getElementById('sq-ed-notes-list').value = notes.join('\n');
+                }
+
+                // Status & Catatan Standar
                 document.getElementById('ped-payment-status').value = p.payment_status || 'GENERATED';
                 document.getElementById('ped-notes').value = p.notes || '';
 
-                recalcPayrollEditorTotals();
+                // Default tab ke Starqua
+                switchPayrollEditorTab('starqua');
+
                 const modalEl = document.getElementById('payroll-editor-modal');
                 if (modalEl) modalEl.classList.remove('hidden');
                 if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
@@ -17113,77 +17998,206 @@ Manager / Supervisor: __________________
         }
 
         function recalcPayrollEditorTotals() {
-            const attDays = parseInt(document.getElementById('ped-attendance-days').value) || 0;
-            const rateTrans = parseFloat(document.getElementById('ped-daily-transport-rate').value) || 0;
+            const attDays = parseInt(document.getElementById('ped-attendance-days')?.value) || 0;
+            const rateTrans = parseFloat(document.getElementById('ped-daily-transport-rate')?.value) || 0;
             const transTotal = attDays * rateTrans;
-            document.getElementById('ped-transport-total').value = transTotal;
+            if (document.getElementById('ped-transport-total')) document.getElementById('ped-transport-total').value = transTotal;
 
-            const baseSal = parseFloat(document.getElementById('ped-base-salary').value) || 0;
-            const allow = parseFloat(document.getElementById('ped-allowance').value) || 0;
-            const comm = parseFloat(document.getElementById('ped-sales-commission').value) || 0;
-            const overtime = parseFloat(document.getElementById('ped-overtime-pay').value) || 0;
-            const bonus = parseFloat(document.getElementById('ped-bonus-pay').value) || 0;
+            const baseSal = parseFloat(document.getElementById('ped-base-salary')?.value) || 0;
+            const allow = parseFloat(document.getElementById('ped-allowance')?.value) || 0;
+            const comm = parseFloat(document.getElementById('ped-sales-commission')?.value) || 0;
+            const overtime = parseFloat(document.getElementById('ped-overtime-pay')?.value) || 0;
+            const bonus = parseFloat(document.getElementById('ped-bonus-pay')?.value) || 0;
 
             const gross = baseSal + allow + transTotal + comm + overtime + bonus;
 
-            const late = parseFloat(document.getElementById('ped-late-deduction').value) || 0;
-            const absence = parseFloat(document.getElementById('ped-absence-deduction').value) || 0;
-            const loan = parseFloat(document.getElementById('ped-loan-deduction').value) || 0;
-            const tax = parseFloat(document.getElementById('ped-tax-deduction').value) || 0;
-            const other = parseFloat(document.getElementById('ped-other-deduction').value) || 0;
+            const late = parseFloat(document.getElementById('ped-late-deduction')?.value) || 0;
+            const absence = parseFloat(document.getElementById('ped-absence-deduction')?.value) || 0;
+            const loan = parseFloat(document.getElementById('ped-loan-deduction')?.value) || 0;
+            const tax = parseFloat(document.getElementById('ped-tax-deduction')?.value) || 0;
+            const other = parseFloat(document.getElementById('ped-other-deduction')?.value) || 0;
 
             const deductions = late + absence + loan + tax + other;
             const net = Math.max(0, gross - deductions);
 
-            document.getElementById('ped-summary-gross').innerText = formatRupiah(gross);
-            document.getElementById('ped-summary-deductions').innerText = formatRupiah(deductions);
+            document.getElementById('ped-summary-gross').innerText = `1. Rp ${formatCleanNumber(gross)}`;
+            document.getElementById('ped-summary-reimb').innerText = `2. Rp 0`;
+            document.getElementById('ped-summary-abs').innerText = `3. Rp ${formatCleanNumber(late + absence)}`;
+            document.getElementById('ped-summary-oth').innerText = `4. Rp ${formatCleanNumber(other + tax)}`;
+            document.getElementById('ped-summary-loan').innerText = `5. Rp ${formatCleanNumber(loan)}`;
             document.getElementById('ped-summary-net').innerText = formatRupiah(net);
         }
 
         async function handleSavePayrollEditor(e) {
             e.preventDefault();
 
-            const attDays = parseInt(document.getElementById('ped-attendance-days').value) || 0;
-            const rateTrans = parseFloat(document.getElementById('ped-daily-transport-rate').value) || 0;
-            const transTotal = attDays * rateTrans;
+            const curPayslip = payrollModuleState.currentPayslip || {};
+            const curDetails = curPayslip.details || {};
+            const curUser = curPayslip.user || {};
 
-            const baseSal = parseFloat(document.getElementById('ped-base-salary').value) || 0;
-            const allow = parseFloat(document.getElementById('ped-allowance').value) || 0;
-            const comm = parseFloat(document.getElementById('ped-sales-commission').value) || 0;
-            const overtime = parseFloat(document.getElementById('ped-overtime-pay').value) || 0;
-            const bonus = parseFloat(document.getElementById('ped-bonus-pay').value) || 0;
-            const gross = baseSal + allow + transTotal + comm + overtime + bonus;
+            // Mengumpulkan data Starqua
+            const baseSalary = parseFloat(document.getElementById('sq-ed-base-salary')?.value) || 0;
 
-            const late = parseFloat(document.getElementById('ped-late-deduction').value) || 0;
-            const absence = parseFloat(document.getElementById('ped-absence-deduction').value) || 0;
-            const loan = parseFloat(document.getElementById('ped-loan-deduction').value) || 0;
-            const tax = parseFloat(document.getElementById('ped-tax-deduction').value) || 0;
-            const other = parseFloat(document.getElementById('ped-other-deduction').value) || 0;
-            const deductions = late + absence + loan + tax + other;
+            const incNames = ['Air Mineral', 'Es Kristal', 'Gas', 'RO', 'Aqua', 'Penjualan Depot', 'Warung'];
+            const incUnits = ['Galon', 'Order', 'Tabung', 'Galon', 'Galon', 'Hari', 'Galon'];
+            const compiledIncentives = [];
+            let totIncentives = 0;
+            for (let i = 0; i < 7; i++) {
+                const q = parseFloat(document.getElementById(`sq-ed-inc-qty-${i}`)?.value) || 0;
+                const r = parseFloat(document.getElementById(`sq-ed-inc-rate-${i}`)?.value) || 0;
+                const tot = q * r;
+                totIncentives += tot;
+                compiledIncentives.push({
+                    name: incNames[i],
+                    qty: q,
+                    unit: incUnits[i],
+                    rate: r,
+                    total: tot
+                });
+            }
+
+            const facNames = ['Uang Makan', 'BPJS Kesehatan', 'Bonus Pencapaian 600 Galon', 'Bonus Pencapaian Es Kristal', 'Bonus Pencapaian RO 200 Galon'];
+            const facUnits = ['Hari', 'Bulan', 'Target', 'Target', 'Target'];
+            const compiledFacilities = [];
+            let totFacilities = 0;
+            let uangMakanHari = 0;
+            for (let i = 0; i < 5; i++) {
+                const q = parseFloat(document.getElementById(`sq-ed-fac-qty-${i}`)?.value) || 0;
+                const r = parseFloat(document.getElementById(`sq-ed-fac-rate-${i}`)?.value) || 0;
+                const tot = q * r;
+                totFacilities += tot;
+                if (i === 0) uangMakanHari = q;
+                compiledFacilities.push({
+                    name: facNames[i],
+                    qty: q,
+                    unit: facUnits[i],
+                    rate: r,
+                    total: tot
+                });
+            }
+
+            const overageRate = parseFloat(document.getElementById('sq-ed-overage-rate')?.value) || 0;
+            const compiledOverage = [{
+                name: 'Lebih Setoran',
+                qty: overageRate > 0 ? 1 : 0,
+                unit: 'Total',
+                rate: overageRate,
+                total: overageRate
+            }];
+
+            const sub1 = baseSalary + totIncentives + totFacilities + overageRate;
+
+            const reimbNames = ['Biaya Lembur', 'Biaya Bensin'];
+            const reimbUnits = ['Jam', 'Bon'];
+            const compiledReimbursements = [];
+            let sub2 = 0;
+            let lemburNominal = 0;
+            for (let i = 0; i < 2; i++) {
+                const q = parseFloat(document.getElementById(`sq-ed-reimb-qty-${i}`)?.value) || 0;
+                const r = parseFloat(document.getElementById(`sq-ed-reimb-rate-${i}`)?.value) || 0;
+                const tot = q * r;
+                sub2 += tot;
+                if (i === 0) lemburNominal = tot;
+                compiledReimbursements.push({
+                    name: reimbNames[i],
+                    qty: q,
+                    unit: reimbUnits[i],
+                    rate: r,
+                    total: tot
+                });
+            }
+
+            const absNames = ['Keterlambatan', 'Pulang Awal', 'Absen Tanpa Surat Dokter'];
+            const compiledAbsence = [];
+            let sub3 = 0;
+            for (let i = 0; i < 3; i++) {
+                const q = parseFloat(document.getElementById(`sq-ed-abs-qty-${i}`)?.value) || 0;
+                const r = parseFloat(document.getElementById(`sq-ed-abs-rate-${i}`)?.value) || 0;
+                const tot = q * r;
+                sub3 += tot;
+                compiledAbsence.push({
+                    name: absNames[i],
+                    qty: q,
+                    unit: 'Hari',
+                    rate: r,
+                    total: tot
+                });
+            }
+
+            const othNames = ['Kasbon tgl 7,14,21', 'selisih gas', 'Selisih RO 1'];
+            const othUnits = ['Tanggal', 'Pcs', 'Pcs'];
+            const compiledOther = [];
+            let sub4 = 0;
+            let kasbonNominal = 0;
+            for (let i = 0; i < 3; i++) {
+                const q = parseFloat(document.getElementById(`sq-ed-oth-qty-${i}`)?.value) || 0;
+                const r = parseFloat(document.getElementById(`sq-ed-oth-rate-${i}`)?.value) || 0;
+                const tot = q * r;
+                sub4 += tot;
+                if (i === 0) kasbonNominal = tot;
+                compiledOther.push({
+                    name: othNames[i],
+                    qty: q,
+                    unit: othUnits[i],
+                    rate: r,
+                    total: tot
+                });
+            }
+
+            const loanQ = parseFloat(document.getElementById('sq-ed-loan-qty-0')?.value) || 0;
+            const loanR = parseFloat(document.getElementById('sq-ed-loan-rate-0')?.value) || 0;
+            const sub5 = loanQ * loanR;
+            const compiledLoans = [{
+                name: 'Cicilan',
+                qty: loanQ,
+                unit: 'Tanggal',
+                rate: loanR,
+                total: sub5
+            }];
+
+            const rawNotes = document.getElementById('sq-ed-notes-list')?.value || '';
+            const compiledNotes = rawNotes.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+
+            const detailsObj = {
+                template: 'starqua',
+                join_date: curDetails.join_date || curUser.join_date || '2024-07-13',
+                incentives: compiledIncentives,
+                facilities: compiledFacilities,
+                overage: compiledOverage,
+                reimbursements: compiledReimbursements,
+                absence_deductions: compiledAbsence,
+                other_deductions: compiledOther,
+                loan_installments: compiledLoans,
+                notes_list: compiledNotes
+            };
+
+            const deductions = sub3 + sub4 + sub5;
+            const gross = sub1 + sub2;
             const net = Math.max(0, gross - deductions);
 
             const payload = {
                 user_id: parseInt(document.getElementById('ped-user-id').value),
                 branch_id: parseInt(document.getElementById('ped-branch-id').value) || 1,
                 period_month: document.getElementById('ped-period-month').value,
-                base_salary: baseSal,
-                allowance: allow,
-                attendance_days: attDays,
-                daily_transport_rate: rateTrans,
-                transport_total: transTotal,
-                sales_commission: comm,
-                overtime_pay: overtime,
-                bonus_pay: bonus,
+                base_salary: baseSalary,
+                allowance: totFacilities,
+                attendance_days: uangMakanHari || 22,
+                daily_transport_rate: 10000,
+                transport_total: (uangMakanHari || 22) * 10000,
+                sales_commission: totIncentives,
+                overtime_pay: lemburNominal,
+                bonus_pay: (sub2 - lemburNominal) + overageRate,
                 gross_salary: gross,
-                late_deduction: late,
-                absence_deduction: absence,
-                loan_deduction: loan,
-                tax_deduction: tax,
-                other_deduction: other,
+                late_deduction: (compiledAbsence[0]?.total || 0),
+                absence_deduction: (compiledAbsence[1]?.total || 0) + (compiledAbsence[2]?.total || 0),
+                loan_deduction: kasbonNominal + sub5,
+                tax_deduction: 0,
+                other_deduction: (sub4 - kasbonNominal),
                 total_deductions: deductions,
                 net_salary: net,
                 payment_status: document.getElementById('ped-payment-status').value,
-                notes: document.getElementById('ped-notes').value || 'Penyesuaian Manual Slip Gaji'
+                notes: document.getElementById('ped-notes').value || 'Slip Gaji Rinci Starqua',
+                details_json: detailsObj
             };
 
             try {
@@ -17197,7 +18211,7 @@ Manager / Supervisor: __________________
                     alert(data.message || 'Slip gaji berhasil disimpan & diverifikasi!');
                     closePayrollEditorModal();
                     loadPayrollModule();
-                    // Buka slip modal preview terbaru
+                    // Buka kembali preview slip gaji yang telah diperbarui
                     openPayrollSlipModal(payload.user_id, payload.period_month);
                 } else {
                     alert(data.error || 'Gagal menyimpan slip gaji.');
@@ -17207,7 +18221,6 @@ Manager / Supervisor: __________________
                 alert('Terjadi kesalahan koneksi server saat menyimpan payroll.');
             }
         }
-
         async function resetOfficialPayroll() {
             if (!payrollModuleState.currentPayslip) return;
             const u = payrollModuleState.currentPayslip.user;
@@ -17698,6 +18711,8 @@ Manager / Supervisor: __________________
             document.getElementById('emp-password').value = '';
             document.getElementById('emp-pin').value = '123456';
             document.getElementById('emp-commission').value = '1.5';
+            const elJoinDate = document.getElementById('emp-join-date');
+            if (elJoinDate) elJoinDate.value = '';
             document.getElementById('emp-modal-title').innerText = 'Tambah Karyawan Baru';
 
             // Populate role options (Default: CASHIER)
@@ -17831,6 +18846,8 @@ Manager / Supervisor: __________________
             document.getElementById('emp-phone').value = emp.phone || '';
             document.getElementById('emp-pin').value = emp.pin || '123456';
             document.getElementById('emp-commission').value = (emp.commission_rate * 100).toFixed(1);
+            const elJoinDate = document.getElementById('emp-join-date');
+            if (elJoinDate) elJoinDate.value = emp.join_date || '';
             document.getElementById('emp-modal-title').innerText = 'Edit Karyawan: ' + emp.name;
 
             // Multi-branch selection initialization for Branch Manager
@@ -17902,6 +18919,7 @@ Manager / Supervisor: __________________
                 pin: document.getElementById('emp-pin').value,
                 password: document.getElementById('emp-password').value,
                 commission_rate: parseFloat(document.getElementById('emp-commission').value) / 100,
+                join_date: document.getElementById('emp-join-date') ? document.getElementById('emp-join-date').value : null,
                 default_work_shift_id: defaultShiftId,
                 assigned_vehicle_id: assignedVehicleId
             };
