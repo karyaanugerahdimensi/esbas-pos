@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.77",
-  "build": "20261026-32",
+  "version": "1.2.78",
+  "build": "20261026-33",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.78",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Penyederhanaan Tampilan POS Kasir: Eliminasi Deskripsi Tier Header, Tag Termasuk Kirim & Badge Ritel Standar pada Kartu Produk (FR-POS-37)",
+      "description": "Menyederhanakan antarmuka POS Kasir agar lebih bersih, lapang, dan terfokus: (1) Eliminasi Deskripsi Tier Pelanggan pada Header: Menghapus label sekunder '• Harga Ritel Standar (Pelanggan Reguler)' pada bar pelanggan aktif sehingga hanya menyisakan nama kategori dan dropdown pelanggan aktif. (2) Eliminasi Tag Status Pengiriman Kartu Produk: Menghapus badge '🎁 Termasuk Kirim' dan '🚚 Wajib Ongkir' pada kartu katalog produk di POS Kasir. (3) Eliminasi Badge Tier Harga pada Kartu Produk: Menghapus label tier harga ('Ritel Standar', 'Mitra', 'Member VIP', dsb.) yang berada di bawah SKU pada kartu katalog produk, sehingga tampilan produk di katalog kasir menjadi lebih rapi, minimalis, dan tidak bertumpuk.",
+      "rollback_command": "git checkout v1.2.77"
+    },
     {
       "version": "1.2.77",
       "commit": "HEAD",

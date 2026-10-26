@@ -737,7 +737,6 @@ try {
                             <div class="flex items-center space-x-2">
                                 <span class="text-[10px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300">Pelanggan Aktif:</span>
                                 <span id="pos-customer-category-badge" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200">REGULER</span>
-                                <span id="pos-customer-tier-desc" class="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold hidden sm:inline">&bull; Harga Ritel Standar</span>
                             </div>
                             <div class="flex items-center space-x-2 mt-1">
                                 <select id="pos-customer-select" onchange="onPosCustomerChange()" class="bg-white dark:bg-slate-800 border border-indigo-300 dark:border-indigo-700 rounded-xl px-2.5 py-1 text-xs font-bold text-indigo-950 dark:text-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs">
@@ -10350,24 +10349,10 @@ try {
                                             ? '<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-violet-100 dark:bg-violet-950/80 text-violet-800 dark:text-violet-300 border border-violet-200 dark:border-violet-800">⚡ Tanpa Stok (BOM)</span>'
                                             : `<span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${p.stock > 10 ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' : 'bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-300'}">Stok: ${formatDecimal(p.stock)}</span>`)}
                                     ${p.has_bom ? '<span class="text-[9px] text-indigo-600 dark:text-indigo-400 font-bold mt-0.5">🧪 Pakai Resep</span>' : ''}
-                                    ${(Number(p.is_delivery_included) === 1 || Number(p.is_delivery_required) === 2) 
-                                        ? '<span class="text-[9px] text-emerald-800 dark:text-emerald-300 font-extrabold mt-0.5 bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700 px-1.5 py-0.2 rounded">🎁 Termasuk Kirim</span>' 
-                                        : (Number(p.is_delivery_required) === 1 ? '<span class="text-[9px] text-amber-800 dark:text-amber-300 font-extrabold mt-0.5 bg-amber-100 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-700 px-1.5 py-0.2 rounded">🚚 Wajib Ongkir</span>' : '')}
                                 </div>
                             </div>
                             <h4 class="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-100 line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-snug">${p.name}</h4>
                             <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">${p.sku}</p>
-                            
-                            <!-- Tier Price Indicator Badge -->
-                            <div class="mt-1">
-                                <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold ${
-                                    priceInfo.isContract ? 'bg-emerald-200 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-200 border border-emerald-400 dark:border-emerald-700' :
-                                    priceInfo.tag.includes('Mitra') ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300' :
-                                    priceInfo.tag.includes('Member') ? 'bg-purple-100 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300' :
-                                    priceInfo.tag.includes('Reseller') ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300' :
-                                    'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-                                }">${priceInfo.tag}</span>
-                            </div>
                         </div>
                         <div class="mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-2">
                             <span class="font-black text-xs sm:text-sm text-indigo-700 dark:text-indigo-400">${formatRupiah(priceInfo.price)}</span>
