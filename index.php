@@ -773,6 +773,7 @@ try {
                             <div class="flex items-center space-x-2">
                                 <i data-lucide="shopping-bag" class="w-5 h-5 text-indigo-600"></i>
                                 <h2 class="font-bold text-slate-800 text-sm sm:text-base">Keranjang Kasir</h2>
+                                <span id="cart-item-count-badge" class="px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800">0 Item</span>
                             </div>
                             <button onclick="clearCart()" class="text-xs text-rose-500 hover:text-rose-700 font-semibold flex items-center space-x-1">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -799,13 +800,22 @@ try {
                                 <span id="summary-tax" class="font-semibold text-slate-800">Rp 0</span>
                             </div>
 
-                            <!-- Delivery Toggle & Dynamic Fee Calculation -->
+                            <!-- Delivery Toggle & Collapsible Dynamic Fee Calculation -->
                             <div class="pt-2 pb-1 border-t border-slate-200">
                                 <div class="flex items-center justify-between">
                                     <label class="flex items-center space-x-2 cursor-pointer text-xs font-bold text-indigo-900 select-none">
                                         <input type="checkbox" id="check-delivery-mode" onchange="onDeliveryToggleChange()" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
                                         <span>🛵 Antar Kurir (Delivery)</span>
                                     </label>
+                                    <div id="pos-delivery-header-actions" class="hidden flex items-center space-x-1.5">
+                                        <span id="pos-delivery-summary-pill" onclick="toggleDeliveryCollapse()" class="cursor-pointer px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 hover:bg-indigo-200 text-indigo-800 border border-indigo-200 transition-colors" title="Klik untuk lihat detail">
+                                            0 km • GRATIS
+                                        </span>
+                                        <button type="button" id="pos-delivery-collapse-btn" onclick="toggleDeliveryCollapse()" class="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center space-x-0.5 px-1.5 py-0.5 rounded hover:bg-indigo-50 transition-colors">
+                                            <span id="pos-delivery-collapse-text">Detail</span>
+                                            <i id="pos-delivery-collapse-icon" data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </div>
                                     <span id="pos-delivery-badge" class="hidden px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-800 border border-indigo-200">Aktif</span>
                                 </div>
                                 <div id="pos-delivery-box" class="hidden mt-2 p-2.5 bg-indigo-50/70 border border-indigo-200/90 rounded-xl space-y-1.5 text-xs">
@@ -855,37 +865,11 @@ try {
                                 <span id="summary-grand-total">Rp 0</span>
                             </div>
 
-                            <!-- Payment Method Selector -->
-                            <div class="pt-1">
-                                <div id="pos-payment-methods-grid" class="grid grid-cols-4 gap-1.5">
-                                    <button type="button" onclick="setPaymentMethod('CASH')" id="pay-btn-CASH" class="pay-btn py-1.5 text-xs font-bold rounded-lg border text-center border-indigo-600 bg-indigo-50 text-indigo-700">Tunai</button>
-                                    <button type="button" onclick="setPaymentMethod('QRIS')" id="pay-btn-QRIS" class="pay-btn py-1.5 text-xs font-semibold rounded-lg border text-center border-slate-200 bg-white text-slate-700 hover:bg-slate-50">QRIS</button>
-                                    <button type="button" onclick="setPaymentMethod('DEBIT')" id="pay-btn-DEBIT" class="pay-btn py-1.5 text-xs font-semibold rounded-lg border text-center border-slate-200 bg-white text-slate-700 hover:bg-slate-50">Debit</button>
-                                    <button type="button" onclick="setPaymentMethod('TRANSFER')" id="pay-btn-TRANSFER" class="pay-btn py-1.5 text-xs font-semibold rounded-lg border text-center border-slate-200 bg-white text-slate-700 hover:bg-slate-50">Transfer</button>
-                                </div>
-                            </div>
-
-                            <div id="cash-payment-section" class="space-y-1.5 pt-1">
-                                <div class="flex items-center justify-between text-xs">
-                                    <span class="font-bold text-slate-600">Uang Diterima:</span>
-                                    <input type="number" id="input-cash-received" oninput="calculateChange()" placeholder="0" class="w-32 text-right py-1.5 px-2 text-xs font-extrabold bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                                </div>
-                                <div id="pos-cash-denominations-grid" class="grid grid-cols-5 gap-1.5 pt-0.5">
-                                    <button type="button" onclick="setExactCash()" class="cash-denom-btn py-1.5 px-1 text-xs font-bold rounded-lg border text-center transition-all bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-400 active:scale-95 shadow-sm">Uang Pas</button>
-                                    <button type="button" onclick="addCash(10000)" class="cash-denom-btn py-1.5 px-1 text-xs font-bold rounded-lg border text-center transition-all bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-400 active:scale-95 shadow-sm">10K</button>
-                                    <button type="button" onclick="addCash(20000)" class="cash-denom-btn py-1.5 px-1 text-xs font-bold rounded-lg border text-center transition-all bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-400 active:scale-95 shadow-sm">20K</button>
-                                    <button type="button" onclick="addCash(50000)" class="cash-denom-btn py-1.5 px-1 text-xs font-bold rounded-lg border text-center transition-all bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-400 active:scale-95 shadow-sm">50K</button>
-                                    <button type="button" onclick="addCash(100000)" class="cash-denom-btn py-1.5 px-1 text-xs font-bold rounded-lg border text-center transition-all bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-400 active:scale-95 shadow-sm">100K</button>
-                                </div>
-                                <div class="flex justify-between items-center text-xs font-bold text-slate-700 pt-1">
-                                    <span>Kembalian:</span>
-                                    <span id="summary-cash-change" class="text-emerald-600 font-mono text-sm sm:text-base font-black">Rp 0</span>
-                                </div>
-                            </div>
-
-                            <button onclick="processCheckout()" id="btn-checkout" class="w-full mt-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-md transition-colors flex items-center justify-center space-x-2 text-xs sm:text-sm">
-                                <i data-lucide="check-circle" class="w-4 h-4 sm:w-5 sm:h-5"></i>
-                                <span>Bayar & Potong Stok BOM (F12)</span>
+                            <!-- Tombol Lanjut Pembayaran (Bayar) -->
+                            <button type="button" onclick="openPaymentModal()" id="btn-open-payment" class="w-full mt-2 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-sm sm:text-base active:scale-[0.99] cursor-pointer">
+                                <i data-lucide="wallet" class="w-5 h-5"></i>
+                                <span>Bayar</span>
+                                <span class="text-xs font-medium opacity-80">(F12)</span>
                             </button>
                         </div>
                     </div>
@@ -5377,6 +5361,162 @@ try {
     <!-- ======================================================== -->
     <!-- MODALS SECTION                                           -->
     <!-- ======================================================== -->
+
+    <!-- Modal 0: Popup Pembayaran POS Terpisah (Order Summary & Multi-Metode Bayar) -->
+    <div id="pos-payment-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-4xl w-full shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-slate-100">
+            <!-- Modal Header -->
+            <div class="px-5 sm:px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+                        <i data-lucide="wallet" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-slate-800 text-base sm:text-lg">Konfirmasi & Pembayaran</h3>
+                        <p class="text-xs text-slate-500">Periksa ringkasan belanja dan tentukan cara pembayaran</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closePaymentModal()" class="w-8 h-8 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 flex items-center justify-center transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body: 2 Columns Grid -->
+            <div class="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-5">
+                <!-- Left Column (5 Cols): Order Summary -->
+                <div class="md:col-span-5 bg-slate-50/90 rounded-2xl p-4 border border-slate-200 flex flex-col justify-between space-y-3">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+                            <span class="font-bold text-xs uppercase tracking-wider text-slate-500">Ringkasan Pesanan</span>
+                            <span id="pos-modal-summary-items-count" class="text-xs font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">0 Produk</span>
+                        </div>
+
+                        <!-- Customer & Branch Info Box -->
+                        <div class="bg-white rounded-xl p-2.5 border border-slate-200/80 text-xs space-y-1 shadow-2xs">
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500">Pelanggan:</span>
+                                <span id="pos-modal-customer-name" class="font-bold text-slate-800 line-clamp-1">Pelanggan Umum</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500">Kategori:</span>
+                                <span id="pos-modal-customer-cat" class="font-bold text-indigo-700">REGULER</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500">Cabang:</span>
+                                <span id="pos-modal-branch-name" class="font-semibold text-slate-700">Cabang Utama</span>
+                            </div>
+                        </div>
+
+                        <!-- Itemized Products List -->
+                        <div>
+                            <span class="text-[11px] font-bold text-slate-500 block mb-1">Rincian Item Belanja:</span>
+                            <div id="pos-modal-items-list" class="max-h-44 sm:max-h-52 overflow-y-auto bg-white rounded-xl p-2 border border-slate-200/80 divide-y divide-slate-100 text-xs space-y-1">
+                                <!-- Populated dynamically via openPaymentModal() -->
+                            </div>
+                        </div>
+
+                        <!-- Price Breakdown -->
+                        <div class="pt-2 border-t border-slate-200 space-y-1.5 text-xs text-slate-600">
+                            <div class="flex justify-between">
+                                <span>Subtotal Produk:</span>
+                                <span id="pos-modal-subtotal" class="font-semibold text-slate-800">Rp 0</span>
+                            </div>
+                            <div class="flex justify-between text-rose-600">
+                                <span>Diskon Faktur:</span>
+                                <span id="pos-modal-discount" class="font-semibold">- Rp 0</span>
+                            </div>
+                            <div id="pos-modal-delivery-row" class="hidden flex justify-between text-indigo-700">
+                                <span id="pos-modal-delivery-label">🛵 Antar Kurir:</span>
+                                <span id="pos-modal-delivery-fee" class="font-bold">GRATIS</span>
+                            </div>
+                            <div id="pos-modal-tax-row" class="hidden flex justify-between text-slate-600">
+                                <span>Pajak (PPN):</span>
+                                <span id="pos-modal-tax" class="font-semibold text-slate-800">Rp 0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grand Total Banner -->
+                    <div class="bg-gradient-to-r from-indigo-700 to-indigo-800 text-white rounded-xl p-3 sm:p-3.5 flex justify-between items-center shadow-sm">
+                        <div>
+                            <p class="text-[10px] uppercase font-black tracking-wider text-indigo-200">Total Tagihan</p>
+                            <p class="text-[11px] text-indigo-100">Harus dibayar</p>
+                        </div>
+                        <span id="pos-modal-grand-total" class="text-xl sm:text-2xl font-black font-mono">Rp 0</span>
+                    </div>
+                </div>
+
+                <!-- Right Column (7 Cols): Payment Selection & Cash Input -->
+                <div class="md:col-span-7 flex flex-col justify-between space-y-4">
+                    <div class="space-y-4">
+                        <!-- Select Payment Method -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Metode Pembayaran:</label>
+                            <div id="pos-payment-methods-grid" class="grid grid-cols-4 gap-2">
+                                <button type="button" onclick="setPaymentMethod('CASH')" id="pay-btn-CASH" class="pay-btn py-2 text-xs font-bold rounded-xl border text-center border-indigo-600 bg-indigo-50 text-indigo-700">Tunai</button>
+                                <button type="button" onclick="setPaymentMethod('QRIS')" id="pay-btn-QRIS" class="pay-btn py-2 text-xs font-semibold rounded-xl border text-center border-slate-200 bg-white text-slate-700 hover:bg-slate-50">QRIS</button>
+                                <button type="button" onclick="setPaymentMethod('DEBIT')" id="pay-btn-DEBIT" class="pay-btn py-2 text-xs font-semibold rounded-xl border text-center border-slate-200 bg-white text-slate-700 hover:bg-slate-50">Debit</button>
+                                <button type="button" onclick="setPaymentMethod('TRANSFER')" id="pay-btn-TRANSFER" class="pay-btn py-2 text-xs font-semibold rounded-xl border text-center border-slate-200 bg-white text-slate-700 hover:bg-slate-50">Transfer</button>
+                            </div>
+                        </div>
+
+                        <!-- Cash Payment Section -->
+                        <div id="cash-payment-section" class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3.5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <label for="input-cash-received" class="text-xs font-bold text-slate-800 block">Uang Tunai Diterima:</label>
+                                    <p class="text-[10px] text-slate-400">Ketik nominal atau klik pilihan cepat</p>
+                                </div>
+                                <div class="relative w-44">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
+                                    <input type="number" id="input-cash-received" oninput="calculateChange()" onkeydown="if(event.key==='Enter'){event.preventDefault(); processCheckout();}" placeholder="0" class="w-full text-right py-2 pl-9 pr-3 text-sm font-black bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <div>
+                                <span class="text-[11px] font-semibold text-slate-500 block mb-1.5">Nominal Cepat (Denominasi):</span>
+                                <div id="pos-cash-denominations-grid" class="grid grid-cols-5 gap-1.5">
+                                    <button type="button" onclick="setExactCash()" class="cash-denom-btn py-2 px-1 text-xs font-bold rounded-lg border text-center transition-all bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-400 active:scale-95 shadow-2xs">Uang Pas</button>
+                                    <button type="button" onclick="addCash(10000)" class="cash-denom-btn py-2 px-1 text-xs font-bold rounded-lg border text-center transition-all bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-400 active:scale-95 shadow-2xs">10K</button>
+                                    <button type="button" onclick="addCash(20000)" class="cash-denom-btn py-2 px-1 text-xs font-bold rounded-lg border text-center transition-all bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-400 active:scale-95 shadow-2xs">20K</button>
+                                    <button type="button" onclick="addCash(50000)" class="cash-denom-btn py-2 px-1 text-xs font-bold rounded-lg border text-center transition-all bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-400 active:scale-95 shadow-2xs">50K</button>
+                                    <button type="button" onclick="addCash(100000)" class="cash-denom-btn py-2 px-1 text-xs font-bold rounded-lg border text-center transition-all bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-400 active:scale-95 shadow-2xs">100K</button>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between items-center pt-2.5 border-t border-slate-200">
+                                <div>
+                                    <span class="text-xs font-bold text-slate-700">Uang Kembalian:</span>
+                                    <p class="text-[10px] text-slate-400">Harus diserahkan ke pelanggan</p>
+                                </div>
+                                <span id="summary-cash-change" class="text-emerald-600 font-mono text-xl sm:text-2xl font-black">Rp 0</span>
+                            </div>
+                        </div>
+
+                        <!-- Non-Cash Notice Information Box -->
+                        <div id="non-cash-payment-info" class="hidden p-3.5 bg-indigo-50/70 border border-indigo-200 rounded-2xl text-xs text-indigo-900 space-y-1">
+                            <div class="flex items-center space-x-1.5 font-bold">
+                                <i data-lucide="info" class="w-4 h-4 text-indigo-600"></i>
+                                <span id="non-cash-info-title">Verifikasi Pembayaran Non-Tunai</span>
+                            </div>
+                            <p id="non-cash-info-desc" class="text-slate-600 text-[11px]">Pastikan dana berhasil terverifikasi pada EDC / QRIS / mutasi rekening sebelum menekan tombol Selesaikan Pembayaran.</p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="pt-3 border-t border-slate-200 flex items-center space-x-3">
+                        <button type="button" onclick="closePaymentModal()" class="px-5 py-3 rounded-xl border border-slate-300 font-bold text-xs text-slate-700 hover:bg-slate-100 transition-colors">
+                            Batal
+                        </button>
+                        <button type="button" onclick="processCheckout()" id="btn-checkout" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-xs sm:text-sm active:scale-[0.99] cursor-pointer">
+                            <i data-lucide="check-circle" class="w-5 h-5"></i>
+                            <span>Selesaikan Pembayaran (Enter)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal 1: Struk Thermal Penjualan -->
     <div id="receipt-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -10223,8 +10363,14 @@ try {
                     return;
                 }
                 existing.qty += 1;
+                // Pindahkan ke urutan pertama agar produk terakhir diinput selalu berada di paling atas (FR-POS-33)
+                const existingIdx = state.cart.indexOf(existing);
+                if (existingIdx > 0) {
+                    state.cart.splice(existingIdx, 1);
+                    state.cart.unshift(existing);
+                }
             } else {
-                state.cart.push({
+                state.cart.unshift({
                     item_key: itemKey,
                     product_id: product.id,
                     variant_id: variantId,
@@ -10247,6 +10393,31 @@ try {
             checkMandatoryDeliveryOnCart();
         }
 
+        function toggleDeliveryCollapse(forceState = null) {
+            if (forceState !== null) {
+                state.isDeliveryCollapsed = forceState;
+            } else {
+                state.isDeliveryCollapsed = !state.isDeliveryCollapsed;
+            }
+
+            const box = document.getElementById('pos-delivery-box');
+            const toggleText = document.getElementById('pos-delivery-collapse-text');
+            const toggleIcon = document.getElementById('pos-delivery-collapse-icon');
+
+            if (!box) return;
+
+            if (state.isDeliveryCollapsed) {
+                box.classList.add('hidden');
+                if (toggleText) toggleText.innerText = 'Detail';
+                if (toggleIcon) toggleIcon.setAttribute('data-lucide', 'chevron-down');
+            } else {
+                box.classList.remove('hidden');
+                if (toggleText) toggleText.innerText = 'Tutup';
+                if (toggleIcon) toggleIcon.setAttribute('data-lucide', 'chevron-up');
+            }
+            lucide.createIcons();
+        }
+
         function resetPosDelivery(skipTotalsRecalc = false) {
             const delivCheckbox = document.getElementById('check-delivery-mode');
             if (delivCheckbox) delivCheckbox.checked = false;
@@ -10254,14 +10425,21 @@ try {
             const badge = document.getElementById('pos-delivery-badge');
             if (badge) badge.classList.add('hidden');
 
+            const actions = document.getElementById('pos-delivery-header-actions');
+            if (actions) actions.classList.add('hidden');
+
             const box = document.getElementById('pos-delivery-box');
             if (box) box.classList.add('hidden');
 
+            state.isDeliveryCollapsed = true;
             state.currentDeliveryFee = 0;
             state.currentDeliveryDistance = 0;
             state.currentPosDriverUserId = null;
             state.currentPosDriverName = null;
             state.currentPosVehicleId = null;
+
+            const pill = document.getElementById('pos-delivery-summary-pill');
+            if (pill) pill.innerText = '0 km • GRATIS';
 
             const noteEl = document.getElementById('pos-delivery-note');
             if (noteEl) {
@@ -10344,6 +10522,12 @@ try {
 
         function renderCart() {
             const container = document.getElementById('cart-items');
+            const countBadge = document.getElementById('cart-item-count-badge');
+            if (countBadge) {
+                const totalQty = (state.cart || []).reduce((sum, item) => sum + item.qty, 0);
+                countBadge.innerText = `${totalQty} Item`;
+            }
+
             if (!state.cart || state.cart.length === 0) {
                 state.cart = [];
                 resetPosDelivery(true);
@@ -10359,10 +10543,15 @@ try {
                 return;
             }
 
-            container.innerHTML = state.cart.map(item => `
-                <div class="py-2.5 flex items-center justify-between text-xs border-b border-slate-100 last:border-b-0">
+            container.innerHTML = state.cart.map((item, index) => {
+                const isLatest = (index === 0 && state.cart.length > 1);
+                return `
+                <div class="py-2.5 flex items-center justify-between text-xs border-b border-slate-100 last:border-b-0 ${isLatest ? 'bg-indigo-50/50 -mx-1.5 px-2 rounded-xl border border-indigo-100/90 shadow-2xs' : ''}">
                     <div class="flex-1 pr-2">
-                        <h4 class="font-bold text-slate-800 line-clamp-1">${item.name}</h4>
+                        <div class="flex items-center space-x-1.5">
+                            <h4 class="font-bold text-slate-800 line-clamp-1">${item.name}</h4>
+                            ${isLatest ? `<span class="inline-flex items-center text-[9px] px-1.5 py-0.2 bg-indigo-600 text-white rounded font-black shadow-2xs shrink-0">✨ Terbaru</span>` : ''}
+                        </div>
                         <div class="flex flex-wrap items-center gap-1 mt-0.5">
                             ${item.variant_name ? `<span class="inline-block text-[10px] px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-black">🏷️ ${item.variant_name}</span>` : ''}
                             ${(item.is_delivery_included === 1 || item.is_delivery_required === 2)
@@ -10375,7 +10564,7 @@ try {
                             ${item.price_tag && !item.price_tag.includes('Ritel') ? `<span class="text-[9px] px-1.5 py-0.2 bg-indigo-50 text-indigo-700 rounded font-bold">${item.price_tag}</span>` : ''}
                         </div>
                     </div>
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-2 shrink-0">
                         <div class="flex items-center border border-slate-200 rounded-lg bg-slate-50">
                             <button onclick="updateCartQty('${item.item_key}', -1)" class="w-6 h-6 flex items-center justify-center text-slate-600 hover:bg-slate-200 rounded-l font-bold">-</button>
                             <span class="w-7 text-center font-bold text-slate-800">${item.qty}</span>
@@ -10387,7 +10576,13 @@ try {
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
+
+            container.scrollTop = 0;
+            calculateCartTotals();
+            lucide.createIcons();
+        }
 
             calculateCartTotals();
             lucide.createIcons();
@@ -10584,12 +10779,18 @@ try {
             }
 
             if (isChecked) {
-                if (badge) badge.classList.remove('hidden');
-                if (box) box.classList.remove('hidden');
+                const actions = document.getElementById('pos-delivery-header-actions');
+                if (actions) actions.classList.remove('hidden');
+                if (badge) badge.classList.add('hidden');
+                // Standar tampilan: Default Collapse (FR-POS-33)
+                state.isDeliveryCollapsed = true;
+                toggleDeliveryCollapse(true);
                 renderPosCourierSelect();
                 await calculateDeliveryFeeForPOS();
                 lucide.createIcons();
             } else {
+                const actions = document.getElementById('pos-delivery-header-actions');
+                if (actions) actions.classList.add('hidden');
                 if (badge) badge.classList.add('hidden');
                 if (box) box.classList.add('hidden');
                 state.currentDeliveryFee = 0;
@@ -10708,6 +10909,15 @@ try {
                     noteEl.classList.add('hidden');
                 }
             }
+
+            // Sinkronkan ringkasan 1-baris pada mode delivery collapse
+            const summaryPill = document.getElementById('pos-delivery-summary-pill');
+            if (summaryPill) {
+                const distKmStr = (state.currentDeliveryDistance && state.currentDeliveryDistance > 0) ? `${formatDecimal(state.currentDeliveryDistance)} km` : '0 km';
+                const feeStr = (state.currentDeliveryFee === 0) ? 'GRATIS' : formatRupiah(state.currentDeliveryFee);
+                summaryPill.innerText = `${distKmStr} • ${feeStr}`;
+            }
+
             calculateCartTotals();
         }
 
@@ -10866,35 +11076,190 @@ try {
             select.innerHTML = html;
         }
 
+        function openPaymentModal() {
+            if (!state.cart || state.cart.length === 0) {
+                alert('Keranjang belanja masih kosong! Silakan pilih produk di katalog terlebih dahulu.');
+                return;
+            }
+
+            // Validasi Opening Shift
+            if (!state.activeShift || state.activeShift.status !== 'OPEN') {
+                alert('PERINGATAN OPENING SHIFT:\nTransaksi penjualan tidak dapat dilakukan karena shift kasir (Opening Sales) belum dibuka!\n\nSilakan isi formulir Opening Shift (uang modal pangkal & verifikasi stok awal) untuk membuka penjualan.');
+                openShiftModal();
+                return;
+            }
+
+            // Hitung ulang kalkulasi total
+            calculateCartTotals();
+
+            // 1. Isi Metadata Pelanggan & Cabang
+            const cust = state.selectedCustomer;
+            const custNameEl = document.getElementById('pos-modal-customer-name');
+            if (custNameEl) custNameEl.innerText = cust ? cust.name : 'Pelanggan Umum (Walk-in)';
+
+            const custCatEl = document.getElementById('pos-modal-customer-cat');
+            if (custCatEl) custCatEl.innerText = state.selectedCustomerCategory || (cust ? cust.category : 'REGULER');
+
+            const branchEl = document.getElementById('pos-modal-branch-name');
+            if (branchEl) branchEl.innerText = state.currentBranch ? state.currentBranch.name : 'Cabang Utama';
+
+            const totalQty = state.cart.reduce((sum, item) => sum + item.qty, 0);
+            const countEl = document.getElementById('pos-modal-summary-items-count');
+            if (countEl) countEl.innerText = `${state.cart.length} Produk (${totalQty} Pcs)`;
+
+            // 2. Tampilkan Rincian Item Keranjang
+            const itemsContainer = document.getElementById('pos-modal-items-list');
+            if (itemsContainer) {
+                itemsContainer.innerHTML = state.cart.map(item => `
+                    <div class="py-1.5 flex justify-between items-center text-xs">
+                        <div class="flex-1 pr-2">
+                            <span class="font-bold text-slate-800 line-clamp-1">${item.name}</span>
+                            <div class="flex items-center space-x-1.5 text-[10px] text-slate-500">
+                                ${item.variant_name ? `<span class="text-purple-700 font-bold">[${item.variant_name}]</span>` : ''}
+                                <span>${item.qty} x ${formatRupiah(item.price)}</span>
+                            </div>
+                        </div>
+                        <span class="font-mono font-bold text-slate-800">${formatRupiah(item.price * item.qty)}</span>
+                    </div>
+                `).join('');
+            }
+
+            // 3. Tampilkan Subtotal, Diskon, Ongkir, Pajak, Grand Total
+            const subtotal = state.cart.reduce((acc, c) => acc + (c.price * c.qty), 0);
+            const discountInput = parseFloat(document.getElementById('input-discount')?.value) || 0;
+            const discount = Math.min(subtotal, Math.max(0, discountInput));
+
+            let totalTax = 0;
+            let hasTaxableItem = false;
+            state.cart.forEach(item => {
+                const isTaxable = (item.is_taxable !== undefined) ? Number(item.is_taxable) : 1;
+                const taxRate = (item.tax_percent !== undefined) ? Number(item.tax_percent) : 11.0;
+                if (isTaxable === 1 && taxRate > 0) {
+                    hasTaxableItem = true;
+                    const itemShare = subtotal > 0 ? ((item.price * item.qty) / subtotal) : 0;
+                    const itemDiscount = discount * itemShare;
+                    const itemTaxableVal = Math.max(0, (item.price * item.qty) - itemDiscount);
+                    totalTax += Math.round((itemTaxableVal * taxRate) / 100);
+                }
+            });
+
+            const isDelivery = document.getElementById('check-delivery-mode')?.checked || false;
+            const deliveryFee = isDelivery ? (state.currentDeliveryFee || 0) : 0;
+            const grandTotal = Math.max(0, subtotal - discount) + totalTax + deliveryFee;
+
+            if (document.getElementById('pos-modal-subtotal')) {
+                document.getElementById('pos-modal-subtotal').innerText = formatRupiah(subtotal);
+            }
+            if (document.getElementById('pos-modal-discount')) {
+                document.getElementById('pos-modal-discount').innerText = discount > 0 ? `- ${formatRupiah(discount)}` : 'Rp 0';
+            }
+
+            const delivRow = document.getElementById('pos-modal-delivery-row');
+            if (delivRow) {
+                if (isDelivery) {
+                    delivRow.classList.remove('hidden');
+                    const distText = (state.currentDeliveryDistance && state.currentDeliveryDistance > 0) ? `(${formatDecimal(state.currentDeliveryDistance)} km)` : '';
+                    const labelEl = document.getElementById('pos-modal-delivery-label');
+                    if (labelEl) labelEl.innerText = `🛵 Antar Kurir ${distText}:`;
+                    const feeEl = document.getElementById('pos-modal-delivery-fee');
+                    if (feeEl) feeEl.innerText = deliveryFee === 0 ? 'GRATIS' : formatRupiah(deliveryFee);
+                } else {
+                    delivRow.classList.add('hidden');
+                }
+            }
+
+            const taxRow = document.getElementById('pos-modal-tax-row');
+            if (taxRow) {
+                if (hasTaxableItem && totalTax > 0) {
+                    taxRow.classList.remove('hidden');
+                    const taxEl = document.getElementById('pos-modal-tax');
+                    if (taxEl) taxEl.innerText = formatRupiah(totalTax);
+                } else {
+                    taxRow.classList.add('hidden');
+                }
+            }
+
+            if (document.getElementById('pos-modal-grand-total')) {
+                document.getElementById('pos-modal-grand-total').innerText = formatRupiah(grandTotal);
+            }
+
+            // 4. Render Tombol Metode Pembayaran & Denominasi
+            renderPosPaymentButtons();
+            renderPosCashDenominations();
+
+            const cashInput = document.getElementById('input-cash-received');
+            if (cashInput && (!cashInput.value || parseFloat(cashInput.value) <= 0)) {
+                cashInput.value = '';
+            }
+            calculateChange();
+
+            // 5. Buka Popup Modal & Fokus Input
+            const modal = document.getElementById('pos-payment-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                lucide.createIcons();
+                setTimeout(() => {
+                    const targetPm = (state.paymentMethods || []).find(m => m.code === state.paymentMethod);
+                    const isCash = targetPm ? (Number(targetPm.is_cash) === 1) : (state.paymentMethod === 'CASH');
+                    if (isCash && cashInput) {
+                        cashInput.focus();
+                        cashInput.select();
+                    }
+                }, 100);
+            }
+        }
+
+        function closePaymentModal() {
+            const modal = document.getElementById('pos-payment-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
         function setPaymentMethod(method) {
             state.paymentMethod = method;
             document.querySelectorAll('.pay-btn').forEach(btn => {
                 if (btn.id === `pay-btn-${method}`) {
-                    btn.className = 'pay-btn py-1.5 text-xs font-bold rounded-lg border text-center border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm';
+                    btn.className = 'pay-btn py-2 text-xs font-bold rounded-xl border text-center border-indigo-600 bg-indigo-50 text-indigo-700 shadow-2xs';
                 } else {
-                    btn.className = 'pay-btn py-1.5 text-xs font-semibold rounded-lg border text-center border-slate-200 bg-white text-slate-700 hover:bg-slate-50';
+                    btn.className = 'pay-btn py-2 text-xs font-semibold rounded-xl border text-center border-slate-200 bg-white text-slate-700 hover:bg-slate-50';
                 }
             });
 
             const cashSection = document.getElementById('cash-payment-section');
-            if (cashSection) {
-                // Cari tahu apakah metode yang dipilih bersifat tunai (is_cash == 1)
-                const targetPm = (state.paymentMethods || []).find(m => m.code === method);
-                const isCash = targetPm ? (Number(targetPm.is_cash) === 1) : (method === 'CASH');
+            const nonCashSection = document.getElementById('non-cash-payment-info');
+            const targetPm = (state.paymentMethods || []).find(m => m.code === method);
+            const isCash = targetPm ? (Number(targetPm.is_cash) === 1) : (method === 'CASH');
 
+            if (cashSection) {
                 if (isCash) cashSection.classList.remove('hidden');
                 else cashSection.classList.add('hidden');
+            }
+
+            if (nonCashSection) {
+                if (!isCash) {
+                    nonCashSection.classList.remove('hidden');
+                    const titleEl = document.getElementById('non-cash-info-title');
+                    const descEl = document.getElementById('non-cash-info-desc');
+                    if (method === 'PIUTANG') {
+                        if (titleEl) titleEl.innerText = 'Pencatatan Piutang Pelanggan';
+                        if (descEl) descEl.innerText = 'Transaksi ini akan dicatat ke dalam buku piutang pelanggan dan saldo piutang akan otomatis bertambah.';
+                    } else {
+                        if (titleEl) titleEl.innerText = `Pembayaran via ${targetPm ? targetPm.name : method}`;
+                        if (descEl) descEl.innerText = `Pastikan dana sudah diverifikasi masuk pada EDC / QRIS / mutasi rekening sebelum menyelesaikan transaksi.`;
+                    }
+                } else {
+                    nonCashSection.classList.add('hidden');
+                }
             }
 
             // Adaptasi Teks & Gaya Tombol Checkout jika PIUTANG
             const btnCheckout = document.getElementById('btn-checkout');
             if (btnCheckout) {
                 if (method === 'PIUTANG') {
-                    btnCheckout.innerHTML = `<i data-lucide="book-open-check" class="w-4 h-4 sm:w-5 sm:h-5"></i><span>Catat Piutang Pelanggan & Potong Stok (F12)</span>`;
-                    btnCheckout.className = 'w-full mt-2 py-3 bg-amber-600 hover:bg-amber-700 text-white font-black rounded-xl shadow-md transition-colors flex items-center justify-center space-x-2 text-xs sm:text-sm';
+                    btnCheckout.innerHTML = `<i data-lucide="book-open-check" class="w-5 h-5"></i><span>Catat Piutang & Selesaikan (Enter)</span>`;
+                    btnCheckout.className = 'flex-1 py-3 bg-amber-600 hover:bg-amber-700 text-white font-black rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-xs sm:text-sm active:scale-[0.99] cursor-pointer';
                 } else {
-                    btnCheckout.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4 sm:w-5 sm:h-5"></i><span>Bayar & Potong Stok BOM (F12)</span>`;
-                    btnCheckout.className = 'w-full mt-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-md transition-colors flex items-center justify-center space-x-2 text-xs sm:text-sm';
+                    btnCheckout.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i><span>Selesaikan Pembayaran (Enter)</span>`;
+                    btnCheckout.className = 'flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-xs sm:text-sm active:scale-[0.99] cursor-pointer';
                 }
                 lucide.createIcons();
             }
@@ -11062,6 +11427,7 @@ try {
                 setPaymentMethod(state.paymentMethod);
 
                 if (data.success) {
+                    closePaymentModal();
                     showReceiptModal(data.sale);
                     clearCart();
                     document.getElementById('input-cash-received').value = '';
@@ -26484,11 +26850,21 @@ Manager / Supervisor: __________________
             }
         }
 
-        // Keyboard Shortcut: F12 for Checkout
+        // Keyboard Shortcut: F12 for Payment Modal / Checkout, Escape to close
         window.addEventListener('keydown', (e) => {
             if (e.key === 'F12' && state.currentTab === 'pos') {
                 e.preventDefault();
-                processCheckout();
+                const payModal = document.getElementById('pos-payment-modal');
+                if (payModal && !payModal.classList.contains('hidden')) {
+                    processCheckout();
+                } else {
+                    openPaymentModal();
+                }
+            } else if (e.key === 'Escape') {
+                const payModal = document.getElementById('pos-payment-modal');
+                if (payModal && !payModal.classList.contains('hidden')) {
+                    closePaymentModal();
+                }
             }
         });
 

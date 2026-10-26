@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.69",
-  "build": "20261026-24",
+  "version": "1.2.70",
+  "build": "20261026-25",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.70",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Modal Pembayaran Terpisah dengan Order Summary, Delivery Collapsible, dan Urutan Produk Terakhir (FR-POS-33)",
+      "description": "Menyempurnakan alur dan tata letak antarmuka POS Kasir: (1) Urutan Item Keranjang: Setiap produk yang baru diinput atau diubah jumlahnya otomatis ditempatkan di posisi paling atas dengan lencana 'Terbaru' (bila item > 1) dan wadah keranjang otomatis bergulir ke atas sehingga kasir selalu langsung melihat produk terakhir yang diinput. (2) Delivery Expand & Collapse: Panel delivery kurir dibuat collapsible dengan status default terlipat (hanya menampilkan ringkasan kompak 1-baris seperti '0 km • GRATIS' dan tombol toggle 'Detail ▾') untuk menghemat ruang vertikal. Kasir dapat membuka rincian lengkap kurir, armada, dan jarak kapan saja dengan satu klik. (3) Modal Pembayaran Terpisah (Order Summary & Multi-Metode): Mengeluarkan kontrol pembayaran, input uang tunai, tombol denominasi cepat, dan kalkulasi kembalian dari sidebar keranjang ke dalam popup modal khusus responsif 2-kolom yang memuat Ringkasan Pesanan lengkap (data pelanggan, cabang, daftar item, subtotal, diskon faktur, ongkir, pajak, grand total) di sisi kiri dan metode bayar/tunai/non-tunai di sisi kanan. (4) Tombol Pembayaran POS: Mengganti tombol panjang di sidebar keranjang menjadi tombol ringkas elegan bernama 'Bayar' (F12) untuk membuka popup pembayaran.",
+      "rollback_command": "git checkout v1.2.69"
+    },
     {
       "version": "1.2.69",
       "commit": "HEAD",
