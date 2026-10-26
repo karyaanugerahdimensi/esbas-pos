@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.80",
-  "build": "20261026-35",
+  "version": "1.2.81",
+  "build": "20261026-36",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.81",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Optimalisasi Layout CRM Kategori: Eliminasi Banner Master Kategori & Relokasi Tombol Tambah ke Toolbar Pencarian (FR-CRM-12)",
+      "description": "Menyederhanakan visual dan menghemat ruang vertikal pada Sub-Tab Kategori Pelanggan CRM (#subview-cust-category): (1) Eliminasi Banner Info: Menghapus kartu informasi 'Master Kategori Pelanggan & Status Aktif/Nonaktif' yang memakan ruang vertikal signifikan di atas tabel. (2) Relokasi Tombol Tambah Kategori Baru: Memindahkan tombol '+ Tambah Kategori Baru' langsung ke dalam toolbar filter & pencarian kategori pelanggan bersebelahan dengan filter status (Semua/Aktif/Nonaktif), selaras dengan arsitektur toolbar Sub-Tab 1 CRM. (3) Dukungan Dark Mode Komprehensif: Menambahkan styling tema gelap (dark:bg-slate-900, dark:border-slate-800) pada baris pencarian kategori pelanggan.",
+      "rollback_command": "git checkout v1.2.80"
+    },
     {
       "version": "1.2.80",
       "commit": "HEAD",

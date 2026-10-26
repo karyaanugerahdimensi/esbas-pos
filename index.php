@@ -3483,35 +3483,23 @@ try {
 
                 <!-- SUBTAB 4: MASTER KATEGORI PELANGGAN & STATUS AKTIF/NONAKTIF -->
                 <div id="subview-cust-category" class="space-y-4 hidden">
-                    <!-- Banner Info -->
-                    <div class="bg-indigo-50/70 border border-indigo-200 rounded-2xl p-4 text-xs text-indigo-950 flex flex-wrap items-start justify-between gap-4">
-                        <div class="flex items-start space-x-3">
-                            <span class="text-2xl">👥</span>
-                            <div>
-                                <p class="font-bold text-sm text-indigo-950">Master Kategori Pelanggan & Status Aktif/Nonaktif</p>
-                                <p class="text-[11px] text-indigo-800 mt-0.5 leading-relaxed">
-                                    Kelola kelompok pelanggan untuk menentukan tingkat harga jual (Tier Harga: Reguler, Member VIP, Reseller/Grosir, atau Kontrak Khusus Mitra B2B).
-                                    Kategori yang diset <span class="font-bold text-rose-700">Nonaktif</span> tidak akan dimunculkan pada formulir pendaftaran pelanggan baru dan filter kasir POS.
-                                </p>
-                            </div>
-                        </div>
-                        <button type="button" onclick="openCustomerCategoryModal()" class="shrink-0 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow transition-colors flex items-center space-x-1.5">
-                            <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                            <span>+ Tambah Kategori Baru</span>
-                        </button>
-                    </div>
-
                     <!-- Filter & Search Bar Kategori Pelanggan -->
-                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-3 items-center justify-between">
+                    <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-3 items-center justify-between">
                         <div class="relative flex-1 min-w-[240px]">
                             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-                            <input type="text" id="cust-cat-search-keyword" oninput="renderCustomerCategoriesTable()" placeholder="Cari nama, kode kategori, atau tier harga..." class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                            <input type="text" id="cust-cat-search-keyword" oninput="renderCustomerCategoriesTable()" placeholder="Cari nama, kode kategori, atau tier harga..." class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400">
                         </div>
-                        <div class="flex gap-1.5 items-center">
-                            <label class="text-[11px] font-semibold text-slate-500 mr-1">Filter Status:</label>
-                            <button type="button" onclick="setCustCatStatusFilter('ALL')" id="filter-cust-cat-all" class="cust-cat-status-filter px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white">Semua</button>
-                            <button type="button" onclick="setCustCatStatusFilter('ACTIVE')" id="filter-cust-cat-active" class="cust-cat-status-filter px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Aktif Saja</button>
-                            <button type="button" onclick="setCustCatStatusFilter('INACTIVE')" id="filter-cust-cat-inactive" class="cust-cat-status-filter px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Nonaktif</button>
+                        <div class="flex gap-2.5 items-center flex-wrap">
+                            <div class="flex gap-1.5 items-center">
+                                <label class="text-[11px] font-semibold text-slate-500 mr-1">Filter Status:</label>
+                                <button type="button" onclick="setCustCatStatusFilter('ALL')" id="filter-cust-cat-all" class="cust-cat-status-filter px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white">Semua</button>
+                                <button type="button" onclick="setCustCatStatusFilter('ACTIVE')" id="filter-cust-cat-active" class="cust-cat-status-filter px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Aktif Saja</button>
+                                <button type="button" onclick="setCustCatStatusFilter('INACTIVE')" id="filter-cust-cat-inactive" class="cust-cat-status-filter px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Nonaktif</button>
+                            </div>
+                            <button type="button" onclick="openCustomerCategoryModal()" class="shrink-0 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow transition-colors flex items-center space-x-1.5">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                                <span>+ Tambah Kategori Baru</span>
+                            </button>
                         </div>
                     </div>
 
