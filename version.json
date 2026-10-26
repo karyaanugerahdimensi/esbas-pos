@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.84",
-  "build": "20261026-39",
+  "version": "1.2.85",
+  "build": "20261026-40",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.85",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Kustomisasi Logo Toko Berbasis Gambar/Foto & Avatar Inisial Pengguna (FR-SET-08)",
+      "description": "Menambahkan fitur kustomisasi logo toko dalam bentuk berkas gambar/foto kustom dan avatar inisial pengguna pada navigasi: (1) Form Konfigurasi Identitas & Logo: Menambahkan komponen unggah gambar/foto kustom (PNG, JPG, WebP, SVG maks 5MB) dengan auto-kompresi canvas cerdas, kotak pratinjau langsung (live preview), kolom URL/Data URL, tombol hapus foto, serta fallback ikon emoji preset. (2) Penerapan Logo Visual Terpadu: Merender foto/gambar logo pada Header Sidebar (Expanded & Collapsed), Layar Masuk (Login Screen), Modal Struk Thermal Penjualan, serta Pratinjau Struk Langsung dengan graceful error fallback. (3) Avatar Inisial Pengguna Sidebar: Menggantikan ikon siluet generik pada kartu akun pengguna sidebar (baik expanded maupun collapsed) dengan inisial nama dinamis kontras tinggi (misal 'MI' untuk Muhamad Ismail) dan dukungan avatar foto pengguna jika tersedia.",
+      "rollback_command": "git checkout v1.2.84"
+    },
     {
       "version": "1.2.84",
       "commit": "HEAD",

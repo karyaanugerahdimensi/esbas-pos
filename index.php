@@ -37,6 +37,20 @@ try {
 } catch (Throwable $e) {
     $quickUsers = [];
 }
+
+$initialAppSettings = [];
+try {
+    if (isset($pdo)) {
+        $stmtAppSet = $pdo->query("SELECT setting_key, setting_value FROM app_settings");
+        while ($row = $stmtAppSet->fetch(PDO::FETCH_ASSOC)) {
+            $initialAppSettings[$row['setting_key']] = $row['setting_value'];
+        }
+    }
+} catch (Throwable $e) {}
+$initialLogoEmoji = $initialAppSettings['app_logo_emoji'] ?? '🛍️';
+$initialLogoUrl = $initialAppSettings['app_logo_url'] ?? '';
+$initialAppName = $initialAppSettings['app_name'] ?? 'ESBAS RETAIL';
+$initialAppSubtitle = $initialAppSettings['app_subtitle'] ?? 'POS, BOM & ESS';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -180,9 +194,13 @@ try {
             </button>
 
             <div class="text-center space-y-2">
-                <span class="inline-block p-3 bg-indigo-100 dark:bg-indigo-950/80 rounded-2xl text-4xl shadow-inner">🛍️</span>
-                <h2 class="text-2xl font-black text-slate-800 dark:text-white tracking-tight">MASUK APLIKASI</h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400">ESBAS Retail: POS Multi-Cabang, BOM & ESS</p>
+                <?php if (!empty($initialLogoUrl)): ?>
+                    <span id="login-app-logo" class="inline-flex items-center justify-center w-20 h-20 p-2 bg-indigo-100 dark:bg-indigo-950/80 rounded-2xl shadow-inner overflow-hidden mx-auto"><img src="<?= htmlspecialchars($initialLogoUrl) ?>" class="max-w-full max-h-full object-contain" alt="Logo"></span>
+                <?php else: ?>
+                    <span id="login-app-logo" class="inline-block p-3 bg-indigo-100 dark:bg-indigo-950/80 rounded-2xl text-4xl shadow-inner"><?= htmlspecialchars($initialLogoEmoji) ?></span>
+                <?php endif; ?>
+                <h2 id="login-app-name" class="text-2xl font-black text-slate-800 dark:text-white tracking-tight"><?= htmlspecialchars($initialAppName) ?></h2>
+                <p id="login-app-subtitle" class="text-xs text-slate-500 dark:text-slate-400"><?= htmlspecialchars($initialAppSubtitle) ?></p>
             </div>
 
             <!-- Login Form -->
@@ -279,10 +297,14 @@ try {
         <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
             <div id="sidebar-header" class="h-16 flex items-center justify-between px-4 border-b border-slate-800 shrink-0">
                 <div id="sidebar-brand-expanded" class="flex items-center space-x-3 overflow-hidden">
-                    <span id="sidebar-app-logo" class="p-2 bg-indigo-600 rounded-xl text-xl shrink-0">🛍️</span>
+                    <?php if (!empty($initialLogoUrl)): ?>
+                        <span id="sidebar-app-logo" class="w-10 h-10 rounded-xl bg-white/10 p-1 flex items-center justify-center shrink-0 overflow-hidden"><img src="<?= htmlspecialchars($initialLogoUrl) ?>" class="w-full h-full object-contain" alt="Logo"></span>
+                    <?php else: ?>
+                        <span id="sidebar-app-logo" class="p-2 bg-indigo-600 rounded-xl text-xl shrink-0"><?= htmlspecialchars($initialLogoEmoji) ?></span>
+                    <?php endif; ?>
                     <div class="sidebar-label transition-opacity duration-200 overflow-hidden whitespace-nowrap">
-                        <h1 id="sidebar-app-name" class="font-black text-sm text-white tracking-wide leading-tight">ESBAS RETAIL</h1>
-                        <p id="sidebar-app-subtitle" class="text-[10px] text-indigo-400 font-medium">POS, BOM & ESS</p>
+                        <h1 id="sidebar-app-name" class="font-black text-sm text-white tracking-wide leading-tight"><?= htmlspecialchars($initialAppName) ?></h1>
+                        <p id="sidebar-app-subtitle" class="text-[10px] text-indigo-400 font-medium"><?= htmlspecialchars($initialAppSubtitle) ?></p>
                     </div>
                 </div>
                 <!-- Toggle Button (Desktop & Tablet - Expanded Mode) -->
@@ -291,7 +313,11 @@ try {
                 </button>
                 <!-- Toggle Button (Desktop & Tablet - Collapsed Mode Centered) -->
                 <button onclick="toggleSidebar()" id="sidebar-toggle-btn-collapsed" title="Buka Menu Sidebar (Expand)" class="hidden group relative w-11 h-11 items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-md mx-auto">
-                    <span id="sidebar-app-logo-collapsed" class="text-xl group-hover:hidden transition-transform duration-200">🛍️</span>
+                    <?php if (!empty($initialLogoUrl)): ?>
+                        <span id="sidebar-app-logo-collapsed" class="group-hover:hidden transition-transform duration-200 flex items-center justify-center w-7 h-7"><img src="<?= htmlspecialchars($initialLogoUrl) ?>" class="w-7 h-7 object-contain rounded-lg" alt="Logo"></span>
+                    <?php else: ?>
+                        <span id="sidebar-app-logo-collapsed" class="text-xl group-hover:hidden transition-transform duration-200"><?= htmlspecialchars($initialLogoEmoji) ?></span>
+                    <?php endif; ?>
                     <i data-lucide="panel-left-open" class="w-5 h-5 hidden group-hover:block transition-transform duration-200"></i>
                 </button>
                 <!-- Close Button (Mobile Only) -->
@@ -440,7 +466,7 @@ try {
             <!-- Expanded User Card -->
             <div id="sidebar-user-expanded" class="flex items-center justify-between p-2 rounded-xl bg-slate-800/60 border border-slate-800">
                 <div class="flex items-center space-x-2.5 overflow-hidden">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                    <div id="sidebar-user-avatar-expanded" class="w-8 h-8 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-indigo-200 flex items-center justify-center font-black text-xs shrink-0 overflow-hidden tracking-wider select-none">
                         👤
                     </div>
                     <div class="sidebar-label overflow-hidden whitespace-nowrap leading-tight">
@@ -455,7 +481,7 @@ try {
 
             <!-- Collapsed User & Logout Controls (Centered) -->
             <div id="sidebar-user-collapsed" class="hidden flex-col items-center space-y-2">
-                <div id="sidebar-user-avatar-collapsed" title="Akun Pengguna" class="w-10 h-10 rounded-xl bg-indigo-600/30 border border-indigo-500/40 text-white flex items-center justify-center font-bold text-sm shadow-sm cursor-default">
+                <div id="sidebar-user-avatar-collapsed" title="Akun Pengguna" class="w-10 h-10 rounded-xl bg-indigo-600/30 border border-indigo-500/40 text-indigo-200 flex items-center justify-center font-black text-sm shadow-sm cursor-default overflow-hidden tracking-wider select-none">
                     👤
                 </div>
                 <button onclick="handleLogout()" title="Keluar dari Aplikasi (Logout)" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 rounded-xl transition-all">
@@ -4895,17 +4921,62 @@ try {
                                     <input type="text" id="set-app-subtitle" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:bg-white" placeholder="Contoh: POS, BOM & ESS">
                                     <p class="text-[11px] text-slate-400 mt-1">Teks kecil di bawah nama aplikasi pada header sidebar.</p>
                                 </div>
-                                <div>
-                                    <label class="block font-bold text-slate-700 mb-1">Logo Aplikasi (Emoji / Ikon)</label>
-                                    <div class="flex items-center space-x-3">
-                                        <input type="text" id="set-app-logo-emoji" class="w-20 p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-center text-xl text-slate-800 focus:bg-white" placeholder="🛍️">
-                                        <div class="flex items-center space-x-1.5">
-                                            <button type="button" onclick="document.getElementById('set-app-logo-emoji').value = '🛍️'" class="p-2 border rounded-lg hover:bg-slate-100">🛍️</button>
-                                            <button type="button" onclick="document.getElementById('set-app-logo-emoji').value = '🏪'" class="p-2 border rounded-lg hover:bg-slate-100">🏪</button>
-                                            <button type="button" onclick="document.getElementById('set-app-logo-emoji').value = '☕'" class="p-2 border rounded-lg hover:bg-slate-100">☕</button>
-                                            <button type="button" onclick="document.getElementById('set-app-logo-emoji').value = '🛒'" class="p-2 border rounded-lg hover:bg-slate-100">🛒</button>
-                                            <button type="button" onclick="document.getElementById('set-app-logo-emoji').value = '🥤'" class="p-2 border rounded-lg hover:bg-slate-100">🥤</button>
-                                            <button type="button" onclick="document.getElementById('set-app-logo-emoji').value = '📦'" class="p-2 border rounded-lg hover:bg-slate-100">📦</button>
+                                <div class="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <label class="block font-bold text-slate-800 dark:text-slate-200">Logo Toko (Foto / Gambar Kustom)</label>
+                                        <span class="text-[10px] bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800">Direkomendasikan</span>
+                                    </div>
+                                    
+                                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                                        <!-- Preview Box -->
+                                        <div id="set-logo-preview-box" class="w-16 h-16 rounded-2xl bg-white dark:bg-slate-800 border-2 border-dashed border-indigo-300 dark:border-indigo-700 flex items-center justify-center shrink-0 shadow-sm overflow-hidden relative group">
+                                            <img id="set-logo-preview-img" src="" alt="Logo Toko" class="w-full h-full object-contain p-1 hidden">
+                                            <span id="set-logo-preview-emoji" class="text-3xl">🛍️</span>
+                                        </div>
+
+                                        <!-- Actions -->
+                                        <div class="flex-1 space-y-2 w-full">
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <input type="file" id="set-app-logo-file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden" onchange="handleLogoFileUpload(event)">
+                                                <button type="button" onclick="document.getElementById('set-app-logo-file').click()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs inline-flex items-center space-x-1.5 transition-colors shadow-sm">
+                                                    <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                                                    <span>Unggah Gambar / Foto</span>
+                                                </button>
+                                                <button type="button" onclick="clearLogoImage()" class="px-2.5 py-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-rose-100 dark:hover:bg-rose-950/60 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 rounded-xl font-semibold text-xs inline-flex items-center space-x-1 transition-colors">
+                                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                                    <span>Hapus Foto</span>
+                                                </button>
+                                            </div>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                                Dukung format <strong>PNG, JPG, WebP, SVG</strong> (Maks 5MB). Otomatis dikompres & disimpan ke database untuk sidebar, login, dan struk.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Direct URL / Data-URL Input -->
+                                    <div class="pt-2 border-t border-slate-200/80 dark:border-slate-800">
+                                        <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mb-1">
+                                            <label for="set-app-logo-url" class="font-semibold">URL / Data URL Gambar:</label>
+                                            <span class="text-[10px] font-mono text-slate-400" id="set-logo-status-text">Format: Data URL / Link Web</span>
+                                        </div>
+                                        <input type="text" id="set-app-logo-url" oninput="handleLogoUrlInput(this.value)" class="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-[11px] text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 truncate" placeholder="data:image/png;base64,... atau https://domain.com/logo.png">
+                                    </div>
+
+                                    <!-- Fallback Emoji Option -->
+                                    <div class="pt-2 border-t border-slate-200/80 dark:border-slate-800">
+                                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1.5 text-[11px]">Cadangan Ikon Emoji (Digunakan jika gambar belum diset atau gagal dimuat)</label>
+                                        <div class="flex items-center space-x-2">
+                                            <input type="text" id="set-app-logo-emoji" oninput="updateLogoPreviewUI()" class="w-14 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-center text-lg text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="🛍️">
+                                            <div class="flex items-center space-x-1 flex-wrap gap-1">
+                                                <button type="button" onclick="setLogoEmojiPreset('🛍️')" class="p-1.5 border dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-sm">🛍️</button>
+                                                <button type="button" onclick="setLogoEmojiPreset('🏪')" class="p-1.5 border dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-sm">🏪</button>
+                                                <button type="button" onclick="setLogoEmojiPreset('☕')" class="p-1.5 border dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-sm">☕</button>
+                                                <button type="button" onclick="setLogoEmojiPreset('🛒')" class="p-1.5 border dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-sm">🛒</button>
+                                                <button type="button" onclick="setLogoEmojiPreset('🥤')" class="p-1.5 border dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-sm">🥤</button>
+                                                <button type="button" onclick="setLogoEmojiPreset('📦')" class="p-1.5 border dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-sm">📦</button>
+                                                <button type="button" onclick="setLogoEmojiPreset('⚡')" class="p-1.5 border dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-sm">⚡</button>
+                                                <button type="button" onclick="setLogoEmojiPreset('🏢')" class="p-1.5 border dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-sm">🏢</button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -9767,6 +9838,160 @@ try {
         }
 
         // ==========================================
+        // USER AVATAR & BRANDING HELPERS
+        // ==========================================
+        function getUserInitials(name) {
+            if (!name) return 'U';
+            const clean = name.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+            const parts = clean.split(/\s+/).filter(Boolean);
+            if (parts.length === 0) return 'U';
+            if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+
+        function updateUserAvatarUI(user) {
+            if (!user) user = state.currentUser || state.loggedInUser || {};
+            const name = user.name || 'User';
+            const role = user.role || 'CASHIER';
+            const initials = getUserInitials(name);
+            const photoUrl = user.photo_url || user.avatar_url || '';
+
+            const expandedAvatar = document.getElementById('sidebar-user-avatar-expanded');
+            if (expandedAvatar) {
+                if (photoUrl) {
+                    expandedAvatar.innerHTML = `<img src="${photoUrl}" class="w-full h-full object-cover rounded-lg" alt="${name}" onerror="this.onerror=null; this.parentElement.innerText='${initials}';">`;
+                } else {
+                    expandedAvatar.innerText = initials;
+                }
+            }
+
+            const collapsedAvatar = document.getElementById('sidebar-user-avatar-collapsed');
+            if (collapsedAvatar) {
+                collapsedAvatar.setAttribute('title', `${name} (${role})`);
+                if (photoUrl) {
+                    collapsedAvatar.innerHTML = `<img src="${photoUrl}" class="w-full h-full object-cover rounded-xl" alt="${name}" onerror="this.onerror=null; this.parentElement.innerText='${initials}';">`;
+                } else {
+                    collapsedAvatar.innerText = initials;
+                }
+            }
+        }
+
+        // ==========================================
+        // LOGO BRANDING SETTINGS HELPERS
+        // ==========================================
+        function setLogoEmojiPreset(emoji) {
+            const el = document.getElementById('set-app-logo-emoji');
+            if (el) {
+                el.value = emoji;
+                updateLogoPreviewUI();
+            }
+        }
+
+        function handleLogoUrlInput(url) {
+            updateLogoPreviewUI();
+        }
+
+        function clearLogoImage() {
+            const urlInput = document.getElementById('set-app-logo-url');
+            const fileInput = document.getElementById('set-app-logo-file');
+            if (urlInput) urlInput.value = '';
+            if (fileInput) fileInput.value = '';
+            updateLogoPreviewUI();
+        }
+
+        function handleLogoFileUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                alert('File yang dipilih bukan merupakan berkas gambar!');
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Ukuran file gambar terlalu besar! Maksimal 5MB.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const rawDataUrl = e.target.result;
+                
+                // Kompres gambar otomatis jika ukuran > 150KB menggunakan HTML5 Canvas
+                if (file.size > 150 * 1024 && !file.type.includes('svg')) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const maxDim = 320;
+                        let w = img.width;
+                        let h = img.height;
+                        if (w > maxDim || h > maxDim) {
+                            if (w > h) {
+                                h = Math.round((h * maxDim) / w);
+                                w = maxDim;
+                            } else {
+                                w = Math.round((w * maxDim) / h);
+                                h = maxDim;
+                            }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        const compressedDataUrl = canvas.toDataURL('image/png', 0.9);
+                        const urlInput = document.getElementById('set-app-logo-url');
+                        if (urlInput) urlInput.value = compressedDataUrl;
+                        updateLogoPreviewUI();
+                    };
+                    img.src = rawDataUrl;
+                } else {
+                    const urlInput = document.getElementById('set-app-logo-url');
+                    if (urlInput) urlInput.value = rawDataUrl;
+                    updateLogoPreviewUI();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateLogoPreviewUI() {
+            const urlInput = document.getElementById('set-app-logo-url');
+            const emojiInput = document.getElementById('set-app-logo-emoji');
+            const previewImg = document.getElementById('set-logo-preview-img');
+            const previewEmoji = document.getElementById('set-logo-preview-emoji');
+            const statusText = document.getElementById('set-logo-status-text');
+
+            const logoUrl = urlInput ? urlInput.value.trim() : '';
+            const logoEmoji = emojiInput ? (emojiInput.value.trim() || '🛍️') : '🛍️';
+
+            if (previewEmoji) previewEmoji.innerText = logoEmoji;
+
+            if (logoUrl) {
+                if (previewImg) {
+                    previewImg.src = logoUrl;
+                    previewImg.classList.remove('hidden');
+                    previewImg.onerror = function() {
+                        previewImg.classList.add('hidden');
+                        if (previewEmoji) previewEmoji.classList.remove('hidden');
+                        if (statusText) statusText.innerText = 'Gambar gagal dimuat (cek URL)';
+                    };
+                    previewImg.onload = function() {
+                        previewImg.classList.remove('hidden');
+                        if (previewEmoji) previewEmoji.classList.add('hidden');
+                        if (statusText) statusText.innerText = 'Gambar logo aktif (tersedia)';
+                    };
+                }
+                if (previewEmoji) previewEmoji.classList.add('hidden');
+            } else {
+                if (previewImg) {
+                    previewImg.classList.add('hidden');
+                    previewImg.src = '';
+                }
+                if (previewEmoji) previewEmoji.classList.remove('hidden');
+                if (statusText) statusText.innerText = 'Menggunakan ikon emoji';
+            }
+        }
+
+        // ==========================================
         // AUTHENTICATION LOGIC (12-HOUR SESSION & PASSWORD MANDATORY)
         // ==========================================
         async function checkAuthSession() {
@@ -10161,12 +10386,13 @@ try {
                 applyAppSettingsToUI();
 
                 // Update Sidebar Profile
-                document.getElementById('sidebar-user-name').innerText = state.currentUser.name;
-                document.getElementById('sidebar-user-role').innerText = state.currentUser.role;
-                const userAvatarCollapsed = document.getElementById('sidebar-user-avatar-collapsed');
-                if (userAvatarCollapsed) {
-                    userAvatarCollapsed.setAttribute('title', `${state.currentUser.name} (${state.currentUser.role})`);
+                if (document.getElementById('sidebar-user-name')) {
+                    document.getElementById('sidebar-user-name').innerText = state.currentUser.name;
                 }
+                if (document.getElementById('sidebar-user-role')) {
+                    document.getElementById('sidebar-user-role').innerText = state.currentUser.role;
+                }
+                updateUserAvatarUI(state.currentUser);
 
                 // Terapkan filter hak akses menu sidebar berdasarkan role login
                 applyRolePermissionsToSidebar();
@@ -11664,7 +11890,11 @@ try {
                     rLogo.classList.add('hidden');
                 } else {
                     rLogo.classList.remove('hidden');
-                    rLogo.innerText = s.app_logo_emoji || '🛍️';
+                    if (s.app_logo_url && s.app_logo_url.trim()) {
+                        rLogo.innerHTML = `<img src="${s.app_logo_url.trim()}" class="max-h-12 max-w-28 mx-auto object-contain mb-1" alt="Logo" onerror="this.onerror=null; this.parentElement.innerText='${s.app_logo_emoji || '🛍️'}';">`;
+                    } else {
+                        rLogo.innerText = s.app_logo_emoji || '🛍️';
+                    }
                 }
             }
             if (document.getElementById('receipt-store-title')) {
@@ -26062,12 +26292,45 @@ Manager / Supervisor: __________________
         function applyAppSettingsToUI() {
             const s = state.appSettings || {};
 
-            // 1. Ubah Logo
+            // 1. Ubah Logo (Foto / Gambar Kustom atau Emoji)
             const logoEmoji = s.app_logo_emoji || '🛍️';
+            const logoUrl = (s.app_logo_url && s.app_logo_url.trim()) ? s.app_logo_url.trim() : '';
+
+            // Expanded Sidebar Logo
             const logoEl = document.getElementById('sidebar-app-logo');
-            if (logoEl) logoEl.innerText = logoEmoji;
+            if (logoEl) {
+                if (logoUrl) {
+                    logoEl.className = 'w-10 h-10 rounded-xl bg-white/10 p-1 flex items-center justify-center shrink-0 overflow-hidden';
+                    logoEl.innerHTML = `<img src="${logoUrl}" class="w-full h-full object-contain" alt="Logo" onerror="this.onerror=null; this.parentElement.className='p-2 bg-indigo-600 rounded-xl text-xl shrink-0'; this.parentElement.innerText='${logoEmoji}';">`;
+                } else {
+                    logoEl.className = 'p-2 bg-indigo-600 rounded-xl text-xl shrink-0';
+                    logoEl.innerText = logoEmoji;
+                }
+            }
+
+            // Collapsed Sidebar Logo
             const logoCollapsedEl = document.getElementById('sidebar-app-logo-collapsed');
-            if (logoCollapsedEl) logoCollapsedEl.innerText = logoEmoji;
+            if (logoCollapsedEl) {
+                if (logoUrl) {
+                    logoCollapsedEl.className = 'group-hover:hidden transition-transform duration-200 flex items-center justify-center w-7 h-7';
+                    logoCollapsedEl.innerHTML = `<img src="${logoUrl}" class="w-7 h-7 object-contain rounded-lg" alt="Logo" onerror="this.onerror=null; this.parentElement.className='text-xl group-hover:hidden transition-transform duration-200'; this.parentElement.innerText='${logoEmoji}';">`;
+                } else {
+                    logoCollapsedEl.className = 'text-xl group-hover:hidden transition-transform duration-200';
+                    logoCollapsedEl.innerText = logoEmoji;
+                }
+            }
+
+            // Login Screen Logo
+            const loginLogoEl = document.getElementById('login-app-logo');
+            if (loginLogoEl) {
+                if (logoUrl) {
+                    loginLogoEl.className = 'inline-flex items-center justify-center w-20 h-20 p-2 bg-indigo-100 dark:bg-indigo-950/80 rounded-2xl shadow-inner overflow-hidden mx-auto';
+                    loginLogoEl.innerHTML = `<img src="${logoUrl}" class="max-w-full max-h-full object-contain" alt="Logo" onerror="this.onerror=null; this.parentElement.className='inline-block p-3 bg-indigo-100 dark:bg-indigo-950/80 rounded-2xl text-4xl shadow-inner'; this.parentElement.innerText='${logoEmoji}';">`;
+                } else {
+                    loginLogoEl.className = 'inline-block p-3 bg-indigo-100 dark:bg-indigo-950/80 rounded-2xl text-4xl shadow-inner';
+                    loginLogoEl.innerText = logoEmoji;
+                }
+            }
 
             // 2. Ubah Nama Aplikasi & Slogan
             const appName = s.app_name || 'ESBAS RETAIL';
@@ -26268,6 +26531,8 @@ Manager / Supervisor: __________________
             if (document.getElementById('set-app-name')) document.getElementById('set-app-name').value = s.app_name || 'ESBAS RETAIL';
             if (document.getElementById('set-app-subtitle')) document.getElementById('set-app-subtitle').value = s.app_subtitle || 'POS, BOM & ESS';
             if (document.getElementById('set-app-logo-emoji')) document.getElementById('set-app-logo-emoji').value = s.app_logo_emoji || '🛍️';
+            if (document.getElementById('set-app-logo-url')) document.getElementById('set-app-logo-url').value = s.app_logo_url || '';
+            updateLogoPreviewUI();
             if (document.getElementById('set-company-name')) document.getElementById('set-company-name').value = s.company_name || 'ESBAS RETAIL INDONESIA';
             if (document.getElementById('set-company-address')) document.getElementById('set-company-address').value = s.company_address || '';
             if (document.getElementById('set-company-phone')) document.getElementById('set-company-phone').value = s.company_phone || '';
@@ -26321,6 +26586,7 @@ Manager / Supervisor: __________________
                 app_name: document.getElementById('set-app-name')?.value.trim() || 'ESBAS RETAIL',
                 app_subtitle: document.getElementById('set-app-subtitle')?.value.trim() || 'POS, BOM & ESS',
                 app_logo_emoji: document.getElementById('set-app-logo-emoji')?.value.trim() || '🛍️',
+                app_logo_url: document.getElementById('set-app-logo-url')?.value.trim() || '',
                 company_name: document.getElementById('set-company-name')?.value.trim() || '',
                 company_address: document.getElementById('set-company-address')?.value.trim() || '',
                 company_phone: document.getElementById('set-company-phone')?.value.trim() || '',
@@ -26377,7 +26643,7 @@ Manager / Supervisor: __________________
                 alert(data.message || 'Konfigurasi berhasil disimpan!');
                 if (data.success) {
                     if (branchId === 0 || branchId === parseInt(state.currentBranch?.id)) {
-                        state.appSettings = settingsPayload;
+                        state.appSettings = { ...state.appSettings, ...settingsPayload };
                         applyAppSettingsToUI();
                     }
                     await loadBranchSettings(branchId);
@@ -26388,11 +26654,21 @@ Manager / Supervisor: __________________
         }
 
         function updateReceiptLivePreview() {
-            const logo = document.getElementById('set-receipt-show-logo')?.checked ? (document.getElementById('set-app-logo-emoji')?.value || '🛍️') : '';
+            const showLogo = document.getElementById('set-receipt-show-logo')?.checked;
+            const logoUrl = document.getElementById('set-app-logo-url')?.value.trim();
+            const logoEmoji = document.getElementById('set-app-logo-emoji')?.value || '🛍️';
             const logoEl = document.getElementById('prev-receipt-logo');
             if (logoEl) {
-                logoEl.innerText = logo;
-                logoEl.style.display = logo ? 'block' : 'none';
+                if (!showLogo) {
+                    logoEl.style.display = 'none';
+                } else {
+                    logoEl.style.display = 'block';
+                    if (logoUrl) {
+                        logoEl.innerHTML = `<img src="${logoUrl}" class="max-h-10 max-w-24 mx-auto object-contain mb-1" alt="Logo" onerror="this.onerror=null; this.parentElement.innerText='${logoEmoji}';">`;
+                    } else {
+                        logoEl.innerText = logoEmoji;
+                    }
+                }
             }
 
             if (document.getElementById('prev-receipt-title')) {
