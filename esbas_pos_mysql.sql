@@ -25,7 +25,7 @@ CREATE TABLE `branches` (
 
 -- Dumping data for table `branches`
 INSERT INTO `branches` (`id`, `code`, `name`, `address`, `latitude`, `longitude`, `radius_meters`, `phone`, `is_active`) VALUES
-(1, 'JKT-01', 'Pusat Cimahi', 'Jl. Panembakan No. 47/39', -6.195, 106.823, 100, '021-23580001', 1),
+(1, 'CMH-01', 'Pusat Cimahi', 'Jl. Panembakan No. 47/39', -6.879400, 107.530000, 100, '085716000475', 1),
 (2, 'BDG-01', 'Cabang Ciganitri', 'Jl. Ciganitri Mukti No. 13', -7.2618, 112.7383, 100, '031-53110002', 1),
 (3, 'BDG-02', 'Cabang Buahbatu', 'Jl. Lio Mekarsari', -6.8893, 107.596, 100, '022-82060003', 1),
 (6, 'CMH-02', 'Cabang Cimahi 1', 'Jl. Panembakan No 74', -6.879512, 107.529706, 100, '', 1);

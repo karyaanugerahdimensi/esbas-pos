@@ -4001,9 +4001,9 @@ try {
                                 <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
                                     <div class="flex items-center justify-between">
                                         <span class="text-slate-500 font-medium">Titik Outlet:</span>
-                                        <span id="map-info-branch-name" class="font-bold text-indigo-900 truncate">Jakarta Mall</span>
+                                        <span id="map-info-branch-name" class="font-bold text-indigo-900 truncate">Pusat Cimahi</span>
                                     </div>
-                                    <p id="map-info-branch-coords" class="text-[10px] font-mono text-slate-400">-6.1950, 106.8230</p>
+                                    <p id="map-info-branch-coords" class="text-[10px] font-mono text-slate-400">-6.8794, 107.5300</p>
                                 </div>
 
                                 <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
@@ -6158,7 +6158,7 @@ try {
                                     <span>Titik & Radius Geofence:</span>
                                 </span>
                                 <div class="flex items-center space-x-2 font-mono">
-                                    <span id="branch-picker-coords-text" class="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/60">-6.195000, 106.823000</span>
+                                    <span id="branch-picker-coords-text" class="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/60">-6.879400, 107.530000</span>
                                     <span id="branch-picker-radius-badge" class="font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200/60">100m</span>
                                 </div>
                             </div>
@@ -6167,11 +6167,11 @@ try {
                             <div class="grid grid-cols-3 gap-2 text-[10px]">
                                 <div class="flex items-center space-x-1">
                                     <span class="text-slate-500 font-bold">Lat:</span>
-                                    <input type="number" step="0.000001" id="branch-modal-lat" oninput="updateBranchPickerFromInputs()" placeholder="-6.1950" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-mono text-[11px] text-slate-800 focus:ring-1 focus:ring-indigo-500" required>
+                                    <input type="number" step="0.000001" id="branch-modal-lat" oninput="updateBranchPickerFromInputs()" placeholder="-6.879400" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-mono text-[11px] text-slate-800 focus:ring-1 focus:ring-indigo-500" required>
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <span class="text-slate-500 font-bold">Lng:</span>
-                                    <input type="number" step="0.000001" id="branch-modal-lng" oninput="updateBranchPickerFromInputs()" placeholder="106.8230" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-mono text-[11px] text-slate-800 focus:ring-1 focus:ring-indigo-500" required>
+                                    <input type="number" step="0.000001" id="branch-modal-lng" oninput="updateBranchPickerFromInputs()" placeholder="107.530000" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-mono text-[11px] text-slate-800 focus:ring-1 focus:ring-indigo-500" required>
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <span class="text-slate-500 font-bold">Radius:</span>
@@ -7722,7 +7722,7 @@ try {
                                     <span>Titik Koordinat Pelanggan:</span>
                                 </span>
                                 <div class="flex items-center space-x-2 font-mono">
-                                    <span id="cust-picker-coords-text" class="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/60">-6.195000, 106.823000</span>
+                                    <span id="cust-picker-coords-text" class="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/60">-6.879400, 107.530000</span>
                                 </div>
                             </div>
 
@@ -7730,11 +7730,11 @@ try {
                             <div class="grid grid-cols-2 gap-2 text-[10px]">
                                 <div class="flex items-center space-x-1">
                                     <span class="text-slate-500 font-bold">Lat:</span>
-                                    <input type="number" step="any" id="cust-latitude" oninput="updateCustPickerFromInputs()" placeholder="-6.195000" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-mono text-[11px] text-slate-800 focus:ring-1 focus:ring-indigo-500">
+                                    <input type="number" step="any" id="cust-latitude" oninput="updateCustPickerFromInputs()" placeholder="-6.879400" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-mono text-[11px] text-slate-800 focus:ring-1 focus:ring-indigo-500">
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <span class="text-slate-500 font-bold">Lng:</span>
-                                    <input type="number" step="any" id="cust-longitude" oninput="updateCustPickerFromInputs()" placeholder="106.823000" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-mono text-[11px] text-slate-800 focus:ring-1 focus:ring-indigo-500">
+                                    <input type="number" step="any" id="cust-longitude" oninput="updateCustPickerFromInputs()" placeholder="107.530000" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-mono text-[11px] text-slate-800 focus:ring-1 focus:ring-indigo-500">
                                 </div>
                             </div>
                         </div>
@@ -20319,8 +20319,8 @@ Manager / Supervisor: __________________
             const bId = document.getElementById('cust-branch')?.value;
             const b = (state.branches || []).find(x => x.id == bId) || state.currentBranch || (state.branches || [])[0];
             if (b) {
-                const bLat = parseFloat(b.latitude) || -6.195000;
-                const bLon = parseFloat(b.longitude) || 106.823000;
+                const bLat = parseFloat(b.latitude) || -6.879400;
+                const bLon = parseFloat(b.longitude) || 107.530000;
                 document.getElementById('cust-latitude').value = bLat.toFixed(6);
                 document.getElementById('cust-longitude').value = bLon.toFixed(6);
                 updateCustPickerBadge(bLat, bLon);
@@ -20409,8 +20409,8 @@ Manager / Supervisor: __________________
                 document.getElementById('cust-discount').value = '0';
                 document.getElementById('cust-branch').value = state.currentBranch ? state.currentBranch.id : '';
                 document.getElementById('cust-address').value = '';
-                const defLat = state.currentBranch?.latitude || -6.195000;
-                const defLon = state.currentBranch?.longitude || 106.823000;
+                const defLat = state.currentBranch?.latitude || -6.879400;
+                const defLon = state.currentBranch?.longitude || 107.530000;
                 document.getElementById('cust-latitude').value = Number(defLat).toFixed(6);
                 document.getElementById('cust-longitude').value = Number(defLon).toFixed(6);
                 document.getElementById('cust-notes').value = '';
@@ -20447,9 +20447,9 @@ Manager / Supervisor: __________________
                         alert(`Titik GPS berhasil dideteksi:\nLat: ${lat}, Lon: ${lon}`);
                     },
                     err => {
-                        // Fallback koordinat sekitar Jakarta/Cabang
-                        const defLat = state.currentBranch?.latitude || -6.195000;
-                        const defLon = state.currentBranch?.longitude || 106.823000;
+                        // Fallback koordinat sekitar Cimahi/Cabang
+                        const defLat = state.currentBranch?.latitude || -6.879400;
+                        const defLon = state.currentBranch?.longitude || 107.530000;
                         const sLat = (defLat + (Math.random() - 0.5) * 0.02).toFixed(6);
                         const sLon = (defLon + (Math.random() - 0.5) * 0.02).toFixed(6);
                         document.getElementById('cust-latitude').value = sLat;
@@ -20485,8 +20485,8 @@ Manager / Supervisor: __________________
             if (isNaN(lat) || isNaN(lon) || (lat === 0 && lon === 0)) {
                 const bId = document.getElementById('cust-branch')?.value;
                 const b = (state.branches || []).find(x => x.id == bId) || state.currentBranch;
-                lat = parseFloat(b?.latitude) || -6.195000;
-                lon = parseFloat(b?.longitude) || 106.823000;
+                lat = parseFloat(b?.latitude) || -6.879400;
+                lon = parseFloat(b?.longitude) || 107.530000;
                 document.getElementById('cust-latitude').value = lat.toFixed(6);
                 document.getElementById('cust-longitude').value = lon.toFixed(6);
             }
@@ -20558,8 +20558,8 @@ Manager / Supervisor: __________________
                 await loadCustomers();
             }
 
-            const branchLat = parseFloat(state.currentBranch?.latitude) || -6.195000;
-            const branchLon = parseFloat(state.currentBranch?.longitude) || 106.823000;
+            const branchLat = parseFloat(state.currentBranch?.latitude) || -6.879400;
+            const branchLon = parseFloat(state.currentBranch?.longitude) || 107.530000;
 
             if (!state.customerMap) {
                 state.customerMap = L.map('customer-geospatial-map').setView([branchLat, branchLon], 12);
@@ -22854,8 +22854,8 @@ Manager / Supervisor: __________________
             const mapContainer = document.getElementById('logistics-map');
             if (!mapContainer) return;
 
-            const branchLat = state.currentBranch?.latitude || -6.195000;
-            const branchLon = state.currentBranch?.longitude || 106.823000;
+            const branchLat = state.currentBranch?.latitude || -6.879400;
+            const branchLon = state.currentBranch?.longitude || 107.530000;
 
             if (!state.logisticsMap) {
                 state.logisticsMap = L.map('logistics-map').setView([branchLat, branchLon], 13);
@@ -22975,8 +22975,8 @@ Manager / Supervisor: __________________
                 state.mapRoutePolyline = null;
             }
 
-            const bLat = branch.latitude || -6.195000;
-            const bLon = branch.longitude || 106.823000;
+            const bLat = branch.latitude || -6.879400;
+            const bLon = branch.longitude || 107.530000;
             const cLat = cust.latitude || (bLat + 0.02);
             const cLon = cust.longitude || (bLon + 0.015);
 
@@ -23253,51 +23253,124 @@ Manager / Supervisor: __________________
                 }
             };
 
-            // 1. Cek apakah input berupa koordinat langsung atau URL Google Maps
-            const coordRegex = /([-+]?\d{1,2}\.\d+)[,\s]+([-+]?\d{1,3}\.\d+)/;
-            const match = query.match(coordRegex);
-            if (match) {
-                const lat = parseFloat(match[1]);
-                const lon = parseFloat(match[2]);
-                if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
-                    applyBranchFoundCoords(lat, lon, `Koordinat Google Maps Terdeteksi: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
-                    finishSearch();
-                    return;
+            // 1. Cek pola koordinat Google Maps atau desimal langsung
+            let foundLat = null, foundLon = null, foundSource = '';
+            
+            // Pola @lat,lon
+            let m = query.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/);
+            if (m) {
+                foundLat = parseFloat(m[1]);
+                foundLon = parseFloat(m[2]);
+                foundSource = 'Koordinat Google Maps (@lat,lon)';
+            }
+            // Pola ?q=lat,lon atau &ll=lat,lon atau destination=lat,lon
+            if (!foundLat) {
+                m = query.match(/(?:[?&](?:q|query|ll|destination)=(-?\d{1,2}\.\d+)[,+](-?\d{1,3}\.\d+))/i);
+                if (m) {
+                    foundLat = parseFloat(m[1]);
+                    foundLon = parseFloat(m[2]);
+                    foundSource = 'Koordinat Parameter Google Maps (?q=lat,lon)';
+                }
+            }
+            // Pola /place/lat,lon atau /place/.../lat,lon
+            if (!foundLat) {
+                m = query.match(/\/place\/(-?\d{1,2}\.\d+)[,+](-?\d{1,3}\.\d+)/i);
+                if (m) {
+                    foundLat = parseFloat(m[1]);
+                    foundLon = parseFloat(m[2]);
+                    foundSource = 'Koordinat Google Maps Place';
+                }
+            }
+            // Pola Raw desimal GPS "-6.8794, 107.5300"
+            if (!foundLat) {
+                m = query.match(/(-?\d{1,2}\.\d{3,})[,\s]+(-?\d{1,3}\.\d{3,})/);
+                if (m) {
+                    foundLat = parseFloat(m[1]);
+                    foundLon = parseFloat(m[2]);
+                    foundSource = 'Koordinat Desimal GPS';
                 }
             }
 
-            // 2. Geocoding via OpenStreetMap Nominatim API
-            try {
-                const encodedQuery = encodeURIComponent(query);
-                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedQuery}&addressdetails=1&limit=1`;
-                const resp = await fetch(url, { headers: { 'Accept-Language': 'id,en' } });
-                const data = await resp.json();
+            if (foundLat !== null && foundLon !== null && !isNaN(foundLat) && !isNaN(foundLon) && foundLat >= -90 && foundLat <= 90 && foundLon >= -180 && foundLon <= 180) {
+                applyBranchFoundCoords(foundLat, foundLon, `${foundSource}: ${foundLat.toFixed(6)}, ${foundLon.toFixed(6)}`);
+                finishSearch();
+                return;
+            }
 
+            // Pola URL pendek Google Maps (maps.app.goo.gl atau goo.gl/maps)
+            if (query.includes('maps.app.goo.gl') || query.includes('goo.gl/maps') || query.includes('google.com/maps')) {
+                try {
+                    const res = await fetch(`api.php?action=resolve_maps_url&url=${encodeURIComponent(query)}`);
+                    const data = await res.json();
+                    if (data.success && data.latitude && data.longitude) {
+                        applyBranchFoundCoords(data.latitude, data.longitude, `Koordinat Link Google Maps: ${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}`);
+                        finishSearch();
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('Gagal resolve short URL:', e);
+                }
+            }
+
+            // 2. Geocoding via OpenStreetMap Nominatim API dengan Pembersihan Alamat
+            try {
+                let nominatimFound = false;
+                const searchNominatim = async (q) => {
+                    try {
+                        const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&addressdetails=1&limit=1`, { headers: { 'Accept-Language': 'id,en' } });
+                        return await resp.json();
+                    } catch (e) {
+                        return [];
+                    }
+                };
+
+                // Percobaan 1: Query asli
+                let data = await searchNominatim(query);
                 if (Array.isArray(data) && data.length > 0) {
-                    const lat = parseFloat(data[0].lat);
-                    const lon = parseFloat(data[0].lon);
-                    applyBranchFoundCoords(lat, lon, data[0].display_name);
+                    applyBranchFoundCoords(parseFloat(data[0].lat), parseFloat(data[0].lon), data[0].display_name);
+                    nominatimFound = true;
                 } else {
-                    let fallbackFound = false;
-                    const commaParts = query.split(',').map(s => s.trim()).filter(Boolean);
-                    if (commaParts.length > 1) {
-                        const broaderQuery = commaParts.slice(1).join(', ');
-                        const resp2 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(broaderQuery)}&addressdetails=1&limit=1`, { headers: { 'Accept-Language': 'id,en' } });
-                        const data2 = await resp2.json();
-                        if (Array.isArray(data2) && data2.length > 0) {
-                            fallbackFound = true;
-                            const lat = parseFloat(data2[0].lat);
-                            const lon = parseFloat(data2[0].lon);
-                            applyBranchFoundCoords(lat, lon, `${data2[0].display_name} (Wilayah Terdekat)`);
+                    // Percobaan 2: Bersihkan nomor rumah (mis: No. 47/39), RT/RW, dsb
+                    let cleanQ = query.replace(/No\.?\s*[\d\/\-]+/gi, ' ')
+                                      .replace(/RT\/?RW\s*[\d\/]+/gi, ' ')
+                                      .replace(/\b(gang|gg|blok)\.?\s*[a-zA-Z0-9\-]+/gi, ' ')
+                                      .replace(/\s+/g, ' ').trim();
+                    
+                    const branchName = document.getElementById('branch-modal-name')?.value || '';
+                    let cityCandidate = '';
+                    const cityMatches = (query + ' ' + branchName).match(/\b(cimahi|bandung|jakarta|surabaya|medan|semarang|yogyakarta|jogja|tangerang|bekasi|depok|bogor|malang|solo|denpasar)\b/i);
+                    if (cityMatches) {
+                        cityCandidate = cityMatches[0];
+                    }
+
+                    if (cleanQ !== query && cleanQ.length > 2) {
+                        const searchWithCity = cityCandidate && !cleanQ.toLowerCase().includes(cityCandidate.toLowerCase()) ? `${cleanQ}, ${cityCandidate}` : cleanQ;
+                        data = await searchNominatim(searchWithCity);
+                        if (Array.isArray(data) && data.length > 0) {
+                            applyBranchFoundCoords(parseFloat(data[0].lat), parseFloat(data[0].lon), `${data[0].display_name} (Pencarian Jalan)`);
+                            nominatimFound = true;
                         }
                     }
 
-                    if (!fallbackFound) {
-                        const gmapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-                        if (statusEl) {
-                            statusEl.innerHTML = `<div class="p-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-[11px] flex items-start space-x-1.5"><i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5"></i><div class="min-w-0 flex-1"><span>Alamat tidak ditemukan otomatis.</span> <a href="${gmapsSearchUrl}" target="_blank" rel="noopener noreferrer" class="font-bold underline text-indigo-700 hover:text-indigo-900 inline-flex items-center space-x-1 ml-1"><span>Cari di Google Maps</span><i data-lucide="external-link" class="w-3 h-3 inline"></i></a><p class="text-[10px] text-slate-500 mt-0.5">Anda bisa salin link atau koordinat dari Google Maps dan tempel di sini.</p></div></div>`;
-                            if (window.lucide) lucide.createIcons();
+                    // Percobaan 3: Pisahkan dengan koma jika ada
+                    if (!nominatimFound) {
+                        const commaParts = query.split(',').map(s => s.trim()).filter(Boolean);
+                        if (commaParts.length > 1) {
+                            const broaderQuery = commaParts.slice(1).join(', ');
+                            data = await searchNominatim(broaderQuery);
+                            if (Array.isArray(data) && data.length > 0) {
+                                applyBranchFoundCoords(parseFloat(data[0].lat), parseFloat(data[0].lon), `${data[0].display_name} (Wilayah Terdekat)`);
+                                nominatimFound = true;
+                            }
                         }
+                    }
+                }
+
+                if (!nominatimFound) {
+                    const gmapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+                    if (statusEl) {
+                        statusEl.innerHTML = `<div class="p-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-[11px] flex items-start space-x-1.5"><i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5"></i><div class="min-w-0 flex-1"><span>Alamat tidak ditemukan otomatis di OpenStreetMap.</span> <a href="${gmapsSearchUrl}" target="_blank" rel="noopener noreferrer" class="font-bold underline text-indigo-700 hover:text-indigo-900 inline-flex items-center space-x-1 ml-1"><span>Cari di Google Maps</span><i data-lucide="external-link" class="w-3 h-3 inline"></i></a><p class="text-[10px] text-slate-500 mt-0.5">Salin URL atau koordinat dari Google Maps lalu paste di kotak pencarian ini.</p></div></div>`;
+                        if (window.lucide) lucide.createIcons();
                     }
                 }
             } catch (err) {
@@ -23318,8 +23391,8 @@ Manager / Supervisor: __________________
             document.getElementById('branch-modal-name').value = '';
             document.getElementById('branch-modal-phone').value = '';
             document.getElementById('branch-modal-address').value = '';
-            const defLat = state.currentBranch?.latitude || -6.195000;
-            const defLon = state.currentBranch?.longitude || 106.823000;
+            const defLat = state.currentBranch?.latitude || -6.879400;
+            const defLon = state.currentBranch?.longitude || 107.530000;
             document.getElementById('branch-modal-lat').value = Number(defLat).toFixed(6);
             document.getElementById('branch-modal-lng').value = Number(defLon).toFixed(6);
             document.getElementById('branch-modal-radius').value = '100';
@@ -23341,7 +23414,7 @@ Manager / Supervisor: __________________
         function editBranch(b) {
             document.getElementById('branch-modal-id').value = b.id;
             document.getElementById('branch-modal-code').value = b.code;
-            document.getElementById('branch-modal-code').readOnly = (b.id == 1);
+            document.getElementById('branch-modal-code').readOnly = false;
             document.getElementById('branch-modal-name').value = b.name;
             document.getElementById('branch-modal-phone').value = b.phone || '';
             document.getElementById('branch-modal-address').value = b.address || '';
@@ -23419,8 +23492,8 @@ Manager / Supervisor: __________________
                 await loadBranches();
             }
 
-            const branchLat = parseFloat(state.currentBranch?.latitude) || -6.195000;
-            const branchLon = parseFloat(state.currentBranch?.longitude) || 106.823000;
+            const branchLat = parseFloat(state.currentBranch?.latitude) || -6.879400;
+            const branchLon = parseFloat(state.currentBranch?.longitude) || 107.530000;
 
             if (!state.branchMap) {
                 state.branchMap = L.map('branch-geospatial-map').setView([branchLat, branchLon], 12);
@@ -23627,8 +23700,8 @@ Manager / Supervisor: __________________
             let radius = parseInt(document.getElementById('branch-modal-radius')?.value) || 100;
 
             if (isNaN(lat) || isNaN(lon) || (lat === 0 && lon === 0)) {
-                lat = parseFloat(state.currentBranch?.latitude) || -6.195000;
-                lon = parseFloat(state.currentBranch?.longitude) || 106.823000;
+                lat = parseFloat(state.currentBranch?.latitude) || -6.879400;
+                lon = parseFloat(state.currentBranch?.longitude) || 107.530000;
                 document.getElementById('branch-modal-lat').value = lat.toFixed(6);
                 document.getElementById('branch-modal-lng').value = lon.toFixed(6);
             }

@@ -1140,12 +1140,13 @@ function autoMigrateAndSync($pdo) {
         $pdo->exec("ALTER TABLE sales ADD COLUMN is_delivery_included INTEGER DEFAULT 0");
     }
 
-    // 14. Synchronize Precise Maps Coordinates for Outlets & Customers
-    $pdo->exec("UPDATE branches SET latitude = -6.1950, longitude = 106.8230 WHERE id = 1"); // Grand Indonesia Jakarta
-    $pdo->exec("UPDATE branches SET latitude = -7.2618, longitude = 112.7383 WHERE id = 2"); // Tunjungan Plaza Surabaya
-    $pdo->exec("UPDATE branches SET latitude = -6.8893, longitude = 107.5960 WHERE id = 3"); // Paris Van Java Bandung
+    // 14. Synchronize Precise Maps Coordinates for Outlets & Customers (Hanya inisialisasi jika koordinat kosong/0 atau jika masih default Jakarta lama)
+    $pdo->exec("UPDATE branches SET latitude = -6.879400, longitude = 107.530000 WHERE id = 1 AND (latitude IS NULL OR latitude = 0 OR (latitude = -6.1950 AND longitude = 106.8230))");
+    $pdo->exec("UPDATE branches SET code = 'CMH-01' WHERE id = 1 AND code = 'JKT-01'");
+    $pdo->exec("UPDATE branches SET latitude = -7.2618, longitude = 112.7383 WHERE id = 2 AND (latitude IS NULL OR latitude = 0)");
+    $pdo->exec("UPDATE branches SET latitude = -6.8893, longitude = 107.5960 WHERE id = 3 AND (latitude IS NULL OR latitude = 0)");
 
-    $pdo->exec("UPDATE customers SET latitude = -6.1955, longitude = 106.8235 WHERE id = 1 AND (latitude IS NULL OR latitude = 0)"); // Walk-in (dekat toko)
+    $pdo->exec("UPDATE customers SET latitude = -6.879450, longitude = 107.530050 WHERE id = 1 AND (latitude IS NULL OR latitude = 0 OR (latitude = -6.1955 AND longitude = 106.8235))"); // Walk-in (dekat toko Pusat Cimahi)
     $pdo->exec("UPDATE customers SET latitude = -6.2155, longitude = 106.8315 WHERE id = 2 AND (latitude IS NULL OR latitude = 0)"); // Anisa (Rasuna Said ~2.5 km)
     $pdo->exec("UPDATE customers SET latitude = -6.2380, longitude = 106.8520 WHERE id = 3 AND (latitude IS NULL OR latitude = 0)"); // Toko Berkah Tebet (~5.8 km)
     $pdo->exec("UPDATE customers SET latitude = -6.2088, longitude = 106.8190 WHERE id = 4 AND (latitude IS NULL OR latitude = 0)"); // Mitra A Wisma Niaga (~1.6 km)
@@ -2035,6 +2036,12 @@ function autoMigrateMysql($pdo) {
             `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
             UNIQUE KEY `uniq_user_branch` (`user_id`, `branch_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    } catch (Exception $e) {}
+
+    // Migrasi sinkronisasi koordinat Pusat Cimahi di MySQL Hosting jika masih default lama
+    try {
+        $pdo->exec("UPDATE `branches` SET `latitude` = -6.879400, `longitude` = 107.530000 WHERE `id` = 1 AND ((`latitude` = -6.1950 AND `longitude` = 106.8230) OR `latitude` IS NULL OR `latitude` = 0)");
+        $pdo->exec("UPDATE `branches` SET `code` = 'CMH-01' WHERE `id` = 1 AND `code` = 'JKT-01'");
     } catch (Exception $e) {}
 
     try {

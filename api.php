@@ -1426,14 +1426,28 @@ try {
             echo json_encode(['success' => true, 'branches' => $stmt->fetchAll()]);
             break;
 
+        case 'resolve_maps_url':
+            $rawUrl = trim($input['url'] ?? $_GET['url'] ?? '');
+            if (empty($rawUrl)) {
+                echo json_encode(['success' => false, 'message' => 'URL Maps tidak boleh kosong.']);
+                exit;
+            }
+            list($lat, $lon) = parseCustomerGoogleCoords($rawUrl);
+            if ($lat !== null && $lon !== null) {
+                echo json_encode(['success' => true, 'latitude' => $lat, 'longitude' => $lon]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Titik koordinat tidak dapat diekstrak dari URL tersebut.']);
+            }
+            break;
+
         case 'save_branch':
             $id = !empty($input['id']) ? (int)$input['id'] : null;
             $code = strtoupper(trim($input['code'] ?? ''));
             $name = trim($input['name'] ?? '');
             $address = trim($input['address'] ?? '');
             $phone = trim($input['phone'] ?? '');
-            $latitude = isset($input['latitude']) && $input['latitude'] !== '' ? (float)$input['latitude'] : -6.1950;
-            $longitude = isset($input['longitude']) && $input['longitude'] !== '' ? (float)$input['longitude'] : 106.8230;
+            $latitude = isset($input['latitude']) && $input['latitude'] !== '' ? (float)$input['latitude'] : -6.879400;
+            $longitude = isset($input['longitude']) && $input['longitude'] !== '' ? (float)$input['longitude'] : 107.530000;
             $radiusMeters = !empty($input['radius_meters']) ? (int)$input['radius_meters'] : 100;
             $isActive = isset($input['is_active']) ? (int)$input['is_active'] : 1;
 

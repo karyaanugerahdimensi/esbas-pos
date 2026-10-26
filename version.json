@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.65",
-  "build": "20261026-20",
+  "version": "1.2.66",
+  "build": "20261026-21",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.66",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Koreksi Koordinat Geospasial Cabang Pusat Cimahi & Peningkatan Mesin Pencarian Peta Outlet (FR-BR-03)",
+      "description": "Menyelesaikan masalah titik lokasi Cabang Pusat Cimahi yang sebelumnya terkunci di Jakarta: (1) Menghapus kueri hardcoded UPDATE branches di skema inisialisasi database (db.php) yang menimpa koordinat outlet menjadi Jakarta pada setiap request. (2) Memperbarui data koordinat Cabang Pusat Cimahi di database menjadi wilayah Cimahi (-6.879400, 107.530000) dan kode cabang menjadi CMH-01. (3) Membuka kunci readOnly pada input kode cabang sehingga pengguna dapat mengedit kode cabang pusat secara bebas. (4) Meningkatkan mesin pencarian alamat pada modal cabang (searchBranchAddressOnMap) dengan pembersihan otomatis nomor rumah (contoh: No. 47/39), RT/RW, dan auto-deteksi kota, parsing URL Google Maps (@lat,lon, ?q=lat,lon, place, short URL), serta penambahan endpoint resolve_maps_url.",
+      "rollback_command": "git checkout v1.2.65"
+    },
     {
       "version": "1.2.65",
       "commit": "HEAD",
