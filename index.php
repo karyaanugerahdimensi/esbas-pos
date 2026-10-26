@@ -7792,9 +7792,9 @@ try {
                         5 Kolom: <code class="bg-emerald-100/90 px-1 py-0.5 rounded text-emerald-900 font-mono font-semibold">Nama Pelanggan, No Telepon, Alamat, Google Maps URL / Koordinat, Kategori Pelanggan</code>
                     </p>
                 </div>
-                <button type="button" onclick="downloadCustomerImportTemplate()" class="px-3.5 py-2 bg-white hover:bg-emerald-100/60 border border-emerald-300 text-emerald-800 rounded-xl font-bold shadow-2xs flex items-center space-x-1.5 shrink-0 transition-colors">
-                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
-                    <span>Unduh Template CSV</span>
+                <button type="button" onclick="downloadCustomerImportTemplate()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-2xs flex items-center space-x-1.5 shrink-0 transition-colors">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                    <span>Unduh Template Excel (.xlsx)</span>
                 </button>
             </div>
 
@@ -7815,8 +7815,8 @@ try {
 
             <form onsubmit="submitImportCustomers(event)" class="space-y-4 text-xs">
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1.5">Pilih Berkas CSV / Text (.csv, .txt):</label>
-                    <input type="file" id="cust-import-file-input" accept=".csv, text/plain, text/csv" onchange="handleCustomerImportFileSelect(event)" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
+                    <label class="block font-bold text-slate-700 mb-1.5">Pilih Berkas Excel / CSV (.xlsx, .xls, .csv):</label>
+                    <input type="file" id="cust-import-file-input" accept=".xlsx, .xls, .csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, text/csv, text/plain" onchange="handleCustomerImportFileSelect(event)" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
                 </div>
 
                 <div class="relative flex items-center justify-center my-1">
@@ -20951,16 +20951,65 @@ Manager / Supervisor: __________________
         }
 
         function downloadCustomerImportTemplate() {
-            window.open('api.php?action=download_customer_template', '_blank');
+            window.open('api.php?action=download_customer_template&format=xlsx', '_blank');
         }
 
-        function handleCustomerImportFileSelect(e) {
+        async function handleCustomerImportFileSelect(e) {
             const file = e.target.files[0];
             if (!file) return;
+
+            const previewBox = document.getElementById('cust-import-preview-box');
+            const tbody = document.getElementById('cust-import-preview-tbody');
+            const countEl = document.getElementById('cust-import-preview-count');
+            const badgeEl = document.getElementById('cust-import-valid-badge');
+            const textInput = document.getElementById('cust-import-text-input');
+
+            const fileName = file.name.toLowerCase();
+            const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+
+            if (isExcel) {
+                if (textInput) textInput.value = '';
+                if (previewBox && tbody) {
+                    previewBox.classList.remove('hidden');
+                    if (countEl) countEl.innerText = `Membaca berkas Excel: ${file.name}...`;
+                    if (badgeEl) {
+                        badgeEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800';
+                        badgeEl.innerText = 'Memeriksa Format Excel...';
+                    }
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500 font-semibold"><span class="inline-block animate-spin mr-1.5">⏳</span> Sedang membaca data dari berkas Excel...</td></tr>`;
+                }
+
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const res = await fetch('api.php?action=preview_customer_import', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await res.json();
+                    if (result.success && Array.isArray(result.rows) && result.rows.length > 0) {
+                        renderCustomerImportPreviewRows(result.rows, result.total, result.valid_count, result.invalid_count);
+                    } else {
+                        if (tbody) {
+                            tbody.innerHTML = `<tr><td colspan="7" class="p-3 text-center text-rose-600 font-semibold">⚠️ ${result.message || 'Tidak ada baris data yang ditemukan dalam berkas Excel ini.'}</td></tr>`;
+                        }
+                        if (badgeEl) {
+                            badgeEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800';
+                            badgeEl.innerText = 'Format Kosong / Tidak Sesuai';
+                        }
+                    }
+                } catch (err) {
+                    if (tbody) {
+                        tbody.innerHTML = `<tr><td colspan="7" class="p-3 text-center text-rose-600">Gagal membaca preview Excel: ${err.message}</td></tr>`;
+                    }
+                }
+                return;
+            }
+
+            // CSV atau Plain Text
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const text = evt.target.result;
-                const textInput = document.getElementById('cust-import-text-input');
                 if (textInput) {
                     textInput.value = text;
                     handleCustomerImportTextChange();
@@ -20993,12 +21042,68 @@ Manager / Supervisor: __________________
             return null;
         }
 
-        function handleCustomerImportTextChange() {
-            const textInput = document.getElementById('cust-import-text-input');
+        function renderCustomerImportPreviewRows(rows, total, validCount, invalidCount) {
             const previewBox = document.getElementById('cust-import-preview-box');
             const tbody = document.getElementById('cust-import-preview-tbody');
             const countEl = document.getElementById('cust-import-preview-count');
             const badgeEl = document.getElementById('cust-import-valid-badge');
+            if (!previewBox || !tbody) return;
+
+            const rowsHtml = rows.slice(0, 15).map((r, idx) => {
+                const name = r.name || '';
+                const phone = r.phone || '';
+                const addr = r.address || '-';
+                const gmaps = r.maps_url || '';
+                const cat = r.category || 'REGULER';
+                const isValid = (r.is_valid !== undefined) ? r.is_valid : (name.length > 0 && phone.replace(/[^\d+]/g, '').length >= 6);
+
+                let coords = r.coords;
+                if (!coords && gmaps) {
+                    coords = extractGoogleCoordsJS(gmaps);
+                }
+
+                const coordsBadge = coords 
+                    ? `<span class="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 font-mono text-[9px] rounded font-bold" title="${escapeHtml(gmaps)}">📍 ${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}</span>`
+                    : (gmaps ? `<span class="text-slate-400 truncate max-w-[120px] inline-block text-[10px]" title="${escapeHtml(gmaps)}">${escapeHtml(gmaps)}</span>` : '<span class="text-slate-300">-</span>');
+
+                return `
+                    <tr class="${isValid ? 'hover:bg-slate-50' : 'bg-rose-50/50'}">
+                        <td class="p-2 text-slate-400 font-mono">${idx + 1}</td>
+                        <td class="p-2 font-bold ${isValid ? 'text-slate-800' : 'text-rose-600'}">${escapeHtml(name) || '<span class="italic text-rose-500 font-normal">Kosong (Wajib)</span>'}</td>
+                        <td class="p-2 font-mono ${phone.replace(/[^\d+]/g, '').length >= 6 ? 'text-slate-700' : 'text-rose-600'}">${escapeHtml(phone) || '<span class="italic text-rose-500 font-normal">Kosong (Wajib)</span>'}</td>
+                        <td class="p-2 text-slate-500 truncate max-w-[140px]" title="${escapeHtml(addr)}">${escapeHtml(addr)}</td>
+                        <td class="p-2">${coordsBadge}</td>
+                        <td class="p-2"><span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${escapeHtml(cat || 'REGULER')}</span></td>
+                        <td class="p-2 text-center">
+                            ${isValid 
+                                ? '<span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-bold text-[9px]">Valid</span>' 
+                                : '<span class="px-1.5 py-0.5 bg-rose-100 text-rose-800 rounded-full font-bold text-[9px]">Gagal</span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            tbody.innerHTML = rowsHtml;
+            previewBox.classList.remove('hidden');
+
+            if (countEl) {
+                countEl.innerText = `Pratinjau: ${total} Baris Ditemukan (${validCount} Valid${total > 15 ? ', menampilkan 15 baris pertama' : ''})`;
+            }
+            if (badgeEl) {
+                if (invalidCount === 0) {
+                    badgeEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800';
+                    badgeEl.innerText = `${validCount} Baris Siap Diimport`;
+                } else {
+                    badgeEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800';
+                    badgeEl.innerText = `${validCount} Valid, ${invalidCount} Baris Tidak Lengkap (Akan Dilewati)`;
+                }
+            }
+        }
+
+        function handleCustomerImportTextChange() {
+            const textInput = document.getElementById('cust-import-text-input');
+            const previewBox = document.getElementById('cust-import-preview-box');
+            const tbody = document.getElementById('cust-import-preview-tbody');
             if (!textInput || !previewBox || !tbody) return;
 
             const text = textInput.value.trim();
@@ -21043,11 +21148,10 @@ Manager / Supervisor: __________________
 
             let validCount = 0;
             let invalidCount = 0;
+            const rows = [];
 
-            const rowsHtml = dataLines.slice(0, 15).map((l, idx) => {
+            dataLines.forEach((l) => {
                 let cols = l.split(delim).map(s => s.trim().replace(/^["']|["']$/g, ''));
-                
-                // Rejoin unquoted coordinates if split
                 if (cols.length > 5 && colMap.maps_url !== undefined && cols[colMap.maps_url]) {
                     const candidate = cols[colMap.maps_url] + ',' + (cols[colMap.maps_url + 1] || '');
                     if (candidate.match(/(?:[?&]q=|-?\d{1,2}\.\d+)[,+](?:-?\d{1,3}\.\d+)/i)) {
@@ -21062,48 +21166,15 @@ Manager / Supervisor: __________________
                 const addr = cols[colMap.address] || '-';
                 const gmaps = cols[colMap.maps_url] || '';
                 const cat = cols[colMap.category] || 'REGULER';
-
                 const isValid = (name.length > 0 && phone.replace(/[^\d+]/g, '').length >= 6);
+
                 if (isValid) validCount++; else invalidCount++;
+                rows.push({
+                    name, phone, address: addr, maps_url: gmaps, category: cat, is_valid: isValid
+                });
+            });
 
-                const coords = extractGoogleCoordsJS(gmaps);
-                const coordsBadge = coords 
-                    ? `<span class="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 font-mono text-[9px] rounded font-bold" title="${escapeHtml(gmaps)}">📍 ${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}</span>`
-                    : (gmaps ? `<span class="text-slate-400 truncate max-w-[120px] inline-block text-[10px]" title="${escapeHtml(gmaps)}">${escapeHtml(gmaps)}</span>` : '<span class="text-slate-300">-</span>');
-
-                return `
-                    <tr class="${isValid ? 'hover:bg-slate-50' : 'bg-rose-50/50'}">
-                        <td class="p-2 text-slate-400 font-mono">${idx + 1}</td>
-                        <td class="p-2 font-bold ${isValid ? 'text-slate-800' : 'text-rose-600'}">${escapeHtml(name) || '<span class="italic text-rose-500 font-normal">Kosong (Wajib)</span>'}</td>
-                        <td class="p-2 font-mono ${phone.replace(/[^\d+]/g, '').length >= 6 ? 'text-slate-700' : 'text-rose-600'}">${escapeHtml(phone) || '<span class="italic text-rose-500 font-normal">Kosong (Wajib)</span>'}</td>
-                        <td class="p-2 text-slate-500 truncate max-w-[140px]" title="${escapeHtml(addr)}">${escapeHtml(addr)}</td>
-                        <td class="p-2">${coordsBadge}</td>
-                        <td class="p-2"><span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${escapeHtml(cat || 'REGULER')}</span></td>
-                        <td class="p-2 text-center">
-                            ${isValid 
-                                ? '<span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-bold text-[9px]">Valid</span>' 
-                                : '<span class="px-1.5 py-0.5 bg-rose-100 text-rose-800 rounded-full font-bold text-[9px]">Gagal</span>'}
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            tbody.innerHTML = rowsHtml;
-            previewBox.classList.remove('hidden');
-
-            const total = dataLines.length;
-            if (countEl) {
-                countEl.innerText = `Pratinjau: ${total} Baris Ditemukan (${validCount} Valid${total > 15 ? ', menampilkan 15 baris pertama' : ''})`;
-            }
-            if (badgeEl) {
-                if (invalidCount === 0) {
-                    badgeEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800';
-                    badgeEl.innerText = `${validCount} Baris Siap Diimport`;
-                } else {
-                    badgeEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800';
-                    badgeEl.innerText = `${validCount} Valid, ${invalidCount} Baris Tidak Lengkap (Akan Dilewati)`;
-                }
-            }
+            renderCustomerImportPreviewRows(rows, dataLines.length, validCount, invalidCount);
         }
 
         async function submitImportCustomers(e) {

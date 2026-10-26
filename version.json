@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.63",
-  "build": "20261026-18",
+  "version": "1.2.64",
+  "build": "20261026-19",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.64",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Template Import Data Pelanggan Berformat Asli Microsoft Excel (.xlsx) & Parser Otomatis (FR-CRM-09-B)",
+      "description": "Mengganti format berkas unduhan template import data pelanggan dari CSV menjadi berkas asli Microsoft Excel (.xlsx) dengan styling sel profesional, header hijau zamrud, lebar kolom terkalibrasi, serta proteksi format teks sel untuk nomor telepon (menjamin angka 0 terdepan tidak hilang di Excel). Dilengkapi mesin parser file Excel langsung di browser dan server, endpoint preview_customer_import untuk memunculkan live preview instan saat file Excel dipilih, serta dukungan impor langsung dari file .xlsx, .xls, .csv, maupun copy-paste.",
+      "rollback_command": "git checkout v1.2.63"
+    },
     {
       "version": "1.2.63",
       "commit": "HEAD",

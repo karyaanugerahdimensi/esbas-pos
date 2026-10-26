@@ -10746,42 +10746,118 @@ try {
             echo json_encode(['success' => true, 'customers' => $stmt->fetchAll()]);
             break;
 
-        case 'download_customer_template':
-            header('Content-Type: text/csv; charset=utf-8');
-            header('Content-Disposition: attachment; filename="template_import_pelanggan.csv"');
-            $out = fopen('php://output', 'w');
-            // Write UTF-8 BOM so Microsoft Excel correctly displays Indonesian characters
-            fputs($out, "\xEF\xBB\xBF");
-            // Standard 5 columns requested: nama, no telepon, alamat, longlat menggunakan url google, kategori pelanggan
-            fputcsv($out, ['Nama Pelanggan', 'No Telepon', 'Alamat', 'Google Maps URL / Koordinat', 'Kategori Pelanggan']);
-            // Sample rows illustrating mandatory (Nama, No Telepon) and optional fields
-            fputcsv($out, ['Budi Santoso', '081234567890', 'Jl. Jenderal Sudirman Kav. 12 Jakarta Pusat', 'https://maps.google.com/?q=-6.2088,106.8190', 'REGULER']);
-            fputcsv($out, ['Siti Aminah (Member VIP)', '081987654321', 'Jl. Rasuna Said Blok C No. 5 Jakarta Selatan', 'https://www.google.com/maps/@-6.2155,106.8315,16z', 'MEMBER']);
-            fputcsv($out, ['Toko Berkah Grosir', '085611223344', 'Jl. Tebet Raya No. 45 Jakarta Selatan', '-6.2380, 106.8520', 'RESELLER']);
-            fputcsv($out, ['PT Mitra Bahtera Abadi', '081122334455', 'Kawasan Industri MM2100 Cikarang', 'https://www.google.com/maps?q=-6.3088,107.1190', 'MITRA']);
-            fputcsv($out, ['Ahmad Dani (Hanya Nama & HP)', '087812345678', '', '', '']);
-            fclose($out);
-            exit;
+if (!function_exists('parseCustomerXlsxRaw')) {
+    function parseCustomerXlsxRaw($filePath) {
+        if (!class_exists('ZipArchive')) return false;
+        $zip = new ZipArchive();
+        if ($zip->open($filePath) !== true) return false;
 
-        case 'import_customers':
-            $csvString = '';
-            if (!empty($_FILES['file']['tmp_name']) && is_uploaded_file($_FILES['file']['tmp_name'])) {
-                $csvString = file_get_contents($_FILES['file']['tmp_name']);
-            } elseif (!empty($input['csv_content'])) {
-                $csvString = $input['csv_content'];
+        $sharedStrings = [];
+        $ssXml = $zip->getFromName('xl/sharedStrings.xml');
+        if ($ssXml) {
+            $xml = @simplexml_load_string($ssXml);
+            if ($xml && isset($xml->si)) {
+                foreach ($xml->si as $si) {
+                    if (isset($si->t)) {
+                        $sharedStrings[] = (string)$si->t;
+                    } elseif (isset($si->r)) {
+                        $txt = '';
+                        foreach ($si->r as $r) { $txt .= (string)$r->t; }
+                        $sharedStrings[] = $txt;
+                    } else {
+                        $sharedStrings[] = '';
+                    }
+                }
             }
+        }
 
-            $rows = [];
-            if (!empty($input['rows']) && is_array($input['rows'])) {
-                $rows = $input['rows'];
-            } elseif (!empty($csvString)) {
-                $lines = preg_split("/\r\n|\n|\r/", trim($csvString));
-                if (count($lines) < 1) {
-                    echo json_encode(['success' => false, 'message' => 'Berkas atau teks data pelanggan kosong.']);
-                    exit;
+        $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
+        if (!$sheetXml) {
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $stat = $zip->statIndex($i);
+                if (preg_match('/xl\/worksheets\/sheet\d+\.xml/i', $stat['name'])) {
+                    $sheetXml = $zip->getFromIndex($i);
+                    break;
+                }
+            }
+        }
+        $zip->close();
+
+        if (!$sheetXml) return false;
+        $xml = @simplexml_load_string($sheetXml);
+        if (!$xml || !isset($xml->sheetData)) return false;
+
+        $rawRows = [];
+        foreach ($xml->sheetData->row as $rowElem) {
+            $rowArr = [];
+            $colIdx = 0;
+            foreach ($rowElem->c as $cell) {
+                $r = (string)$cell['r'];
+                if (preg_match('/^([A-Z]+)(\d+)$/', $r, $m)) {
+                    $colLetters = $m[1];
+                    $targetCol = 0;
+                    for ($k = 0; $k < strlen($colLetters); $k++) {
+                        $targetCol = $targetCol * 26 + (ord($colLetters[$k]) - ord('A') + 1);
+                    }
+                    $targetCol = $targetCol - 1;
+                    while ($colIdx < $targetCol) {
+                        $rowArr[] = '';
+                        $colIdx++;
+                    }
                 }
 
-                // Detect delimiter: tab (\t), semicolon (;), or comma (,)
+                $val = '';
+                $type = (string)$cell['t'];
+                if ($type === 's') {
+                    $sIdx = (int)$cell->v;
+                    $val = $sharedStrings[$sIdx] ?? '';
+                } elseif ($type === 'inlineStr') {
+                    $val = (string)$cell->is->t;
+                } else {
+                    $val = (string)$cell->v;
+                }
+                $rowArr[] = trim($val);
+                $colIdx++;
+            }
+            $rawRows[] = $rowArr;
+        }
+        return $rawRows;
+    }
+}
+
+if (!function_exists('parseCustomerFileToRowsUnified')) {
+    function parseCustomerFileToRowsUnified($filePath, $rawString = '') {
+        $rawRows = [];
+        if (!empty($filePath) && file_exists($filePath)) {
+            $fp = fopen($filePath, 'rb');
+            $magic = fread($fp, 4);
+            fclose($fp);
+
+            if ($magic === "PK\x03\x04") {
+                $rawRows = parseCustomerXlsxRaw($filePath);
+            } else {
+                $content = file_get_contents($filePath);
+                if (stripos($content, '<table') !== false && stripos($content, '<tr') !== false) {
+                    if (preg_match_all('/<tr[^>]*>(.*?)<\/tr>/is', $content, $trMatches)) {
+                        foreach ($trMatches[1] as $tr) {
+                            if (preg_match_all('/<t[hd][^>]*>(.*?)<\/t[hd]>/is', $tr, $tdMatches)) {
+                                $row = [];
+                                foreach ($tdMatches[1] as $td) {
+                                    $row[] = trim(html_entity_decode(strip_tags($td), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                                }
+                                $rawRows[] = $row;
+                            }
+                        }
+                    }
+                } else {
+                    $rawString = $content;
+                }
+            }
+        }
+
+        if (empty($rawRows) && !empty($rawString)) {
+            $lines = preg_split("/\r\n|\n|\r/", trim($rawString));
+            if (!empty($lines)) {
                 $firstLine = $lines[0];
                 $tabCount = substr_count($firstLine, "\t");
                 $semiCount = substr_count($firstLine, ";");
@@ -10793,61 +10869,272 @@ try {
                     $delimiter = ';';
                 }
 
-                $rawHeaders = str_getcsv($firstLine, $delimiter);
-                $headerMap = [
-                    'nama' => 'name', 'nama pelanggan' => 'name', 'nama lengkap' => 'name', 'customer name' => 'name', 'name' => 'name',
-                    'no telepon' => 'phone', 'no telp' => 'phone', 'nomor telepon' => 'phone', 'no hp' => 'phone', 'nomor hp' => 'phone',
-                    'telepon' => 'phone', 'phone' => 'phone', 'hp' => 'phone', 'wa' => 'phone', 'whatsapp' => 'phone', 'no whatsapp' => 'phone',
-                    'alamat' => 'address', 'alamat lengkap' => 'address', 'address' => 'address',
-                    'google maps' => 'maps_url', 'url google' => 'maps_url', 'url maps' => 'maps_url', 'link maps' => 'maps_url',
-                    'link google maps' => 'maps_url', 'google maps url' => 'maps_url', 'google maps url / koordinat' => 'maps_url',
-                    'google maps / longlat' => 'maps_url', 'longlat' => 'maps_url', 'koordinat' => 'maps_url', 'latlong' => 'maps_url',
-                    'maps' => 'maps_url', 'url' => 'maps_url', 'location' => 'maps_url', 'lokasi' => 'maps_url',
-                    'kategori' => 'category', 'kategori pelanggan' => 'category', 'category' => 'category', 'customer category' => 'category', 'tier' => 'category'
-                ];
-
-                $canonicalHeaders = [];
-                $isFirstLineHeader = false;
-                foreach ($rawHeaders as $rh) {
-                    $cleaned = strtolower(trim(str_replace(["\xEF\xBB\xBF", '"', "'"], '', $rh)));
-                    if (isset($headerMap[$cleaned])) {
-                        $isFirstLineHeader = true;
-                        $canonicalHeaders[] = $headerMap[$cleaned];
-                    } else {
-                        $canonicalHeaders[] = $cleaned;
-                    }
-                }
-
-                $startIndex = $isFirstLineHeader ? 1 : 0;
-                if (!$isFirstLineHeader) {
-                    $canonicalHeaders = ['name', 'phone', 'address', 'maps_url', 'category'];
-                }
-
-                for ($i = $startIndex; $i < count($lines); $i++) {
-                    $line = trim($lines[$i]);
+                foreach ($lines as $line) {
+                    $line = trim($line);
                     if (empty($line)) continue;
-                    $data = str_getcsv($line, $delimiter);
-
-                    // Rejoin split maps_url if comma inside URL or coordinates split into two columns
-                    if (count($data) > count($canonicalHeaders)) {
-                        $mapsIdx = array_search('maps_url', $canonicalHeaders);
-                        if ($mapsIdx !== false && isset($data[$mapsIdx]) && isset($data[$mapsIdx + 1])) {
-                            $candidate = $data[$mapsIdx] . ',' . $data[$mapsIdx + 1];
-                            if (preg_match('#(?:[?&]q=|-?\d{1,2}\.\d+)[,+](?:-?\d{1,3}\.\d+)#i', $candidate)) {
-                                $merged = array_slice($data, 0, $mapsIdx);
-                                $merged[] = $candidate;
-                                $merged = array_merge($merged, array_slice($data, $mapsIdx + 2));
-                                $data = $merged;
-                            }
-                        }
-                    }
-
-                    $row = [];
-                    foreach ($canonicalHeaders as $cIdx => $colKey) {
-                        $row[$colKey] = isset($data[$cIdx]) ? trim($data[$cIdx]) : '';
-                    }
-                    $rows[] = $row;
+                    $rawRows[] = str_getcsv($line, $delimiter);
                 }
+            }
+        }
+
+        if (empty($rawRows)) return [];
+
+        $headerMap = [
+            'nama' => 'name', 'nama pelanggan' => 'name', 'nama lengkap' => 'name', 'customer name' => 'name', 'name' => 'name',
+            'no telepon' => 'phone', 'no telp' => 'phone', 'nomor telepon' => 'phone', 'no hp' => 'phone', 'nomor hp' => 'phone',
+            'telepon' => 'phone', 'phone' => 'phone', 'hp' => 'phone', 'wa' => 'phone', 'whatsapp' => 'phone', 'no whatsapp' => 'phone',
+            'alamat' => 'address', 'alamat lengkap' => 'address', 'address' => 'address',
+            'google maps' => 'maps_url', 'url google' => 'maps_url', 'url maps' => 'maps_url', 'link maps' => 'maps_url',
+            'link google maps' => 'maps_url', 'google maps url' => 'maps_url', 'google maps url / koordinat' => 'maps_url',
+            'google maps / longlat' => 'maps_url', 'longlat' => 'maps_url', 'koordinat' => 'maps_url', 'latlong' => 'maps_url',
+            'maps' => 'maps_url', 'url' => 'maps_url', 'location' => 'maps_url', 'lokasi' => 'maps_url',
+            'kategori' => 'category', 'kategori pelanggan' => 'category', 'category' => 'category', 'customer category' => 'category', 'tier' => 'category'
+        ];
+
+        $firstRow = $rawRows[0];
+        $canonicalHeaders = [];
+        $isHeader = false;
+        foreach ($firstRow as $rh) {
+            $cleaned = strtolower(trim(preg_replace('/\s*\(.*?\)/', '', str_replace(["\xEF\xBB\xBF", '"', "'"], '', $rh))));
+            if (isset($headerMap[$cleaned])) {
+                $isHeader = true;
+                $canonicalHeaders[] = $headerMap[$cleaned];
+            } else {
+                $canonicalHeaders[] = $cleaned;
+            }
+        }
+
+        $startIndex = $isHeader ? 1 : 0;
+        if (!$isHeader) {
+            $canonicalHeaders = ['name', 'phone', 'address', 'maps_url', 'category'];
+        }
+
+        $parsedRows = [];
+        for ($i = $startIndex; $i < count($rawRows); $i++) {
+            $data = $rawRows[$i];
+            if (empty($data) || (count($data) === 1 && empty($data[0]))) continue;
+
+            if (count($data) > count($canonicalHeaders)) {
+                $mapsIdx = array_search('maps_url', $canonicalHeaders);
+                if ($mapsIdx !== false && isset($data[$mapsIdx]) && isset($data[$mapsIdx + 1])) {
+                    $candidate = $data[$mapsIdx] . ',' . $data[$mapsIdx + 1];
+                    if (preg_match('#(?:[?&]q=|-?\d{1,2}\.\d+)[,+](?:-?\d{1,3}\.\d+)#i', $candidate)) {
+                        $merged = array_slice($data, 0, $mapsIdx);
+                        $merged[] = $candidate;
+                        $merged = array_merge($merged, array_slice($data, $mapsIdx + 2));
+                        $data = $merged;
+                    }
+                }
+            }
+
+            $row = [];
+            foreach ($canonicalHeaders as $cIdx => $colKey) {
+                $row[$colKey] = isset($data[$cIdx]) ? trim($data[$cIdx]) : '';
+            }
+            $parsedRows[] = $row;
+        }
+
+        return $parsedRows;
+    }
+}
+
+        case 'download_customer_template':
+            $format = strtolower(trim($_GET['format'] ?? 'xlsx'));
+
+            // Format CSV jika secara eksplisit diminta (?format=csv)
+            if ($format === 'csv') {
+                header('Content-Type: text/csv; charset=utf-8');
+                header('Content-Disposition: attachment; filename="template_import_pelanggan.csv"');
+                $out = fopen('php://output', 'w');
+                fputs($out, "\xEF\xBB\xBF");
+                fputcsv($out, ['Nama Pelanggan', 'No Telepon', 'Alamat', 'Google Maps URL / Koordinat', 'Kategori Pelanggan']);
+                fputcsv($out, ['Budi Santoso', '081234567890', 'Jl. Jenderal Sudirman Kav. 12 Jakarta Pusat', 'https://maps.app.goo.gl/3X5f9ZAbCd123', 'REGULER']);
+                fputcsv($out, ['Siti Aminah (Member VIP)', '081987654321', 'Jl. Rasuna Said Blok C No. 5 Jakarta Selatan', 'https://www.google.com/maps/@-6.2155,106.8315,16z', 'MEMBER']);
+                fputcsv($out, ['Toko Berkah Grosir', '085611223344', 'Jl. Tebet Raya No. 45 Jakarta Selatan', '-6.2380, 106.8520', 'RESELLER']);
+                fputcsv($out, ['PT Mitra Bahtera Abadi', '081122334455', 'Kawasan Industri MM2100 Cikarang', 'https://www.google.com/maps?q=-6.3088,107.1190', 'MITRA']);
+                fputcsv($out, ['Ahmad Dani (Hanya Nama & HP)', '087812345678', '', '', '']);
+                fclose($out);
+                exit;
+            }
+
+            // Default: Format Asli Microsoft Excel (.xlsx) dengan styling rapi & format teks pelindung angka 0 pada nomor telepon
+            if (class_exists('ZipArchive')) {
+                $tempFile = tempnam(sys_get_temp_dir(), 'tpl_cust_') . '.xlsx';
+                $zip = new ZipArchive();
+                if ($zip->open($tempFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+                    $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' . "\n" .
+                        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' .
+                        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' .
+                        '<Default Extension="xml" ContentType="application/xml"/>' .
+                        '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' .
+                        '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' .
+                        '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' .
+                        '</Types>');
+
+                    $zip->addFromString('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' . "\n" .
+                        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' .
+                        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' .
+                        '</Relationships>');
+
+                    $zip->addFromString('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' . "\n" .
+                        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' .
+                        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' .
+                        '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' .
+                        '</Relationships>');
+
+                    $zip->addFromString('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' . "\n" .
+                        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' .
+                        '<sheets><sheet name="Data Pelanggan" sheetId="1" r:id="rId1"/></sheets>' .
+                        '</workbook>');
+
+                    $zip->addFromString('xl/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' . "\n" .
+                        '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' .
+                        '<fonts count="2"><font><name val="Calibri"/><sz val="11"/></font><font><b/><color rgb="FFFFFFFF"/><name val="Calibri"/><sz val="11"/></font></fonts>' .
+                        '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF059669"/></patternFill></fill></fills>' .
+                        '<borders count="2"><border><left/><right/><top/><bottom/></border><border><left style="thin"><color rgb="FFCBD5E1"/></left><right style="thin"><color rgb="FFCBD5E1"/></right><top style="thin"><color rgb="FFCBD5E1"/></top><bottom style="thin"><color rgb="FFCBD5E1"/></bottom></border></borders>' .
+                        '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' .
+                        '<cellXfs count="3">' .
+                        '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' .
+                        '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' .
+                        '<xf numFmtId="49" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>' .
+                        '</cellXfs>' .
+                        '</styleSheet>');
+
+                    $headers = [
+                        'Nama Pelanggan (Wajib)',
+                        'No Telepon (Wajib)',
+                        'Alamat (Opsional)',
+                        'Google Maps URL / Koordinat (Opsional)',
+                        'Kategori Pelanggan (Opsional)'
+                    ];
+
+                    $sampleRows = [
+                        ['Budi Santoso', '081234567890', 'Jl. Jenderal Sudirman Kav. 12 Jakarta Pusat', 'https://maps.app.goo.gl/3X5f9ZAbCd123', 'REGULER'],
+                        ['Siti Aminah (Member VIP)', '081987654321', 'Jl. Rasuna Said Blok C No. 5 Jakarta Selatan', 'https://www.google.com/maps/@-6.2155,106.8315,16z', 'MEMBER'],
+                        ['Toko Berkah Grosir', '085611223344', 'Jl. Tebet Raya No. 45 Jakarta Selatan', '-6.2380, 106.8520', 'RESELLER'],
+                        ['PT Mitra Bahtera Abadi', '081122334455', 'Kawasan Industri MM2100 Cikarang', 'https://www.google.com/maps?q=-6.3088,107.1190', 'MITRA'],
+                        ['Ahmad Dani (Hanya Nama & HP)', '087812345678', '', '', '']
+                    ];
+
+                    $sheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' . "\n" .
+                        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' .
+                        '<cols>' .
+                        '<col min="1" max="1" width="30" customWidth="1"/>' .
+                        '<col min="2" max="2" width="22" customWidth="1"/>' .
+                        '<col min="3" max="3" width="45" customWidth="1"/>' .
+                        '<col min="4" max="4" width="48" customWidth="1"/>' .
+                        '<col min="5" max="5" width="28" customWidth="1"/>' .
+                        '</cols>' .
+                        '<sheetData>' .
+                        '<row r="1" ht="25" customHeight="1">';
+
+                    $cols = ['A', 'B', 'C', 'D', 'E'];
+                    foreach ($headers as $i => $h) {
+                        $cRef = $cols[$i] . '1';
+                        $sheetXml .= '<c r="' . $cRef . '" t="inlineStr" s="1"><is><t>' . htmlspecialchars($h, ENT_XML1, 'UTF-8') . '</t></is></c>';
+                    }
+                    $sheetXml .= '</row>';
+
+                    $rowNum = 2;
+                    foreach ($sampleRows as $row) {
+                        $sheetXml .= '<row r="' . $rowNum . '" ht="20" customHeight="1">';
+                        foreach ($row as $i => $val) {
+                            $cRef = $cols[$i] . $rowNum;
+                            $sheetXml .= '<c r="' . $cRef . '" t="inlineStr" s="2"><is><t>' . htmlspecialchars($val, ENT_XML1, 'UTF-8') . '</t></is></c>';
+                        }
+                        $sheetXml .= '</row>';
+                        $rowNum++;
+                    }
+                    $sheetXml .= '</sheetData></worksheet>';
+
+                    $zip->addFromString('xl/worksheets/sheet1.xml', $sheetXml);
+                    $zip->close();
+
+                    if (file_exists($tempFile)) {
+                        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                        header('Content-Disposition: attachment; filename="template_import_pelanggan.xlsx"');
+                        header('Content-Length: ' . filesize($tempFile));
+                        header('Cache-Control: max-age=0');
+                        header('Pragma: public');
+                        readfile($tempFile);
+                        @unlink($tempFile);
+                        exit;
+                    }
+                }
+            }
+
+            // Fallback CSV jika zip tidak tersedia
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename="template_import_pelanggan.csv"');
+            $out = fopen('php://output', 'w');
+            fputs($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['Nama Pelanggan', 'No Telepon', 'Alamat', 'Google Maps URL / Koordinat', 'Kategori Pelanggan']);
+            fputcsv($out, ['Budi Santoso', '081234567890', 'Jl. Jenderal Sudirman Kav. 12 Jakarta Pusat', 'https://maps.app.goo.gl/3X5f9ZAbCd123', 'REGULER']);
+            fputcsv($out, ['Ahmad Dani', '087812345678', '', '', '']);
+            fclose($out);
+            exit;
+
+        case 'preview_customer_import':
+            $filePath = !empty($_FILES['file']['tmp_name']) && is_uploaded_file($_FILES['file']['tmp_name']) ? $_FILES['file']['tmp_name'] : '';
+            $rawContent = $input['csv_content'] ?? '';
+            $fileName = $_FILES['file']['name'] ?? 'Data Pelanggan';
+
+            if (empty($filePath) && empty($rawContent)) {
+                echo json_encode(['success' => false, 'message' => 'Tidak ada berkas Excel atau teks data yang diunggah.']);
+                exit;
+            }
+
+            $rawRows = parseCustomerFileToRowsUnified($filePath, $rawContent);
+            if (empty($rawRows)) {
+                echo json_encode(['success' => false, 'message' => 'Berkas Excel atau teks kosong, atau format kolom tidak dikenali.']);
+                exit;
+            }
+
+            $validCount = 0;
+            $invalidCount = 0;
+            $previewRows = [];
+
+            foreach ($rawRows as $idx => $r) {
+                $name = trim($r['name'] ?? '');
+                $phone = trim($r['phone'] ?? '');
+                $cleanPhone = preg_replace('/[^\d+]/', '', $phone);
+                $isValid = (!empty($name) && strlen($cleanPhone) >= 6);
+
+                if ($isValid) $validCount++; else $invalidCount++;
+
+                $coords = parseCustomerGoogleCoords($r['maps_url'] ?? '');
+                $coordsObj = ($coords[0] !== null && $coords[1] !== null) ? ['lat' => $coords[0], 'lon' => $coords[1]] : null;
+
+                $previewRows[] = [
+                    'name' => $name,
+                    'phone' => $phone,
+                    'address' => $r['address'] ?? '',
+                    'maps_url' => $r['maps_url'] ?? '',
+                    'category' => !empty($r['category']) ? strtoupper($r['category']) : 'REGULER',
+                    'is_valid' => $isValid,
+                    'coords' => $coordsObj
+                ];
+            }
+
+            echo json_encode([
+                'success' => true,
+                'filename' => $fileName,
+                'rows' => $previewRows,
+                'total' => count($previewRows),
+                'valid_count' => $validCount,
+                'invalid_count' => $invalidCount
+            ]);
+            exit;
+
+        case 'import_customers':
+            $filePath = !empty($_FILES['file']['tmp_name']) && is_uploaded_file($_FILES['file']['tmp_name']) ? $_FILES['file']['tmp_name'] : '';
+            $rawContent = $input['csv_content'] ?? '';
+
+            $rows = [];
+            if (!empty($input['rows']) && is_array($input['rows'])) {
+                $rows = $input['rows'];
+            } else {
+                $rows = parseCustomerFileToRowsUnified($filePath, $rawContent);
             }
 
             if (empty($rows)) {
