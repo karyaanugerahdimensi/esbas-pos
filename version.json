@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.71",
-  "build": "20261026-26",
+  "version": "1.2.72",
+  "build": "20261026-27",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.72",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Opsi Tampilan Dark Mode & Light Mode serta Perbaikan Kontras Banner Total Tagihan (FR-UI-02)",
+      "description": "Menambahkan dukungan tema gelap (Dark Mode) dan terang (Light Mode) pada seluruh antarmuka aplikasi: (1) Tombol Pengalih Tema (Dark/Light): Menambahkan tombol pengalih tema dengan ikon matahari/bulan yang responsif di header topbar dan kartu login. (2) Persistensi & Anti-Flicker: Menyimpan preferensi tema kasir di localStorage ('esbas_theme') dengan pendeteksian otomatis prefers-color-scheme sistem operasi di awal elemen head untuk mencegah efek kelap-kelip (FOUC). (3) Kompatibilitas Tailwind CSS v4: Mengonfigurasi @custom-variant dark (&:where(.dark, .dark *)) pada input.css dan mengompilasi tailwind.min.css dengan varian gelap pada seluruh komponen utama (topbar, kartu produk katalog, keranjang kasir, panel delivery, modal pembayaran). (4) Perbaikan Kontras Banner Total Tagihan: Mengganti kelas gradien Tailwind v3 yang usang pada popup pembayaran (#pos-payment-modal) menjadi solid background indigo berdaya kontras tinggi (bg-indigo-600 dark:bg-indigo-700 text-white) sehingga angka total tagihan selalu terbaca jelas dan tajam.",
+      "rollback_command": "git checkout v1.2.71"
+    },
     {
       "version": "1.2.71",
       "commit": "HEAD",
