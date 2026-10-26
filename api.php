@@ -154,6 +154,247 @@ if ($sessionUserId > 0 && !$sessionUserCanAccessAll && $sessionBranchId > 0) {
     if (is_array($input) && isset($input['branch_id'])) $input['branch_id'] = $sessionBranchId;
 }
 
+if (!function_exists('parseCustomerXlsxRaw')) {
+    function parseCustomerXlsxRaw($filePath) {
+        if (!class_exists('ZipArchive')) return false;
+        $zip = new ZipArchive();
+        if ($zip->open($filePath) !== true) return false;
+
+        $sharedStrings = [];
+        $ssXml = $zip->getFromName('xl/sharedStrings.xml');
+        if ($ssXml) {
+            $xml = @simplexml_load_string($ssXml);
+            if ($xml && isset($xml->si)) {
+                foreach ($xml->si as $si) {
+                    if (isset($si->t)) {
+                        $sharedStrings[] = (string)$si->t;
+                    } elseif (isset($si->r)) {
+                        $txt = '';
+                        foreach ($si->r as $r) { $txt .= (string)$r->t; }
+                        $sharedStrings[] = $txt;
+                    } else {
+                        $sharedStrings[] = '';
+                    }
+                }
+            }
+        }
+
+        $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
+        if (!$sheetXml) {
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $stat = $zip->statIndex($i);
+                if (preg_match('/xl\/worksheets\/sheet\d+\.xml/i', $stat['name'])) {
+                    $sheetXml = $zip->getFromIndex($i);
+                    break;
+                }
+            }
+        }
+        $zip->close();
+
+        if (!$sheetXml) return false;
+        $xml = @simplexml_load_string($sheetXml);
+        if (!$xml || !isset($xml->sheetData)) return false;
+
+        $rawRows = [];
+        foreach ($xml->sheetData->row as $rowElem) {
+            $rowArr = [];
+            $colIdx = 0;
+            foreach ($rowElem->c as $cell) {
+                $r = (string)$cell['r'];
+                if (preg_match('/^([A-Z]+)(\d+)$/', $r, $m)) {
+                    $colLetters = $m[1];
+                    $targetCol = 0;
+                    for ($k = 0; $k < strlen($colLetters); $k++) {
+                        $targetCol = $targetCol * 26 + (ord($colLetters[$k]) - ord('A') + 1);
+                    }
+                    $targetCol = $targetCol - 1;
+                    while ($colIdx < $targetCol) {
+                        $rowArr[] = '';
+                        $colIdx++;
+                    }
+                }
+
+                $val = '';
+                $type = (string)$cell['t'];
+                if ($type === 's') {
+                    $sIdx = (int)$cell->v;
+                    $val = $sharedStrings[$sIdx] ?? '';
+                } elseif ($type === 'inlineStr') {
+                    $val = (string)$cell->is->t;
+                } else {
+                    $val = (string)$cell->v;
+                }
+                $rowArr[] = trim($val);
+                $colIdx++;
+            }
+            $rawRows[] = $rowArr;
+        }
+        return $rawRows;
+    }
+}
+
+if (!function_exists('parseCustomerFileToRowsUnified')) {
+    function parseCustomerFileToRowsUnified($filePath, $rawString = '') {
+        $rawRows = [];
+        if (!empty($filePath) && file_exists($filePath)) {
+            $fp = fopen($filePath, 'rb');
+            $magic = fread($fp, 4);
+            fclose($fp);
+
+            if ($magic === "PK\x03\x04") {
+                $rawRows = parseCustomerXlsxRaw($filePath);
+            } else {
+                $content = file_get_contents($filePath);
+                if (stripos($content, '<table') !== false && stripos($content, '<tr') !== false) {
+                    if (preg_match_all('/<tr[^>]*>(.*?)<\/tr>/is', $content, $trMatches)) {
+                        foreach ($trMatches[1] as $tr) {
+                            if (preg_match_all('/<t[hd][^>]*>(.*?)<\/t[hd]>/is', $tr, $tdMatches)) {
+                                $row = [];
+                                foreach ($tdMatches[1] as $td) {
+                                    $row[] = trim(html_entity_decode(strip_tags($td), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                                }
+                                $rawRows[] = $row;
+                            }
+                        }
+                    }
+                } else {
+                    $rawString = $content;
+                }
+            }
+        }
+
+        if (empty($rawRows) && !empty($rawString)) {
+            $lines = preg_split("/\r\n|\n|\r/", trim($rawString));
+            if (!empty($lines)) {
+                $firstLine = $lines[0];
+                $tabCount = substr_count($firstLine, "\t");
+                $semiCount = substr_count($firstLine, ";");
+                $commaCount = substr_count($firstLine, ",");
+                $delimiter = ',';
+                if ($tabCount > $commaCount && $tabCount > $semiCount) {
+                    $delimiter = "\t";
+                } elseif ($semiCount > $commaCount) {
+                    $delimiter = ';';
+                }
+
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if (empty($line)) continue;
+                    $rawRows[] = str_getcsv($line, $delimiter);
+                }
+            }
+        }
+
+        if (empty($rawRows)) return [];
+
+        $headerMap = [
+            'nama' => 'name', 'nama pelanggan' => 'name', 'nama lengkap' => 'name', 'customer name' => 'name', 'name' => 'name',
+            'no telepon' => 'phone', 'no telp' => 'phone', 'nomor telepon' => 'phone', 'no hp' => 'phone', 'nomor hp' => 'phone',
+            'telepon' => 'phone', 'phone' => 'phone', 'hp' => 'phone', 'wa' => 'phone', 'whatsapp' => 'phone', 'no whatsapp' => 'phone',
+            'alamat' => 'address', 'alamat lengkap' => 'address', 'address' => 'address',
+            'google maps' => 'maps_url', 'url google' => 'maps_url', 'url maps' => 'maps_url', 'link maps' => 'maps_url',
+            'link google maps' => 'maps_url', 'google maps url' => 'maps_url', 'google maps url / koordinat' => 'maps_url',
+            'google maps / longlat' => 'maps_url', 'longlat' => 'maps_url', 'koordinat' => 'maps_url', 'latlong' => 'maps_url',
+            'maps' => 'maps_url', 'url' => 'maps_url', 'location' => 'maps_url', 'lokasi' => 'maps_url',
+            'kategori' => 'category', 'kategori pelanggan' => 'category', 'category' => 'category', 'customer category' => 'category', 'tier' => 'category'
+        ];
+
+        $firstRow = $rawRows[0];
+        $canonicalHeaders = [];
+        $isHeader = false;
+        foreach ($firstRow as $rh) {
+            $cleaned = strtolower(trim(preg_replace('/\s*\(.*?\)/', '', str_replace(["\xEF\xBB\xBF", '"', "'"], '', $rh))));
+            if (isset($headerMap[$cleaned])) {
+                $isHeader = true;
+                $canonicalHeaders[] = $headerMap[$cleaned];
+            } else {
+                $canonicalHeaders[] = $cleaned;
+            }
+        }
+
+        $startIndex = $isHeader ? 1 : 0;
+        if (!$isHeader) {
+            $canonicalHeaders = ['name', 'phone', 'address', 'maps_url', 'category'];
+        }
+
+        $parsedRows = [];
+        for ($i = $startIndex; $i < count($rawRows); $i++) {
+            $data = $rawRows[$i];
+            if (empty($data) || (count($data) === 1 && empty($data[0]))) continue;
+
+            if (count($data) > count($canonicalHeaders)) {
+                $mapsIdx = array_search('maps_url', $canonicalHeaders);
+                if ($mapsIdx !== false && isset($data[$mapsIdx]) && isset($data[$mapsIdx + 1])) {
+                    $candidate = $data[$mapsIdx] . ',' . $data[$mapsIdx + 1];
+                    if (preg_match('#(?:[?&]q=|-?\d{1,2}\.\d+)[,+](?:-?\d{1,3}\.\d+)#i', $candidate)) {
+                        $merged = array_slice($data, 0, $mapsIdx);
+                        $merged[] = $candidate;
+                        $merged = array_merge($merged, array_slice($data, $mapsIdx + 2));
+                        $data = $merged;
+                    }
+                }
+            }
+
+            $row = [];
+            foreach ($canonicalHeaders as $cIdx => $colKey) {
+                $row[$colKey] = isset($data[$cIdx]) ? trim($data[$cIdx]) : '';
+            }
+            $parsedRows[] = $row;
+        }
+
+        return $parsedRows;
+    }
+}
+if (!function_exists('parseCustomerGoogleCoords')) {
+    function parseCustomerGoogleCoords($val) {
+        $val = trim($val ?? '');
+        if (empty($val)) return [null, null];
+
+        // Resolusi URL pendek (maps.app.goo.gl atau goo.gl/maps) jika curl aktif
+        if (preg_match('#https?://(maps\.app\.goo\.gl|goo\.gl/maps)/[a-zA-Z0-9_-]+#i', $val)) {
+            if (function_exists('curl_init')) {
+                $ch = curl_init($val);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+                curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0');
+                curl_exec($ch);
+                $effectiveUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+                curl_close($ch);
+                if (!empty($effectiveUrl) && $effectiveUrl !== $val) {
+                    $val = $effectiveUrl;
+                }
+            }
+        }
+
+        // Pola 1: @lat,lon
+        if (preg_match('#@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)#', $val, $m)) {
+            return [(float)$m[1], (float)$m[2]];
+        }
+        // Pola 2: q=lat,lon atau query=lat,lon atau destination=lat,lon
+        if (preg_match('#(?:[?&](?:q|query|ll|destination)=(-?\d{1,2}\.\d+)[,+](-?\d{1,3}\.\d+))#i', $val, $m)) {
+            return [(float)$m[1], (float)$m[2]];
+        }
+        // Pola 3: /place/lat,lon
+        if (preg_match('#/place/(-?\d{1,2}\.\d+)[,+](-?\d{1,3}\.\d+)#i', $val, $m)) {
+            return [(float)$m[1], (float)$m[2]];
+        }
+        // Pola 4: /dir/.../lat,lon
+        if (preg_match('#/dir/[^/]+/(-?\d{1,2}\.\d+)[,+](-?\d{1,3}\.\d+)#i', $val, $m)) {
+            return [(float)$m[1], (float)$m[2]];
+        }
+        // Pola 5: Raw decimal coordinates "-6.2088, 106.8190"
+        if (preg_match('#(-?\d{1,2}\.\d{3,})[,\s]+(-?\d{1,3}\.\d{3,})#', $val, $m)) {
+            $lat = (float)$m[1];
+            $lon = (float)$m[2];
+            if ($lat >= -90 && $lat <= 90 && $lon >= -180 && $lon <= 180) {
+                return [$lat, $lon];
+            }
+        }
+        return [null, null];
+    }
+}
+
 try {
     switch ($action) {
 
@@ -10746,198 +10987,6 @@ try {
             echo json_encode(['success' => true, 'customers' => $stmt->fetchAll()]);
             break;
 
-if (!function_exists('parseCustomerXlsxRaw')) {
-    function parseCustomerXlsxRaw($filePath) {
-        if (!class_exists('ZipArchive')) return false;
-        $zip = new ZipArchive();
-        if ($zip->open($filePath) !== true) return false;
-
-        $sharedStrings = [];
-        $ssXml = $zip->getFromName('xl/sharedStrings.xml');
-        if ($ssXml) {
-            $xml = @simplexml_load_string($ssXml);
-            if ($xml && isset($xml->si)) {
-                foreach ($xml->si as $si) {
-                    if (isset($si->t)) {
-                        $sharedStrings[] = (string)$si->t;
-                    } elseif (isset($si->r)) {
-                        $txt = '';
-                        foreach ($si->r as $r) { $txt .= (string)$r->t; }
-                        $sharedStrings[] = $txt;
-                    } else {
-                        $sharedStrings[] = '';
-                    }
-                }
-            }
-        }
-
-        $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
-        if (!$sheetXml) {
-            for ($i = 0; $i < $zip->numFiles; $i++) {
-                $stat = $zip->statIndex($i);
-                if (preg_match('/xl\/worksheets\/sheet\d+\.xml/i', $stat['name'])) {
-                    $sheetXml = $zip->getFromIndex($i);
-                    break;
-                }
-            }
-        }
-        $zip->close();
-
-        if (!$sheetXml) return false;
-        $xml = @simplexml_load_string($sheetXml);
-        if (!$xml || !isset($xml->sheetData)) return false;
-
-        $rawRows = [];
-        foreach ($xml->sheetData->row as $rowElem) {
-            $rowArr = [];
-            $colIdx = 0;
-            foreach ($rowElem->c as $cell) {
-                $r = (string)$cell['r'];
-                if (preg_match('/^([A-Z]+)(\d+)$/', $r, $m)) {
-                    $colLetters = $m[1];
-                    $targetCol = 0;
-                    for ($k = 0; $k < strlen($colLetters); $k++) {
-                        $targetCol = $targetCol * 26 + (ord($colLetters[$k]) - ord('A') + 1);
-                    }
-                    $targetCol = $targetCol - 1;
-                    while ($colIdx < $targetCol) {
-                        $rowArr[] = '';
-                        $colIdx++;
-                    }
-                }
-
-                $val = '';
-                $type = (string)$cell['t'];
-                if ($type === 's') {
-                    $sIdx = (int)$cell->v;
-                    $val = $sharedStrings[$sIdx] ?? '';
-                } elseif ($type === 'inlineStr') {
-                    $val = (string)$cell->is->t;
-                } else {
-                    $val = (string)$cell->v;
-                }
-                $rowArr[] = trim($val);
-                $colIdx++;
-            }
-            $rawRows[] = $rowArr;
-        }
-        return $rawRows;
-    }
-}
-
-if (!function_exists('parseCustomerFileToRowsUnified')) {
-    function parseCustomerFileToRowsUnified($filePath, $rawString = '') {
-        $rawRows = [];
-        if (!empty($filePath) && file_exists($filePath)) {
-            $fp = fopen($filePath, 'rb');
-            $magic = fread($fp, 4);
-            fclose($fp);
-
-            if ($magic === "PK\x03\x04") {
-                $rawRows = parseCustomerXlsxRaw($filePath);
-            } else {
-                $content = file_get_contents($filePath);
-                if (stripos($content, '<table') !== false && stripos($content, '<tr') !== false) {
-                    if (preg_match_all('/<tr[^>]*>(.*?)<\/tr>/is', $content, $trMatches)) {
-                        foreach ($trMatches[1] as $tr) {
-                            if (preg_match_all('/<t[hd][^>]*>(.*?)<\/t[hd]>/is', $tr, $tdMatches)) {
-                                $row = [];
-                                foreach ($tdMatches[1] as $td) {
-                                    $row[] = trim(html_entity_decode(strip_tags($td), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-                                }
-                                $rawRows[] = $row;
-                            }
-                        }
-                    }
-                } else {
-                    $rawString = $content;
-                }
-            }
-        }
-
-        if (empty($rawRows) && !empty($rawString)) {
-            $lines = preg_split("/\r\n|\n|\r/", trim($rawString));
-            if (!empty($lines)) {
-                $firstLine = $lines[0];
-                $tabCount = substr_count($firstLine, "\t");
-                $semiCount = substr_count($firstLine, ";");
-                $commaCount = substr_count($firstLine, ",");
-                $delimiter = ',';
-                if ($tabCount > $commaCount && $tabCount > $semiCount) {
-                    $delimiter = "\t";
-                } elseif ($semiCount > $commaCount) {
-                    $delimiter = ';';
-                }
-
-                foreach ($lines as $line) {
-                    $line = trim($line);
-                    if (empty($line)) continue;
-                    $rawRows[] = str_getcsv($line, $delimiter);
-                }
-            }
-        }
-
-        if (empty($rawRows)) return [];
-
-        $headerMap = [
-            'nama' => 'name', 'nama pelanggan' => 'name', 'nama lengkap' => 'name', 'customer name' => 'name', 'name' => 'name',
-            'no telepon' => 'phone', 'no telp' => 'phone', 'nomor telepon' => 'phone', 'no hp' => 'phone', 'nomor hp' => 'phone',
-            'telepon' => 'phone', 'phone' => 'phone', 'hp' => 'phone', 'wa' => 'phone', 'whatsapp' => 'phone', 'no whatsapp' => 'phone',
-            'alamat' => 'address', 'alamat lengkap' => 'address', 'address' => 'address',
-            'google maps' => 'maps_url', 'url google' => 'maps_url', 'url maps' => 'maps_url', 'link maps' => 'maps_url',
-            'link google maps' => 'maps_url', 'google maps url' => 'maps_url', 'google maps url / koordinat' => 'maps_url',
-            'google maps / longlat' => 'maps_url', 'longlat' => 'maps_url', 'koordinat' => 'maps_url', 'latlong' => 'maps_url',
-            'maps' => 'maps_url', 'url' => 'maps_url', 'location' => 'maps_url', 'lokasi' => 'maps_url',
-            'kategori' => 'category', 'kategori pelanggan' => 'category', 'category' => 'category', 'customer category' => 'category', 'tier' => 'category'
-        ];
-
-        $firstRow = $rawRows[0];
-        $canonicalHeaders = [];
-        $isHeader = false;
-        foreach ($firstRow as $rh) {
-            $cleaned = strtolower(trim(preg_replace('/\s*\(.*?\)/', '', str_replace(["\xEF\xBB\xBF", '"', "'"], '', $rh))));
-            if (isset($headerMap[$cleaned])) {
-                $isHeader = true;
-                $canonicalHeaders[] = $headerMap[$cleaned];
-            } else {
-                $canonicalHeaders[] = $cleaned;
-            }
-        }
-
-        $startIndex = $isHeader ? 1 : 0;
-        if (!$isHeader) {
-            $canonicalHeaders = ['name', 'phone', 'address', 'maps_url', 'category'];
-        }
-
-        $parsedRows = [];
-        for ($i = $startIndex; $i < count($rawRows); $i++) {
-            $data = $rawRows[$i];
-            if (empty($data) || (count($data) === 1 && empty($data[0]))) continue;
-
-            if (count($data) > count($canonicalHeaders)) {
-                $mapsIdx = array_search('maps_url', $canonicalHeaders);
-                if ($mapsIdx !== false && isset($data[$mapsIdx]) && isset($data[$mapsIdx + 1])) {
-                    $candidate = $data[$mapsIdx] . ',' . $data[$mapsIdx + 1];
-                    if (preg_match('#(?:[?&]q=|-?\d{1,2}\.\d+)[,+](?:-?\d{1,3}\.\d+)#i', $candidate)) {
-                        $merged = array_slice($data, 0, $mapsIdx);
-                        $merged[] = $candidate;
-                        $merged = array_merge($merged, array_slice($data, $mapsIdx + 2));
-                        $data = $merged;
-                    }
-                }
-            }
-
-            $row = [];
-            foreach ($canonicalHeaders as $cIdx => $colKey) {
-                $row[$colKey] = isset($data[$cIdx]) ? trim($data[$cIdx]) : '';
-            }
-            $parsedRows[] = $row;
-        }
-
-        return $parsedRows;
-    }
-}
-
         case 'download_customer_template':
             $format = strtolower(trim($_GET['format'] ?? 'xlsx'));
 
@@ -11142,56 +11191,7 @@ if (!function_exists('parseCustomerFileToRowsUnified')) {
                 exit;
             }
 
-            // Helper function to extract Lat/Lon from Google Maps URL or raw coordinate string
-            if (!function_exists('parseCustomerGoogleCoords')) {
-                function parseCustomerGoogleCoords($val) {
-                    $val = trim($val ?? '');
-                    if (empty($val)) return [null, null];
-
-                    // Resolusi URL pendek (maps.app.goo.gl atau goo.gl/maps) jika curl aktif
-                    if (preg_match('#https?://(maps\.app\.goo\.gl|goo\.gl/maps)/[a-zA-Z0-9_-]+#i', $val)) {
-                        if (function_exists('curl_init')) {
-                            $ch = curl_init($val);
-                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-                            curl_setopt($ch, CURLOPT_TIMEOUT, 3);
-                            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0');
-                            curl_exec($ch);
-                            $effectiveUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
-                            curl_close($ch);
-                            if (!empty($effectiveUrl) && $effectiveUrl !== $val) {
-                                $val = $effectiveUrl;
-                            }
-                        }
-                    }
-
-                    // Pola 1: @lat,lon
-                    if (preg_match('#@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)#', $val, $m)) {
-                        return [(float)$m[1], (float)$m[2]];
-                    }
-                    // Pola 2: q=lat,lon atau query=lat,lon atau destination=lat,lon
-                    if (preg_match('#(?:[?&](?:q|query|ll|destination)=(-?\d{1,2}\.\d+)[,+](-?\d{1,3}\.\d+))#i', $val, $m)) {
-                        return [(float)$m[1], (float)$m[2]];
-                    }
-                    // Pola 3: /place/lat,lon
-                    if (preg_match('#/place/(-?\d{1,2}\.\d+)[,+](-?\d{1,3}\.\d+)#i', $val, $m)) {
-                        return [(float)$m[1], (float)$m[2]];
-                    }
-                    // Pola 4: /dir/.../lat,lon
-                    if (preg_match('#/dir/[^/]+/(-?\d{1,2}\.\d+)[,+](-?\d{1,3}\.\d+)#i', $val, $m)) {
-                        return [(float)$m[1], (float)$m[2]];
-                    }
-                    // Pola 5: Raw decimal coordinates "-6.2088, 106.8190"
-                    if (preg_match('#(-?\d{1,2}\.\d{3,})[,\s]+(-?\d{1,3}\.\d{3,})#', $val, $m)) {
-                        $lat = (float)$m[1];
-                        $lon = (float)$m[2];
-                        if ($lat >= -90 && $lat <= 90 && $lon >= -180 && $lon <= 180) {
-                            return [$lat, $lon];
-                        }
-                    }
-                    return [null, null];
-                }
-            }
+            // Google coords parser is defined globally above
 
             // Normalisasi kategori yang diizinkan
             $validCategories = ['REGULER', 'MEMBER', 'RESELLER', 'MITRA'];

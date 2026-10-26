@@ -20986,7 +20986,13 @@ Manager / Supervisor: __________________
                         method: 'POST',
                         body: formData
                     });
-                    const result = await res.json();
+                    const rawText = await res.text();
+                    let result;
+                    try {
+                        result = JSON.parse(rawText);
+                    } catch (e) {
+                        throw new Error('Respon server bukan JSON: ' + (rawText ? rawText.substring(0, 150) : 'Kosong (HTTP ' + res.status + ')'));
+                    }
                     if (result.success && Array.isArray(result.rows) && result.rows.length > 0) {
                         renderCustomerImportPreviewRows(result.rows, result.total, result.valid_count, result.invalid_count);
                     } else {
@@ -21211,7 +21217,13 @@ Manager / Supervisor: __________________
                     });
                 }
 
-                const data = await res.json();
+                const rawRes = await res.text();
+                let data;
+                try {
+                    data = JSON.parse(rawRes);
+                } catch (errJson) {
+                    throw new Error('Respon server bukan JSON: ' + (rawRes ? rawRes.substring(0, 150) : 'Kosong (HTTP ' + res.status + ')'));
+                }
                 btnSubmit.disabled = false;
                 btnSubmit.innerHTML = `<i data-lucide="upload" class="w-4 h-4"></i><span>Proses Import Pelanggan</span>`;
                 if (window.lucide) lucide.createIcons();

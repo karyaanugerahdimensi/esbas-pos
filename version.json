@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.64",
-  "build": "20261026-19",
+  "version": "1.2.65",
+  "build": "20261026-20",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.65",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Perbaikan Resolusi Parser File Excel & Penanganan Koordinat Geospasial (FR-CRM-09-C)",
+      "description": "Memperbaiki galat 'Unexpected end of JSON input' pada pratinjau berkas Excel impor pelanggan: (1) Merelokasi seluruh fungsi parser Excel dan geocoding Google Maps ke lingkup global server (sebelum switch action) agar dapat dipanggil oleh preview_customer_import secara runtime tanpa fatal error. (2) Mengoreksi penulisan variabel koordinat bujur ($lon) pada ekstraksi format desimal (-6.895, 107.532). (3) Menambahkan penanganan protektif pembacaan respon JSON pada sisi klien JavaScript dengan penangkapan galat HTTP deskriptif.",
+      "rollback_command": "git checkout v1.2.64"
+    },
     {
       "version": "1.2.64",
       "commit": "HEAD",
