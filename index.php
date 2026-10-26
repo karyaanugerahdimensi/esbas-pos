@@ -398,9 +398,9 @@ try {
                         <i data-lucide="user-check" class="w-4 h-4 shrink-0"></i>
                         <span class="sidebar-label whitespace-nowrap">Portal ESS Karyawan</span>
                     </button>
-                    <button onclick="switchTab('employees')" id="tab-btn-employees" title="Manajemen Karyawan CRUD" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                    <button onclick="switchTab('employees')" id="tab-btn-employees" title="Manajemen Data Karyawan" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="users" class="w-4 h-4 shrink-0"></i>
-                        <span class="sidebar-label whitespace-nowrap">Kelola Karyawan (CRUD)</span>
+                        <span class="sidebar-label whitespace-nowrap">Kelola Karyawan</span>
                     </button>
                     <button onclick="switchTab('payroll')" id="tab-btn-payroll" title="Payroll & Slip Gaji Karyawan" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="receipt" class="w-4 h-4 shrink-0 text-emerald-400"></i>
@@ -463,9 +463,9 @@ try {
                 <!-- Section 7: Pengaturan Organisasi & Multi-Cabang -->
                 <div class="space-y-1">
                     <p class="sidebar-label px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 whitespace-nowrap">Pengaturan Multi-Cabang</p>
-                    <button onclick="switchTab('branches')" id="tab-btn-branches" title="Kelola Cabang / Outlet (CRUD)" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                    <button onclick="switchTab('branches')" id="tab-btn-branches" title="Kelola Data Cabang / Outlet" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="store" class="w-4 h-4 shrink-0"></i>
-                        <span class="sidebar-label whitespace-nowrap">Kelola Cabang (CRUD)</span>
+                        <span class="sidebar-label whitespace-nowrap">Kelola Cabang</span>
                     </button>
                     <button onclick="switchTab('payments')" id="tab-btn-payments" title="Kelola Metode Pembayaran (CRUD)" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                         <i data-lucide="credit-card" class="w-4 h-4 shrink-0"></i>
@@ -29154,164 +29154,164 @@ Manager / Supervisor: __________________
         const allPermissionsStructure = [
             {
                 key: 'pos',
-                title: '1. POS Penjualan Kasir',
+                title: 'POS Penjualan',
                 icon: 'shopping-cart',
                 subtabs: [
-                    { key: 'pos:cashier', title: 'Transaksi Kasir POS', desc: 'Buka transaksi kasir, scan barcode, dan cetak struk nota' }
+                    { key: 'pos:cashier', title: 'Transaksi Kasir', desc: 'Buka transaksi kasir, scan barcode, dan cetak struk nota' }
                 ]
             },
             {
                 key: 'reports',
-                title: '2. Laporan Penjualan & Piutang',
+                title: 'Laporan Penjualan',
                 icon: 'bar-chart-3',
                 subtabs: [
-                    { key: 'reports:sales', title: 'Laporan Penjualan (Sales)', desc: 'Rekap omzet, produk terlaris, filter kurun waktu, ekspor excel' },
-                    { key: 'reports:ar', title: 'Buku Piutang Usaha (AR)', desc: 'Monitoring piutang pelanggan & pelunasan faktur' },
-                    { key: 'reports:shifts', title: 'Laporan Shift Kasir', desc: 'Audit shift, saldo kas laci, selisih kas fisik' },
-                    { key: 'reports:bom', title: 'Analisis Penggunaan BOM', desc: 'Audit pemakaian bahan baku & efisiensi formula resep' }
+                    { key: 'reports:sales', title: 'Laporan Penjualan', desc: 'Rekap omzet, produk terlaris, filter kurun waktu, ekspor excel' },
+                    { key: 'reports:ar', title: 'Piutang Usaha', desc: 'Monitoring piutang pelanggan & pelunasan faktur' },
+                    { key: 'reports:shifts', title: 'Shift Kasir', desc: 'Audit shift kasir, saldo kas laci, dan selisih kas fisik' },
+                    { key: 'reports:bom', title: 'Pemakaian Bahan (BOM)', desc: 'Audit pemakaian bahan baku & formula resep' }
                 ]
             },
             {
                 key: 'ess',
-                title: '3. Portal ESS Karyawan',
+                title: 'Portal ESS Karyawan',
                 icon: 'user-check',
                 subtabs: [
-                    { key: 'ess:presensi', title: 'Presensi GPS & Swafoto', desc: 'Clock-in / clock-out presensi harian geofencing' },
-                    { key: 'ess:schedules', title: 'Jam Kerja & Roster Bulanan', desc: 'Penyusunan jadwal shift dan hari libur kerja' },
-                    { key: 'ess:swaps', title: 'Pertukaran Shift Karyawan', desc: 'Pengajuan dan persetujuan tukar shift sesama rekan cabang' },
-                    { key: 'ess:leaves', title: 'Permohonan Izin & Cuti', desc: 'Form izin sakit, cuti tahunan, dan persetujuan manajer' },
-                    { key: 'ess:reimburse', title: 'Klaim Reimbursement Toko', desc: 'Klaim pengeluaran operasional toko (petty cash)' },
-                    { key: 'ess:payslip', title: 'Slip Gaji Mandiri Karyawan', desc: 'Lihat dan cetak slip gaji pribadi karyawan' },
-                    { key: 'ess:loans', title: 'Pinjaman & Kasbon Gaji', desc: 'Pengajuan kasbon darurat potong gaji otomatis' },
-                    { key: 'ess:report', title: 'Rekapitulasi Presensi Staf', desc: 'Laporan rekap kehadiran bulanan seluruh karyawan' }
+                    { key: 'ess:presensi', title: 'Presensi & GPS', desc: 'Clock-in / clock-out presensi harian geofencing' },
+                    { key: 'ess:schedules', title: 'Jadwal & Shift Kerja', desc: 'Penyusunan jadwal shift dan hari libur kerja' },
+                    { key: 'ess:swaps', title: 'Tukar Jadwal Shift', desc: 'Pengajuan dan persetujuan tukar shift sesama rekan cabang' },
+                    { key: 'ess:leaves', title: 'Izin & Cuti Kerja', desc: 'Pengajuan izin sakit, cuti tahunan, dan persetujuan atasan' },
+                    { key: 'ess:reimburse', title: 'Klaim Reimbursement', desc: 'Klaim pengeluaran operasional toko (petty cash)' },
+                    { key: 'ess:payslip', title: 'Slip Gaji Karyawan', desc: 'Lihat dan cetak dokumen slip gaji pribadi karyawan' },
+                    { key: 'ess:loans', title: 'Kasbon & Pinjaman', desc: 'Pengajuan kasbon darurat potong gaji otomatis' },
+                    { key: 'ess:report', title: 'Laporan Kehadiran', desc: 'Laporan rekapitulasi kehadiran bulanan seluruh staf' }
                 ]
             },
             {
                 key: 'employees',
-                title: '4. Kelola Karyawan (CRUD)',
+                title: 'Kelola Karyawan',
                 icon: 'users',
                 subtabs: [
-                    { key: 'employees:list', title: 'Master Karyawan & Hak Akses', desc: 'CRUD master data staf, PIN kasir, dan penugasan cabang' }
+                    { key: 'employees:list', title: 'Daftar Karyawan', desc: 'Master data staf, PIN kasir, dan penugasan cabang' }
                 ]
             },
             {
                 key: 'payroll',
-                title: '4b. Payroll & Slip Gaji',
+                title: 'Payroll & Slip Gaji',
                 icon: 'receipt',
                 subtabs: [
-                    { key: 'payroll:overview', title: 'Rekapitulasi Gaji & Slip Resmi', desc: 'Kalkulasi gaji bulanan, komisi, denda, dan cetak slip resmi' }
+                    { key: 'payroll:overview', title: 'Rekapitulasi Penggajian', desc: 'Kalkulasi gaji bulanan, komisi, lembur, dan slip resmi' }
                 ]
             },
             {
                 key: 'products',
-                title: '5. Master Produk & Varian',
+                title: 'Master Produk & Varian',
                 icon: 'package',
                 subtabs: [
-                    { key: 'products:fg', title: 'Barang Jadi (Finished Goods)', desc: 'Katalog barang siap jual dan penetapan harga dasar' },
-                    { key: 'products:raw', title: 'Bahan Baku (Raw Material)', desc: 'Inventori bahan baku produksi dan harga pokok beli' },
-                    { key: 'products:cat', title: 'Kategori, Jenis & Satuan', desc: 'Master kategori barang, satuan takar BOM, dan tipe produk' }
+                    { key: 'products:fg', title: 'Katalog Barang Jadi', desc: 'Katalog barang siap jual dan penetapan harga dasar' },
+                    { key: 'products:raw', title: 'Bahan Baku Produksi', desc: 'Inventori bahan baku produksi dan harga pokok beli' },
+                    { key: 'products:cat', title: 'Kategori & Satuan', desc: 'Master kategori barang, satuan takar BOM, dan tipe produk' }
                 ]
             },
             {
                 key: 'bom',
-                title: '6. Resep / BOM Bahan',
+                title: 'Resep / BOM Bahan',
                 icon: 'flask-conical',
                 subtabs: [
-                    { key: 'bom:recipes', title: 'Penyusunan Komposisi & HPP', desc: 'Formula bahan baku barang jadi dan kalkulasi HPP otomatis' }
+                    { key: 'bom:recipes', title: 'Komposisi Resep & HPP', desc: 'Formula bahan baku barang jadi dan kalkulasi HPP otomatis' }
                 ]
             },
             {
                 key: 'stocks',
-                title: '7. Stok & Kartu Mutasi',
+                title: 'Stok & Kartu Mutasi',
                 icon: 'boxes',
                 subtabs: [
-                    { key: 'stocks:balance', title: 'Saldo Stok Cabang Aktif', desc: 'Pengecekan stok fisik, setel awal, dan stok masuk' },
-                    { key: 'stocks:movements', title: 'Buku Kartu Pergerakan (Ledger)', desc: 'Audit kartu mutasi masuk, keluar, dan penyesuaian stok' }
+                    { key: 'stocks:balance', title: 'Saldo Stok Cabang', desc: 'Pengecekan stok fisik, setel awal, dan stok masuk' },
+                    { key: 'stocks:movements', title: 'Kartu Mutasi Stok', desc: 'Audit kartu mutasi masuk, keluar, dan penyesuaian stok' }
                 ]
             },
             {
                 key: 'pnl',
-                title: '8. Laporan Laba Rugi (P&L)',
-                icon: 'trending-up',
+                title: 'Laporan Laba Rugi',
+                icon: 'line-chart',
                 subtabs: [
-                    { key: 'pnl:statement', title: 'Laporan Income Statement', desc: 'Ikhtisar omzet bersih, HPP riil, dan laba bersih akhir' }
+                    { key: 'pnl:statement', title: 'Laporan Laba Rugi', desc: 'Laporan keuangan laba kotor, beban operasional, dan laba bersih' }
                 ]
             },
             {
                 key: 'partner-sales',
-                title: '8b. Penjualan Mitra (B2B)',
+                title: 'Laporan Penjualan Mitra',
                 icon: 'handshake',
                 subtabs: [
-                    { key: 'partner-sales:report', title: 'Rekapitulasi Penjualan Mitra', desc: 'Laporan transaksi mitra B2B per invoice dan profitabilitas' }
+                    { key: 'partner-sales:overview', title: 'Rekap Penjualan Mitra', desc: 'Laporan omzet penjualan mitra, agen, dan reseller B2B' }
                 ]
             },
             {
                 key: 'expenses',
-                title: '9. Beban Operasional Cabang',
+                title: 'Beban Operasional Cabang',
                 icon: 'wallet',
                 subtabs: [
-                    { key: 'expenses:ledger', title: 'Buku Catatan Pengeluaran Beban', desc: 'Pencatatan kas operasional outlet keluar harian' },
-                    { key: 'expenses:category', title: 'Kelola Kategori Beban (CRUD)', desc: 'Master kategori beban operasional cabang' }
+                    { key: 'expenses:ledger', title: 'Buku Catatan Beban', desc: 'Pencatatan kas operasional outlet keluar harian' },
+                    { key: 'expenses:category', title: 'Kategori Beban', desc: 'Master kategori beban operasional cabang' }
                 ]
             },
             {
                 key: 'customers',
-                title: '10. Pelanggan & Mitra CRM',
+                title: 'Pelanggan & Mitra CRM',
                 icon: 'user-check',
                 subtabs: [
-                    { key: 'customers:list', title: 'Daftar Pelanggan Reguler & Mitra', desc: 'Database pelanggan CRM, nomor telepon, dan alamat' },
-                    { key: 'customers:category', title: 'Kategori & Tiering Harga', desc: 'Penetapan diskon tier harga pelanggan setia' },
-                    { key: 'customers:mitra-pricing', title: 'Kontrak Harga Khusus Mitra B2B', desc: 'Harga jual kontrak khusus per item mitra' },
-                    { key: 'customers:maps', title: 'Peta Geospasial Pelanggan', desc: 'Sebaran titik koordinat pelanggan pada peta GPS' }
+                    { key: 'customers:list', title: 'Daftar Pelanggan', desc: 'Database pelanggan CRM, nomor telepon, dan alamat' },
+                    { key: 'customers:category', title: 'Kategori & Diskon', desc: 'Penetapan diskon tier harga pelanggan setia' },
+                    { key: 'customers:mitra-pricing', title: 'Harga Khusus Mitra', desc: 'Harga jual kontrak khusus per item mitra B2B' },
+                    { key: 'customers:maps', title: 'Peta Lokasi Pelanggan', desc: 'Sebaran titik koordinat pelanggan pada peta GPS' }
                 ]
             },
             {
                 key: 'logistics',
-                title: '11. Kurir & Biaya Kirim',
+                title: 'Kurir & Biaya Kirim',
                 icon: 'truck',
                 subtabs: [
-                    { key: 'logistics:couriers', title: 'Armada Motor & Kurir Toko', desc: 'Master armada kendaraan operasional dan driver' },
-                    { key: 'logistics:calculator', title: 'Kalkulator Ongkir Jarak Peta', desc: 'Hitung ongkos kirim geospasial real-time' },
-                    { key: 'logistics:logs', title: 'Log BBM, Odometer & Servis', desc: 'Pencatatan bensin dan servis armada masuk beban' },
-                    { key: 'logistics:settings', title: 'Pengaturan Tarif Ongkir Dinamis', desc: 'Tarif dasar, radius gratis ongkir, dan tarif per km' },
-                    { key: 'logistics:maps', title: 'Peta Geospasial Outlet & Kurir', desc: 'Peta geospasial armada pengiriman pesanan' }
+                    { key: 'logistics:couriers', title: 'Armada & Kurir Toko', desc: 'Master armada kendaraan operasional dan driver' },
+                    { key: 'logistics:calculator', title: 'Kalkulator Ongkos Kirim', desc: 'Hitung ongkos kirim geospasial real-time' },
+                    { key: 'logistics:logs', title: 'Log BBM & Servis', desc: 'Pencatatan bensin dan servis armada masuk beban' },
+                    { key: 'logistics:settings', title: 'Pengaturan Tarif Kirim', desc: 'Tarif dasar, radius gratis ongkir, dan tarif per km' },
+                    { key: 'logistics:maps', title: 'Peta Outlet & Kurir', desc: 'Peta geospasial armada pengiriman pesanan' }
                 ]
             },
             {
                 key: 'branches',
-                title: '12. Kelola Cabang (CRUD)',
+                title: 'Kelola Cabang',
                 icon: 'store',
                 subtabs: [
-                    { key: 'branches:table', title: 'Tabel Cabang & Titik Koordinat GPS', desc: 'Master profil toko, radius presensi, dan nomor telepon' },
-                    { key: 'branches:maps', title: 'Peta Geospasial Jaringan Outlet', desc: 'Visualisasi seluruh outlet cabang pada Google/Leaflet Maps' }
+                    { key: 'branches:table', title: 'Daftar Cabang Toko', desc: 'Master profil toko, radius presensi, dan nomor telepon' },
+                    { key: 'branches:maps', title: 'Peta Jaringan Cabang', desc: 'Visualisasi seluruh outlet cabang pada Google/Leaflet Maps' }
                 ]
             },
             {
                 key: 'payments',
-                title: '13. Metode Pembayaran',
+                title: 'Metode Pembayaran',
                 icon: 'credit-card',
                 subtabs: [
-                    { key: 'payments:methods', title: 'Master Saluran Pembayaran Kasir', desc: 'Aktivasi Tunai, QRIS Dinamis, Kartu Debit, Transfer Bank' }
+                    { key: 'payments:methods', title: 'Metode Pembayaran Kasir', desc: 'Aktivasi Tunai, QRIS Dinamis, Kartu Debit, Transfer Bank' }
                 ]
             },
             {
                 key: 'sale-cancellations',
-                title: '14. Pembatalan Penjualan (Void)',
+                title: 'Pembatalan Penjualan',
                 icon: 'ban',
                 subtabs: [
-                    { key: 'sale-cancellations:logs', title: 'Otorisasi & Riwayat Void Kasir', desc: 'Persetujuan pembatalan transaksi dan audit trail' }
+                    { key: 'sale-cancellations:logs', title: 'Riwayat Pembatalan (Void)', desc: 'Persetujuan pembatalan transaksi dan audit trail' }
                 ]
             },
             {
                 key: 'settings',
-                title: '15. Konfigurasi Sistem & Cetak',
+                title: 'Konfigurasi Sistem',
                 icon: 'settings',
                 subtabs: [
-                    { key: 'settings:general', title: 'Identitas Toko & Konfigurasi Nota', desc: 'Nama toko, header struk, alamat, dan koneksi printer thermal' },
-                    { key: 'settings:logo', title: 'Kustomisasi Logo & Avatar Staf', desc: 'Unggah foto logo toko dan avatar pengguna' },
-                    { key: 'settings:roles', title: 'Master Peran & Matriks Hak Akses', desc: 'Manajemen role akun dan izin granular menu & sub-tab' },
-                    { key: 'settings:sync', title: 'Sinkronisasi Master Hosting & Lokal', desc: 'Penyelarasan database server hosting dan SQLite offline' },
-                    { key: 'settings:danger', title: 'Pembersihan & Reset Data Toko', desc: 'Pengosongan data transaksi penjualan atau riwayat uji coba' }
+                    { key: 'settings:general', title: 'Identitas Toko & Nota', desc: 'Nama toko, header struk, alamat, dan koneksi printer thermal' },
+                    { key: 'settings:logo', title: 'Logo Toko & Avatar', desc: 'Unggah foto logo toko dan avatar pengguna' },
+                    { key: 'settings:roles', title: 'Hak Akses & Role', desc: 'Manajemen role akun dan izin granular menu & sub-tab' },
+                    { key: 'settings:sync', title: 'Sinkronisasi Data', desc: 'Penyelarasan database server hosting dan SQLite offline' },
+                    { key: 'settings:danger', title: 'Pembersihan & Reset Data', desc: 'Pengosongan data transaksi penjualan atau riwayat uji coba' }
                 ]
             }
         ];

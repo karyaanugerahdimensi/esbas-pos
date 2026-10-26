@@ -13872,23 +13872,25 @@ try {
                 $stmtIn->execute([$code, $name, $description, $canAccessAllBranches, $now, $now]);
                 $id = (int)$pdo->lastInsertId();
 
-                // Auto-seed initial permissions for all 15 menus based on chosen template preset
+                // Auto-seed initial permissions for all 17 menus based on chosen template preset
                 $allMenus = [
-                    'pos' => '1. POS Penjualan Kasir',
-                    'reports' => '2. Laporan Penjualan & Piutang',
-                    'ess' => '3. Portal ESS Karyawan',
-                    'employees' => '4. Kelola Karyawan (CRUD)',
-                    'products' => '5. Master Produk & Varian',
-                    'bom' => '6. Resep / BOM Bahan',
-                    'stocks' => '7. Stok & Kartu Mutasi',
-                    'pnl' => '8. Laporan Laba Rugi',
-                    'expenses' => '9. Beban Operasional Cabang',
-                    'customers' => '10. Pelanggan & Mitra CRM',
-                    'logistics' => '11. Kurir & Biaya Kirim',
-                    'branches' => '12. Kelola Cabang (CRUD)',
-                    'payments' => '13. Metode Pembayaran',
-                    'sale-cancellations' => '14. Pembatalan Penjualan (Void)',
-                    'settings' => '15. Konfigurasi Sistem & Cetak'
+                    'pos' => 'POS Penjualan',
+                    'reports' => 'Laporan Penjualan',
+                    'ess' => 'Portal ESS Karyawan',
+                    'employees' => 'Kelola Karyawan',
+                    'payroll' => 'Payroll & Slip Gaji',
+                    'products' => 'Master Produk & Varian',
+                    'bom' => 'Resep / BOM Bahan',
+                    'stocks' => 'Stok & Kartu Mutasi',
+                    'pnl' => 'Laporan Laba Rugi',
+                    'partner-sales' => 'Laporan Penjualan Mitra',
+                    'expenses' => 'Beban Operasional Cabang',
+                    'customers' => 'Pelanggan & Mitra CRM',
+                    'logistics' => 'Kurir & Biaya Kirim',
+                    'branches' => 'Kelola Cabang',
+                    'payments' => 'Metode Pembayaran',
+                    'sale-cancellations' => 'Pembatalan Penjualan',
+                    'settings' => 'Konfigurasi Sistem'
                 ];
 
                 $presetMap = [
@@ -14028,23 +14030,23 @@ try {
             ");
 
             $menuTitles = [
-                'pos' => '1. POS Penjualan Kasir',
-                'reports' => '2. Laporan Penjualan & Piutang',
-                'ess' => '3. Portal ESS Karyawan',
-                'employees' => '4. Kelola Karyawan (CRUD)',
-                'payroll' => '4b. Payroll & Slip Gaji',
-                'products' => '5. Master Produk & Varian',
-                'bom' => '6. Resep / BOM Bahan',
-                'stocks' => '7. Stok & Kartu Mutasi',
-                'pnl' => '8. Laporan Laba Rugi',
-                'partner-sales' => '8b. Penjualan Mitra (B2B)',
-                'expenses' => '9. Beban Operasional Cabang',
-                'customers' => '10. Pelanggan & Mitra CRM',
-                'logistics' => '11. Kurir & Biaya Kirim',
-                'branches' => '12. Kelola Cabang (CRUD)',
-                'payments' => '13. Metode Pembayaran',
-                'sale-cancellations' => '14. Pembatalan Penjualan (Void)',
-                'settings' => '15. Konfigurasi Sistem & Cetak'
+                'pos' => 'POS Penjualan',
+                'reports' => 'Laporan Penjualan',
+                'ess' => 'Portal ESS Karyawan',
+                'employees' => 'Kelola Karyawan',
+                'payroll' => 'Payroll & Slip Gaji',
+                'products' => 'Master Produk & Varian',
+                'bom' => 'Resep / BOM Bahan',
+                'stocks' => 'Stok & Kartu Mutasi',
+                'pnl' => 'Laporan Laba Rugi',
+                'partner-sales' => 'Laporan Penjualan Mitra',
+                'expenses' => 'Beban Operasional Cabang',
+                'customers' => 'Pelanggan & Mitra CRM',
+                'logistics' => 'Kurir & Biaya Kirim',
+                'branches' => 'Kelola Cabang',
+                'payments' => 'Metode Pembayaran',
+                'sale-cancellations' => 'Pembatalan Penjualan',
+                'settings' => 'Konfigurasi Sistem'
             ];
 
             foreach ($permissions as $role => $items) {

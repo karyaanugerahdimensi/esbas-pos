@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.2.93",
-    "build": "20261026-48",
+    "version": "1.2.94",
+    "build": "20261026-49",
     "release_date": "2026-10-26",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.2.94",
+            "commit": "HEAD",
+            "date": "2026-10-26",
+            "title": "Penyelarasan & Penyederhanaan Penamaan Seluruh Menu dan Sub-Menu Hak Akses Role dengan Menu Sidebar (FR-SET-11)",
+            "description": "Menyelaraskan dan menyederhanakan penamaan seluruh 17 menu utama dan 34 sub-menu pada tabel matriks perizinan peran (#settings-subtab-roles) agar 100% konsisten dengan label navigasi pada sidebar: (1) Penyelarasan Menu Utama: Menghapus penomoran manual dan akhiran redundan pada matriks hak akses sehingga persis mencerminkan nama menu sidebar (misal: POS Penjualan menggantikan 1. POS Penjualan Kasir, Laporan Penjualan menggantikan 2. Laporan Penjualan & Piutang, Kelola Karyawan menggantikan 4. Kelola Karyawan (CRUD), Payroll & Slip Gaji menggantikan 4b. Payroll & Slip Gaji, Kelola Cabang menggantikan 12. Kelola Cabang (CRUD), dan Konfigurasi Sistem menggantikan 15. Konfigurasi Sistem & Cetak). (2) Penyederhanaan Sub-Menu: Mengubah nama-nama sub-menu yang terlalu panjang menjadi lebih ringkas, umum, dan mudah dipahami pengguna operasional (misal: Transaksi Kasir, Piutang Usaha, Shift Kasir, Pemakaian Bahan (BOM), Presensi & GPS, Jadwal & Shift Kerja, Tukar Jadwal Shift, Izin & Cuti Kerja, Katalog Barang Jadi, Komposisi Resep & HPP, Saldo Stok Cabang, Kartu Mutasi Stok, Harga Khusus Mitra, Kalkulator Ongkos Kirim, Hak Akses & Role). (3) Sinkronisasi Database & Skema: Memperbarui kolom menu_title pada tabel role_menu_permissions di basis data SQLite (database.sqlite) dan dump skema MySQL (esbas_pos_mysql.sql) serta kamus menu pada api.php.",
+            "rollback_command": "git checkout v1.2.93"
+        },
         {
             "version": "1.2.93",
             "commit": "HEAD",
