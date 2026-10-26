@@ -8372,11 +8372,21 @@ try {
             $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$mon, (int)$year);
 
             $isManager = true;
+            $isSuperAdmin = false;
+            $userBranchId = null;
             if ($userId > 0) {
-                $stmtR = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                $stmtR = $pdo->prepare("SELECT role, branch_id FROM users WHERE id = ?");
                 $stmtR->execute([$userId]);
-                $userRole = strtoupper($stmtR->fetchColumn() ?: '');
-                $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+                $uData = $stmtR->fetch(PDO::FETCH_ASSOC);
+                if ($uData) {
+                    $userRole = strtoupper($uData['role'] ?: '');
+                    $userBranchId = (int)($uData['branch_id'] ?? 0);
+                    $isSuperAdmin = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN']);
+                    $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+                    if (!$isSuperAdmin && $userBranchId > 0) {
+                        $branchId = $userBranchId;
+                    }
+                }
             }
 
             if (!$isManager && $userId > 0) {
@@ -8800,11 +8810,21 @@ try {
             $status = $_GET['status'] ?? 'ALL';
 
             $isManager = true;
+            $isSuperAdmin = false;
+            $userBranchId = null;
             if ($userId > 0) {
-                $stmtR = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                $stmtR = $pdo->prepare("SELECT role, branch_id FROM users WHERE id = ?");
                 $stmtR->execute([$userId]);
-                $userRole = strtoupper($stmtR->fetchColumn() ?: '');
-                $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+                $uData = $stmtR->fetch(PDO::FETCH_ASSOC);
+                if ($uData) {
+                    $userRole = strtoupper($uData['role'] ?: '');
+                    $userBranchId = (int)($uData['branch_id'] ?? 0);
+                    $isSuperAdmin = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN']);
+                    $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+                    if (!$isSuperAdmin && $userBranchId > 0) {
+                        $branchId = $userBranchId;
+                    }
+                }
             }
 
             $sql = "
@@ -8820,7 +8840,7 @@ try {
                 WHERE 1=1
             ";
             $params = [];
-            if ($branchId && $isManager) {
+            if ($branchId && ($isManager || !$isSuperAdmin)) {
                 $sql .= " AND sw.branch_id = ?";
                 $params[] = $branchId;
             }
@@ -8849,7 +8869,6 @@ try {
         case 'request_shift_swap':
             $requesterId = (int)($input['requester_id'] ?? 3);
             $targetId = (int)($input['target_id'] ?? 0);
-            $branchId = (int)($input['branch_id'] ?? 1);
             $shiftDate = trim($input['shift_date'] ?? '');
             $targetDate = !empty($input['target_date']) ? trim($input['target_date']) : $shiftDate;
             $reason = trim($input['reason'] ?? 'Tukar jadwal kerja/libur');
@@ -8863,9 +8882,32 @@ try {
                 exit;
             }
 
-            $stmtRoles = $pdo->prepare("SELECT id, role, name FROM users WHERE id IN (?, ?)");
-            $stmtRoles->execute([$requesterId, $targetId]);
-            foreach ($stmtRoles->fetchAll() as $uInfo) {
+            // Ambil data requester dan target
+            $stmtReq = $pdo->prepare("SELECT id, role, name, branch_id FROM users WHERE id = ?");
+            $stmtReq->execute([$requesterId]);
+            $requester = $stmtReq->fetch(PDO::FETCH_ASSOC);
+
+            $stmtTar = $pdo->prepare("SELECT id, role, name, branch_id FROM users WHERE id = ?");
+            $stmtTar->execute([$targetId]);
+            $target = $stmtTar->fetch(PDO::FETCH_ASSOC);
+
+            if (!$requester || !$target) {
+                echo json_encode(['success' => false, 'message' => 'Data pengguna karyawan tidak ditemukan.']);
+                exit;
+            }
+
+            // Validasi rekan hanya bisa dalam cabang lokasi yang sama
+            if ((int)$requester['branch_id'] !== (int)$target['branch_id']) {
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Pertukaran jadwal hanya dapat dilakukan antar rekan kerja dalam satu cabang lokasi yang sama.'
+                ]);
+                exit;
+            }
+
+            $branchId = (int)$requester['branch_id'];
+
+            foreach ([$requester, $target] as $uInfo) {
                 if (in_array(strtoupper($uInfo['role']), ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'])) {
                     echo json_encode(['success' => false, 'message' => "Karyawan {$uInfo['name']} ({$uInfo['role']}) tidak memiliki jadwal shift sehingga tidak dapat melakukan tukar shift."]);
                     exit;
@@ -8950,6 +8992,68 @@ try {
             echo json_encode(['success' => true, 'message' => 'Pengajuan disetujui dan jadwal kedua karyawan otomatis tertukar di sistem!']);
             break;
 
+        case 'delete_shift_swap':
+            $swapId = (int)($input['swap_id'] ?? ($_GET['id'] ?? 0));
+            $userId = (int)($input['user_id'] ?? ($_GET['user_id'] ?? ($_SESSION['user_id'] ?? 0)));
+
+            if ($swapId <= 0) {
+                echo json_encode(['success' => false, 'message' => 'ID pertukaran jadwal tidak valid.']);
+                break;
+            }
+
+            $stmt = $pdo->prepare("SELECT * FROM shift_swaps WHERE id = ?");
+            $stmt->execute([$swapId]);
+            $swap = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$swap) {
+                echo json_encode(['success' => false, 'message' => 'Data permohonan tukar jadwal tidak ditemukan.']);
+                break;
+            }
+
+            $isAuthorized = false;
+            if ($userId > 0) {
+                if ($swap['requester_id'] == $userId || $swap['target_id'] == $userId) {
+                    $isAuthorized = true;
+                } else {
+                    $stmtRole = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                    $stmtRole->execute([$userId]);
+                    $role = strtoupper($stmtRole->fetchColumn() ?: '');
+                    if (in_array($role, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'])) {
+                        $isAuthorized = true;
+                    }
+                }
+            } else {
+                $isAuthorized = true;
+            }
+
+            if (!$isAuthorized) {
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak untuk menghapus permohonan tukar jadwal ini.']);
+                break;
+            }
+
+            $pdo->prepare("DELETE FROM shift_swaps WHERE id = ?")->execute([$swapId]);
+            echo json_encode(['success' => true, 'message' => 'Data permohonan tukar jadwal berhasil dihapus.']);
+            break;
+
+        case 'clear_all_shift_swaps':
+            $userId = (int)($input['user_id'] ?? ($_GET['user_id'] ?? ($_SESSION['user_id'] ?? 0)));
+            $branchId = !empty($input['branch_id']) ? (int)$input['branch_id'] : (!empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : 0);
+
+            $stmtRole = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+            $stmtRole->execute([$userId]);
+            $role = strtoupper($stmtRole->fetchColumn() ?: '');
+            if (!in_array($role, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']) && $userId > 0) {
+                echo json_encode(['success' => false, 'message' => 'Hanya Manajer atau Super Admin yang dapat mengosongkan riwayat tukar jadwal.']);
+                break;
+            }
+
+            if ($branchId > 0 && !in_array($role, ['SUPER_ADMIN', 'SUPERADMIN'])) {
+                $pdo->prepare("DELETE FROM shift_swaps WHERE branch_id = ?")->execute([$branchId]);
+            } else {
+                $pdo->exec("DELETE FROM shift_swaps");
+            }
+            echo json_encode(['success' => true, 'message' => 'Seluruh data pertukaran jadwal berhasil dikosongkan.']);
+            break;
+
         // ==========================================
         // 8f. PENGAJUAN KETIDAKHADIRAN (CUTI, IZIN, SAKIT)
         // ==========================================
@@ -8959,11 +9063,21 @@ try {
             $status = $_GET['status'] ?? 'ALL';
 
             $isManager = true;
+            $isSuperAdmin = false;
+            $userBranchId = null;
             if ($userId > 0) {
-                $stmtR = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                $stmtR = $pdo->prepare("SELECT role, branch_id FROM users WHERE id = ?");
                 $stmtR->execute([$userId]);
-                $userRole = strtoupper($stmtR->fetchColumn() ?: '');
-                $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+                $uData = $stmtR->fetch(PDO::FETCH_ASSOC);
+                if ($uData) {
+                    $userRole = strtoupper($uData['role'] ?: '');
+                    $userBranchId = (int)($uData['branch_id'] ?? 0);
+                    $isSuperAdmin = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN']);
+                    $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+                    if (!$isSuperAdmin && $userBranchId > 0) {
+                        $branchId = $userBranchId;
+                    }
+                }
             }
 
             $sql = "
@@ -8977,7 +9091,7 @@ try {
                 WHERE 1=1
             ";
             $params = [];
-            if ($branchId && $isManager) {
+            if ($branchId && ($isManager || !$isSuperAdmin)) {
                 $sql .= " AND lr.branch_id = ?";
                 $params[] = $branchId;
             }
@@ -9081,6 +9195,68 @@ try {
             $pdo->commit();
 
             echo json_encode(['success' => true, 'message' => 'Permohonan disetujui dan jadwal karyawan otomatis di-update.']);
+            break;
+
+        case 'delete_leave_request':
+            $leaveId = (int)($input['leave_id'] ?? ($_GET['id'] ?? 0));
+            $userId = (int)($input['user_id'] ?? ($_GET['user_id'] ?? ($_SESSION['user_id'] ?? 0)));
+
+            if ($leaveId <= 0) {
+                echo json_encode(['success' => false, 'message' => 'ID permohonan ketidakhadiran tidak valid.']);
+                break;
+            }
+
+            $stmt = $pdo->prepare("SELECT * FROM leave_requests WHERE id = ?");
+            $stmt->execute([$leaveId]);
+            $leave = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$leave) {
+                echo json_encode(['success' => false, 'message' => 'Data permohonan ketidakhadiran tidak ditemukan.']);
+                break;
+            }
+
+            $isAuthorized = false;
+            if ($userId > 0) {
+                if ($leave['user_id'] == $userId) {
+                    $isAuthorized = true;
+                } else {
+                    $stmtRole = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                    $stmtRole->execute([$userId]);
+                    $role = strtoupper($stmtRole->fetchColumn() ?: '');
+                    if (in_array($role, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'])) {
+                        $isAuthorized = true;
+                    }
+                }
+            } else {
+                $isAuthorized = true;
+            }
+
+            if (!$isAuthorized) {
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak untuk menghapus permohonan ini.']);
+                break;
+            }
+
+            $pdo->prepare("DELETE FROM leave_requests WHERE id = ?")->execute([$leaveId]);
+            echo json_encode(['success' => true, 'message' => 'Data permohonan ketidakhadiran berhasil dihapus.']);
+            break;
+
+        case 'clear_all_leave_requests':
+            $userId = (int)($input['user_id'] ?? ($_GET['user_id'] ?? ($_SESSION['user_id'] ?? 0)));
+            $branchId = !empty($input['branch_id']) ? (int)$input['branch_id'] : (!empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : 0);
+
+            $stmtRole = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+            $stmtRole->execute([$userId]);
+            $role = strtoupper($stmtRole->fetchColumn() ?: '');
+            if (!in_array($role, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']) && $userId > 0) {
+                echo json_encode(['success' => false, 'message' => 'Hanya Manajer atau Super Admin yang dapat mengosongkan riwayat ketidakhadiran.']);
+                break;
+            }
+
+            if ($branchId > 0 && !in_array($role, ['SUPER_ADMIN', 'SUPERADMIN'])) {
+                $pdo->prepare("DELETE FROM leave_requests WHERE branch_id = ?")->execute([$branchId]);
+            } else {
+                $pdo->exec("DELETE FROM leave_requests");
+            }
+            echo json_encode(['success' => true, 'message' => 'Seluruh data riwayat permohonan ketidakhadiran berhasil dikosongkan.']);
             break;
 
         // ==========================================
@@ -9441,11 +9617,21 @@ try {
             $status = $_GET['status'] ?? 'ALL';
 
             $isManager = true;
+            $isSuperAdmin = false;
+            $userBranchId = null;
             if ($userId > 0) {
-                $stmtR = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                $stmtR = $pdo->prepare("SELECT role, branch_id FROM users WHERE id = ?");
                 $stmtR->execute([$userId]);
-                $userRole = strtoupper($stmtR->fetchColumn() ?: '');
-                $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+                $uData = $stmtR->fetch(PDO::FETCH_ASSOC);
+                if ($uData) {
+                    $userRole = strtoupper($uData['role'] ?: '');
+                    $userBranchId = (int)($uData['branch_id'] ?? 0);
+                    $isSuperAdmin = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN']);
+                    $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+                    if (!$isSuperAdmin && $userBranchId > 0) {
+                        $branchId = $userBranchId;
+                    }
+                }
             }
 
             $sql = "
@@ -9459,7 +9645,7 @@ try {
                 WHERE 1=1
             ";
             $params = [];
-            if ($branchId && $isManager) {
+            if ($branchId && ($isManager || !$isSuperAdmin)) {
                 $sql .= " AND sl.branch_id = ?";
                 $params[] = $branchId;
             }
@@ -9586,6 +9772,68 @@ try {
                 'status' => $newStatus,
                 'message' => ($newStatus === 'PAID') ? 'Kasbon LUNAS sepenuhnya!' : 'Pembayaran angsuran berhasil dicatat. Sisa saldo kasbon: Rp ' . number_format($newRemaining, 0, ',', '.')
             ]);
+            break;
+
+        case 'delete_salary_loan':
+            $loanId = (int)($input['loan_id'] ?? ($_GET['id'] ?? 0));
+            $userId = (int)($input['user_id'] ?? ($_GET['user_id'] ?? ($_SESSION['user_id'] ?? 0)));
+
+            if ($loanId <= 0) {
+                echo json_encode(['success' => false, 'message' => 'ID pinjaman kasbon tidak valid.']);
+                break;
+            }
+
+            $stmt = $pdo->prepare("SELECT * FROM salary_loans WHERE id = ?");
+            $stmt->execute([$loanId]);
+            $loan = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$loan) {
+                echo json_encode(['success' => false, 'message' => 'Data kasbon tidak ditemukan.']);
+                break;
+            }
+
+            $isAuthorized = false;
+            if ($userId > 0) {
+                if ($loan['user_id'] == $userId && $loan['status'] === 'PENDING') {
+                    $isAuthorized = true;
+                } else {
+                    $stmtRole = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                    $stmtRole->execute([$userId]);
+                    $role = strtoupper($stmtRole->fetchColumn() ?: '');
+                    if (in_array($role, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'])) {
+                        $isAuthorized = true;
+                    }
+                }
+            } else {
+                $isAuthorized = true;
+            }
+
+            if (!$isAuthorized) {
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak untuk menghapus data kasbon ini.']);
+                break;
+            }
+
+            $pdo->prepare("DELETE FROM salary_loans WHERE id = ?")->execute([$loanId]);
+            echo json_encode(['success' => true, 'message' => 'Data riwayat kasbon karyawan berhasil dihapus.']);
+            break;
+
+        case 'clear_all_salary_loans':
+            $userId = (int)($input['user_id'] ?? ($_GET['user_id'] ?? ($_SESSION['user_id'] ?? 0)));
+            $branchId = !empty($input['branch_id']) ? (int)$input['branch_id'] : (!empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : 0);
+
+            $stmtRole = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+            $stmtRole->execute([$userId]);
+            $role = strtoupper($stmtRole->fetchColumn() ?: '');
+            if (!in_array($role, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']) && $userId > 0) {
+                echo json_encode(['success' => false, 'message' => 'Hanya Manajer atau Super Admin yang dapat mengosongkan riwayat kasbon.']);
+                break;
+            }
+
+            if ($branchId > 0 && !in_array($role, ['SUPER_ADMIN', 'SUPERADMIN'])) {
+                $pdo->prepare("DELETE FROM salary_loans WHERE branch_id = ?")->execute([$branchId]);
+            } else {
+                $pdo->exec("DELETE FROM salary_loans");
+            }
+            echo json_encode(['success' => true, 'message' => 'Seluruh data riwayat kasbon karyawan berhasil dikosongkan.']);
             break;
 
         // ==========================================

@@ -1072,10 +1072,6 @@ CREATE TABLE `shift_swaps` (
     `rejection_reason` TEXT DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table `shift_swaps`
-INSERT INTO `shift_swaps` (`id`, `requester_id`, `target_id`, `branch_id`, `shift_date`, `reason`, `status`, `created_at`, `target_date`, `requester_shift_name`, `target_shift_name`, `approved_by`, `approved_at`, `rejection_reason`) VALUES
-(16, 3, 4, 1, '2026-10-15', 'Ada keperluan keluarga pagi hari', 'APPROVED', '2026-10-19 05:29:23', '2026-10-15', 'Shift 1 (Pagi)', 'Shift 2 (Siang/Sore)', 1, '2026-10-19 12:29:23', NULL);
-
 -- --------------------------------------------------------
 -- Table structure for `leave_requests`
 -- --------------------------------------------------------
@@ -1095,10 +1091,6 @@ CREATE TABLE `leave_requests` (
     `approved_at` DATETIME DEFAULT NULL,
     `rejection_reason` TEXT DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Dumping data for table `leave_requests`
-INSERT INTO `leave_requests` (`id`, `user_id`, `leave_type`, `start_date`, `end_date`, `reason`, `status`, `created_at`, `branch_id`, `attachment_doc`, `approved_by`, `approved_at`, `rejection_reason`) VALUES
-(16, 3, 'SAKIT', '2026-10-20', '2026-10-21', 'Demam tinggi rawat jalan', 'APPROVED', '2026-10-19 05:29:23', 1, 'Surat Dokter No. 445/MED/2026', 1, '2026-10-19 12:29:23', NULL);
 
 -- --------------------------------------------------------
 -- Table structure for `salary_loans`
@@ -1122,15 +1114,6 @@ CREATE TABLE `salary_loans` (
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `shift_id` INT DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Dumping data for table `salary_loans`
-INSERT INTO `salary_loans` (`id`, `user_id`, `branch_id`, `loan_date`, `amount`, `reason`, `installment_months`, `monthly_deduction`, `status`, `remaining_amount`, `approved_by`, `approved_at`, `rejection_reason`, `notes`, `created_at`, `shift_id`) VALUES
-(7, 2, 1, '2026-10-12', 150000, 'Kasbon Kasir Shift #1: Kasbon tunai laci kasir darurat', 1, 150000, 'ACTIVE', 150000, 1, '2026-10-12 20:53:47', NULL, 'Kasbon dicairkan tunai dari laci kasir pada shift #40 (Shift Uji Kasir)', '2026-10-12 13:53:47', NULL),
-(8, 2, 1, '2026-10-12', 150000, 'Kasbon Kasir Shift #1: Kasbon tunai laci kasir darurat', 1, 150000, 'ACTIVE', 150000, 1, '2026-10-12 20:54:10', NULL, 'Kasbon dicairkan tunai dari laci kasir pada shift #41 (Shift Uji Kasir)', '2026-10-12 13:54:10', NULL),
-(9, 2, 1, '2026-10-12', 150000, 'Kasbon Kasir Shift #1: Kasbon tunai laci kasir darurat', 1, 150000, 'ACTIVE', 150000, 1, '2026-10-12 21:26:15', NULL, 'Kasbon dicairkan tunai dari laci kasir pada shift #42 (Shift Uji Kasir)', '2026-10-12 14:26:15', NULL),
-(10, 2, 1, '2026-10-12', 150000, 'Kasbon Kasir Shift #1: Kasbon tunai laci kasir darurat', 1, 150000, 'ACTIVE', 150000, 1, '2026-10-12 21:27:30', NULL, 'Kasbon dicairkan tunai dari laci kasir pada shift #43 (Shift Uji Kasir)', '2026-10-12 14:27:30', NULL),
-(23, 3, 1, '2026-10-19', 600000, 'Perbaikan kendaraan motor', 3, 200000, 'ACTIVE', 400000, 1, '2026-10-19 12:29:23', NULL, 'Potongan gaji bulan berjalan', '2026-10-19 05:29:23', NULL),
-(25, 2, 1, '2026-10-19', 150000, 'Kasbon Kasir Shift #1: Kasbon tunai laci kasir darurat', 1, 150000, 'ACTIVE', 150000, 1, '2026-10-19 07:29:52', NULL, 'Kasbon dicairkan tunai dari laci kasir pada shift #53 (Shift Uji Kasir)', '2026-10-19 05:29:52', NULL);
 
 -- --------------------------------------------------------
 -- Table structure for `employee_payrolls`

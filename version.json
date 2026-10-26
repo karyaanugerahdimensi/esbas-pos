@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.87",
-  "build": "20261026-42",
+  "version": "1.2.88",
+  "build": "20261026-43",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.88",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Isolasi Cabang Roster & Shift Swap ESS serta Pembersihan Data Operasional (FR-ESS-15)",
+      "description": "Pembaruan integritas dan privasi data Employee Self Service (ESS): (1) Kunci Cabang Roster Jadwal Shift: Mengunci dropdown cabang (#ess-roster-branch-select) bagi staf non-superadmin agar hanya menampilkan dan mengakses cabang penugasan karyawan yang bersangkutan, baik pada UI maupun validasi server get_monthly_schedules. (2) Filter Rekan Tukar Shift Khusus Cabang yang Sama: Membatasi pilihan rekan kerja pengganti (#swap-target-user) hanya untuk karyawan dalam satu cabang penugasan yang sama (branch_id), serta menambahkan validasi server request_shift_swap. (3) Pembersihan Data & Fitur Hapus Terpadu: Menghapus data mock pada tabel shift_swaps, leave_requests, dan salary_loans (SQLite database.sqlite & esbas_pos_mysql.sql) serta melengkapi ketiga tabel dengan tombol aksi hapus (trash-2) dan tombol Kosongkan Riwayat.",
+      "rollback_command": "git checkout v1.2.87"
+    },
     {
       "version": "1.2.87",
       "commit": "HEAD",

@@ -1792,9 +1792,14 @@ try {
                                     </h3>
                                     <p class="text-[11px] text-slate-500">Persetujuan manajer & riwayat status pertukaran shift.</p>
                                 </div>
-                                <button onclick="loadShiftSwaps()" class="p-1.5 text-slate-500 hover:text-indigo-600 rounded-lg">
-                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                                </button>
+                                <div class="flex items-center space-x-1.5">
+                                    <button onclick="clearAllShiftSwaps()" title="Kosongkan Seluruh Riwayat Tukar Jadwal" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition-colors">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="loadShiftSwaps()" title="Refresh Data" class="p-1.5 text-slate-500 hover:text-indigo-600 rounded-lg">
+                                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="overflow-x-auto">
                                 <table class="w-full text-left text-xs">
@@ -1875,9 +1880,14 @@ try {
                                     </h3>
                                     <p class="text-[11px] text-slate-500">Persetujuan manajer cabang & pencatatan otomatis ke roster jadwal.</p>
                                 </div>
-                                <button onclick="loadLeaveRequests()" class="p-1.5 text-slate-500 hover:text-indigo-600 rounded-lg">
-                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                                </button>
+                                <div class="flex items-center space-x-1.5">
+                                    <button onclick="clearAllLeaveRequests()" title="Kosongkan Seluruh Riwayat Ketidakhadiran" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition-colors">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="loadLeaveRequests()" title="Refresh Data" class="p-1.5 text-slate-500 hover:text-indigo-600 rounded-lg">
+                                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="overflow-x-auto">
                                 <table class="w-full text-left text-xs">
@@ -2253,9 +2263,14 @@ try {
                                     </h3>
                                     <p class="text-[11px] text-slate-500">Persetujuan manajer, riwayat saldo utang, dan pembayaran angsuran.</p>
                                 </div>
-                                <button onclick="loadSalaryLoans()" class="p-1.5 text-slate-500 hover:text-indigo-600 rounded-lg">
-                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                                </button>
+                                <div class="flex items-center space-x-1.5">
+                                    <button onclick="clearAllSalaryLoans()" title="Kosongkan Seluruh Riwayat Kasbon" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition-colors">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="loadSalaryLoans()" title="Refresh Data" class="p-1.5 text-slate-500 hover:text-indigo-600 rounded-lg">
+                                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="overflow-x-auto">
                                 <table class="w-full text-left text-xs">
@@ -15077,6 +15092,8 @@ Manager / Supervisor: __________________
                 state.expenseCategories = data.expense_categories;
             }
             populateReimburseCategoryDropdown(state.expenseCategories);
+            initRosterControls();
+            populateSwapPeerDropdown();
 
             document.getElementById('ess-emp-name').innerText = data.user.name;
             document.getElementById('ess-emp-role').innerText = `${data.user.role} • NIK: ${data.user.nik} • ${state.currentBranch.name}`;
@@ -15436,8 +15453,26 @@ Manager / Supervisor: __________________
         function initRosterControls() {
             const bSelect = document.getElementById('ess-roster-branch-select');
             const mInput = document.getElementById('ess-roster-month-input');
-            if (bSelect && state.branches.length > 0 && bSelect.children.length === 0) {
-                bSelect.innerHTML = state.branches.map(b => `<option value="${b.id}" ${b.id === state.currentBranch.id ? 'selected' : ''}>${b.name}</option>`).join('');
+            const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
+            const role = (curUser.role || 'CASHIER').toUpperCase().trim();
+            const isSuperAdmin = (role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'SUPER ADMIN');
+            const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
+
+            if (bSelect && state.branches && state.branches.length > 0) {
+                if (!isSuperAdmin) {
+                    const userBranch = state.branches.find(b => parseInt(b.id) === parseInt(userBranchId)) || { id: userBranchId, name: state.currentBranch?.name || 'Cabang Penugasan' };
+                    bSelect.innerHTML = `<option value="${userBranch.id}" selected>${userBranch.name} (Terkunci)</option>`;
+                    bSelect.value = userBranch.id;
+                    bSelect.disabled = true;
+                    bSelect.title = "Terkunci pada lokasi cabang penempatan Anda";
+                    bSelect.className = "p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700 rounded-xl font-bold cursor-not-allowed opacity-90";
+                } else {
+                    bSelect.disabled = false;
+                    bSelect.title = "Pilih cabang untuk melihat roster jadwal";
+                    bSelect.className = "p-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl font-bold";
+                    const currentSelected = bSelect.value || (state.currentBranch ? state.currentBranch.id : state.branches[0].id);
+                    bSelect.innerHTML = state.branches.map(b => `<option value="${b.id}" ${parseInt(b.id) === parseInt(currentSelected) ? 'selected' : ''}>${b.name}</option>`).join('');
+                }
             }
             if (mInput && !mInput.value) {
                 const now = new Date();
@@ -15448,8 +15483,11 @@ Manager / Supervisor: __________________
 
         async function loadMonthlySchedules() {
             const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
+            const role = (curUser.role || 'CASHIER').toUpperCase().trim();
+            const isSuperAdmin = (role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'SUPER ADMIN');
             const isManager = isManagerOrSuperAdminUser(curUser);
-            const bId = document.getElementById('ess-roster-branch-select')?.value || state.currentBranch.id;
+            const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
+            const bId = (!isSuperAdmin && userBranchId) ? userBranchId : (document.getElementById('ess-roster-branch-select')?.value || state.currentBranch.id);
             const mVal = document.getElementById('ess-roster-month-input')?.value || new Date().toISOString().slice(0, 7);
 
             const impBtn = document.getElementById('btn-import-schedule');
@@ -15661,11 +15699,20 @@ Manager / Supervisor: __________________
         function populateSwapPeerDropdown() {
             const select = document.getElementById('swap-target-user');
             if (!select) return;
-            const curUserId = state.currentUser ? state.currentUser.id : 3;
-            const peers = (state.users || []).filter(u => u.id != curUserId && u.is_active == 1 && !['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'].includes(u.role));
+            const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
+            const curUserId = curUser.id;
+            const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
+
+            const peers = (state.users || []).filter(u => 
+                parseInt(u.id) !== parseInt(curUserId) && 
+                parseInt(u.is_active) === 1 && 
+                parseInt(u.branch_id) === parseInt(userBranchId) &&
+                !['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'].includes((u.role || '').toUpperCase())
+            );
+
             select.innerHTML = peers.map(u => `
-                <option value="${u.id}">${u.name} (${u.nik} - ${u.role})</option>
-            `).join('') || `<option value="">Belum ada rekan kerja terdaftar</option>`;
+                <option value="${u.id}">${u.name} (${u.nik || '-'} - ${u.role})</option>
+            `).join('') || `<option value="">Belum ada rekan kerja dalam satu cabang lokasi</option>`;
 
             // Default dates
             const today = new Date().toISOString().slice(0, 10);
@@ -15677,7 +15724,10 @@ Manager / Supervisor: __________________
             try {
                 const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
                 const isManager = isManagerOrSuperAdminUser(curUser);
-                const bId = state.currentBranch ? state.currentBranch.id : 1;
+                const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
+                const role = (curUser.role || 'CASHIER').toUpperCase().trim();
+                const isSuperAdmin = (role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'SUPER ADMIN');
+                const bId = (!isSuperAdmin && userBranchId) ? userBranchId : (state.currentBranch ? state.currentBranch.id : 1);
                 const res = await fetch(`api.php?action=get_shift_swaps&branch_id=${bId}&user_id=${curUser.id}`);
                 const data = await res.json();
                 if (!data.success) {
@@ -15689,33 +15739,38 @@ Manager / Supervisor: __________________
                 if (!tbody) return;
 
                 tbody.innerHTML = (data.swaps || []).map(s => `
-                    <tr class="hover:bg-slate-50">
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                         <td class="py-2.5 px-3">
-                            <span class="font-bold text-slate-800">${s.requester_name}</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-100">${s.requester_name}</span>
                             <span class="text-slate-400 block text-[10px]">🔄 Tukar dengan: <strong>${s.target_name}</strong></span>
                         </td>
                         <td class="py-2.5 px-3 font-mono">
-                            <span class="font-bold text-indigo-700">${s.shift_date}</span> (${s.requester_shift_name || '-'})<br>
-                            <span class="text-purple-700">${s.target_date || s.shift_date}</span> (${s.target_shift_name || '-'})
+                            <span class="font-bold text-indigo-700 dark:text-indigo-400">${s.shift_date}</span> (${s.requester_shift_name || '-'})<br>
+                            <span class="text-purple-700 dark:text-purple-400">${s.target_date || s.shift_date}</span> (${s.target_shift_name || '-'})
                         </td>
-                        <td class="py-2.5 px-3 text-slate-600">${s.reason || '-'}</td>
+                        <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">${s.reason || '-'}</td>
                         <td class="py-2.5 px-3">
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                s.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' :
-                                (s.status === 'REJECTED' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800')
+                                s.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400' :
+                                (s.status === 'REJECTED' ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400')
                             }">
                                 ${s.status === 'APPROVED' ? '✓ DISETUJUI' : (s.status === 'REJECTED' ? '✕ DITOLAK' : '⏳ PENDING')}
                             </span>
                         </td>
                         <td class="py-2.5 px-3 text-center">
-                            ${s.status === 'PENDING' ? (
-                                isManager ? `
-                                    <div class="flex items-center justify-center space-x-1">
+                            <div class="flex items-center justify-center space-x-1">
+                                ${s.status === 'PENDING' ? (
+                                    isManager ? `
                                         <button onclick="approveShiftSwap(${s.id}, 'APPROVE')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Setujui</button>
                                         <button onclick="approveShiftSwap(${s.id}, 'REJECT')" class="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Tolak</button>
-                                    </div>
-                                ` : `<span class="text-[10px] text-amber-700 font-semibold">⏳ Menunggu Manajer</span>`
-                            ) : `<span class="text-[10px] text-slate-400">Selesai</span>`}
+                                    ` : `<span class="text-[10px] text-amber-700 dark:text-amber-400 font-semibold">⏳ Menunggu</span>`
+                                ) : `<span class="text-[10px] text-slate-400">Selesai</span>`}
+                                ${(isManager || s.requester_id == curUser.id || s.target_id == curUser.id) ? `
+                                    <button onclick="deleteShiftSwap(${s.id})" title="Hapus Riwayat Tukar Jadwal" class="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors ml-1">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
                         </td>
                     </tr>
                 `).join('') || `<tr><td colspan="5" class="text-center py-4 text-slate-400">Belum ada pengajuan tukar jadwal</td></tr>`;
@@ -15728,12 +15783,18 @@ Manager / Supervisor: __________________
 
         async function submitShiftSwapForm(e) {
             e.preventDefault();
-            const curUserId = state.currentUser ? state.currentUser.id : 3;
-            const bId = state.currentBranch ? state.currentBranch.id : 1;
+            const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
+            const curUserId = curUser.id;
+            const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
             const targetId = document.getElementById('swap-target-user').value;
             const shiftDate = document.getElementById('swap-req-date').value;
             const targetDate = document.getElementById('swap-target-date').value;
             const reason = document.getElementById('swap-reason').value;
+
+            if (!targetId) {
+                alert('Pilih rekan kerja pengganti terlebih dahulu.');
+                return;
+            }
 
             const res = await fetch('api.php?action=request_shift_swap', {
                 method: 'POST',
@@ -15741,7 +15802,7 @@ Manager / Supervisor: __________________
                 body: JSON.stringify({
                     requester_id: curUserId,
                     target_id: targetId,
-                    branch_id: bId,
+                    branch_id: userBranchId,
                     shift_date: shiftDate,
                     target_date: targetDate,
                     reason
@@ -15772,12 +15833,56 @@ Manager / Supervisor: __________________
             }
         }
 
+        async function deleteShiftSwap(swapId) {
+            if (!confirm('Hapus riwayat permohonan tukar jadwal ini?')) return;
+            const curUserId = state.currentUser ? state.currentUser.id : 1;
+            try {
+                const res = await fetch('api.php?action=delete_shift_swap', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ swap_id: swapId, user_id: curUserId })
+                });
+                const data = await res.json();
+                alert(data.message || data.error);
+                if (data.success) {
+                    loadShiftSwaps();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Gagal menghapus tukar jadwal: ' + err.message);
+            }
+        }
+
+        async function clearAllShiftSwaps() {
+            if (!confirm('Yakin ingin mengosongkan SELURUH data riwayat pertukaran jadwal? Tindakan ini tidak dapat dibatalkan.')) return;
+            const curUserId = state.currentUser ? state.currentUser.id : 1;
+            const userBranchId = (state.currentUser && state.currentUser.branch_id) || (state.currentBranch ? state.currentBranch.id : 1);
+            try {
+                const res = await fetch('api.php?action=clear_all_shift_swaps', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ branch_id: userBranchId, user_id: curUserId })
+                });
+                const data = await res.json();
+                alert(data.message || data.error);
+                if (data.success) {
+                    loadShiftSwaps();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Gagal mengosongkan riwayat tukar jadwal: ' + err.message);
+            }
+        }
+
         // --- 4. Cuti, Izin & Sakit (Leave Management) ---
         async function loadLeaveRequests() {
             try {
                 const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
                 const isManager = isManagerOrSuperAdminUser(curUser);
-                const bId = state.currentBranch ? state.currentBranch.id : 1;
+                const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
+                const role = (curUser.role || 'CASHIER').toUpperCase().trim();
+                const isSuperAdmin = (role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'SUPER ADMIN');
+                const bId = (!isSuperAdmin && userBranchId) ? userBranchId : (state.currentBranch ? state.currentBranch.id : 1);
                 const res = await fetch(`api.php?action=get_leave_requests&branch_id=${bId}&user_id=${curUser.id}`);
                 const data = await res.json();
                 if (!data.success) {
@@ -15789,39 +15894,44 @@ Manager / Supervisor: __________________
                 if (!tbody) return;
 
                 tbody.innerHTML = (data.leaves || []).map(lv => `
-                    <tr class="hover:bg-slate-50">
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                         <td class="py-2.5 px-3">
-                            <span class="font-bold text-slate-800">${lv.employee_name}</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-100">${lv.employee_name}</span>
                             <span class="text-slate-400 block text-[10px] font-mono">${lv.employee_nik}</span>
                         </td>
                         <td class="py-2.5 px-3">
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                lv.leave_type === 'SAKIT' ? 'bg-rose-100 text-rose-800' :
-                                (lv.leave_type === 'CUTI_TAHUNAN' ? 'bg-indigo-100 text-indigo-800' : 'bg-blue-100 text-blue-800')
+                                lv.leave_type === 'SAKIT' ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-400' :
+                                (lv.leave_type === 'CUTI_TAHUNAN' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-400' : 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-400')
                             }">${lv.leave_type}</span>
-                            <span class="block text-[10px] font-mono font-bold text-slate-600 mt-0.5">${lv.start_date} s/d ${lv.end_date}</span>
+                            <span class="block text-[10px] font-mono font-bold text-slate-600 dark:text-slate-300 mt-0.5">${lv.start_date} s/d ${lv.end_date}</span>
                         </td>
-                        <td class="py-2.5 px-3 text-slate-600">
+                        <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">
                             ${lv.reason}
-                            ${lv.attachment_doc ? `<span class="block text-[10px] text-indigo-600 italic mt-0.5">📎 ${lv.attachment_doc}</span>` : ''}
+                            ${lv.attachment_doc ? `<span class="block text-[10px] text-indigo-600 dark:text-indigo-400 italic mt-0.5">📎 ${lv.attachment_doc}</span>` : ''}
                         </td>
                         <td class="py-2.5 px-3">
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                lv.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' :
-                                (lv.status === 'REJECTED' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800')
+                                lv.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400' :
+                                (lv.status === 'REJECTED' ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400')
                             }">
                                 ${lv.status === 'APPROVED' ? '✓ DISETUJUI' : (lv.status === 'REJECTED' ? '✕ DITOLAK' : '⏳ PENDING')}
                             </span>
                         </td>
                         <td class="py-2.5 px-3 text-center">
-                            ${lv.status === 'PENDING' ? (
-                                isManager ? `
-                                    <div class="flex items-center justify-center space-x-1">
+                            <div class="flex items-center justify-center space-x-1">
+                                ${lv.status === 'PENDING' ? (
+                                    isManager ? `
                                         <button onclick="approveLeaveRequest(${lv.id}, 'APPROVE')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Setujui</button>
                                         <button onclick="approveLeaveRequest(${lv.id}, 'REJECT')" class="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Tolak</button>
-                                    </div>
-                                ` : `<span class="text-[10px] text-amber-700 font-semibold">⏳ Menunggu Manajer</span>`
-                            ) : `<span class="text-[10px] text-slate-400">Selesai</span>`}
+                                    ` : `<span class="text-[10px] text-amber-700 dark:text-amber-400 font-semibold">⏳ Menunggu</span>`
+                                ) : `<span class="text-[10px] text-slate-400">Selesai</span>`}
+                                ${(isManager || lv.user_id == curUser.id) ? `
+                                    <button onclick="deleteLeaveRequest(${lv.id})" title="Hapus Riwayat Ketidakhadiran" class="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors ml-1">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
                         </td>
                     </tr>
                 `).join('') || `<tr><td colspan="5" class="text-center py-4 text-slate-400">Belum ada permohonan ketidakhadiran</td></tr>`;
@@ -15834,8 +15944,9 @@ Manager / Supervisor: __________________
 
         async function submitLeaveForm(e) {
             e.preventDefault();
-            const curUserId = state.currentUser ? state.currentUser.id : 3;
-            const bId = state.currentBranch ? state.currentBranch.id : 1;
+            const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
+            const curUserId = curUser.id;
+            const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
             const type = document.getElementById('leave-type').value;
             const start = document.getElementById('leave-start-date').value;
             const end = document.getElementById('leave-end-date').value;
@@ -15845,7 +15956,7 @@ Manager / Supervisor: __________________
             const res = await fetch('api.php?action=submit_leave_request', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: curUserId, branch_id: bId, leave_type: type, start_date: start, end_date: end, reason, attachment_doc: doc })
+                body: JSON.stringify({ user_id: curUserId, branch_id: userBranchId, leave_type: type, start_date: start, end_date: end, reason, attachment_doc: doc })
             });
             const data = await res.json();
             alert(data.message || data.error);
@@ -15870,6 +15981,49 @@ Manager / Supervisor: __________________
             if (data.success) {
                 loadLeaveRequests();
                 loadMonthlySchedules();
+            }
+        }
+
+        async function deleteLeaveRequest(leaveId) {
+            if (!confirm('Hapus riwayat permohonan ketidakhadiran ini?')) return;
+            const curUserId = state.currentUser ? state.currentUser.id : 1;
+            try {
+                const res = await fetch('api.php?action=delete_leave_request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leave_id: leaveId, user_id: curUserId })
+                });
+                const data = await res.json();
+                alert(data.message || data.error);
+                if (data.success) {
+                    loadLeaveRequests();
+                    loadMonthlySchedules();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Gagal menghapus data ketidakhadiran: ' + err.message);
+            }
+        }
+
+        async function clearAllLeaveRequests() {
+            if (!confirm('Yakin ingin mengosongkan SELURUH data riwayat ketidakhadiran (cuti, izin & sakit)? Tindakan ini tidak dapat dibatalkan.')) return;
+            const curUserId = state.currentUser ? state.currentUser.id : 1;
+            const userBranchId = (state.currentUser && state.currentUser.branch_id) || (state.currentBranch ? state.currentBranch.id : 1);
+            try {
+                const res = await fetch('api.php?action=clear_all_leave_requests', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ branch_id: userBranchId, user_id: curUserId })
+                });
+                const data = await res.json();
+                alert(data.message || data.error);
+                if (data.success) {
+                    loadLeaveRequests();
+                    loadMonthlySchedules();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Gagal mengosongkan data ketidakhadiran: ' + err.message);
             }
         }
 
@@ -16108,7 +16262,10 @@ Manager / Supervisor: __________________
             try {
                 const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
                 const isManager = isManagerOrSuperAdminUser(curUser);
-                const bId = state.currentBranch ? state.currentBranch.id : 1;
+                const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
+                const role = (curUser.role || 'CASHIER').toUpperCase().trim();
+                const isSuperAdmin = (role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'SUPER ADMIN');
+                const bId = (!isSuperAdmin && userBranchId) ? userBranchId : (state.currentBranch ? state.currentBranch.id : 1);
                 const curUserId = curUser.id || 3;
 
                 // Load loans
@@ -16137,35 +16294,40 @@ Manager / Supervisor: __________________
                 if (!tbody) return;
 
                 tbody.innerHTML = loans.map(l => `
-                    <tr class="hover:bg-slate-50">
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                         <td class="py-2.5 px-3">
-                            <span class="font-bold text-slate-800">${l.employee_name}</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-100">${l.employee_name}</span>
                             <span class="text-slate-400 block text-[10px] font-mono">${l.employee_nik}</span>
                         </td>
-                        <td class="py-2.5 px-3 font-mono text-slate-600">${l.loan_date}</td>
-                        <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900">${formatRupiah(l.amount)}</td>
-                        <td class="py-2.5 px-3 text-right font-mono text-rose-600">${formatRupiah(l.monthly_deduction)}/bln <span class="text-[10px] text-slate-400">(${l.installment_months}x)</span></td>
-                        <td class="py-2.5 px-3 text-right font-mono font-bold ${l.remaining_amount > 0 ? 'text-amber-700' : 'text-emerald-700'}">${formatRupiah(l.remaining_amount)}</td>
+                        <td class="py-2.5 px-3 font-mono text-slate-600 dark:text-slate-300">${l.loan_date}</td>
+                        <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900 dark:text-slate-100">${formatRupiah(l.amount)}</td>
+                        <td class="py-2.5 px-3 text-right font-mono text-rose-600 dark:text-rose-400">${formatRupiah(l.monthly_deduction)}/bln <span class="text-[10px] text-slate-400">(${l.installment_months}x)</span></td>
+                        <td class="py-2.5 px-3 text-right font-mono font-bold ${l.remaining_amount > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400'}">${formatRupiah(l.remaining_amount)}</td>
                         <td class="py-2.5 px-3">
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                l.status === 'PAID' ? 'bg-emerald-100 text-emerald-800' :
-                                (l.status === 'ACTIVE' ? 'bg-blue-100 text-blue-800' :
-                                (l.status === 'REJECTED' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'))
+                                l.status === 'PAID' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400' :
+                                (l.status === 'ACTIVE' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-400' :
+                                (l.status === 'REJECTED' ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400'))
                             }">
                                 ${l.status === 'PAID' ? '✓ LUNAS' : (l.status === 'ACTIVE' ? 'AKTIF (POTONG GAJI)' : (l.status === 'REJECTED' ? '✕ DITOLAK' : '⏳ PENDING'))}
                             </span>
                         </td>
                         <td class="py-2.5 px-3 text-center">
-                            ${l.status === 'PENDING' ? (
-                                isManager ? `
-                                    <div class="flex items-center justify-center space-x-1">
+                            <div class="flex items-center justify-center space-x-1">
+                                ${l.status === 'PENDING' ? (
+                                    isManager ? `
                                         <button onclick="approveSalaryLoan(${l.id}, 'APPROVE')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Setujui</button>
                                         <button onclick="approveSalaryLoan(${l.id}, 'REJECT')" class="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Tolak</button>
-                                    </div>
-                                ` : `<span class="text-[10px] text-amber-700 font-semibold">⏳ Menunggu Manajer</span>`
-                            ) : (l.status === 'ACTIVE' && l.remaining_amount > 0 ? `
-                                <button onclick="openLoanRepayModal(${l.id}, ${l.remaining_amount})" class="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Bayar Angsuran</button>
-                            ` : `<span class="text-[10px] text-slate-400">Tuntas</span>`)}
+                                    ` : `<span class="text-[10px] text-amber-700 dark:text-amber-400 font-semibold">⏳ Menunggu</span>`
+                                ) : (l.status === 'ACTIVE' && l.remaining_amount > 0 ? `
+                                    <button onclick="openLoanRepayModal(${l.id}, ${l.remaining_amount})" class="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-bold shadow-xs">Bayar Angsuran</button>
+                                ` : `<span class="text-[10px] text-slate-400">Tuntas</span>`)}
+                                ${(isManager || l.user_id == curUser.id) ? `
+                                    <button onclick="deleteSalaryLoan(${l.id})" title="Hapus Riwayat Kasbon" class="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors ml-1">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
                         </td>
                     </tr>
                 `).join('') || `<tr><td colspan="7" class="text-center py-4 text-slate-400">Belum ada riwayat pengajuan kasbon</td></tr>`;
@@ -16186,8 +16348,9 @@ Manager / Supervisor: __________________
 
         async function submitSalaryLoanForm(e) {
             e.preventDefault();
-            const curUserId = state.currentUser ? state.currentUser.id : 3;
-            const bId = state.currentBranch ? state.currentBranch.id : 1;
+            const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
+            const curUserId = curUser.id;
+            const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
             const amount = parseFloat(document.getElementById('loan-amount-input').value) || 0;
             const tenor = parseInt(document.getElementById('loan-tenor-select').value) || 1;
             const reason = document.getElementById('loan-reason-input').value;
@@ -16197,7 +16360,7 @@ Manager / Supervisor: __________________
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     user_id: curUserId,
-                    branch_id: bId,
+                    branch_id: userBranchId,
                     amount,
                     installment_months: tenor,
                     reason
@@ -16226,6 +16389,47 @@ Manager / Supervisor: __________________
             alert(data.message || data.error);
             if (data.success) {
                 loadSalaryLoans();
+            }
+        }
+
+        async function deleteSalaryLoan(loanId) {
+            if (!confirm('Hapus riwayat data pinjaman kasbon ini?')) return;
+            const curUserId = state.currentUser ? state.currentUser.id : 1;
+            try {
+                const res = await fetch('api.php?action=delete_salary_loan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ loan_id: loanId, user_id: curUserId })
+                });
+                const data = await res.json();
+                alert(data.message || data.error);
+                if (data.success) {
+                    loadSalaryLoans();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Gagal menghapus kasbon: ' + err.message);
+            }
+        }
+
+        async function clearAllSalaryLoans() {
+            if (!confirm('Yakin ingin mengosongkan SELURUH riwayat kasbon karyawan? Tindakan ini tidak dapat dibatalkan.')) return;
+            const curUserId = state.currentUser ? state.currentUser.id : 1;
+            const userBranchId = (state.currentUser && state.currentUser.branch_id) || (state.currentBranch ? state.currentBranch.id : 1);
+            try {
+                const res = await fetch('api.php?action=clear_all_salary_loans', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ branch_id: userBranchId, user_id: curUserId })
+                });
+                const data = await res.json();
+                alert(data.message || data.error);
+                if (data.success) {
+                    loadSalaryLoans();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Gagal mengosongkan kasbon: ' + err.message);
             }
         }
 
