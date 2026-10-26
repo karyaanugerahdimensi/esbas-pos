@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.70",
-  "build": "20261026-25",
+  "version": "1.2.71",
+  "build": "20261026-26",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.71",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Perbaikan Galat Sintaks JavaScript (Unexpected token '}') pada Script POS & Pemulihan Akses Login (FR-POS-33-B)",
+      "description": "Memperbaiki galat fatal Uncaught SyntaxError: Unexpected token '}' pada konsol peramban web: Menghapus 4 baris kode penutup ganda (calculateCartTotals(); lucide.createIcons(); }) yang tidak sengaja tertinggal pada fungsi renderCart() tepat sebelum renderPosCourierSelect() di index.php. Galat sintaks ini sebelumnya menyebabkan seluruh script JavaScript gagal dimuat saat halaman login dibuka sehingga event handler login dan sesi tidak dapat dieksekusi. Kini seluruh blok script terverifikasi bersih dan proses autentikasi login berjalan normal kembali.",
+      "rollback_command": "git checkout v1.2.70"
+    },
     {
       "version": "1.2.70",
       "commit": "HEAD",

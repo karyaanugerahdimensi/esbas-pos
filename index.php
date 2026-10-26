@@ -10584,10 +10584,6 @@ try {
             lucide.createIcons();
         }
 
-            calculateCartTotals();
-            lucide.createIcons();
-        }
-
         function renderPosCourierSelect() {
             const vehicleSelect = document.getElementById('pos-courier-select');
             const driverSelect = document.getElementById('pos-driver-employee-select');
