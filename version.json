@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.76",
-  "build": "20261026-31",
+  "version": "1.2.77",
+  "build": "20261026-32",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.77",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Penyederhanaan Tampilan Item Keranjang Kasir: Eliminasi Tag Termasuk Kirim, Tanpa Stok BOM, dan Member VIP (FR-POS-36)",
+      "description": "Menyederhanakan visual kartu item belanja pada Keranjang Kasir (#cart-items): (1) Eliminasi Tag Termasuk Kirim & Wajib Ongkir: Menghapus badge status pengiriman pada baris item keranjang agar tidak membebani ruang vertikal. (2) Eliminasi Tag Tanpa Stok (BOM): Menghapus badge status inventori BOM pada baris item keranjang belanja. (3) Eliminasi Tag Tier Harga (Member VIP / Reseller / Mitra): Menghapus pill badge tier harga pada rincian harga per unit, sehingga baris harga hanya menampilkan perkalian bersih 'Rp X.XXX x Qty' yang rapi dan mudah dibaca kasir. (4) Preservasi Tag Varian: Mempertahankan tag varian produk (misal: '🏷️ Pakai Tutup Mineral') yang esensial bagi kasir dan staf untuk identifikasi jenis pesanan.",
+      "rollback_command": "git checkout v1.2.76"
+    },
     {
       "version": "1.2.76",
       "commit": "HEAD",

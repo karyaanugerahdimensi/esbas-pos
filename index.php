@@ -10672,16 +10672,9 @@ try {
                             <h4 class="font-bold text-slate-800 dark:text-slate-100 line-clamp-1">${item.name}</h4>
                             ${isLatest ? `<span class="inline-flex items-center text-[9px] px-1.5 py-0.2 bg-indigo-600 text-white rounded font-black shadow-2xs shrink-0">✨ Terbaru</span>` : ''}
                         </div>
-                        <div class="flex flex-wrap items-center gap-1 mt-0.5">
-                            ${item.variant_name ? `<span class="inline-block text-[10px] px-2 py-0.5 bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 rounded font-black">🏷️ ${item.variant_name}</span>` : ''}
-                            ${(item.is_delivery_included === 1 || item.is_delivery_required === 2)
-                                ? `<span class="inline-block text-[9px] px-1.5 py-0.2 bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 rounded font-bold">🎁 Termasuk Kirim</span>`
-                                : (item.is_delivery_required === 1 ? `<span class="inline-block text-[9px] px-1.5 py-0.2 bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 rounded font-bold">🚚 Wajib Ongkir</span>` : '')}
-                            ${(!item.requires_stock || item.max_stock >= 999999) ? `<span class="inline-block text-[9px] px-1.5 py-0.2 bg-violet-100 dark:bg-violet-950/70 text-violet-800 dark:text-violet-300 border border-violet-200 dark:border-violet-800 rounded font-bold">⚡ Tanpa Stok (BOM)</span>` : ''}
-                        </div>
+                        ${item.variant_name ? `<div class="mt-0.5"><span class="inline-block text-[10px] px-2 py-0.5 bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 rounded font-black">🏷️ ${item.variant_name}</span></div>` : ''}
                         <div class="flex items-center space-x-1.5 mt-0.5">
                             <span class="text-[11px] text-slate-400 dark:text-slate-500 font-mono">${formatRupiah(item.price)} x ${item.qty}</span>
-                            ${item.price_tag && !item.price_tag.includes('Ritel') ? `<span class="text-[9px] px-1.5 py-0.2 bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 rounded font-bold">${item.price_tag}</span>` : ''}
                         </div>
                     </div>
                     <div class="flex items-center space-x-2 shrink-0">
