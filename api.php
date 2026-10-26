@@ -1752,7 +1752,7 @@ try {
             $phone = trim($input['phone'] ?? '');
             $password = trim($input['password'] ?? 'password123');
             $pin = trim($input['pin'] ?? '123456');
-            $commRate = (float)($input['commission_rate'] ?? 0.015);
+            $commRate = isset($input['commission_rate']) ? (float)$input['commission_rate'] : 0.0;
             $isActive = isset($input['is_active']) ? (int)$input['is_active'] : 1;
 
             if (empty($nik) || empty($name)) {
@@ -8079,7 +8079,7 @@ try {
             ");
             $stmtCommission->execute([$userId]);
             $commData = $stmtCommission->fetch();
-            $commissionEarned = $commData['total_omzet'] * ($user['commission_rate'] ?? 0.015);
+            $commissionEarned = $commData['total_omzet'] * (float)($user['commission_rate'] ?? 0);
 
             $stmtAttToday = $pdo->prepare("
                 SELECT * FROM attendance_logs 
@@ -8135,7 +8135,7 @@ try {
                 'is_manager' => $isManager,
                 'user' => $user,
                 'commission' => [
-                    'rate_percent' => ($user['commission_rate'] ?? 0.015) * 100,
+                    'rate_percent' => (float)($user['commission_rate'] ?? 0) * 100,
                     'total_tx' => (int)$commData['total_tx'],
                     'total_omzet' => (float)$commData['total_omzet'],
                     'commission_earned' => (float)$commissionEarned
@@ -9558,7 +9558,7 @@ try {
                     $stmtComm = $pdo->prepare("SELECT COALESCE(SUM(grand_total), 0) FROM sales WHERE user_id = ? AND date(created_at) BETWEEN ? AND ?");
                     $stmtComm->execute([$uId, $startDate, $endDate]);
                     $totOmzet = (float)$stmtComm->fetchColumn();
-                    $comm = $totOmzet * ((float)($emp['commission_rate'] ?: 0.015));
+                    $comm = $totOmzet * ((float)($emp['commission_rate'] ?? 0));
 
                     $gross = $baseSal + $allow + $transTot + $comm;
 
@@ -9704,7 +9704,7 @@ try {
                 $stmtComm = $pdo->prepare("SELECT COALESCE(SUM(grand_total), 0) FROM sales WHERE user_id = ? AND date(created_at) BETWEEN ? AND ?");
                 $stmtComm->execute([$userId, $startDate, $endDate]);
                 $totalOmzet = (float)$stmtComm->fetchColumn();
-                $salesCommission = $totalOmzet * ((float)($user['commission_rate'] ?: 0.015));
+                $salesCommission = $totalOmzet * ((float)($user['commission_rate'] ?? 0));
 
                 $overtimePay = 0;
                 $bonusPay = 0;

@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.2.94",
-    "build": "20261026-49",
+    "version": "1.2.95",
+    "build": "20261026-50",
     "release_date": "2026-10-26",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.2.95",
+            "commit": "HEAD",
+            "date": "2026-10-26",
+            "title": "Peniadaan Komponen Rate Komisi pada Dokumen Slip Gaji, Form Karyawan & Tabel Karyawan (FR-PAYROLL-05)",
+            "description": "Menghilangkan komponen Rate Komisi dari seluruh antarmuka operasional: (1) Dokumen Slip Gaji Karyawan (#payroll-slip-modal & #tab-ess): Menghapus baris Rate Komisi pada metadata identitas karyawan di kop slip gaji resmi format Standar Navy dan ESS. (2) Modal Tambah/Edit Karyawan (#emp-modal): Menghapus field input Rate Komisi (%), merestrukturisasi form kredensial (PIN Cepat & Kata Sandi) dan tanggal masuk kerja secara kompak, serta mempertahankan hidden input untuk kompatibilitas data. (3) Tabel Kelola Karyawan (#employee-table-body): Mengeliminasi kolom Komisi % dari header dan baris tabel karyawan. (4) Penyelarasan Backend (api.php): Memperbarui kalkulasi komisi agar menggunakan fallback 0 alih-alih nilai legacy hardcode 1.5%.",
+            "rollback_command": "git checkout v1.2.94"
+        },
         {
             "version": "1.2.94",
             "commit": "HEAD",

@@ -2108,7 +2108,6 @@ try {
                                 </div>
                                 <div class="space-y-1">
                                     <div class="flex"><span class="w-28 text-slate-500">Hari Hadir:</span><span id="slip-emp-attendance-days" class="font-bold text-slate-800">22 Hari</span></div>
-                                    <div class="flex"><span class="w-28 text-slate-500">Rate Komisi:</span><span id="slip-emp-comm-rate" class="font-bold text-slate-800">1.5%</span></div>
                                     <div class="flex"><span class="w-28 text-slate-500">Status Bayar:</span><span id="slip-status-badge" class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-[10px]">TERVERIFIKASI</span></div>
                                 </div>
                             </div>
@@ -2486,7 +2485,6 @@ try {
                                     <th class="py-3 px-4">Cabang Penempatan</th>
                                     <th class="py-3 px-4">Email / Telepon</th>
                                     <th class="py-3 px-4">Shift Kerja</th>
-                                    <th class="py-3 px-4">Komisi %</th>
                                     <th class="py-3 px-4">Status</th>
                                     <th class="py-3 px-4 text-center">Aksi</th>
                                 </tr>
@@ -6285,26 +6283,21 @@ try {
                     </div>
                 </div>
 
+                <input type="hidden" id="emp-commission" value="0">
                 <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Rate Komisi (%):</label>
-                        <input type="number" step="0.1" id="emp-commission" value="1.5" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium">
-                    </div>
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">PIN Cepat (6-Digit):</label>
                         <input type="text" id="emp-pin" value="123456" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Tanggal Masuk Kerja:</label>
-                        <input type="date" id="emp-join-date" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium text-slate-800">
-                        <p class="text-[10px] text-slate-400">Dicetak di kop slip gaji resmi.</p>
                     </div>
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">Kata Sandi (Password):</label>
                         <input type="password" id="emp-password" placeholder="Kosongkan jika tetap" class="w-full p-2.5 bg-slate-50 border rounded-xl">
                     </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Tanggal Masuk Kerja:</label>
+                    <input type="date" id="emp-join-date" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium text-slate-800">
+                    <p class="text-[10px] text-slate-400">Dicetak di kop slip gaji resmi.</p>
                 </div>
 
                 <!-- Shift Kerja Bawaan (Default Work Shift) -->
@@ -9911,7 +9904,6 @@ try {
                         </div>
                         <div class="space-y-1">
                             <div class="flex"><span class="w-28 text-slate-500">Hari Hadir:</span><span id="modal-slip-emp-attendance-days" class="font-bold text-slate-800">3 Hari Hadir</span></div>
-                            <div class="flex"><span class="w-28 text-slate-500">Rate Komisi:</span><span id="modal-slip-emp-comm-rate" class="font-bold text-slate-800">0.0%</span></div>
                             <div class="flex"><span class="w-28 text-slate-500">Status Bayar:</span><span id="modal-slip-status-badge" class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-[10px]">TERVERIFIKASI</span></div>
                         </div>
                     </div>
@@ -17070,7 +17062,7 @@ Manager / Supervisor: __________________
                 document.getElementById('slip-emp-name').innerText = u.name || '-';
                 document.getElementById('slip-emp-role').innerText = u.role || '-';
                 document.getElementById('slip-emp-attendance-days').innerText = `${p.attendance_days || 0} Hari Hadir`;
-                document.getElementById('slip-emp-comm-rate').innerText = `${((parseFloat(u.commission_rate) || 0) * 100).toFixed(1)}%`;
+                if (document.getElementById('slip-emp-comm-rate')) document.getElementById('slip-emp-comm-rate').innerText = `${((parseFloat(u.commission_rate) || 0) * 100).toFixed(1)}%`;
                 document.getElementById('slip-sign-emp-name').innerText = u.name || '-';
 
                 // Status bayar badge
@@ -17725,7 +17717,7 @@ Manager / Supervisor: __________________
                 document.getElementById('modal-slip-emp-name').innerText = u.name || '-';
                 document.getElementById('modal-slip-emp-role').innerText = (u.role || '-').toUpperCase();
                 document.getElementById('modal-slip-emp-attendance-days').innerText = `${p.attendance_days || 0} Hari Hadir`;
-                document.getElementById('modal-slip-emp-comm-rate').innerText = `${((parseFloat(u.commission_rate) || 0) * 100).toFixed(1)}%`;
+                if (document.getElementById('modal-slip-emp-comm-rate')) document.getElementById('modal-slip-emp-comm-rate').innerText = `${((parseFloat(u.commission_rate) || 0) * 100).toFixed(1)}%`;
 
                 const isVerified = p.payment_status === 'GENERATED' || p.payment_status === 'PAID';
                 const statusBadgeEl = document.getElementById('modal-slip-status-badge');
@@ -18622,7 +18614,6 @@ Manager / Supervisor: __________________
                     <td class="py-2.5 px-4">${branchPlacementHtml}</td>
                     <td class="py-2.5 px-4 text-slate-500">${e.email || '-'} / ${e.phone || '-'}</td>
                     <td class="py-2.5 px-4">${shiftBadge}</td>
-                    <td class="py-2.5 px-4 font-bold text-amber-700">${(e.commission_rate * 100).toFixed(1)}%</td>
                     <td class="py-2.5 px-4">
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${e.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
                             ${e.is_active ? 'Aktif' : 'Nonaktif'}
@@ -18721,7 +18712,7 @@ Manager / Supervisor: __________________
             document.getElementById('emp-phone').value = '';
             document.getElementById('emp-password').value = '';
             document.getElementById('emp-pin').value = '123456';
-            document.getElementById('emp-commission').value = '1.5';
+            if (document.getElementById('emp-commission')) document.getElementById('emp-commission').value = '0';
             const elJoinDate = document.getElementById('emp-join-date');
             if (elJoinDate) elJoinDate.value = '';
             document.getElementById('emp-modal-title').innerText = 'Tambah Karyawan Baru';
@@ -18856,7 +18847,7 @@ Manager / Supervisor: __________________
             document.getElementById('emp-email').value = emp.email || '';
             document.getElementById('emp-phone').value = emp.phone || '';
             document.getElementById('emp-pin').value = emp.pin || '123456';
-            document.getElementById('emp-commission').value = (emp.commission_rate * 100).toFixed(1);
+            if (document.getElementById('emp-commission')) document.getElementById('emp-commission').value = ((parseFloat(emp.commission_rate) || 0) * 100).toFixed(1);
             const elJoinDate = document.getElementById('emp-join-date');
             if (elJoinDate) elJoinDate.value = emp.join_date || '';
             document.getElementById('emp-modal-title').innerText = 'Edit Karyawan: ' + emp.name;
@@ -18929,7 +18920,7 @@ Manager / Supervisor: __________________
                 phone: document.getElementById('emp-phone').value,
                 pin: document.getElementById('emp-pin').value,
                 password: document.getElementById('emp-password').value,
-                commission_rate: parseFloat(document.getElementById('emp-commission').value) / 100,
+                commission_rate: document.getElementById('emp-commission') ? (parseFloat(document.getElementById('emp-commission').value) / 100) : 0,
                 join_date: document.getElementById('emp-join-date') ? document.getElementById('emp-join-date').value : null,
                 default_work_shift_id: defaultShiftId,
                 assigned_vehicle_id: assignedVehicleId
