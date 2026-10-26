@@ -131,9 +131,6 @@ try {
             header {
                 height: 3rem !important;
             }
-            #shift-banner {
-                padding: 0.5rem 0.75rem !important;
-            }
         }
     </style>
 </head>
@@ -466,16 +463,22 @@ try {
                 </div>
 
                 <!-- 12-Hour Daily Session Lifetime Badge -->
-                <div id="topbar-session-badge" class="flex items-center space-x-1.5 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0" title="Batas aktif sesi login harian: 12 jam per hari">
+                <div id="topbar-session-badge" class="hidden md:flex items-center space-x-1.5 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0" title="Batas aktif sesi login harian: 12 jam per hari">
                     <i data-lucide="clock" class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0"></i>
                     <span id="topbar-session-text" class="text-[11px] sm:text-xs font-bold text-indigo-800 dark:text-indigo-300 whitespace-nowrap">Sesi: 12j 00m</span>
                 </div>
 
                 <!-- Shift Status Pill -->
-                <div id="topbar-shift-badge" onclick="openShiftModal()" class="cursor-pointer flex items-center space-x-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shrink-0 max-w-[115px] sm:max-w-none">
+                <div id="topbar-shift-badge" onclick="openShiftModal()" class="cursor-pointer hidden sm:flex items-center space-x-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shrink-0 max-w-[150px] sm:max-w-none" title="Status Shift Kasir">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                     <span id="topbar-shift-text" class="text-[11px] sm:text-xs font-bold text-emerald-800 dark:text-emerald-300 truncate whitespace-nowrap">Shift Buka</span>
                 </div>
+
+                <!-- Tombol Tutup / Buka Shift Kasir di Header -->
+                <button type="button" id="btn-toggle-shift" onclick="openShiftModal()" class="cursor-pointer flex items-center space-x-1 sm:space-x-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800/80 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl text-rose-700 dark:text-rose-300 font-bold text-[11px] sm:text-xs transition-colors shrink-0 shadow-2xs" title="Tutup / Buka Shift Kasir">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0"></i>
+                    <span id="btn-shift-label" class="truncate whitespace-nowrap">Tutup Shift</span>
+                </button>
             </div>
         </header>
 
@@ -726,26 +729,6 @@ try {
             <!-- TAB 1: MODUL PENJUALAN & POS KASIR                   -->
             <!-- ---------------------------------------------------- -->
             <div id="tab-pos" class="space-y-4">
-                <!-- Shift Banner -->
-                <div id="shift-banner" class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
-                    <div class="flex items-center space-x-3">
-                        <span id="shift-status-indicator" class="w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <div>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Status Sesi Kasir:</span>
-                                <span id="shift-status-text" class="text-sm font-bold text-emerald-700 dark:text-emerald-400">SHIFT BUKA</span>
-                            </div>
-                            <p id="shift-details-text" class="text-xs text-slate-500 dark:text-slate-400">Modal Kas Awal: Rp 300.000 &bull; Dimulai: 08:00 WIB</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <button id="btn-toggle-shift" onclick="openShiftModal()" class="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-700 transition-colors flex items-center space-x-1.5 cursor-pointer">
-                            <i data-lucide="clock" class="w-3.5 h-3.5"></i>
-                            <span id="btn-shift-label">Tutup Shift Kasir</span>
-                        </button>
-                    </div>
-                </div>
-
                 <!-- Customer & Pricing Tier Selection Bar (CRM & B2B Mitra) -->
                 <div class="bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/60 p-3.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
                     <div class="flex items-center space-x-3">
@@ -11610,43 +11593,80 @@ try {
             const btnLabel = document.getElementById('btn-shift-label');
             const topbarShiftBadge = document.getElementById('topbar-shift-badge');
             const topbarShiftText = document.getElementById('topbar-shift-text');
+            const btnToggleShift = document.getElementById('btn-toggle-shift');
 
             if (isShiftOpen) {
                 const shiftTitle = state.activeShift.shift_name || ('Shift ' + (state.activeShift.shift_number || 1));
-                indicator.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse';
-                statusText.innerText = `${shiftTitle.toUpperCase()} AKTIF (BUKA)`;
-                statusText.className = 'text-sm font-bold text-emerald-700';
+                if (indicator) indicator.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse';
+                if (statusText) {
+                    statusText.innerText = `${shiftTitle.toUpperCase()} AKTIF (BUKA)`;
+                    statusText.className = 'text-sm font-bold text-emerald-700';
+                }
                 const openerInfo = (state.activeShift.opener_name && state.activeShift.opener_name !== state.currentUser?.name) ? ` (dibuka oleh ${state.activeShift.opener_name})` : '';
-                detailsText.innerText = `${shiftTitle}${openerInfo} • Kasir: ${state.currentUser?.name || 'Kasir'} • Modal: ${formatRupiah(state.activeShift.initial_cash)} • Mulai: ${state.activeShift.start_time}`;
-                btnLabel.innerText = `Tutup ${shiftTitle}`;
+                if (detailsText) detailsText.innerText = `${shiftTitle}${openerInfo} • Kasir: ${state.currentUser?.name || 'Kasir'} • Modal: ${formatRupiah(state.activeShift.initial_cash)} • Mulai: ${state.activeShift.start_time}`;
+                if (btnLabel) btnLabel.innerText = `Tutup ${shiftTitle}`;
 
-                topbarShiftBadge.className = 'cursor-pointer flex items-center space-x-1.5 bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 rounded-xl hover:bg-emerald-100 transition-colors';
-                topbarShiftText.innerText = `${shiftTitle}: ${state.currentUser?.name || 'Buka'}`;
-                topbarShiftText.className = 'text-xs font-bold text-emerald-800';
+                if (btnToggleShift) {
+                    btnToggleShift.className = 'cursor-pointer flex items-center space-x-1 sm:space-x-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800/80 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl text-rose-700 dark:text-rose-300 font-bold text-[11px] sm:text-xs transition-colors shrink-0 shadow-2xs';
+                    btnToggleShift.title = `Tutup ${shiftTitle}`;
+                }
+
+                if (topbarShiftBadge) {
+                    topbarShiftBadge.className = 'cursor-pointer hidden sm:flex items-center space-x-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shrink-0 max-w-[150px] sm:max-w-none';
+                }
+                if (topbarShiftText) {
+                    topbarShiftText.innerText = `${shiftTitle}: ${state.currentUser?.name || 'Buka'}`;
+                    topbarShiftText.className = 'text-[11px] sm:text-xs font-bold text-emerald-800 dark:text-emerald-300 truncate whitespace-nowrap';
+                }
             } else {
                 if (state.branchClosedToday) {
                     const closerName = escapeHtml(state.finalClosedShift?.closer_name || state.finalClosedShift?.cashier_name || 'Kasir');
                     const closeTime = escapeHtml(state.finalClosedShift?.end_time || '');
-                    indicator.className = 'w-3.5 h-3.5 rounded-full bg-slate-500';
-                    statusText.innerText = 'TOKO TUTUP (CLOSING HARIAN SELESAI) 🌙';
-                    statusText.className = 'text-sm font-bold text-slate-700';
-                    detailsText.innerText = `Operasional hari ini telah ditutup oleh ${closerName}${closeTime ? ' (' + closeTime + ')' : ''}. Buka shift kembali esok hari sebagai Shift 1 (Pagi).`;
-                    btnLabel.innerText = 'Status: Toko Tutup 🌙';
+                    if (indicator) indicator.className = 'w-3.5 h-3.5 rounded-full bg-slate-500';
+                    if (statusText) {
+                        statusText.innerText = 'TOKO TUTUP (CLOSING HARIAN SELESAI) 🌙';
+                        statusText.className = 'text-sm font-bold text-slate-700';
+                    }
+                    if (detailsText) detailsText.innerText = `Operasional hari ini telah ditutup oleh ${closerName}${closeTime ? ' (' + closeTime + ')' : ''}. Buka shift kembali esok hari sebagai Shift 1 (Pagi).`;
+                    if (btnLabel) btnLabel.innerText = 'Toko Tutup 🌙';
 
-                    topbarShiftBadge.className = 'cursor-pointer flex items-center space-x-1.5 bg-slate-100 border border-slate-300 px-2.5 py-1.5 rounded-xl hover:bg-slate-200 transition-colors';
-                    topbarShiftText.innerText = 'Toko Tutup 🌙';
-                    topbarShiftText.className = 'text-xs font-bold text-slate-700';
+                    if (btnToggleShift) {
+                        btnToggleShift.className = 'cursor-pointer flex items-center space-x-1 sm:space-x-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl text-slate-700 dark:text-slate-300 font-bold text-[11px] sm:text-xs transition-colors shrink-0 shadow-2xs';
+                        btnToggleShift.title = 'Toko Tutup (Closing Harian Selesai)';
+                    }
+
+                    if (topbarShiftBadge) {
+                        topbarShiftBadge.className = 'cursor-pointer hidden sm:flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0 max-w-[150px] sm:max-w-none';
+                    }
+                    if (topbarShiftText) {
+                        topbarShiftText.innerText = 'Toko Tutup 🌙';
+                        topbarShiftText.className = 'text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-300 truncate whitespace-nowrap';
+                    }
                 } else {
-                    indicator.className = 'w-3.5 h-3.5 rounded-full bg-rose-500';
-                    statusText.innerText = 'SHIFT BELUM DIBUKA';
-                    statusText.className = 'text-sm font-bold text-rose-700';
-                    detailsText.innerText = 'Buka sesi kasir untuk mencatat modal kas.';
-                    btnLabel.innerText = 'Buka Shift Baru';
+                    if (indicator) indicator.className = 'w-3.5 h-3.5 rounded-full bg-rose-500';
+                    if (statusText) {
+                        statusText.innerText = 'SHIFT BELUM DIBUKA';
+                        statusText.className = 'text-sm font-bold text-rose-700';
+                    }
+                    if (detailsText) detailsText.innerText = 'Buka sesi kasir untuk mencatat modal kas.';
+                    if (btnLabel) btnLabel.innerText = 'Buka Shift';
 
-                    topbarShiftBadge.className = 'cursor-pointer flex items-center space-x-1.5 bg-rose-50 border border-rose-200 px-2.5 py-1.5 rounded-xl hover:bg-rose-100 transition-colors';
-                    topbarShiftText.innerText = 'Shift Tutup';
-                    topbarShiftText.className = 'text-xs font-bold text-rose-800';
+                    if (btnToggleShift) {
+                        btnToggleShift.className = 'cursor-pointer flex items-center space-x-1 sm:space-x-1.5 bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl font-bold text-[11px] sm:text-xs transition-colors shrink-0 shadow-xs';
+                        btnToggleShift.title = 'Buka Shift Baru';
+                    }
+
+                    if (topbarShiftBadge) {
+                        topbarShiftBadge.className = 'cursor-pointer hidden sm:flex items-center space-x-1.5 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/80 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors shrink-0 max-w-[150px] sm:max-w-none';
+                    }
+                    if (topbarShiftText) {
+                        topbarShiftText.innerText = 'Shift Tutup';
+                        topbarShiftText.className = 'text-[11px] sm:text-xs font-bold text-rose-800 dark:text-rose-300 truncate whitespace-nowrap';
+                    }
                 }
+            }
+            if (window.lucide && typeof lucide.createIcons === 'function') {
+                lucide.createIcons();
             }
         }
 

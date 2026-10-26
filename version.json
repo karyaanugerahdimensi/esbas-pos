@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.72",
-  "build": "20261026-27",
+  "version": "1.2.73",
+  "build": "20261026-28",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.73",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Penyederhanaan Tampilan POS Kasir: Eliminasi Banner Status Shift & Relokasi Tombol Tutup Shift ke Header (FR-POS-34)",
+      "description": "Menyempurnakan tata letak dan ergonomi antarmuka POS Kasir: (1) Eliminasi Banner Status Shift: Menghapus kontainer kartu status sesi kasir (#shift-banner) yang sebelumnya memakan ruang vertikal signifikan di atas bar pemilihan pelanggan, sehingga area pemilihan pelanggan dan katalog kasir langsung naik ke posisi teratas yang lapang dan bersih. (2) Relokasi Tombol Tutup/Buka Shift ke Header: Memindahkan tombol aksi Buka/Tutup Shift (#btn-toggle-shift) ke header topbar tepat di samping pill status shift kasir, dilengkapi styling dinamis dan adaptif (tombol Tutup Shift bernuansa lembut saat shift aktif, tombol Buka Shift hijau zamrud saat shift belum dibuka, dan tombol status saat toko tutup). (3) Proteksi Null Pointer Sisi Klien: Menambahkan pemeriksaan aman pada fungsi renderShiftBanner() agar tidak memicu galat manipulasi DOM elemen banner yang telah dieliminasi.",
+      "rollback_command": "git checkout v1.2.72"
+    },
     {
       "version": "1.2.72",
       "commit": "HEAD",
