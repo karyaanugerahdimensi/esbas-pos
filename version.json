@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.82",
-  "build": "20261026-37",
+  "version": "1.2.83",
+  "build": "20261026-38",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.83",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Optimalisasi Presisi & Kerapian Sidebar Navigasi Mode Ciut/Collapsed (FR-UI-03)",
+      "description": "Menata ulang arsitektur tata letak dan visual sidebar navigasi saat dalam mode ciut (collapsed/icon-only): (1) Eliminasi Tabrakan Header: Mengganti kontainer logo dan tombol toggle yang berhimpitan menjadi satu tombol terpusat (centered) 44x44px yang menampilkan logo toko dan berubah menjadi ikon ekspansi (panel-left-open) saat di-hover. (2) Penyelarasan Presisi Tombol Menu & Ikon: Menstandarkan tombol navigasi saat ciut menjadi bujur sangkar 44x44px simetris dengan ikon berada presisi di tengah (justify-center) serta menambahkan pemisah lembut antar kelompok seksi. (3) Restrukturisasi Profil & Logout Bawah: Mengubah tata letak kartu profil dari horizontal berdesakan menjadi vertikal terpusat (avatar di atas, tombol keluar di bawah) dengan tooltip nama pengguna. (4) Penanganan Rapi Footer Versi: Mengganti teks versi panjang dan tombol Rollback yang sebelumnya meluber (overflow) ke katalog produk menjadi tombol lencana ringkas 36x36px terpusat dengan indikator denyut hijau.",
+      "rollback_command": "git checkout v1.2.82"
+    },
     {
       "version": "1.2.82",
       "commit": "HEAD",

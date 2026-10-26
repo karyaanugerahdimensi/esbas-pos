@@ -84,6 +84,38 @@ try {
             color: #ffffff !important;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
+        /* ========================================================= */
+        /* SIDEBAR COLLAPSED PRECISION STYLING                       */
+        /* ========================================================= */
+        #app-sidebar.sidebar-collapsed #sidebar-nav {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+        }
+        #app-sidebar.sidebar-collapsed .sidebar-menu-btn {
+            width: 44px !important;
+            height: 44px !important;
+            padding: 0 !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            justify-content: center !important;
+            border-radius: 0.75rem !important;
+        }
+        #app-sidebar.sidebar-collapsed .sidebar-menu-btn i {
+            width: 20px !important;
+            height: 20px !important;
+            margin: 0 !important;
+            flex-shrink: 0 !important;
+        }
+        #app-sidebar.sidebar-collapsed .sidebar-item-active {
+            background-color: #4f46e5 !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.4) !important;
+        }
+        #app-sidebar.sidebar-collapsed nav > div + div {
+            margin-top: 0.75rem !important;
+            padding-top: 0.75rem !important;
+            border-top: 1px solid rgba(51, 65, 85, 0.4) !important;
+        }
         /* Custom scrollbar for clean aesthetics */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
@@ -245,17 +277,22 @@ try {
         
         <!-- Sidebar Top: Brand & Collapse Toggle -->
         <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
-            <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800 shrink-0">
-                <div class="flex items-center space-x-3 overflow-hidden">
+            <div id="sidebar-header" class="h-16 flex items-center justify-between px-4 border-b border-slate-800 shrink-0">
+                <div id="sidebar-brand-expanded" class="flex items-center space-x-3 overflow-hidden">
                     <span id="sidebar-app-logo" class="p-2 bg-indigo-600 rounded-xl text-xl shrink-0">🛍️</span>
                     <div class="sidebar-label transition-opacity duration-200 overflow-hidden whitespace-nowrap">
                         <h1 id="sidebar-app-name" class="font-black text-sm text-white tracking-wide leading-tight">ESBAS RETAIL</h1>
                         <p id="sidebar-app-subtitle" class="text-[10px] text-indigo-400 font-medium">POS, BOM & ESS</p>
                     </div>
                 </div>
-                <!-- Toggle Button (Desktop & Tablet) -->
-                <button onclick="toggleSidebar()" title="Collapse / Expand Menu" class="hidden md:flex p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                <!-- Toggle Button (Desktop & Tablet - Expanded Mode) -->
+                <button onclick="toggleSidebar()" id="sidebar-toggle-btn-expanded" title="Ciutkan Menu (Collapse)" class="hidden md:flex p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
                     <i data-lucide="panel-left-close" id="sidebar-toggle-icon" class="w-4 h-4"></i>
+                </button>
+                <!-- Toggle Button (Desktop & Tablet - Collapsed Mode Centered) -->
+                <button onclick="toggleSidebar()" id="sidebar-toggle-btn-collapsed" title="Buka Menu Sidebar (Expand)" class="hidden group relative w-11 h-11 items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-md mx-auto">
+                    <span id="sidebar-app-logo-collapsed" class="text-xl group-hover:hidden transition-transform duration-200">🛍️</span>
+                    <i data-lucide="panel-left-open" class="w-5 h-5 hidden group-hover:block transition-transform duration-200"></i>
                 </button>
                 <!-- Close Button (Mobile Only) -->
                 <button onclick="toggleMobileSidebar()" class="md:hidden p-1.5 text-slate-400 hover:text-white rounded-lg">
@@ -264,7 +301,7 @@ try {
             </div>
 
             <!-- Navigation Menu Items -->
-            <nav class="p-3 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+            <nav id="sidebar-nav" class="p-3 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
                 
                 <!-- Section 0: Executive & Real-Time Monitoring (Superadmin & Branch Manager Only) -->
                 <div id="sidebar-sec-executive" class="space-y-1">
@@ -399,8 +436,9 @@ try {
         </div>
 
         <!-- Sidebar Bottom: User Profile & Logout -->
-        <div class="p-3 border-t border-slate-800 bg-slate-950/40">
-            <div class="flex items-center justify-between p-2 rounded-xl bg-slate-800/60 border border-slate-800">
+        <div id="sidebar-bottom-container" class="p-3 border-t border-slate-800 bg-slate-950/40">
+            <!-- Expanded User Card -->
+            <div id="sidebar-user-expanded" class="flex items-center justify-between p-2 rounded-xl bg-slate-800/60 border border-slate-800">
                 <div class="flex items-center space-x-2.5 overflow-hidden">
                     <div class="w-8 h-8 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-white flex items-center justify-center font-bold text-xs shrink-0">
                         👤
@@ -414,14 +452,33 @@ try {
                     <i data-lucide="log-out" class="w-4 h-4"></i>
                 </button>
             </div>
+
+            <!-- Collapsed User & Logout Controls (Centered) -->
+            <div id="sidebar-user-collapsed" class="hidden flex-col items-center space-y-2">
+                <div id="sidebar-user-avatar-collapsed" title="Akun Pengguna" class="w-10 h-10 rounded-xl bg-indigo-600/30 border border-indigo-500/40 text-white flex items-center justify-center font-bold text-sm shadow-sm cursor-default">
+                    👤
+                </div>
+                <button onclick="handleLogout()" title="Keluar dari Aplikasi (Logout)" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 rounded-xl transition-all">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </button>
+            </div>
+
             <!-- Version Badge & Quick Rollback Helper -->
-            <div class="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 px-1">
+            <!-- Expanded Version Footer -->
+            <div id="sidebar-version-expanded" class="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 px-1">
                 <button type="button" onclick="openVersionModal()" title="Lihat Riwayat Versi & Titik Rollback" class="hover:text-indigo-400 flex items-center space-x-1.5 transition-colors group">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
                     <span class="font-mono font-bold group-hover:underline">v<?= htmlspecialchars($appVersionData['version']) ?>-<?= htmlspecialchars($appVersionData['commit_hash']) ?></span>
                 </button>
                 <button type="button" onclick="openVersionModal()" title="Buka Panduan Rollback Git" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition-colors">
                     Rollback
+                </button>
+            </div>
+
+            <!-- Collapsed Version Button (Centered) -->
+            <div id="sidebar-version-collapsed" class="hidden mt-2 pt-2 border-t border-slate-800/80 text-center">
+                <button type="button" onclick="openVersionModal()" title="Versi v<?= htmlspecialchars($appVersionData['version']) ?> (Klik untuk riwayat & rollback)" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 hover:text-indigo-400 text-slate-400 flex items-center justify-center mx-auto transition-colors shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                 </button>
             </div>
         </div>
@@ -9416,7 +9473,13 @@ try {
     <script>
         const state = {
             currentTab: 'pos',
-            sidebarCollapsed: false,
+            sidebarCollapsed: (function() {
+                try {
+                    return localStorage.getItem('esbas_sidebar_collapsed') === 'true';
+                } catch(e) {
+                    return false;
+                }
+            })(),
             loggedInUser: null,
             sessionInfo: null,
             sessionTimerInterval: null,
@@ -9589,20 +9652,80 @@ try {
 
         function applySidebarState() {
             const sidebar = document.getElementById('app-sidebar');
+            if (!sidebar) return;
             const labels = document.querySelectorAll('.sidebar-label');
             const toggleIcon = document.getElementById('sidebar-toggle-icon');
+            const header = document.getElementById('sidebar-header');
+            const brandExpanded = document.getElementById('sidebar-brand-expanded');
+            const toggleExpanded = document.getElementById('sidebar-toggle-btn-expanded');
+            const toggleCollapsed = document.getElementById('sidebar-toggle-btn-collapsed');
+            const userExpanded = document.getElementById('sidebar-user-expanded');
+            const userCollapsed = document.getElementById('sidebar-user-collapsed');
+            const versionExpanded = document.getElementById('sidebar-version-expanded');
+            const versionCollapsed = document.getElementById('sidebar-version-collapsed');
 
             if (state.sidebarCollapsed) {
                 sidebar.classList.remove('w-64');
-                sidebar.classList.add('w-20');
+                sidebar.classList.add('w-20', 'sidebar-collapsed');
                 labels.forEach(el => el.classList.add('hidden'));
+
+                if (header) {
+                    header.classList.remove('justify-between', 'px-4');
+                    header.classList.add('justify-center', 'px-2');
+                }
+                if (brandExpanded) brandExpanded.classList.add('hidden');
+                if (toggleExpanded) {
+                    toggleExpanded.classList.remove('md:flex');
+                    toggleExpanded.classList.add('hidden');
+                }
+                if (toggleCollapsed) {
+                    toggleCollapsed.classList.remove('hidden');
+                    toggleCollapsed.classList.add('flex');
+                }
+
+                if (userExpanded) userExpanded.classList.add('hidden');
+                if (userCollapsed) {
+                    userCollapsed.classList.remove('hidden');
+                    userCollapsed.classList.add('flex');
+                }
+
+                if (versionExpanded) versionExpanded.classList.add('hidden');
+                if (versionCollapsed) versionCollapsed.classList.remove('hidden');
+
                 if (toggleIcon) toggleIcon.setAttribute('data-lucide', 'panel-left');
             } else {
-                sidebar.classList.remove('w-20');
+                sidebar.classList.remove('w-20', 'sidebar-collapsed');
                 sidebar.classList.add('w-64');
                 labels.forEach(el => el.classList.remove('hidden'));
+
+                if (header) {
+                    header.classList.remove('justify-center', 'px-2');
+                    header.classList.add('justify-between', 'px-4');
+                }
+                if (brandExpanded) brandExpanded.classList.remove('hidden');
+                if (toggleExpanded) {
+                    toggleExpanded.classList.remove('hidden');
+                    toggleExpanded.classList.add('md:flex');
+                }
+                if (toggleCollapsed) {
+                    toggleCollapsed.classList.remove('flex');
+                    toggleCollapsed.classList.add('hidden');
+                }
+
+                if (userExpanded) userExpanded.classList.remove('hidden');
+                if (userCollapsed) {
+                    userCollapsed.classList.remove('flex');
+                    userCollapsed.classList.add('hidden');
+                }
+
+                if (versionExpanded) versionExpanded.classList.remove('hidden');
+                if (versionCollapsed) versionCollapsed.classList.add('hidden');
+
                 if (toggleIcon) toggleIcon.setAttribute('data-lucide', 'panel-left-close');
             }
+            try {
+                localStorage.setItem('esbas_sidebar_collapsed', state.sidebarCollapsed ? 'true' : 'false');
+            } catch(e) {}
             lucide.createIcons();
         }
 
@@ -10040,6 +10163,10 @@ try {
                 // Update Sidebar Profile
                 document.getElementById('sidebar-user-name').innerText = state.currentUser.name;
                 document.getElementById('sidebar-user-role').innerText = state.currentUser.role;
+                const userAvatarCollapsed = document.getElementById('sidebar-user-avatar-collapsed');
+                if (userAvatarCollapsed) {
+                    userAvatarCollapsed.setAttribute('title', `${state.currentUser.name} (${state.currentUser.role})`);
+                }
 
                 // Terapkan filter hak akses menu sidebar berdasarkan role login
                 applyRolePermissionsToSidebar();
@@ -25939,6 +26066,8 @@ Manager / Supervisor: __________________
             const logoEmoji = s.app_logo_emoji || '🛍️';
             const logoEl = document.getElementById('sidebar-app-logo');
             if (logoEl) logoEl.innerText = logoEmoji;
+            const logoCollapsedEl = document.getElementById('sidebar-app-logo-collapsed');
+            if (logoCollapsedEl) logoCollapsedEl.innerText = logoEmoji;
 
             // 2. Ubah Nama Aplikasi & Slogan
             const appName = s.app_name || 'ESBAS RETAIL';
@@ -27132,6 +27261,9 @@ Manager / Supervisor: __________________
         // Initialize theme UI and session check on DOM ready
         document.addEventListener('DOMContentLoaded', () => {
             updateThemeUI();
+            if (window.innerWidth >= 768 && state.sidebarCollapsed) {
+                applySidebarState();
+            }
             checkAuthSession();
         });
     </script>
