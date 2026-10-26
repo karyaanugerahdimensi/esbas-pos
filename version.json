@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.83",
-  "build": "20261026-38",
+  "version": "1.2.84",
+  "build": "20261026-39",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.84",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Adaptasi Komprehensif Tema Gelap & Terang Dashboard Eksekutif & Live Radar (FR-DASH-02)",
+      "description": "Menata ulang dan memberikan dukungan tema Gelap (Dark Mode) dan Terang (Light Mode) secara menyeluruh pada halaman Dashboard Eksekutif & Live Transaction Radar (#tab-dashboard): (1) Eliminasi Gradien Rusak Banner Kontrol: Mengganti kelas gradien legasi yang tidak dirender dengan kontainer adaptif kontras tinggi (bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800), tipografi gelap di mode terang (text-slate-900) dan putih terang di mode gelap (dark:text-slate-100), serta kontrol filter cabang dan tanggal yang adaptif. (2) Adaptasi 5 Kartu KPI Eksekutif: Mengonfigurasi seluruh 5 kartu metrik utama (Omzet, Total Transaksi, Laba Kotor, Status Cabang Buka, Beban Operasional) dengan kelas tema adaptif (bg-white dark:bg-slate-900, dark:text-slate-100, dark:border-slate-800). (3) Adaptasi Live Radar Stream & Tabel Transaksi: Menyelaraskan kartu live radar, baris tabel transaksi realtime, badge metode pembayaran (Cash, QRIS, Transfer, Debit, Piutang), dan badge kurir dengan varian dark mode berdaya kontras tajam. (4) Adaptasi Leaderboard Cabang & Saluran Pembayaran: Memutakhirkan kartu peringkat cabang, bar progres performa, dan distribusi pembayaran agar bersih, tajam, dan nyaman dibaca di kedua mode pencahayaan.",
+      "rollback_command": "git checkout v1.2.83"
+    },
     {
       "version": "1.2.83",
       "commit": "HEAD",

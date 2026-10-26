@@ -548,19 +548,19 @@ try {
             <div id="tab-dashboard" class="space-y-6 hidden">
                 
                 <!-- Executive Controls & Live Radar Banner -->
-                <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-5 text-white border border-slate-800 shadow-xl flex flex-wrap items-center justify-between gap-4">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-xs flex flex-wrap items-center justify-between gap-4 transition-colors">
                     <div class="flex items-center space-x-3.5">
                         <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/20 shrink-0">
                             ⚡
                         </div>
                         <div>
                             <div class="flex items-center space-x-2.5">
-                                <h2 class="text-base sm:text-lg font-black tracking-wide text-white">Dashboard Eksekutif & Live Transaction Radar</h2>
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping mr-1.5"></span>LIVE
+                                <h2 class="text-base sm:text-lg font-black tracking-wide text-slate-900 dark:text-slate-100">Dashboard Eksekutif & Live Transaction Radar</h2>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping mr-1.5"></span>LIVE
                                 </span>
                             </div>
-                            <p class="text-xs text-slate-300 mt-0.5">Monitoring transaksi realtime, performa seluruh cabang, & arus kas harian terpusat</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Monitoring transaksi realtime, performa seluruh cabang, & arus kas harian terpusat</p>
                         </div>
                     </div>
 
@@ -568,33 +568,33 @@ try {
                     <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
                         <!-- Branch Selector -->
                         <div class="relative">
-                            <select id="exec-branch-filter" onchange="onExecBranchFilterChange()" class="bg-slate-800/95 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-sm">
+                            <select id="exec-branch-filter" onchange="onExecBranchFilterChange()" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-2xs">
                                 <option value="0">🌐 Semua Cabang (Konsolidasi Global)</option>
                                 <!-- Populated via JS -->
                             </select>
                         </div>
 
                         <!-- Date Presets -->
-                        <div class="flex items-center bg-slate-800/95 p-1 rounded-xl border border-slate-700 text-xs font-bold">
-                            <button type="button" onclick="setExecDateFilter('today')" id="exec-date-btn-today" class="exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500 text-slate-950 transition-colors">Hari Ini</button>
-                            <button type="button" onclick="setExecDateFilter('yesterday')" id="exec-date-btn-yesterday" class="exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-300 hover:text-white transition-colors">Kemarin</button>
-                            <button type="button" onclick="setExecDateFilter('week')" id="exec-date-btn-week" class="exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-300 hover:text-white transition-colors">7 Hari</button>
-                            <button type="button" onclick="setExecDateFilter('month')" id="exec-date-btn-month" class="exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-300 hover:text-white transition-colors">Bulan Ini</button>
+                        <div class="flex items-center bg-slate-100 dark:bg-slate-800/95 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold">
+                            <button type="button" onclick="setExecDateFilter('today')" id="exec-date-btn-today" class="exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500 text-slate-950 transition-colors shadow-2xs">Hari Ini</button>
+                            <button type="button" onclick="setExecDateFilter('yesterday')" id="exec-date-btn-yesterday" class="exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">Kemarin</button>
+                            <button type="button" onclick="setExecDateFilter('week')" id="exec-date-btn-week" class="exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">7 Hari</button>
+                            <button type="button" onclick="setExecDateFilter('month')" id="exec-date-btn-month" class="exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">Bulan Ini</button>
                         </div>
 
                         <!-- Live Auto-Refresh Toggle -->
-                        <button type="button" id="btn-exec-autorefresh" onclick="toggleExecAutoRefresh()" class="px-3 py-2 bg-emerald-600/30 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors" title="Toggle Auto-Refresh Realtime setiap 10 detik">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <button type="button" id="btn-exec-autorefresh" onclick="toggleExecAutoRefresh()" class="px-3 py-2 bg-emerald-100 dark:bg-emerald-950/60 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors shadow-2xs" title="Toggle Auto-Refresh Realtime setiap 10 detik">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             <span id="exec-autorefresh-label">Live 10d: ON</span>
                         </button>
 
                         <!-- Audio Sound Toggle -->
-                        <button type="button" id="btn-exec-sound" onclick="toggleExecSound()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 rounded-xl transition-colors" title="Bunyi audio saat ada transaksi baru masuk">
-                            <i data-lucide="volume-2" id="exec-sound-icon" class="w-4 h-4 text-amber-400"></i>
+                        <button type="button" id="btn-exec-sound" onclick="toggleExecSound()" class="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 rounded-xl transition-colors shadow-2xs" title="Bunyi audio saat ada transaksi baru masuk">
+                            <i data-lucide="volume-2" id="exec-sound-icon" class="w-4 h-4 text-amber-500"></i>
                         </button>
 
                         <!-- Refresh Manual Button -->
-                        <button type="button" onclick="loadExecutiveDashboard(true)" class="p-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl transition-colors shadow" title="Refresh data sekarang">
+                        <button type="button" onclick="loadExecutiveDashboard(true)" class="p-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl transition-colors shadow-2xs" title="Refresh data sekarang">
                             <i data-lucide="refresh-cw" id="exec-refresh-icon" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -603,70 +603,70 @@ try {
                 <!-- Row 1: Executive KPI Cards -->
                 <div class="grid grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
                     <!-- Card 1: Omzet -->
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs relative overflow-hidden">
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xs relative overflow-hidden transition-colors">
                         <div class="flex items-center justify-between">
-                            <span class="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl text-lg">💰</span>
-                            <span id="exec-kpi-rev-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">Gross Sales</span>
+                            <span class="p-2.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl text-lg">💰</span>
+                            <span id="exec-kpi-rev-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">Gross Sales</span>
                         </div>
                         <div class="mt-3">
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Omzet Penjualan</p>
-                            <h3 id="exec-kpi-revenue" class="text-lg sm:text-xl font-black text-slate-800 tracking-tight mt-0.5">Rp 0</h3>
-                            <p id="exec-kpi-revenue-sub" class="text-[10px] text-slate-500 mt-1">Diskon: Rp 0 &bull; Ongkir: Rp 0</p>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">Total Omzet Penjualan</p>
+                            <h3 id="exec-kpi-revenue" class="text-lg sm:text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight mt-0.5">Rp 0</h3>
+                            <p id="exec-kpi-revenue-sub" class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Diskon: Rp 0 &bull; Ongkir: Rp 0</p>
                         </div>
                     </div>
 
                     <!-- Card 2: Total Transaksi -->
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs relative overflow-hidden">
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xs relative overflow-hidden transition-colors">
                         <div class="flex items-center justify-between">
-                            <span class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl text-lg">🧾</span>
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-800">Invoices</span>
+                            <span class="p-2.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-xl text-lg">🧾</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">Invoices</span>
                         </div>
                         <div class="mt-3">
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Transaksi</p>
-                            <h3 id="exec-kpi-transactions" class="text-lg sm:text-xl font-black text-indigo-900 tracking-tight mt-0.5">0 Struk</h3>
-                            <p id="exec-kpi-aov" class="text-[10px] text-indigo-600 font-semibold mt-1">Rata-rata: Rp 0 / struk (AOV)</p>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">Total Transaksi</p>
+                            <h3 id="exec-kpi-transactions" class="text-lg sm:text-xl font-black text-indigo-900 dark:text-indigo-200 tracking-tight mt-0.5">0 Struk</h3>
+                            <p id="exec-kpi-aov" class="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-1">Rata-rata: Rp 0 / struk (AOV)</p>
                         </div>
                     </div>
 
                     <!-- Card 3: Laba Kotor -->
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs relative overflow-hidden">
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xs relative overflow-hidden transition-colors">
                         <div class="flex items-center justify-between">
-                            <span class="p-2.5 bg-purple-50 text-purple-600 rounded-xl text-lg">📈</span>
-                            <span id="exec-kpi-margin-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800">0% Margin</span>
+                            <span class="p-2.5 bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 rounded-xl text-lg">📈</span>
+                            <span id="exec-kpi-margin-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800">0% Margin</span>
                         </div>
                         <div class="mt-3">
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Laba Kotor Terestimasi</p>
-                            <h3 id="exec-kpi-profit" class="text-lg sm:text-xl font-black text-purple-900 tracking-tight mt-0.5">Rp 0</h3>
-                            <p id="exec-kpi-cogs" class="text-[10px] text-purple-600 font-medium mt-1">BOM / Modal: Rp 0</p>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">Laba Kotor Terestimasi</p>
+                            <h3 id="exec-kpi-profit" class="text-lg sm:text-xl font-black text-purple-900 dark:text-purple-200 tracking-tight mt-0.5">Rp 0</h3>
+                            <p id="exec-kpi-cogs" class="text-[10px] text-purple-600 dark:text-purple-400 font-medium mt-1">BOM / Modal: Rp 0</p>
                         </div>
                     </div>
 
                     <!-- Card 4: Status Cabang Buka -->
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs relative overflow-hidden">
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xs relative overflow-hidden transition-colors">
                         <div class="flex items-center justify-between">
-                            <span class="p-2.5 bg-amber-50 text-amber-600 rounded-xl text-lg">🏪</span>
-                            <span id="exec-kpi-active-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 flex items-center space-x-1">
+                            <span class="p-2.5 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl text-lg">🏪</span>
+                            <span id="exec-kpi-active-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center space-x-1">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                 <span>Outlet Buka</span>
                             </span>
                         </div>
                         <div class="mt-3">
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Status Outlet Aktif</p>
-                            <h3 id="exec-kpi-branches" class="text-lg sm:text-xl font-black text-slate-800 tracking-tight mt-0.5">0 Cabang</h3>
-                            <p id="exec-kpi-shifts" class="text-[10px] text-slate-500 mt-1">0 Shift Kasir beroperasi</p>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">Status Outlet Aktif</p>
+                            <h3 id="exec-kpi-branches" class="text-lg sm:text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight mt-0.5">0 Cabang</h3>
+                            <p id="exec-kpi-shifts" class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">0 Shift Kasir beroperasi</p>
                         </div>
                     </div>
 
                     <!-- Card 5: Arus Kas / Beban -->
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs relative overflow-hidden col-span-2 lg:col-span-1">
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xs relative overflow-hidden col-span-2 lg:col-span-1 transition-colors">
                         <div class="flex items-center justify-between">
-                            <span class="p-2.5 bg-rose-50 text-rose-600 rounded-xl text-lg">💸</span>
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800">Biaya / Beban</span>
+                            <span class="p-2.5 bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 rounded-xl text-lg">💸</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800">Biaya / Beban</span>
                         </div>
                         <div class="mt-3">
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Beban Operasional Toko</p>
-                            <h3 id="exec-kpi-expenses" class="text-lg sm:text-xl font-black text-rose-700 tracking-tight mt-0.5">Rp 0</h3>
-                            <p id="exec-kpi-net-cash" class="text-[10px] text-slate-500 mt-1">Estimasi Kas Bersih: Rp 0</p>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">Beban Operasional Toko</p>
+                            <h3 id="exec-kpi-expenses" class="text-lg sm:text-xl font-black text-rose-700 dark:text-rose-400 tracking-tight mt-0.5">Rp 0</h3>
+                            <p id="exec-kpi-net-cash" class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Estimasi Kas Bersih: Rp 0</p>
                         </div>
                     </div>
                 </div>
@@ -675,28 +675,28 @@ try {
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     
                     <!-- Left Column (7 cols): Real-Time Live Transaction Radar Stream -->
-                    <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
+                    <div class="lg:col-span-7 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col transition-colors">
                         <!-- Header -->
-                        <div class="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50/60">
+                        <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 bg-slate-50/60 dark:bg-slate-800/40">
                             <div class="flex items-center space-x-2.5">
-                                <span class="p-1.5 bg-emerald-100 text-emerald-800 rounded-lg text-sm">⚡</span>
+                                <span class="p-1.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 rounded-lg text-sm">⚡</span>
                                 <div>
-                                    <h3 class="font-extrabold text-xs text-slate-800 uppercase tracking-wider flex items-center space-x-2">
+                                    <h3 class="font-extrabold text-xs text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center space-x-2">
                                         <span>Live Stream Transaksi Seluruh Cabang</span>
                                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                                     </h3>
-                                    <p class="text-[10px] text-slate-500" id="exec-live-count-sub">Memuat stream transaksi...</p>
+                                    <p class="text-[10px] text-slate-500 dark:text-slate-400" id="exec-live-count-sub">Memuat stream transaksi...</p>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-2 text-xs">
-                                <span id="exec-last-synced-time" class="text-[11px] text-slate-400 font-medium">Auto-sync aktif</span>
+                                <span id="exec-last-synced-time" class="text-[11px] text-slate-400 dark:text-slate-400 font-medium">Auto-sync aktif</span>
                             </div>
                         </div>
 
                         <!-- Live Table / Stream Feed -->
                         <div class="overflow-x-auto max-h-[520px] overflow-y-auto custom-scrollbar">
                             <table class="w-full text-left text-xs">
-                                <thead class="bg-slate-50/90 text-[10px] uppercase font-bold text-slate-400 tracking-wider sticky top-0 border-b border-slate-200/60 z-10">
+                                <thead class="bg-slate-50/90 dark:bg-slate-800/90 text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400 tracking-wider sticky top-0 border-b border-slate-200/60 dark:border-slate-700 z-10">
                                     <tr>
                                         <th class="py-2.5 px-3">Waktu</th>
                                         <th class="py-2.5 px-3">No. Faktur</th>
@@ -706,35 +706,35 @@ try {
                                         <th class="py-2.5 px-3 text-center">Metode</th>
                                     </tr>
                                 </thead>
-                                <tbody id="exec-live-transactions-body" class="divide-y divide-slate-100">
+                                <tbody id="exec-live-transactions-body" class="divide-y divide-slate-100 dark:divide-slate-800">
                                     <!-- Dynamic Realtime Rows via JS -->
                                 </tbody>
                             </table>
                         </div>
                         
                         <!-- Footer status -->
-                        <div class="p-3 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
+                        <div class="p-3 bg-slate-50 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
                             <span class="flex items-center space-x-1.5">
-                                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
                                 <span>Data tersinkronisasi langsung dari database transaksi penjualan aktif</span>
                             </span>
-                            <button type="button" onclick="switchTab('reports')" class="text-indigo-600 hover:text-indigo-800 font-bold hover:underline">Lihat Laporan Lengkap &rarr;</button>
+                            <button type="button" onclick="switchTab('reports')" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-bold hover:underline">Lihat Laporan Lengkap &rarr;</button>
                         </div>
                     </div>
 
                     <!-- Right Column (5 cols): Multi-Branch Performance Leaderboard -->
                     <div class="lg:col-span-5 space-y-6">
                         <!-- Branch Performance Card -->
-                        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
-                            <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+                            <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40">
                                 <div class="flex items-center space-x-2">
-                                    <span class="p-1.5 bg-amber-100 text-amber-800 rounded-lg text-sm">🏆</span>
+                                    <span class="p-1.5 bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 rounded-lg text-sm">🏆</span>
                                     <div>
-                                        <h3 class="font-extrabold text-xs text-slate-800 uppercase tracking-wider">Komparasi Kinerja Cabang</h3>
-                                        <p class="text-[10px] text-slate-500">Ranking omzet & kontribusi penjualan hari ini</p>
+                                        <h3 class="font-extrabold text-xs text-slate-800 dark:text-slate-100 uppercase tracking-wider">Komparasi Kinerja Cabang</h3>
+                                        <p class="text-[10px] text-slate-500 dark:text-slate-400">Ranking omzet & kontribusi penjualan hari ini</p>
                                     </div>
                                 </div>
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600" id="exec-branches-ranking-count">0 Cabang</span>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700" id="exec-branches-ranking-count">0 Cabang</span>
                             </div>
 
                             <div class="p-4 space-y-3.5" id="exec-branch-leaderboard-container">
@@ -743,13 +743,13 @@ try {
                         </div>
 
                         <!-- Payment Methods Breakdown Card -->
-                        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
-                            <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+                            <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40">
                                 <div class="flex items-center space-x-2">
-                                    <span class="p-1.5 bg-indigo-100 text-indigo-800 rounded-lg text-sm">💳</span>
+                                    <span class="p-1.5 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 rounded-lg text-sm">💳</span>
                                     <div>
-                                        <h3 class="font-extrabold text-xs text-slate-800 uppercase tracking-wider">Saluran Pembayaran Kasir</h3>
-                                        <p class="text-[10px] text-slate-500">Distribusi Tunai, QRIS, Transfer & Piutang</p>
+                                        <h3 class="font-extrabold text-xs text-slate-800 dark:text-slate-100 uppercase tracking-wider">Saluran Pembayaran Kasir</h3>
+                                        <p class="text-[10px] text-slate-500 dark:text-slate-400">Distribusi Tunai, QRIS, Transfer & Piutang</p>
                                     </div>
                                 </div>
                             </div>
@@ -762,16 +762,16 @@ try {
                 </div>
 
                 <!-- Row 3: Top Selling Fast-Moving Products Today -->
-                <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
-                    <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+                <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+                    <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40">
                         <div class="flex items-center space-x-2">
-                            <span class="p-1.5 bg-purple-100 text-purple-800 rounded-lg text-sm">🔥</span>
+                            <span class="p-1.5 bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 rounded-lg text-sm">🔥</span>
                             <div>
-                                <h3 class="font-extrabold text-xs text-slate-800 uppercase tracking-wider">Top 8 Produk Terlaris Hari Ini (Lintas Cabang)</h3>
-                                <p class="text-[10px] text-slate-500">Produk dengan volume penjualan & perputaran tercepat (Fast-Moving)</p>
+                                <h3 class="font-extrabold text-xs text-slate-800 dark:text-slate-100 uppercase tracking-wider">Top 8 Produk Terlaris Hari Ini (Lintas Cabang)</h3>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400">Produk dengan volume penjualan & perputaran tercepat (Fast-Moving)</p>
                             </div>
                         </div>
-                        <span class="text-[11px] font-bold text-indigo-600">Konsolidasi Terkini</span>
+                        <span class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">Konsolidasi Terkini</span>
                     </div>
 
                     <div class="p-4">
@@ -26904,9 +26904,9 @@ Manager / Supervisor: __________________
                 const b = document.getElementById(`exec-date-btn-${p}`);
                 if (!b) return;
                 if (p === preset) {
-                    b.className = 'exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500 text-slate-950 transition-colors';
+                    b.className = 'exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500 text-slate-950 transition-colors shadow-2xs';
                 } else {
-                    b.className = 'exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-300 hover:text-white transition-colors';
+                    b.className = 'exec-date-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors';
                 }
             });
 
@@ -27060,11 +27060,11 @@ Manager / Supervisor: __________________
                     if (recentTx.length === 0) {
                         txBody.innerHTML = `
                             <tr>
-                                <td colspan="6" class="py-12 text-center text-slate-400">
+                                <td colspan="6" class="py-12 text-center text-slate-400 dark:text-slate-500">
                                     <div class="flex flex-col items-center justify-center space-y-2">
                                         <span class="text-3xl">📭</span>
-                                        <p class="font-bold text-xs">Belum ada aktivitas transaksi pada periode ini</p>
-                                        <p class="text-[11px] text-slate-400">Transaksi kasir akan otomatis muncul secara live di sini saat diselesaikan.</p>
+                                        <p class="font-bold text-xs text-slate-600 dark:text-slate-400">Belum ada aktivitas transaksi pada periode ini</p>
+                                        <p class="text-[11px] text-slate-400 dark:text-slate-500">Transaksi kasir akan otomatis muncul secara live di sini saat diselesaikan.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -27080,43 +27080,43 @@ Manager / Supervisor: __________________
                             
                             // Badge payment
                             const pMethod = (tx.payment_method || 'CASH').toUpperCase();
-                            let pBadgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
-                            if (pMethod.includes('QRIS')) pBadgeClass = 'bg-blue-100 text-blue-800 border-blue-200';
-                            else if (pMethod.includes('TRANSFER')) pBadgeClass = 'bg-indigo-100 text-indigo-800 border-indigo-200';
-                            else if (pMethod.includes('DEBIT') || pMethod.includes('EDC')) pBadgeClass = 'bg-purple-100 text-purple-800 border-purple-200';
-                            else if (pMethod.includes('TEMPO') || pMethod.includes('PIUTANG')) pBadgeClass = 'bg-amber-100 text-amber-800 border-amber-200';
+                            let pBadgeClass = 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
+                            if (pMethod.includes('QRIS')) pBadgeClass = 'bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800';
+                            else if (pMethod.includes('TRANSFER')) pBadgeClass = 'bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800';
+                            else if (pMethod.includes('DEBIT') || pMethod.includes('EDC')) pBadgeClass = 'bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800';
+                            else if (pMethod.includes('TEMPO') || pMethod.includes('PIUTANG')) pBadgeClass = 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800';
 
                             const isDelivery = (tx.delivery_method === 'DELIVERY') || (tx.delivery_status && tx.delivery_status !== 'PICKUP') || (Number(tx.delivery_fee || 0) > 0);
                             const totalAmount = tx.grand_total !== undefined ? tx.grand_total : (tx.final_amount !== undefined ? tx.final_amount : (tx.total_amount || 0));
 
                             return `
-                                <tr class="hover:bg-amber-50/40 transition-colors ${isNew ? 'bg-emerald-50/60 animate-pulse' : ''}">
+                                <tr class="hover:bg-amber-50/40 dark:hover:bg-slate-800/60 transition-colors ${isNew ? 'bg-emerald-50/60 dark:bg-emerald-950/40 animate-pulse' : ''}">
                                     <td class="py-2.5 px-3 whitespace-nowrap">
                                         <div class="flex flex-col">
-                                            <span class="font-black text-slate-800 text-[11px]">${relTime}</span>
-                                            <span class="text-[10px] text-slate-400 font-mono">${tx.time_formatted || (txDate.split(' ')[1] || '')}</span>
+                                            <span class="font-black text-slate-800 dark:text-slate-100 text-[11px]">${relTime}</span>
+                                            <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono">${tx.time_formatted || (txDate.split(' ')[1] || '')}</span>
                                         </div>
                                     </td>
                                     <td class="py-2.5 px-3 whitespace-nowrap">
-                                        <button type="button" onclick="openSaleDetailModal('${escapeHtml(tx.invoice_number)}')" class="font-mono font-bold text-indigo-600 hover:text-indigo-800 hover:underline flex items-center space-x-1" title="Buka Detail Nota Transaksi">
+                                        <button type="button" onclick="openSaleDetailModal('${escapeHtml(tx.invoice_number)}')" class="font-mono font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline flex items-center space-x-1" title="Buka Detail Nota Transaksi">
                                             <span>#${escapeHtml(tx.invoice_number)}</span>
                                             <i data-lucide="external-link" class="w-3 h-3"></i>
                                         </button>
-                                        <span class="text-[10px] text-slate-400 block">${escapeHtml(tx.customer_name || 'Pelanggan Umum')}</span>
+                                        <span class="text-[10px] text-slate-400 dark:text-slate-500 block">${escapeHtml(tx.customer_name || 'Pelanggan Umum')}</span>
                                     </td>
                                     <td class="py-2.5 px-3 whitespace-nowrap">
                                         <div class="flex items-center space-x-1.5">
-                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">${escapeHtml(tx.branch_name || '-')}</span>
-                                            ${isDelivery ? '<span class="px-1 py-0.2 rounded text-[9px] font-bold bg-purple-100 text-purple-700 border border-purple-200" title="Pesanan Dikirim Kurir">🛵 Kurir</span>' : ''}
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">${escapeHtml(tx.branch_name || '-')}</span>
+                                            ${isDelivery ? '<span class="px-1 py-0.2 rounded text-[9px] font-bold bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800" title="Pesanan Dikirim Kurir">🛵 Kurir</span>' : ''}
                                         </div>
-                                        <span class="text-[10px] text-slate-400 mt-0.5 block">Kasir: ${escapeHtml(tx.cashier_name || '-')}</span>
+                                        <span class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 block">Kasir: ${escapeHtml(tx.cashier_name || '-')}</span>
                                     </td>
                                     <td class="py-2.5 px-3 max-w-[220px]">
-                                        <span class="text-[11px] text-slate-700 font-medium truncate block" title="${escapeHtml(itemsSummary)}">${escapeHtml(shortSummary || '-')}</span>
-                                        <span class="text-[10px] text-slate-400">${tx.total_items_qty || items.length || 0} qty produk</span>
+                                        <span class="text-[11px] text-slate-700 dark:text-slate-200 font-medium truncate block" title="${escapeHtml(itemsSummary)}">${escapeHtml(shortSummary || '-')}</span>
+                                        <span class="text-[10px] text-slate-400 dark:text-slate-500">${tx.total_items_qty || items.length || 0} qty produk</span>
                                     </td>
                                     <td class="py-2.5 px-3 text-right whitespace-nowrap">
-                                        <span class="font-black text-slate-900 text-xs sm:text-sm">${formatRupiah(totalAmount)}</span>
+                                        <span class="font-black text-slate-900 dark:text-slate-100 text-xs sm:text-sm">${formatRupiah(totalAmount)}</span>
                                     </td>
                                     <td class="py-2.5 px-3 text-center whitespace-nowrap">
                                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${pBadgeClass}">${escapeHtml(pMethod)}</span>
@@ -27136,7 +27136,7 @@ Manager / Supervisor: __________________
 
                 if (rankingContainer) {
                     if (branchRanking.length === 0) {
-                        rankingContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Belum ada data penjualan per cabang pada filter ini.</p>`;
+                        rankingContainer.innerHTML = `<p class="text-xs text-slate-400 dark:text-slate-500 text-center py-4">Belum ada data penjualan per cabang pada filter ini.</p>`;
                     } else {
                         const topRevenue = Math.max(...branchRanking.map(b => Number(b.revenue || b.total_revenue || 0)), 1);
                         rankingContainer.innerHTML = branchRanking.map((b, idx) => {
@@ -27145,25 +27145,25 @@ Manager / Supervisor: __________________
                             const aovB = Number(b.aov || 0);
                             const pct = b.revenue_share_pct !== undefined ? Number(b.revenue_share_pct) : Math.min(100, Math.round((rev / topRevenue) * 100));
                             
-                            let rankBadge = `<span class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-black text-xs flex items-center justify-center shrink-0">#${idx + 1}</span>`;
+                            let rankBadge = `<span class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black text-xs flex items-center justify-center shrink-0">#${idx + 1}</span>`;
                             if (idx === 0) rankBadge = `<span class="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center shrink-0 shadow-sm shadow-amber-400/40">🥇</span>`;
-                            else if (idx === 1) rankBadge = `<span class="w-6 h-6 rounded-full bg-slate-300 text-slate-900 font-black text-xs flex items-center justify-center shrink-0">🥈</span>`;
-                            else if (idx === 2) rankBadge = `<span class="w-6 h-6 rounded-full bg-amber-700/40 text-amber-900 font-black text-xs flex items-center justify-center shrink-0">🥉</span>`;
+                            else if (idx === 1) rankBadge = `<span class="w-6 h-6 rounded-full bg-slate-300 dark:bg-slate-600 text-slate-900 dark:text-slate-100 font-black text-xs flex items-center justify-center shrink-0">🥈</span>`;
+                            else if (idx === 2) rankBadge = `<span class="w-6 h-6 rounded-full bg-amber-700/40 text-amber-900 dark:text-amber-300 font-black text-xs flex items-center justify-center shrink-0">🥉</span>`;
 
                             return `
-                                <div class="p-2.5 rounded-2xl bg-slate-50/80 hover:bg-slate-100/80 transition-colors border border-slate-100 space-y-2">
+                                <div class="p-2.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors border border-slate-100 dark:border-slate-800 space-y-2">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center space-x-2.5">
                                             ${rankBadge}
                                             <div>
-                                                <h4 class="font-extrabold text-xs text-slate-800">${escapeHtml(b.branch_name)} <span class="text-slate-400 font-mono text-[10px]">(${escapeHtml(b.branch_code)})</span></h4>
-                                                <p class="text-[10px] text-slate-500">${txCount.toLocaleString('id-ID')} transaksi &bull; AOV: ${formatRupiah(aovB)}</p>
+                                                <h4 class="font-extrabold text-xs text-slate-800 dark:text-slate-100">${escapeHtml(b.branch_name)} <span class="text-slate-400 dark:text-slate-500 font-mono text-[10px]">(${escapeHtml(b.branch_code)})</span></h4>
+                                                <p class="text-[10px] text-slate-500 dark:text-slate-400">${txCount.toLocaleString('id-ID')} transaksi &bull; AOV: ${formatRupiah(aovB)}</p>
                                             </div>
                                         </div>
-                                        <span class="font-black text-xs text-slate-900">${formatRupiah(rev)}</span>
+                                        <span class="font-black text-xs text-slate-900 dark:text-slate-100">${formatRupiah(rev)}</span>
                                     </div>
                                     <!-- Progress bar -->
-                                    <div class="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
+                                    <div class="w-full bg-slate-200/70 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
                                         <div class="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
                                     </div>
                                 </div>
@@ -27177,7 +27177,7 @@ Manager / Supervisor: __________________
                 const pDist = data.payment_methods || data.payment_distribution || [];
                 if (paymentContainer) {
                     if (pDist.length === 0) {
-                        paymentContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Belum ada data saluran pembayaran.</p>`;
+                        paymentContainer.innerHTML = `<p class="text-xs text-slate-400 dark:text-slate-500 text-center py-4">Belum ada data saluran pembayaran.</p>`;
                     } else {
                         const totalPayRev = pDist.reduce((acc, p) => acc + Number(p.total_amount || 0), 0) || 1;
                         paymentContainer.innerHTML = pDist.map(p => {
@@ -27189,14 +27189,14 @@ Manager / Supervisor: __________________
                             return `
                                 <div class="space-y-1">
                                     <div class="flex items-center justify-between text-xs font-bold">
-                                        <span class="text-slate-700 flex items-center space-x-1.5">
+                                        <span class="text-slate-700 dark:text-slate-200 flex items-center space-x-1.5">
                                             <span>${escapeHtml(pMethod)}</span>
-                                            <span class="text-[10px] font-normal text-slate-400">(${pCount} trx)</span>
+                                            <span class="text-[10px] font-normal text-slate-400 dark:text-slate-500">(${pCount} trx)</span>
                                         </span>
-                                        <span class="text-slate-900">${formatRupiah(pNominal)} <span class="text-[10px] text-slate-400 font-normal">(${pShare}%)</span></span>
+                                        <span class="text-slate-900 dark:text-slate-100">${formatRupiah(pNominal)} <span class="text-[10px] text-slate-400 dark:text-slate-500 font-normal">(${pShare}%)</span></span>
                                     </div>
-                                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                                        <div class="h-full bg-indigo-600 rounded-full transition-all duration-500" style="width: ${pShare}%"></div>
+                                    <div class="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                                        <div class="h-full bg-indigo-600 dark:bg-indigo-500 rounded-full transition-all duration-500" style="width: ${pShare}%"></div>
                                     </div>
                                 </div>
                             `;
@@ -27209,18 +27209,18 @@ Manager / Supervisor: __________________
                 const topProducts = data.top_products || [];
                 if (topProdGrid) {
                     if (topProducts.length === 0) {
-                        topProdGrid.innerHTML = `<div class="col-span-full text-center py-6 text-xs text-slate-400">Belum ada produk terjual pada periode ini.</div>`;
+                        topProdGrid.innerHTML = `<div class="col-span-full text-center py-6 text-xs text-slate-400 dark:text-slate-500">Belum ada produk terjual pada periode ini.</div>`;
                     } else {
                         topProdGrid.innerHTML = topProducts.map((p, idx) => {
                             const salesVal = p.total_sales !== undefined ? p.total_sales : (p.total_revenue || 0);
                             return `
-                                <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-purple-300 transition-all flex items-start space-x-3">
-                                    <span class="w-7 h-7 rounded-xl bg-purple-100 text-purple-800 font-black text-xs flex items-center justify-center shrink-0">#${idx + 1}</span>
+                                <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-600 transition-all flex items-start space-x-3">
+                                    <span class="w-7 h-7 rounded-xl bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 font-black text-xs flex items-center justify-center shrink-0">#${idx + 1}</span>
                                     <div class="min-w-0 flex-1">
-                                        <h4 class="font-bold text-xs text-slate-800 truncate" title="${escapeHtml(p.product_name)}">${escapeHtml(p.product_name)}</h4>
+                                        <h4 class="font-bold text-xs text-slate-800 dark:text-slate-100 truncate" title="${escapeHtml(p.product_name)}">${escapeHtml(p.product_name)}</h4>
                                         <div class="flex items-center space-x-2 mt-1">
-                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">${formatDecimal(p.total_qty)} Terjual</span>
-                                            <span class="text-[10px] text-slate-400 font-medium">${formatRupiah(salesVal)}</span>
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300">${formatDecimal(p.total_qty)} Terjual</span>
+                                            <span class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">${formatRupiah(salesVal)}</span>
                                         </div>
                                     </div>
                                 </div>
