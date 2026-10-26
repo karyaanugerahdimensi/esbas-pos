@@ -9552,6 +9552,8 @@ try {
                 </div>
             </form>
         </div>
+    </div>
+
     <!-- Modal: Riwayat & Penyesuaian Nilai Meteran Air Display Counter -->
     <div id="water-meter-adjust-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
@@ -17014,14 +17016,19 @@ Manager / Supervisor: __________________
                 document.getElementById('modal-slip-terbilang-text').innerText = angkaTerbilang(netSal) + " Rupiah";
 
                 // Footer Signatures
-                document.getElementById('modal-slip-sign-emp-name').innerText = u.name || '-';
-                const mgrUser = (allEmployeesData || []).find(e => ['BRANCH_MANAGER', 'MANAGER'].includes(e.role));
-                document.getElementById('modal-slip-sign-mgr-name').innerText = mgrUser ? mgrUser.name : 'Nina Indrayani, SE.';
+                const empNameEl = document.getElementById('modal-slip-sign-emp-name');
+                if (empNameEl) empNameEl.innerText = u.name || '-';
+                const employeePool = (typeof allEmployeesData !== 'undefined' && allEmployeesData && allEmployeesData.length > 0) ? allEmployeesData : (state.users || []);
+                const mgrUser = employeePool.find(e => ['BRANCH_MANAGER', 'MANAGER'].includes(e.role));
+                const mgrNameEl = document.getElementById('modal-slip-sign-mgr-name');
+                if (mgrNameEl) mgrNameEl.innerText = mgrUser ? mgrUser.name : 'Nina Indrayani, SE.';
 
-                document.getElementById('modal-slip-status-footer').innerText = `Status Dokumen: ${isVerified ? 'Terverifikasi (Resmi)' : 'Draft Otomatis'}`;
+                const footerStatusEl = document.getElementById('modal-slip-status-footer');
+                if (footerStatusEl) footerStatusEl.innerText = `Status Dokumen: ${isVerified ? 'Terverifikasi (Resmi)' : 'Draft Otomatis'}`;
 
-                document.getElementById('payroll-slip-modal').classList.remove('hidden');
-                lucide.createIcons();
+                const modalEl = document.getElementById('payroll-slip-modal');
+                if (modalEl) modalEl.classList.remove('hidden');
+                if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
             } catch (err) {
                 console.error(err);
                 alert('Terjadi kesalahan saat memuat slip gaji.');
@@ -17091,8 +17098,9 @@ Manager / Supervisor: __________________
                 document.getElementById('ped-notes').value = p.notes || '';
 
                 recalcPayrollEditorTotals();
-                document.getElementById('payroll-editor-modal').classList.remove('hidden');
-                lucide.createIcons();
+                const modalEl = document.getElementById('payroll-editor-modal');
+                if (modalEl) modalEl.classList.remove('hidden');
+                if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
             } catch (err) {
                 console.error(err);
                 alert('Gagal membuka editor payroll');
@@ -17100,7 +17108,8 @@ Manager / Supervisor: __________________
         }
 
         function closePayrollEditorModal() {
-            document.getElementById('payroll-editor-modal').classList.add('hidden');
+            const modalEl = document.getElementById('payroll-editor-modal');
+            if (modalEl) modalEl.classList.add('hidden');
         }
 
         function recalcPayrollEditorTotals() {

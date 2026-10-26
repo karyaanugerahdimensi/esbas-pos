@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.90",
-  "build": "20261026-45",
+  "version": "1.2.91",
+  "build": "20261026-46",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.91",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Perbaikan Tombol Aksi Modal Slip & Editor Payroll Akibat Unclosed Modal Div (FR-PAYROLL-02)",
+      "description": "Memperbaiki tombol aksi [Slip] dan [Edit] pada tabel Payroll Cabang (#tab-payroll) yang sebelumnya tidak memunculkan modal: (1) Penutupan Tag Kontainer Modal yang Hilang: Mengidentifikasi dan memperbaiki tag penutup </div> yang hilang pada modal angsuran kasbon (#loan-repay-modal, baris 9554) yang sebelumnya menyebabkan seluruh modal berikutnya (Water Meter, Base Version, Slip Gaji, dan Editor Payroll) bersarang (nested) di dalam kontainer yang memiliki kelas 'hidden' (display: none), sehingga modal tidak pernah muncul ke layar saat class hidden milik modal itu sendiri dihapus. (2) Defensif Null & Fallback Manajer: Menyempurnakan pemanggilan elemen modal slip dan editor dengan pengecekan aman null-guard, serta fallback pencarian manajer dari state.users jika allEmployeesData belum dimuat. (3) Kompatibilitas cal_days_in_month: Menambahkan fungsi fallback cal_days_in_month pada api.php untuk menjamin kestabilan pemrosesan data payroll di berbagai versi hosting PHP.",
+      "rollback_command": "git checkout v1.2.90"
+    },
     {
       "version": "1.2.90",
       "commit": "HEAD",

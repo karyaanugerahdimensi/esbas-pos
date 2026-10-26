@@ -11,6 +11,12 @@ if (!headers_sent()) {
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/version.php';
 
+if (!function_exists('cal_days_in_month')) {
+    function cal_days_in_month($calendar, $month, $year) {
+        return (int)date('t', mktime(0, 0, 0, (int)$month, 1, (int)$year));
+    }
+}
+
 // Safe session save path handling (ensure writable local directory)
 $sessionSaveDir = __DIR__ . DIRECTORY_SEPARATOR . 'sessions';
 if (!is_dir($sessionSaveDir)) {
