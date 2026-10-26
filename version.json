@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.86",
-  "build": "20261026-41",
+  "version": "1.2.87",
+  "build": "20261026-42",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.87",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Integrasi Kategori Reimbursement ESS dengan Master Beban Operasional Cabang (FR-ESS-14)",
+      "description": "Menghubungkan opsi kategori klaim pengeluaran toko (petty cash reimbursement) pada modul ESS secara langsung dan dinamis dengan Master Kategori Beban Operasional Cabang (`expense_categories`): (1) Preload & Sinkronisasi Dropdown: Mengganti opsi kategori statis lama pada elemen select `#reimburse-category` dengan pemuatan dinamis dari tabel master `expense_categories` yang aktif (Beban Listrik & Air, Beban Perlengkapan & Kemasan, Beban BBM, Kebersihan, dll.) baik pada pemuatan awal PHP maupun runtime JavaScript. (2) Sinkronisasi Endpoint ESS (`api.php`): Memperbarui aksi `ess_get_data` dan `get_initial_data` untuk menyertakan daftar kategori beban aktif ke klien, serta memperbarui logika approval/pencairan klaim `ess_approve_reimbursement` agar langsung mencatatkan kategori riil ke tabel `branch_expenses` dan terintegrasi otomatis ke Laporan Beban Operasional Cabang dan Laporan Laba Rugi.",
+      "rollback_command": "git checkout v1.2.86"
+    },
     {
       "version": "1.2.86",
       "commit": "HEAD",

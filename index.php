@@ -51,6 +51,16 @@ $initialLogoEmoji = $initialAppSettings['app_logo_emoji'] ?? '🛍️';
 $initialLogoUrl = $initialAppSettings['app_logo_url'] ?? '';
 $initialAppName = $initialAppSettings['app_name'] ?? 'ESBAS RETAIL';
 $initialAppSubtitle = $initialAppSettings['app_subtitle'] ?? 'POS, BOM & ESS';
+
+$initialExpenseCategories = [];
+try {
+    if (isset($pdo)) {
+        $stmtExpCats = $pdo->query("SELECT id, code, name, group_type FROM expense_categories WHERE is_active = 1 ORDER BY name ASC");
+        if ($stmtExpCats) {
+            $initialExpenseCategories = $stmtExpCats->fetchAll(PDO::FETCH_ASSOC);
+        }
+    }
+} catch (Throwable $e) {}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -1584,11 +1594,22 @@ $initialAppSubtitle = $initialAppSettings['app_subtitle'] ?? 'POS, BOM & ESS';
 
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                                 <div>
-                                    <label class="block text-slate-600 mb-1 font-semibold">Kategori:</label>
-                                    <select id="reimburse-category" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl">
-                                        <option value="KERTAS_KASIR">Kertas Struk Kasir</option>
-                                        <option value="UTILITAS_DARURAT">Token Listrik / Air Darurat</option>
-                                        <option value="OPERASIONAL_TOKO">Perlengkapan Toko</option>
+                                    <label class="block text-slate-700 dark:text-slate-300 mb-1 font-semibold flex items-center justify-between">
+                                        <span>Kategori Beban Cabang:</span>
+                                    </label>
+                                    <select id="reimburse-category" class="w-full p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 font-medium focus:ring-1 focus:ring-amber-500">
+                                        <?php if (!empty($initialExpenseCategories)): ?>
+                                            <?php foreach ($initialExpenseCategories as $expCat): ?>
+                                                <option value="<?= htmlspecialchars($expCat['name']) ?>"><?= htmlspecialchars($expCat['name']) ?></option>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <option value="Beban Perlengkapan Toko & Kemasan">Beban Perlengkapan Toko & Kemasan</option>
+                                            <option value="Beban Listrik, Air & Utilitas">Beban Listrik, Air & Utilitas</option>
+                                            <option value="Beban Kebersihan & Keamanan">Beban Kebersihan & Keamanan</option>
+                                            <option value="Beban Bahan Bakar (BBM) Kurir">Beban Bahan Bakar (BBM) Kurir</option>
+                                            <option value="Beban Pemeliharaan & Reparasi Toko">Beban Pemeliharaan & Reparasi Toko</option>
+                                            <option value="Beban Operasional Lain-lain">Beban Operasional Lain-lain</option>
+                                        <?php endif; ?>
                                     </select>
                                 </div>
                                 <div>
@@ -10370,6 +10391,8 @@ $initialAppSubtitle = $initialAppSettings['app_subtitle'] ?? 'POS, BOM & ESS';
                 state.currentDeliverySetting = data.current_delivery_setting || null;
                 state.allDeliverySettings = data.all_delivery_settings || [];
                 state.vehicles = data.all_vehicles || [];
+                state.expenseCategories = data.expense_categories || [];
+                populateReimburseCategoryDropdown(state.expenseCategories);
 
                 // Pastikan tier yang aktif terpilih adalah kategori yang berstatus aktif
                 const activeCats = (state.customerCategories || []).filter(c => c.is_active == 1);
@@ -15020,6 +15043,23 @@ Manager / Supervisor: __________________
             return ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER'].includes(r);
         }
 
+        function populateReimburseCategoryDropdown(categories) {
+            const select = document.getElementById('reimburse-category');
+            if (!select) return;
+            const currentVal = select.value;
+            const cats = (categories && categories.length > 0) ? categories : (state.expenseCategories || []);
+            const activeCats = cats.filter(c => c.is_active == 1);
+            if (activeCats.length === 0) return;
+
+            select.innerHTML = activeCats.map(c => `
+                <option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>
+            `).join('');
+
+            if (currentVal && activeCats.some(c => c.name === currentVal)) {
+                select.value = currentVal;
+            }
+        }
+
         async function loadEssData() {
             const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
             const uId = curUser.id || 3;
@@ -15032,6 +15072,11 @@ Manager / Supervisor: __________________
                     console.error('Bootstrap failed:', data.error || 'Unknown error');
                     return;
                 }
+
+            if (data.expense_categories && data.expense_categories.length > 0) {
+                state.expenseCategories = data.expense_categories;
+            }
+            populateReimburseCategoryDropdown(state.expenseCategories);
 
             document.getElementById('ess-emp-name').innerText = data.user.name;
             document.getElementById('ess-emp-role').innerText = `${data.user.role} • NIK: ${data.user.nik} • ${state.currentBranch.name}`;
@@ -20474,6 +20519,7 @@ Manager / Supervisor: __________________
                 if (kpiCatCount) kpiCatCount.innerText = state.expenseCategories.length;
 
                 populateExpenseCategoryFilterDropdown();
+                populateReimburseCategoryDropdown(state.expenseCategories);
 
                 if (render) {
                     renderExpenseCategoriesTable();

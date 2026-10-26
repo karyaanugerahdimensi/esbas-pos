@@ -1397,6 +1397,9 @@ try {
             $finalClosedShiftToday = $stmtBranchFinalClosed->fetch();
             $isBranchClosedToday = !empty($finalClosedShiftToday);
 
+            $stmtInitExpCats = $pdo->query("SELECT id, code, name, group_type FROM expense_categories WHERE is_active = 1 ORDER BY name ASC");
+            $initialExpCats = $stmtInitExpCats ? $stmtInitExpCats->fetchAll(PDO::FETCH_ASSOC) : [];
+
             echo json_encode([
                 'success' => true,
                 'branches' => $branches,
@@ -1419,6 +1422,7 @@ try {
                 'customers' => $customers,
                 'mitra_prices' => $mitraPrices,
                 'customer_categories' => $customerCategories,
+                'expense_categories' => $initialExpCats,
                 'current_delivery_setting' => $currentDeliverySetting,
                 'all_delivery_settings' => $allDeliverySettings,
                 'branch_vehicles' => $branchVehicles,
@@ -8088,6 +8092,9 @@ try {
             }
             $allBranchReimbursements = $stmtPendingReimburse->fetchAll();
 
+            $stmtExpCats = $pdo->query("SELECT id, code, name, group_type FROM expense_categories WHERE is_active = 1 ORDER BY name ASC");
+            $expenseCategories = $stmtExpCats ? $stmtExpCats->fetchAll(PDO::FETCH_ASSOC) : [];
+
             echo json_encode([
                 'success' => true,
                 'is_manager' => $isManager,
@@ -8101,7 +8108,8 @@ try {
                 'today_attendance' => $todayAttendance,
                 'attendance_history' => $attendanceHistory,
                 'colleagues' => $colleagues,
-                'branch_reimbursements' => $allBranchReimbursements
+                'branch_reimbursements' => $allBranchReimbursements,
+                'expense_categories' => $expenseCategories
             ]);
             break;
 
@@ -8216,11 +8224,12 @@ try {
             $pdo->prepare("UPDATE reimbursements SET status = 'DISBURSED', disbursed_at = datetime('now', 'localtime') WHERE id = ?")->execute([$reimburseId]);
 
             $catNameMap = [
-                'KERTAS_KASIR' => 'Perlengkapan Kasir (ESS Reimbursement)',
-                'UTILITAS_DARURAT' => 'Utilitas & Listrik Toko (ESS Reimbursement)',
-                'OPERASIONAL_TOKO' => 'Operasional & Kebersihan Toko (ESS Reimbursement)'
+                'KERTAS_KASIR' => 'Beban Perlengkapan Toko & Kemasan',
+                'UTILITAS_DARURAT' => 'Beban Listrik, Air & Utilitas',
+                'OPERASIONAL_TOKO' => 'Beban Kebersihan & Keamanan'
             ];
-            $catLabel = $catNameMap[$claim['category']] ?? 'Beban Operasional Toko (ESS)';
+            $rawCat = trim($claim['category'] ?? '');
+            $catLabel = $catNameMap[$rawCat] ?? ($rawCat ?: 'Beban Operasional Toko (ESS)');
 
             $stmtExp = $pdo->prepare("
                 INSERT INTO branch_expenses (branch_id, category, amount, expense_date, source, notes)
