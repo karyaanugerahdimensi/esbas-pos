@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.74",
-  "build": "20261026-29",
+  "version": "1.2.75",
+  "build": "20261026-30",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.75",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Perbaikan Error Unik Kode Pelanggan & Multi-Strategy Deduplikasi Import CRM (FR-CRM-10)",
+      "description": "Menyempurnakan mesin import data pelanggan & mitra massal (api.php) untuk mengatasi galat SQLSTATE[23000] UNIQUE constraint failed: customers.code: (1) Normalisasi Nomor Telepon Lanjutan: Menambahkan helper normalizeCustomerPhone() yang menyelaraskan seluruh variasi nomor telepon (anti-pemotongan nol Excel '812...', format '+62...', tanda hubung/spasi) sehingga pembaruan nama pelanggan yang sudah ada selalu cocok dengan data basis data dan tidak memicu penambahan data baru. (2) Multi-Strategy Deduplication Engine: Mengembangkan pencocokan bertingkat menggunakan in-memory index hash map (berdasarkan Kode Pelanggan, Nomor Telepon ternormalisasi, Nomor Telepon digit mentah, dan Nama Pelanggan) yang memungkinkan pembaruan nama pelanggan secara instan tanpa duplikasi. (3) Anti-Collision Unique Code Generator: Mengganti generator kode 3-digit acak dengan generator 5-digit ber-entropi tinggi (100.000 kombinasi) dilengkapi loop verifikasi ganda (database check + memory index) yang menjamin 100% bebas tabrakan kode unik saat ribuan pelanggan diimport serentak. (4) Dukungan Kolom Kode Pelanggan & Koreksi Pemisahan Titik Koordinat: Menambahkan pemetaan kolom 'kode'/'kode pelanggan'/'code' pada parser berkas serta mengoreksi ekspresi reguler un-splitting koordinat berkoma dengan spasi.",
+      "rollback_command": "git checkout v1.2.74"
+    },
     {
       "version": "1.2.74",
       "commit": "HEAD",

@@ -233,6 +233,19 @@ if (!function_exists('parseCustomerXlsxRaw')) {
     }
 }
 
+if (!function_exists('normalizeCustomerPhone')) {
+    function normalizeCustomerPhone($phone) {
+        $digits = preg_replace('/\D+/', '', $phone ?? '');
+        if (empty($digits)) return '';
+        if (strpos($digits, '62') === 0 && strlen($digits) >= 9) {
+            $digits = '0' . substr($digits, 2);
+        } elseif (strpos($digits, '0') !== 0 && strlen($digits) >= 8) {
+            $digits = '0' . $digits;
+        }
+        return $digits;
+    }
+}
+
 if (!function_exists('parseCustomerFileToRowsUnified')) {
     function parseCustomerFileToRowsUnified($filePath, $rawString = '') {
         $rawRows = [];
@@ -288,6 +301,8 @@ if (!function_exists('parseCustomerFileToRowsUnified')) {
         if (empty($rawRows)) return [];
 
         $headerMap = [
+            'kode' => 'code', 'kode pelanggan' => 'code', 'kode customer' => 'code', 'customer code' => 'code', 'code' => 'code', 'cust code' => 'code',
+            'no' => 'row_num', 'nomor' => 'row_num', '#' => 'row_num',
             'nama' => 'name', 'nama pelanggan' => 'name', 'nama lengkap' => 'name', 'customer name' => 'name', 'name' => 'name',
             'no telepon' => 'phone', 'no telp' => 'phone', 'nomor telepon' => 'phone', 'no hp' => 'phone', 'nomor hp' => 'phone',
             'telepon' => 'phone', 'phone' => 'phone', 'hp' => 'phone', 'wa' => 'phone', 'whatsapp' => 'phone', 'no whatsapp' => 'phone',
@@ -314,7 +329,11 @@ if (!function_exists('parseCustomerFileToRowsUnified')) {
 
         $startIndex = $isHeader ? 1 : 0;
         if (!$isHeader) {
-            $canonicalHeaders = ['name', 'phone', 'address', 'maps_url', 'category'];
+            if (isset($firstRow[0]) && preg_match('/^(?:CUST|MBR|RSL|MTR)-/i', trim($firstRow[0]))) {
+                $canonicalHeaders = ['code', 'name', 'phone', 'address', 'maps_url', 'category'];
+            } else {
+                $canonicalHeaders = ['name', 'phone', 'address', 'maps_url', 'category'];
+            }
         }
 
         $parsedRows = [];
@@ -326,7 +345,7 @@ if (!function_exists('parseCustomerFileToRowsUnified')) {
                 $mapsIdx = array_search('maps_url', $canonicalHeaders);
                 if ($mapsIdx !== false && isset($data[$mapsIdx]) && isset($data[$mapsIdx + 1])) {
                     $candidate = $data[$mapsIdx] . ',' . $data[$mapsIdx + 1];
-                    if (preg_match('#(?:[?&]q=|-?\d{1,2}\.\d+)[,+](?:-?\d{1,3}\.\d+)#i', $candidate)) {
+                    if (preg_match('#(?:\bq=|-?\d{1,2}\.\d+)\s*[,+]\s*(?:-?\d{1,3}\.\d+)#i', $candidate)) {
                         $merged = array_slice($data, 0, $mapsIdx);
                         $merged[] = $candidate;
                         $merged = array_merge($merged, array_slice($data, $mapsIdx + 2));
@@ -337,6 +356,7 @@ if (!function_exists('parseCustomerFileToRowsUnified')) {
 
             $row = [];
             foreach ($canonicalHeaders as $cIdx => $colKey) {
+                if ($colKey === 'row_num') continue;
                 $row[$colKey] = isset($data[$cIdx]) ? trim($data[$cIdx]) : '';
             }
             $parsedRows[] = $row;
@@ -11182,6 +11202,7 @@ try {
                 $coordsObj = ($coords[0] !== null && $coords[1] !== null) ? ['lat' => $coords[0], 'lon' => $coords[1]] : null;
 
                 $previewRows[] = [
+                    'code' => $r['code'] ?? ($r['kode'] ?? ''),
                     'name' => $name,
                     'phone' => $phone,
                     'address' => $r['address'] ?? '',
@@ -11229,10 +11250,37 @@ try {
                 }
             } catch (Exception $e) {}
 
-            $stmtFindByPhone = $pdo->prepare("SELECT id, code, name, category, latitude, longitude, address FROM customers WHERE phone = ? LIMIT 1");
+            // Preload seluruh pelanggan yang ada ke dalam memory map untuk pencocokan multi-strategi yang instan & presisi
+            $allExistingCustomers = $pdo->query("SELECT id, code, name, phone, address, category, latitude, longitude FROM customers")->fetchAll(PDO::FETCH_ASSOC);
+            $byCode = [];
+            $byNormPhone = [];
+            $byRawPhone = [];
+            $byName = [];
+
+            foreach ($allExistingCustomers as $c) {
+                if (!empty($c['code'])) {
+                    $byCode[strtoupper(trim($c['code']))] = $c;
+                }
+                if (!empty($c['phone'])) {
+                    $rawP = preg_replace('/\D+/', '', $c['phone']);
+                    if (!empty($rawP)) {
+                        $byRawPhone[$rawP] = $c;
+                    }
+                    $normP = normalizeCustomerPhone($c['phone']);
+                    if (!empty($normP)) {
+                        $byNormPhone[$normP] = $c;
+                    }
+                }
+                if (!empty($c['name'])) {
+                    $byName[strtolower(trim($c['name']))] = $c;
+                }
+            }
+
+            $stmtCheckCode = $pdo->prepare("SELECT id FROM customers WHERE UPPER(code) = UPPER(?) LIMIT 1");
+
             $stmtUpdate = $pdo->prepare("
                 UPDATE customers 
-                SET name = ?, address = ?, category = ?, 
+                SET name = ?, phone = ?, address = ?, category = ?, 
                     latitude = COALESCE(?, latitude), longitude = COALESCE(?, longitude)
                 WHERE id = ?
             ");
@@ -11250,6 +11298,7 @@ try {
 
             foreach ($rows as $idx => $r) {
                 $rowNum = $idx + 1;
+                $code = trim($r['code'] ?? ($r['kode'] ?? ''));
                 $name = trim($r['name'] ?? '');
                 $phone = trim($r['phone'] ?? '');
                 $address = trim($r['address'] ?? '');
@@ -11263,9 +11312,10 @@ try {
                     continue;
                 }
 
-                // Sanitasi nomor telepon
+                // Sanitasi & normalisasi nomor telepon
                 $cleanPhone = preg_replace('/[^\d+]/', '', $phone);
-                if (strlen($cleanPhone) < 6) {
+                $normPhone = normalizeCustomerPhone($phone);
+                if (strlen($cleanPhone) < 6 && strlen($normPhone) < 6) {
                     $skipped++;
                     $skippedDetails[] = "Baris #{$rowNum} ('{$name}'): No Telepon '{$phone}' tidak valid (minimal 6 digit).";
                     continue;
@@ -11288,26 +11338,121 @@ try {
                 // Ekstraksi koordinat Google Maps
                 list($lat, $lon) = parseCustomerGoogleCoords($mapsUrl);
 
-                // Cek apakah nomor telepon sudah terdaftar untuk deduplikasi
-                $stmtFindByPhone->execute([$cleanPhone]);
-                $existing = $stmtFindByPhone->fetch();
+                // Multi-Strategy Deduplication & Existing Customer Matcher:
+                $existing = null;
+
+                // 1. Cek berdasarkan Kode Pelanggan jika tersedia di file import
+                if (!empty($code) && isset($byCode[strtoupper($code)])) {
+                    $existing = $byCode[strtoupper($code)];
+                }
+
+                // 2. Cek berdasarkan No Telepon ternormalisasi (kebal pemotongan angka 0 Excel, format +62, dan tanda baca)
+                if (!$existing && !empty($normPhone) && isset($byNormPhone[$normPhone])) {
+                    $existing = $byNormPhone[$normPhone];
+                }
+
+                // 3. Fallback cek No Telepon raw digits
+                if (!$existing && !empty($cleanPhone) && isset($byRawPhone[$cleanPhone])) {
+                    $existing = $byRawPhone[$cleanPhone];
+                }
+
+                // 4. Fallback jika nomor telepon diubah/dikoreksi oleh pengguna, cocokkan nama lama yang persis
+                if (!$existing && !empty($name)) {
+                    $normName = strtolower(trim($name));
+                    if (isset($byName[$normName])) {
+                        $existing = $byName[$normName];
+                    }
+                }
 
                 if ($existing) {
-                    // Update data yang ada
+                    // Update data pelanggan yang sudah ada
                     $targetLat = ($lat !== null) ? $lat : $existing['latitude'];
                     $targetLon = ($lon !== null) ? $lon : $existing['longitude'];
                     $targetAddr = !empty($address) ? $address : $existing['address'];
                     $targetCat = !empty($rawCat) ? $category : $existing['category'];
+                    $targetPhone = !empty($cleanPhone) ? $cleanPhone : $existing['phone'];
 
-                    $stmtUpdate->execute([$name, $targetAddr, $targetCat, $targetLat, $targetLon, $existing['id']]);
+                    $stmtUpdate->execute([$name, $targetPhone, $targetAddr, $targetCat, $targetLat, $targetLon, $existing['id']]);
                     $updated++;
-                } else {
-                    // Buat kode pelanggan baru otomatis
-                    $prefix = ($category === 'MITRA') ? 'MTR-' : (($category === 'MEMBER') ? 'MBR-' : (($category === 'RESELLER') ? 'RSL-' : 'CUST-'));
-                    $code = $prefix . date('ymd') . rand(100, 999);
 
-                    $stmtInsert->execute([$code, $name, $cleanPhone, $address, $category, $lat, $lon, $branchId]);
+                    // Perbarui data index in-memory untuk referensi baris berikutnya
+                    $updatedRecord = [
+                        'id' => $existing['id'],
+                        'code' => $existing['code'],
+                        'name' => $name,
+                        'phone' => $targetPhone,
+                        'address' => $targetAddr,
+                        'category' => $targetCat,
+                        'latitude' => $targetLat,
+                        'longitude' => $targetLon
+                    ];
+                    $byCode[strtoupper($existing['code'])] = $updatedRecord;
+                    if (!empty($targetPhone)) {
+                        $rawTP = preg_replace('/\D+/', '', $targetPhone);
+                        if (!empty($rawTP)) $byRawPhone[$rawTP] = $updatedRecord;
+                        $tNorm = normalizeCustomerPhone($targetPhone);
+                        if (!empty($tNorm)) $byNormPhone[$tNorm] = $updatedRecord;
+                    }
+                    $byName[strtolower(trim($name))] = $updatedRecord;
+                } else {
+                    // Buat pelanggan baru dengan jaminan kode unik (Anti-Collision Unique Code Generator)
+                    $newCode = null;
+
+                    // Jika kode dicantumkan di file dan belum dipakai siapa pun di DB
+                    if (!empty($code) && !isset($byCode[strtoupper($code)])) {
+                        $stmtCheckCode->execute([$code]);
+                        if (!$stmtCheckCode->fetch()) {
+                            $newCode = $code;
+                        }
+                    }
+
+                    if (empty($newCode)) {
+                        $prefix = ($category === 'MITRA') ? 'MTR-' : (($category === 'MEMBER') ? 'MBR-' : (($category === 'RESELLER') ? 'RSL-' : 'CUST-'));
+                        $todayPrefix = $prefix . date('ymd');
+
+                        $attempts = 0;
+                        while ($attempts < 500) {
+                            $attempts++;
+                            // Gunakan 5 digit angka acak (10000 - 99999) untuk 100.000 kombinasi per prefix per hari
+                            $candidate = $todayPrefix . str_pad((string)mt_rand(100, 99999), 5, '0', STR_PAD_LEFT);
+                            if (!isset($byCode[strtoupper($candidate)])) {
+                                $stmtCheckCode->execute([$candidate]);
+                                if (!$stmtCheckCode->fetch()) {
+                                    $newCode = $candidate;
+                                    break;
+                                }
+                                $byCode[strtoupper($candidate)] = true;
+                            }
+                        }
+                        // Fallback unik tak terbatas jika ribuan record diimport serentak
+                        if (empty($newCode)) {
+                            $newCode = $todayPrefix . substr(bin2hex(random_bytes(4)), 0, 6);
+                        }
+                    }
+
+                    $stmtInsert->execute([$newCode, $name, $cleanPhone, $address, $category, $lat, $lon, $branchId]);
+                    $newId = (int)$pdo->lastInsertId();
                     $inserted++;
+
+                    // Daftarkan ke in-memory index
+                    $newRecord = [
+                        'id' => $newId,
+                        'code' => $newCode,
+                        'name' => $name,
+                        'phone' => $cleanPhone,
+                        'address' => $address,
+                        'category' => $category,
+                        'latitude' => $lat,
+                        'longitude' => $lon
+                    ];
+                    $byCode[strtoupper($newCode)] = $newRecord;
+                    if (!empty($cleanPhone)) {
+                        $rawCP = preg_replace('/\D+/', '', $cleanPhone);
+                        if (!empty($rawCP)) $byRawPhone[$rawCP] = $newRecord;
+                        $nP = normalizeCustomerPhone($cleanPhone);
+                        if (!empty($nP)) $byNormPhone[$nP] = $newRecord;
+                    }
+                    $byName[strtolower(trim($name))] = $newRecord;
                 }
             }
 
