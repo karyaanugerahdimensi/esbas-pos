@@ -1384,52 +1384,52 @@ try {
             <!-- TAB 3: MODUL EMPLOYEE SELF SERVICE (ESS)             -->
             <!-- ---------------------------------------------------- -->
             <div id="tab-ess" class="hidden space-y-6">
-                <div class="bg-gradient-to-r from-indigo-900 to-indigo-700 text-white rounded-3xl p-6 shadow-md flex flex-wrap items-center justify-between gap-4">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
                     <div class="flex items-center space-x-4">
-                        <div class="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-2xl border border-white/20">👤</div>
+                        <div class="w-14 h-14 bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center text-2xl border border-indigo-200 dark:border-indigo-800 shrink-0 shadow-2xs">👤</div>
                         <div>
-                            <h2 id="ess-emp-name" class="font-black text-lg leading-tight">Siti Rahmawati</h2>
-                            <p id="ess-emp-role" class="text-xs text-indigo-200">CASHIER &bull; NIK: CSR001 &bull; Cabang Jakarta</p>
+                            <h2 id="ess-emp-name" class="font-black text-lg sm:text-xl text-slate-900 dark:text-slate-100 leading-tight">Siti Rahmawati</h2>
+                            <p id="ess-emp-role" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">CASHIER &bull; NIK: CSR001 &bull; Cabang Jakarta</p>
                             <div class="flex items-center space-x-2 mt-2">
-                                <span class="px-2.5 py-0.5 rounded-full text-[11px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">Status: Aktif</span>
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 font-bold">Status: Aktif</span>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/10 min-w-[220px]">
-                        <p class="text-xs text-indigo-200 font-semibold">Estimasi Komisi Kasir Bulan Ini</p>
-                        <h3 id="ess-commission-amount" class="text-xl font-black text-amber-300 mt-1">Rp 0</h3>
-                        <p id="ess-commission-details" class="text-[11px] text-indigo-200 mt-0.5">Rate: 1.5% dari Omzet</p>
+                    <div class="bg-slate-50 dark:bg-slate-800/80 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 min-w-[220px] shadow-2xs">
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-bold">Estimasi Komisi Kasir Bulan Ini</p>
+                        <h3 id="ess-commission-amount" class="text-xl sm:text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1 font-mono">Rp 0</h3>
+                        <p id="ess-commission-details" class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Rate: 1.5% dari Omzet</p>
                     </div>
                 </div>
 
                 <!-- ESS Subtabs Navigation Bar -->
-                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs">
+                <div class="bg-white dark:bg-slate-900 p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
                     <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
                         <button id="ess-subtab-btn-presensi" onclick="setEssSubtab('presensi')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs">
                             <i data-lucide="map-pin" class="w-4 h-4"></i>
                             <span>Presensi & Klaim Toko</span>
                         </button>
-                        <button id="ess-subtab-btn-schedules" onclick="setEssSubtab('schedules')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="ess-subtab-btn-schedules" onclick="setEssSubtab('schedules')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
                             <i data-lucide="calendar" class="w-4 h-4"></i>
                             <span>Jam Kerja & Roster Bulanan</span>
                         </button>
-                        <button id="ess-subtab-btn-swaps" onclick="setEssSubtab('swaps')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="ess-subtab-btn-swaps" onclick="setEssSubtab('swaps')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
                             <i data-lucide="repeat" class="w-4 h-4"></i>
                             <span>Tukar Jadwal (Shift Swap)</span>
                         </button>
-                        <button id="ess-subtab-btn-leaves" onclick="setEssSubtab('leaves')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="ess-subtab-btn-leaves" onclick="setEssSubtab('leaves')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
                             <i data-lucide="calendar-off" class="w-4 h-4"></i>
                             <span>Cuti, Izin & Sakit</span>
                         </button>
-                        <button id="ess-subtab-btn-attendance" onclick="setEssSubtab('attendance')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="ess-subtab-btn-attendance" onclick="setEssSubtab('attendance')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
                             <i data-lucide="file-bar-chart" class="w-4 h-4"></i>
                             <span>Laporan Kehadiran</span>
                         </button>
-                        <button id="ess-subtab-btn-payslip" onclick="setEssSubtab('payslip')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="ess-subtab-btn-payslip" onclick="setEssSubtab('payslip')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
                             <i data-lucide="receipt" class="w-4 h-4"></i>
                             <span>Cetak Slip Gaji Mandiri</span>
                         </button>
-                        <button id="ess-subtab-btn-loans" onclick="setEssSubtab('loans')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                        <button id="ess-subtab-btn-loans" onclick="setEssSubtab('loans')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
                             <i data-lucide="hand-coins" class="w-4 h-4"></i>
                             <span>Pinjaman / Kasbon Gaji</span>
                         </button>
@@ -14809,7 +14809,7 @@ Manager / Supervisor: __________________
                     if (st === subtab) {
                         btn.className = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
                     } else {
-                        btn.className = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+                        btn.className = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700';
                     }
                 }
             });

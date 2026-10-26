@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.81",
-  "build": "20261026-36",
+  "version": "1.2.82",
+  "build": "20261026-37",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.82",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Optimalisasi Adaptasi Tema Gelap & Terang Header Employee Self Service (FR-ESS-12)",
+      "description": "Memperbaiki keterbacaan dan kontras kartu header profil Employee Self Service (ESS) agar beradaptasi sempurna dengan mode Gelap (Dark Mode) dan Terang (Light Mode): (1) Eliminasi Masalah Gradien: Mengganti kelas gradien gelap legasi yang tidak dirender Tailwind v4 dengan struktur kartu adaptif solid berkontras tinggi (bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800). (2) Penyelarasan Tipografi: Mengubah warna teks nama pegawai menjadi dark slate pada light mode dan bright slate pada dark mode (text-slate-900 dark:text-slate-100), sub-informasi jabatan/NIK (text-slate-500 dark:text-slate-400), serta lencana status aktif bergradasi lembut. (3) Kartu Ringkasan Komisi & Subtab ESS: Mengadaptasi kotak komisi (bg-slate-50 dark:bg-slate-800/80) dan tombol navigasi subtab ESS agar kontras dan terbaca jelas pada tema terang maupun gelap.",
+      "rollback_command": "git checkout v1.2.81"
+    },
     {
       "version": "1.2.81",
       "commit": "HEAD",
