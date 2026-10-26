@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.78",
-  "build": "20261026-33",
+  "version": "1.2.79",
+  "build": "20261026-34",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.79",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Perbaikan Bug Undefined pada Laporan Penjualan Mitra B2B (FR-ACC-05-B)",
+      "description": "Memperbaiki ketidaksesuaian penamaan properti data (*naming mismatch*) antara respons backend API dan rendering UI pada Laporan Penjualan Mitra (B2B): (1) Perbaikan Undefined Order & Item pada Peringkat Mitra Teratas: Menyelaraskan nama properti partner_name, total_orders, total_revenue, total_items, dan total_profit dari API ke UI sehingga kartu peringkat menampilkan identitas mitra, jumlah pesanan, nominal omzet riil, dan laba kotor tanpa teks 'undefined'. (2) Perbaikan Undefined Kuantitas pada Detail Pesanan: Menyelaraskan properti kuantitas item (qty vs quantity) pada baris tabel pesanan sehingga kuantitas produk tampil presisi (contoh: '• 15x Air Mineral...'). (3) Perbaikan Total Belanja & HPP: Menyediakan alias grand_total as final_total dan total_cogs as cogs sehingga nominal total belanja dan modal HPP tampil akurat. (4) Penyelarasan Rincian Item pada Modal Detail Pesanan: Menyelaraskan properti subtotal, cost_price, dan total_cogs pada modal rincian transaksi mitra.",
+      "rollback_command": "git checkout v1.2.78"
+    },
     {
       "version": "1.2.78",
       "commit": "HEAD",

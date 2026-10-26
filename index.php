@@ -19590,18 +19590,23 @@ Manager / Supervisor: __________________
                     topBoard.innerHTML = tops.map((p, idx) => {
                         const rankMedals = ['🥇', '🥈', '🥉', '🏅'];
                         const medal = rankMedals[idx] || '⭐';
+                        const partnerTitle = p.partner_name || p.customer_name || 'Mitra';
+                        const totalOrders = p.total_orders ?? p.order_count ?? 0;
+                        const totalRevenue = p.total_revenue ?? p.total_spend ?? 0;
+                        const totalItems = p.total_items ?? 0;
+                        const totalProfit = p.total_profit ?? p.gross_profit ?? 0;
                         return `
                             <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 flex items-center space-x-3 hover:bg-slate-100/70 transition-colors">
                                 <span class="text-2xl">${medal}</span>
                                 <div class="min-w-0 flex-1">
                                     <div class="flex items-center justify-between">
-                                        <h5 class="font-bold text-slate-800 text-xs truncate" title="${escapeHtml(p.partner_name)}">${escapeHtml(p.partner_name)}</h5>
-                                        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">${p.total_orders} Order</span>
+                                        <h5 class="font-bold text-slate-800 text-xs truncate" title="${escapeHtml(partnerTitle)}">${escapeHtml(partnerTitle)}</h5>
+                                        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">${totalOrders} Order</span>
                                     </div>
-                                    <div class="text-xs font-black text-slate-900 font-mono mt-0.5">${formatRupiah(p.total_revenue || 0)}</div>
+                                    <div class="text-xs font-black text-slate-900 font-mono mt-0.5">${formatRupiah(totalRevenue)}</div>
                                     <div class="text-[10px] text-slate-400 flex items-center justify-between mt-0.5">
-                                        <span>${p.total_items} item</span>
-                                        <span class="text-indigo-600 font-medium">Laba: ${formatRupiah(p.total_profit || 0)}</span>
+                                        <span>${totalItems} item</span>
+                                        <span class="text-indigo-600 font-medium">Laba: ${formatRupiah(totalProfit)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -19660,7 +19665,8 @@ Manager / Supervisor: __________________
                     const shownItems = items.slice(0, 2);
                     const itemLines = shownItems.map(it => {
                         const vText = it.variant_name ? ` (${it.variant_name})` : '';
-                        return `<div class="truncate text-slate-700 font-medium" title="${escapeHtml(it.product_name + vText)}">• <strong>${it.quantity}x</strong> ${escapeHtml(it.product_name + vText)} <span class="text-slate-400 font-mono text-[10px]">@${formatRupiah(it.unit_price)}</span></div>`;
+                        const qty = it.quantity ?? it.qty ?? 0;
+                        return `<div class="truncate text-slate-700 font-medium" title="${escapeHtml(it.product_name + vText)}">• <strong>${qty}x</strong> ${escapeHtml(it.product_name + vText)} <span class="text-slate-400 font-mono text-[10px]">@${formatRupiah(it.unit_price)}</span></div>`;
                     }).join('');
                     const moreCount = items.length - shownItems.length;
                     const moreTag = moreCount > 0 ? `<div class="text-[10px] text-emerald-600 font-bold mt-0.5">+${moreCount} item lainnya...</div>` : '';
@@ -19697,11 +19703,11 @@ Manager / Supervisor: __________________
                             <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${escapeHtml(o.payment_method || 'CASH')}</span>
                         </td>
                         <td class="py-3 px-3 text-right font-mono font-bold text-slate-900">
-                            ${formatRupiah(o.final_total || 0)}
+                            ${formatRupiah(o.final_total ?? o.grand_total ?? 0)}
                         </td>
                         <td class="py-3 px-3 text-right font-mono ${profitColor}">
                             <div>${formatRupiah(o.profit || 0)}</div>
-                            <div class="text-[10px] text-slate-400 font-normal">HPP: ${formatRupiah(o.cogs || 0)}</div>
+                            <div class="text-[10px] text-slate-400 font-normal">HPP: ${formatRupiah(o.cogs ?? o.total_cogs ?? 0)}</div>
                         </td>
                         <td class="py-3 px-3 text-center whitespace-nowrap">
                             <div class="flex items-center justify-center space-x-1.5">
@@ -19767,6 +19773,10 @@ Manager / Supervisor: __________________
                     const vText = it.variant_name ? ` <span class="text-emerald-700 font-medium">(${escapeHtml(it.variant_name)})</span>` : '';
                     const profit = Number(it.profit || 0);
                     const profitClass = profit >= 0 ? 'text-indigo-700 font-bold' : 'text-rose-600 font-bold';
+                    const qty = it.quantity ?? it.qty ?? 0;
+                    const subtotal = it.subtotal ?? it.subtotal_price ?? 0;
+                    const costPrice = it.cost_price ?? it.unit_cogs ?? 0;
+                    const totalCogs = it.total_cogs ?? it.subtotal_cogs ?? 0;
                     return `
                         <tr class="hover:bg-slate-50">
                             <td class="py-2.5 px-3 text-slate-400 font-mono">${idx + 1}</td>
@@ -19774,11 +19784,11 @@ Manager / Supervisor: __________________
                                 <div class="font-bold text-slate-800">${escapeHtml(it.product_name)}${vText}</div>
                                 <div class="text-[10px] text-slate-400 font-mono">SKU: ${escapeHtml(it.sku || '-')}</div>
                             </td>
-                            <td class="py-2.5 px-2 text-center font-bold text-slate-900">${it.quantity}</td>
+                            <td class="py-2.5 px-2 text-center font-bold text-slate-900">${qty}</td>
                             <td class="py-2.5 px-3 text-right font-mono text-slate-700">${formatRupiah(it.unit_price || 0)}</td>
-                            <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900">${formatRupiah(it.subtotal || 0)}</td>
-                            <td class="py-2.5 px-3 text-right font-mono text-slate-500">${formatRupiah(it.cost_price || 0)}</td>
-                            <td class="py-2.5 px-3 text-right font-mono text-slate-600">${formatRupiah(it.total_cogs || 0)}</td>
+                            <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900">${formatRupiah(subtotal)}</td>
+                            <td class="py-2.5 px-3 text-right font-mono text-slate-500">${formatRupiah(costPrice)}</td>
+                            <td class="py-2.5 px-3 text-right font-mono text-slate-600">${formatRupiah(totalCogs)}</td>
                             <td class="py-2.5 px-3 text-right font-mono ${profitClass}">${formatRupiah(profit)}</td>
                         </tr>
                     `;
@@ -19786,12 +19796,13 @@ Manager / Supervisor: __________________
             }
 
             // Summary Breakdown
-            document.getElementById('pod-modal-subtotal').innerText = formatRupiah(order.total_amount || 0);
+            document.getElementById('pod-modal-subtotal').innerText = formatRupiah(order.total_amount ?? order.subtotal ?? 0);
             document.getElementById('pod-modal-discount').innerText = `- ${formatRupiah(order.discount || 0)}`;
             document.getElementById('pod-modal-delivery').innerText = formatRupiah(order.delivery_fee || 0);
-            document.getElementById('pod-modal-grand-total').innerText = formatRupiah(order.final_total || 0);
+            document.getElementById('pod-modal-grand-total').innerText = formatRupiah(order.final_total ?? order.grand_total ?? 0);
 
-            const profitMargin = Number(order.final_total || 0) > 0 ? ((Number(order.profit || 0) / Number(order.final_total)) * 100).toFixed(1) : '0';
+            const finalTotal = Number(order.final_total ?? order.grand_total ?? 0);
+            const profitMargin = finalTotal > 0 ? ((Number(order.profit || 0) / finalTotal) * 100).toFixed(1) : '0';
             document.getElementById('pod-modal-total-profit').innerText = `${formatRupiah(order.profit || 0)} (Margin: ${profitMargin}%)`;
 
             modal.classList.remove('hidden');

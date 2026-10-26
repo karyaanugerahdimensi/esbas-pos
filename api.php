@@ -10202,12 +10202,16 @@ try {
                 SELECT 
                     s.customer_id,
                     COALESCE(c.name, s.customer_name, 'Mitra Tanpa Nama') as customer_name,
+                    COALESCE(c.name, s.customer_name, 'Mitra Tanpa Nama') as partner_name,
                     COALESCE(c.phone, '-') as phone,
                     COALESCE(c.address, '-') as address,
                     COUNT(s.id) as order_count,
+                    COUNT(s.id) as total_orders,
                     COALESCE(SUM(s.grand_total), 0) as total_spend,
+                    COALESCE(SUM(s.grand_total), 0) as total_revenue,
                     COALESCE(SUM(s.total_cogs), 0) as total_cogs,
                     (COALESCE(SUM(s.grand_total), 0) - COALESCE(SUM(s.total_cogs), 0)) as gross_profit,
+                    (COALESCE(SUM(s.grand_total), 0) - COALESCE(SUM(s.total_cogs), 0)) as total_profit,
                     COALESCE(SUM(CASE WHEN s.payment_status = 'UNPAID' OR s.payment_method = 'PIUTANG' THEN s.grand_total ELSE 0 END), 0) as receivable_amount
                 FROM sales s
                 LEFT JOIN customers c ON c.id = s.customer_id
@@ -10233,6 +10237,7 @@ try {
                     COALESCE(c.address, '-') as customer_address,
                     u.name as cashier_name,
                     s.subtotal,
+                    s.subtotal as total_amount,
                     s.discount,
                     s.tax,
                     s.delivery_fee,
@@ -10240,7 +10245,9 @@ try {
                     s.driver_name,
                     s.delivery_status,
                     s.grand_total,
+                    s.grand_total as final_total,
                     s.total_cogs,
+                    s.total_cogs as cogs,
                     (s.grand_total - s.total_cogs) as profit,
                     s.payment_method,
                     COALESCE(s.payment_status, CASE WHEN s.payment_method = 'PIUTANG' THEN 'UNPAID' ELSE 'PAID' END) as payment_status,
@@ -10270,12 +10277,17 @@ try {
                         si.variant_id,
                         si.variant_name,
                         si.qty,
+                        si.qty as quantity,
                         si.unit_price,
                         si.unit_cogs,
+                        si.unit_cogs as cost_price,
                         si.subtotal_price,
+                        si.subtotal_price as subtotal,
                         si.subtotal_cogs,
+                        si.subtotal_cogs as total_cogs,
                         (si.subtotal_price - si.subtotal_cogs) as profit,
-                        p.unit as product_unit
+                        p.unit as product_unit,
+                        p.sku
                     FROM sale_items si
                     LEFT JOIN products p ON p.id = si.product_id
                     WHERE si.sale_id IN ($inPlaceholders)
@@ -10300,6 +10312,25 @@ try {
                 $ord['items_summary'] = !empty($summaries) ? implode(', ', $summaries) : 'Pesanan Mitra';
             }
             unset($ord);
+
+            // Enrich top_partners with total_items, total_revenue, total_profit, etc.
+            foreach ($topPartners as &$tp) {
+                $cid = $tp['customer_id'];
+                $tpItems = 0;
+                foreach ($orders as $ord) {
+                    if ($ord['customer_id'] == $cid) {
+                        foreach ($ord['items'] as $it) {
+                            $tpItems += (float)($it['qty'] ?? $it['quantity'] ?? 0);
+                        }
+                    }
+                }
+                $tp['total_items'] = $tpItems;
+                $tp['partner_name'] = $tp['partner_name'] ?? $tp['customer_name'] ?? 'Mitra';
+                $tp['total_orders'] = (int)($tp['order_count'] ?? $tp['total_orders'] ?? 0);
+                $tp['total_revenue'] = (float)($tp['total_spend'] ?? $tp['total_revenue'] ?? 0);
+                $tp['total_profit'] = (float)($tp['gross_profit'] ?? $tp['total_profit'] ?? 0);
+            }
+            unset($tp);
 
             // 4. Mitra Master List for Filter
             $stmtMitraList = $pdo->query("SELECT id, name, phone, address FROM customers WHERE UPPER(category) = 'MITRA' ORDER BY name ASC");
