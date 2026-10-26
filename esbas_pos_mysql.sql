@@ -285,6 +285,12 @@ CREATE TABLE `role_menu_permissions` (
     `menu_key` VARCHAR(255) NOT NULL,
     `menu_title` VARCHAR(255) NOT NULL,
     `can_access` INT DEFAULT 1,
+    `can_view` INT DEFAULT 1,
+    `can_create` INT DEFAULT 0,
+    `can_update` INT DEFAULT 0,
+    `can_delete` INT DEFAULT 0,
+    `parent_key` VARCHAR(255) DEFAULT NULL,
+    `is_subtab` INT DEFAULT 0,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.89",
-  "build": "20261026-44",
+  "version": "1.2.90",
+  "build": "20261026-45",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.90",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Matriks Hak Akses Peran Granular Tingkat Sub-Tab & 4 Mode Aksi CRUD (FR-SET-10)",
+      "description": "Menghadirkan sistem perizinan peran (Role-Based Access Control / RBAC) granular dan komprehensif hingga tingkat sub-tab dan 4 mode aksi CRUD (View, Tambah, Update, Hapus): (1) Perluasan Hierarki Menu & Sub-Tab: Memperluas matriks hak akses pada Pengaturan (#settings-subtab-roles) dari 17 menu induk mencakup seluruh 34 sub-tab operasional (Laporan Penjualan/Piutang/Shift/BOM, ESS Presensi/Jadwal/Tukar Shift/Cuti/Slip/Kasbon, Master Produk Barang Jadi/Bahan Baku/Kategori, Stok Saldo/Mutasi, Beban Buku Kas/Kategori, Pelanggan Member/Kategori/Harga Khusus Mitra/Peta, Logistik Kurir/Kalkulator/Riwayat/Setting/Peta, Kelola Cabang Daftar/Peta, dan Pengaturan Sistem Identitas/Logo/Role/Sinkronisasi/Danger Zone). (2) 4 Mode Aksi Granular (V, T, U, D): Menyediakan 4 tombol pill kontrol interaktif per menu dan per sub-tab untuk tiap role: [V] View/Lihat (biru), [T] Tambah/Create (hijau), [U] Update/Edit (kuning), dan [D] Hapus/Delete (merah), dengan Super Admin terkunci aktif penuh 100%. (3) Penegakan Izin Frontend & Dynamic Sub-tab Visibility: Fungsi hasUserPerm(key, mode) dan applySubTabPermissions() yang secara dinamis menyembunyikan tombol sub-tab yang tidak diizinkan serta memvalidasi hak aksi create, update, dan delete pada modul Karyawan, Produk, Beban Operasional, dan Pelanggan. (4) Skema Data & Migrasi Backend: Memperbarui tabel role_menu_permissions dengan kolom can_view, can_create, can_update, can_delete, parent_key, is_subtab pada SQLite (database.sqlite) dan MySQL (esbas_pos_mysql.sql) serta auto-migration pada db.php.",
+      "rollback_command": "git checkout v1.2.89"
+    },
     {
       "version": "1.2.89",
       "commit": "HEAD",

@@ -1353,24 +1353,52 @@ try {
             // 15 Menu Lengkap Sistem
             $allMenuKeys = ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
 
-            // Jika Super Admin, berikan akses penuh (1) ke seluruh 15 menu
+            // Jika Super Admin, berikan akses penuh mutlak (1) ke seluruh menu & sub-tab
             if ($normCurRole === 'SUPERADMIN') {
                 foreach ($allMenuKeys as $mk) {
-                    $userPerms[$mk] = 1;
+                    $userPerms[$mk] = [
+                        'access' => 1,
+                        'view' => 1,
+                        'create' => 1,
+                        'update' => 1,
+                        'delete' => 1,
+                        'parent_key' => null,
+                        'is_subtab' => 0
+                    ];
                 }
             }
 
             foreach ($rolePerms as $rp) {
                 $normRpRole = str_replace('_', '', strtoupper($rp['role']));
                 if ($normRpRole === $normCurRole || strtoupper($rp['role']) === strtoupper($curRole)) {
-                    $userPerms[$rp['menu_key']] = (int)$rp['can_access'];
+                    $cView = isset($rp['can_view']) ? (int)$rp['can_view'] : (int)($rp['can_access'] ?? 1);
+                    $cCreate = isset($rp['can_create']) ? (int)$rp['can_create'] : 0;
+                    $cUpdate = isset($rp['can_update']) ? (int)$rp['can_update'] : 0;
+                    $cDelete = isset($rp['can_delete']) ? (int)$rp['can_delete'] : 0;
+                    $userPerms[$rp['menu_key']] = [
+                        'access' => $cView,
+                        'view' => $cView,
+                        'create' => $cCreate,
+                        'update' => $cUpdate,
+                        'delete' => $cDelete,
+                        'parent_key' => $rp['parent_key'] ?? null,
+                        'is_subtab' => (int)($rp['is_subtab'] ?? 0)
+                    ];
                 }
             }
 
-            // Pastikan Super Admin tetap dapat mengakses menu 11-15 tanpa terkunci
+            // Pastikan Super Admin tetap dapat mengakses seluruh menu tanpa terkunci
             if ($normCurRole === 'SUPERADMIN') {
-                foreach (['logistics', 'branches', 'payments', 'sale-cancellations', 'settings'] as $mk) {
-                    $userPerms[$mk] = 1;
+                foreach (['dashboard', 'pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'partner-sales', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'] as $mk) {
+                    $userPerms[$mk] = [
+                        'access' => 1,
+                        'view' => 1,
+                        'create' => 1,
+                        'update' => 1,
+                        'delete' => 1,
+                        'parent_key' => null,
+                        'is_subtab' => 0
+                    ];
                 }
             }
 
@@ -13789,7 +13817,7 @@ try {
                     FROM user_roles r 
                     ORDER BY r.is_system DESC, r.id ASC
                 ");
-                $roles = $stmtRoles ? $stmtRoles->fetchAll() : [];
+                $roles = $stmtRoles ? $stmtRoles->fetchAll(PDO::FETCH_ASSOC) : [];
             } catch (Exception $e) {
                 $roles = [];
             }
@@ -13803,13 +13831,28 @@ try {
             }
 
             $stmt = $pdo->query("SELECT * FROM role_menu_permissions ORDER BY role ASC, id ASC");
-            $allPerms = $stmt->fetchAll();
+            $allPerms = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             $grouped = [];
             foreach ($allPerms as $p) {
-                $grouped[$p['role']][$p['menu_key']] = (int)$p['can_access'];
+                $cView = isset($p['can_view']) ? (int)$p['can_view'] : (int)($p['can_access'] ?? 1);
+                $cCreate = isset($p['can_create']) ? (int)$p['can_create'] : 0;
+                $cUpdate = isset($p['can_update']) ? (int)$p['can_update'] : 0;
+                $cDelete = isset($p['can_delete']) ? (int)$p['can_delete'] : 0;
+
+                $pData = [
+                    'access' => $cView,
+                    'view' => $cView,
+                    'create' => $cCreate,
+                    'update' => $cUpdate,
+                    'delete' => $cDelete,
+                    'parent_key' => $p['parent_key'] ?? null,
+                    'is_subtab' => (int)($p['is_subtab'] ?? 0)
+                ];
+
+                $grouped[$p['role']][$p['menu_key']] = $pData;
                 $normRole = str_replace('_', '', strtoupper($p['role']));
-                $grouped[$normRole][$p['menu_key']] = (int)$p['can_access'];
+                $grouped[$normRole][$p['menu_key']] = $pData;
             }
 
             echo json_encode([
@@ -13832,12 +13875,13 @@ try {
             $stmtCheck = $pdo->prepare("SELECT id FROM role_menu_permissions WHERE role = ? AND menu_key = ?");
             $stmtUp = $pdo->prepare("
                 UPDATE role_menu_permissions 
-                SET can_access = ?, menu_title = ?, updated_at = ? 
+                SET can_access = ?, can_view = ?, can_create = ?, can_update = ?, can_delete = ?, 
+                    menu_title = ?, parent_key = ?, is_subtab = ?, updated_at = ? 
                 WHERE role = ? AND menu_key = ?
             ");
             $stmtIn = $pdo->prepare("
-                INSERT INTO role_menu_permissions (role, menu_key, menu_title, can_access, updated_at) 
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO role_menu_permissions (role, menu_key, menu_title, can_access, can_view, can_create, can_update, can_delete, parent_key, is_subtab, updated_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
 
             $menuTitles = [
@@ -13845,10 +13889,12 @@ try {
                 'reports' => '2. Laporan Penjualan & Piutang',
                 'ess' => '3. Portal ESS Karyawan',
                 'employees' => '4. Kelola Karyawan (CRUD)',
+                'payroll' => '4b. Payroll & Slip Gaji',
                 'products' => '5. Master Produk & Varian',
                 'bom' => '6. Resep / BOM Bahan',
                 'stocks' => '7. Stok & Kartu Mutasi',
                 'pnl' => '8. Laporan Laba Rugi',
+                'partner-sales' => '8b. Penjualan Mitra (B2B)',
                 'expenses' => '9. Beban Operasional Cabang',
                 'customers' => '10. Pelanggan & Mitra CRM',
                 'logistics' => '11. Kurir & Biaya Kirim',
@@ -13858,8 +13904,8 @@ try {
                 'settings' => '15. Konfigurasi Sistem & Cetak'
             ];
 
-            foreach ($permissions as $role => $menus) {
-                if (!is_array($menus)) continue;
+            foreach ($permissions as $role => $items) {
+                if (!is_array($items)) continue;
                 // Sinkronkan alias nama role sistem agar kompatibel mundur
                 $aliases = [$role];
                 if ($role === 'SUPER_ADMIN') $aliases[] = 'SUPERADMIN';
@@ -13868,14 +13914,31 @@ try {
                 if ($role === 'MANAGER') $aliases[] = 'BRANCH_MANAGER';
 
                 foreach ($aliases as $targetRole) {
-                    foreach ($menus as $mKey => $can) {
-                        $mTitle = $menuTitles[$mKey] ?? $mKey;
-                        $canInt = $can ? 1 : 0;
+                    foreach ($items as $mKey => $val) {
+                        if (is_array($val)) {
+                            $cView = !empty($val['view']) ? 1 : 0;
+                            $cCreate = !empty($val['create']) ? 1 : 0;
+                            $cUpdate = !empty($val['update']) ? 1 : 0;
+                            $cDelete = !empty($val['delete']) ? 1 : 0;
+                            $mTitle = $val['title'] ?? $menuTitles[$mKey] ?? $mKey;
+                            $pKey = $val['parent_key'] ?? (strpos($mKey, ':') !== false ? explode(':', $mKey)[0] : null);
+                            $isSub = isset($val['is_subtab']) ? (int)$val['is_subtab'] : ($pKey !== null ? 1 : 0);
+                        } else {
+                            $cView = $val ? 1 : 0;
+                            $cCreate = $cView;
+                            $cUpdate = $cView;
+                            $cDelete = 0;
+                            $mTitle = $menuTitles[$mKey] ?? $mKey;
+                            $pKey = strpos($mKey, ':') !== false ? explode(':', $mKey)[0] : null;
+                            $isSub = ($pKey !== null) ? 1 : 0;
+                        }
+                        $canAccess = $cView;
+
                         $stmtCheck->execute([$targetRole, $mKey]);
                         if ($stmtCheck->fetchColumn()) {
-                            $stmtUp->execute([$canInt, $mTitle, $now, $targetRole, $mKey]);
+                            $stmtUp->execute([$canAccess, $cView, $cCreate, $cUpdate, $cDelete, $mTitle, $pKey, $isSub, $now, $targetRole, $mKey]);
                         } else {
-                            $stmtIn->execute([$targetRole, $mKey, $mTitle, $canInt, $now]);
+                            $stmtIn->execute([$targetRole, $mKey, $mTitle, $canAccess, $cView, $cCreate, $cUpdate, $cDelete, $pKey, $isSub, $now]);
                         }
                     }
                 }
@@ -13884,7 +13947,7 @@ try {
 
             echo json_encode([
                 'success' => true,
-                'message' => 'Matriks hak akses role & menu berhasil diperbarui!'
+                'message' => 'Matriks hak akses role, sub-tab, dan mode aksi (View, Tambah, Update, Delete) berhasil diperbarui!'
             ]);
             break;
 

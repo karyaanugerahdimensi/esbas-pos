@@ -5177,42 +5177,80 @@ try {
 
                 <!-- SUBTAB 2: Hak Akses Role & Menu -->
                 <div id="settings-subtab-roles" class="space-y-6 hidden">
-                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">
-                        <div class="flex flex-wrap items-center justify-between gap-3 border-b pb-4">
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-6">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700 pb-4">
                             <div>
-                                <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
-                                    <span>🛡️ Matriks Hak Akses Menu per Role Pengguna</span>
+                                <h3 class="font-bold text-slate-800 dark:text-white text-base flex items-center space-x-2">
+                                    <span>🛡️ Matriks Hak Akses Menu, Sub-Tab & Mode Aksi (CRUD)</span>
                                 </h3>
-                                <p class="text-xs text-slate-500">Tentukan menu mana saja yang boleh diakses dan tampil di sidebar untuk setiap peran akun login.</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Konfigurasikan perizinan terperinci hingga tingkat Sub-Tab dan 4 mode operasional: View (Lihat), Tambah (Create), Ubah (Update), dan Hapus (Delete).</p>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <button onclick="saveRolePermissionsMatrix()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-1.5">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button type="button" onclick="toggleAllSubtabsExpand(true)" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-colors">
+                                    Buka Semua Sub-Tab
+                                </button>
+                                <button type="button" onclick="toggleAllSubtabsExpand(false)" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-colors">
+                                    Tutup Semua Sub-Tab
+                                </button>
+                                <button type="button" onclick="saveRolePermissionsMatrix()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center space-x-1.5 transition-colors">
                                     <i data-lucide="check" class="w-3.5 h-3.5"></i>
                                     <span>Simpan Hak Akses</span>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Matriks Role x Menu -->
-                        <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                        <!-- Legend & Search Toolbar -->
+                        <div class="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <span class="font-bold text-slate-700 dark:text-slate-300">Keterangan Mode Aksi:</span>
+                                <div class="inline-flex items-center space-x-1 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-lg text-blue-700 dark:text-blue-300 font-bold text-[11px]" title="Hak Melihat & Mengakses Halaman / Sub-Tab">
+                                    <span>V</span>
+                                    <span class="font-normal text-[10px]">= View (Lihat)</span>
+                                </div>
+                                <div class="inline-flex items-center space-x-1 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-lg text-emerald-700 dark:text-emerald-300 font-bold text-[11px]" title="Hak Menambah Data Baru / Transaksi">
+                                    <span>T</span>
+                                    <span class="font-normal text-[10px]">= Tambah (Create)</span>
+                                </div>
+                                <div class="inline-flex items-center space-x-1 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-lg text-amber-700 dark:text-amber-300 font-bold text-[11px]" title="Hak Mengedit / Mengubah Data">
+                                    <span>U</span>
+                                    <span class="font-normal text-[10px]">= Update (Ubah)</span>
+                                </div>
+                                <div class="inline-flex items-center space-x-1 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 px-2 py-0.5 rounded-lg text-rose-700 dark:text-rose-300 font-bold text-[11px]" title="Hak Menghapus / Membatalkan Data">
+                                    <span>D</span>
+                                    <span class="font-normal text-[10px]">= Delete (Hapus)</span>
+                                </div>
+                            </div>
+                            <div class="w-full sm:w-64">
+                                <input type="text" id="role-perm-filter-input" oninput="filterRolePermissionsMatrix()" placeholder="Cari menu atau sub-tab..." class="w-full text-xs px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+
+                        <!-- Matriks Role x Menu x Sub-Tab -->
+                        <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700 max-h-[70vh] overflow-y-auto">
                             <table class="w-full text-xs text-left">
-                                <thead id="role-permissions-table-head" class="bg-slate-50 text-slate-700 font-bold uppercase tracking-wider border-b border-slate-200">
+                                <thead id="role-permissions-table-head" class="bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
                                     <tr>
-                                        <th class="py-3 px-4">Menu Aplikasi</th>
+                                        <th class="py-3 px-4">Menu & Sub-Tab Akses</th>
                                         <th class="py-3 px-4 text-center">👑 Super Admin</th>
                                         <th class="py-3 px-4 text-center">👔 Manager</th>
                                         <th class="py-3 px-4 text-center">🛒 Cashier</th>
                                         <th class="py-3 px-4 text-center">📦 Staff</th>
                                     </tr>
                                 </thead>
-                                <tbody id="role-permissions-table-body" class="divide-y divide-slate-100">
+                                <tbody id="role-permissions-table-body" class="divide-y divide-slate-100 dark:divide-slate-700/60 bg-white dark:bg-slate-800">
                                     <tr>
-                                        <td colspan="5" class="py-6 text-center text-slate-400">Memuat matriks perizinan role...</td>
+                                        <td colspan="5" class="py-8 text-center text-slate-400">Memuat matriks perizinan role & sub-tab...</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                        <p class="text-[11px] text-slate-400 italic">Catatan: Menu yang dicentang akan otomatis muncul di sidebar pengguna saat login dengan role bersangkutan.</p>
+                        <div class="flex items-center justify-between text-[11px] text-slate-400">
+                            <p class="italic">Catatan: Mode V (View) mengontrol visibilitas tombol menu sidebar dan tab/sub-tab, sedangkan mode T (Tambah), U (Ubah), D (Hapus) mengatur wewenang tombol aksi dan transaksi.</p>
+                            <button type="button" onclick="saveRolePermissionsMatrix()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center space-x-1.5 transition-colors shrink-0">
+                                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                <span>Simpan Hak Akses</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -17628,7 +17666,18 @@ Manager / Supervisor: __________________
             updateEmployeeMultiBranchCount();
         }
 
-        async function openEmployeeModal() {
+        async function openEmployeeModal(isEdit = false) {
+            if (isEdit) {
+                if (!hasUserPerm('employees', 'update')) {
+                    showToast('Akses Ditolak: Peran Anda tidak memiliki izin untuk mengedit data karyawan!', 'error');
+                    return false;
+                }
+            } else {
+                if (!hasUserPerm('employees', 'create')) {
+                    showToast('Akses Ditolak: Peran Anda tidak memiliki izin untuk menambah data karyawan!', 'error');
+                    return false;
+                }
+            }
             currentEditingEmployee = null;
             await ensureWorkShiftsLoaded();
 
@@ -17754,7 +17803,8 @@ Manager / Supervisor: __________________
 
         async function editEmployee(emp) {
             currentEditingEmployee = emp;
-            await openEmployeeModal();
+            const ok = await openEmployeeModal(true);
+            if (ok === false) return;
             document.getElementById('emp-id').value = emp.id;
             document.getElementById('emp-nik').value = emp.nik;
             document.getElementById('emp-name').value = emp.name;
@@ -17864,6 +17914,10 @@ Manager / Supervisor: __________________
         }
 
         async function deleteEmployee(id) {
+            if (!hasUserPerm('employees', 'delete')) {
+                showToast('Akses Ditolak: Peran Anda tidak memiliki izin untuk menonaktifkan/menghapus karyawan!', 'error');
+                return;
+            }
             if (!confirm('Nonaktifkan karyawan ini?')) return;
             const res = await fetch('api.php?action=delete_employee', {
                 method: 'POST',
@@ -18132,6 +18186,10 @@ Manager / Supervisor: __________________
         }
 
         async function deleteEmployee(id) {
+            if (!hasUserPerm('employees', 'delete')) {
+                showToast('Akses Ditolak: Peran Anda tidak memiliki izin untuk menonaktifkan/menghapus karyawan!', 'error');
+                return;
+            }
             if (!confirm('Nonaktifkan karyawan ini?')) return;
             const res = await fetch('api.php?action=delete_employee', {
                 method: 'POST',
@@ -18418,6 +18476,10 @@ Manager / Supervisor: __________________
         }
 
         async function openProductModal() {
+            if (!hasUserPerm('products', 'create') && !hasUserPerm('products:fg', 'create')) {
+                showToast('Akses Ditolak: Peran Anda tidak memiliki izin untuk menambah produk!', 'error');
+                return;
+            }
             document.getElementById('prod-id').value = '';
             document.getElementById('prod-sku').value = '';
             document.getElementById('prod-barcode').value = '';
@@ -18464,6 +18526,10 @@ Manager / Supervisor: __________________
         }
 
         async function editProduct(p) {
+            if (!hasUserPerm('products', 'update') && !hasUserPerm('products:fg', 'update')) {
+                showToast('Akses Ditolak: Peran Anda tidak memiliki izin untuk mengedit produk!', 'error');
+                return;
+            }
             document.getElementById('prod-id').value = p.id;
             document.getElementById('prod-sku').value = p.sku;
             document.getElementById('prod-barcode').value = p.barcode;
@@ -18602,6 +18668,10 @@ Manager / Supervisor: __________________
         }
 
         async function deleteProduct(id, name) {
+            if (!hasUserPerm('products', 'delete') && !hasUserPerm('products:fg', 'delete')) {
+                showToast('Akses Ditolak: Peran Anda tidak memiliki izin untuk menghapus produk!', 'error');
+                return;
+            }
             if (!confirm(`Apakah Anda yakin ingin MENGHAPUS produk '${name}'?\n\nJika produk memiliki riwayat transaksi, produk akan dinonaktifkan (Soft Delete) agar laporan akuntansi tetap terjaga.`)) {
                 return;
             }
@@ -21865,6 +21935,11 @@ Manager / Supervisor: __________________
         // 9C. MODAL INPUT & EDIT BEBAN OPERASIONAL
         // ==========================================
         function openBranchExpenseModal(expense = null) {
+            const reqMode = expense ? 'update' : 'create';
+            if (!hasUserPerm('expenses', reqMode) && !hasUserPerm('expenses:ledger', reqMode)) {
+                showToast(`Akses Ditolak: Peran Anda tidak memiliki izin untuk ${expense ? 'mengedit' : 'mencatat'} pengeluaran beban!`, 'error');
+                return;
+            }
             const modal = document.getElementById('branch-expense-modal');
             const titleEl = document.getElementById('branch-expense-modal-title');
             const branchSelect = document.getElementById('be-branch-id');
@@ -21989,6 +22064,10 @@ Manager / Supervisor: __________________
         }
 
         async function deleteBranchExpense(id, category, amount) {
+            if (!hasUserPerm('expenses', 'delete') && !hasUserPerm('expenses:ledger', 'delete')) {
+                showToast('Akses Ditolak: Peran Anda tidak memiliki izin untuk menghapus catatan beban operasional!', 'error');
+                return;
+            }
             if (!confirm(`Hapus catatan beban '${category}' sebesar ${formatRupiah(amount)}?\nPenghapusan ini akan mengembalikan Laba Bersih cabang.`)) {
                 return;
             }
@@ -22603,6 +22682,11 @@ Manager / Supervisor: __________________
         }
 
         function openCustomerModal(cust = null) {
+            const reqMode = cust ? 'update' : 'create';
+            if (!hasUserPerm('customers', reqMode) && !hasUserPerm('customers:list', reqMode)) {
+                showToast(`Akses Ditolak: Peran Anda tidak memiliki izin untuk ${cust ? 'mengedit' : 'menambah'} data pelanggan!`, 'error');
+                return;
+            }
             const modal = document.getElementById('customer-modal');
             const title = document.getElementById('cust-modal-title');
             const branchSelect = document.getElementById('cust-branch');
@@ -23181,6 +23265,10 @@ Manager / Supervisor: __________________
         }
 
         async function deleteCustomer(id) {
+            if (!hasUserPerm('customers', 'delete') && !hasUserPerm('customers:list', 'delete')) {
+                showToast('Akses Ditolak: Peran Anda tidak memiliki izin untuk menonaktifkan/menghapus pelanggan!', 'error');
+                return;
+            }
             if (!confirm('Apakah Anda yakin ingin menonaktifkan pelanggan ini?')) return;
             const res = await fetch('api.php?action=delete_customer', {
                 method: 'POST',
@@ -27591,6 +27679,86 @@ Manager / Supervisor: __________________
             document.title = `${appName} - ${appSubtitle}`;
         }
 
+        function applySubTabPermissions() {
+            const curUser = state.currentUser || state.loggedInUser;
+            if (!curUser) return;
+            const role = (curUser.role || 'CASHIER').toUpperCase().trim().replace(/_/g, '');
+            const isSuperAdmin = (role === 'SUPERADMIN' || role === 'SUPER ADMIN');
+
+            const subTabMapping = [
+                // Reports
+                { id: 'report-subtab-btn-sales', key: 'reports:sales' },
+                { id: 'report-subtab-btn-receivables', key: 'reports:ar' },
+                { id: 'report-subtab-btn-shifts', key: 'reports:shifts' },
+                { id: 'report-subtab-btn-bom', key: 'reports:bom' },
+
+                // ESS
+                { id: 'ess-subtab-btn-presensi', key: 'ess:presensi' },
+                { id: 'ess-subtab-btn-schedules', key: 'ess:schedules' },
+                { id: 'ess-subtab-btn-swaps', key: 'ess:swaps' },
+                { id: 'ess-subtab-btn-leaves', key: 'ess:leaves' },
+                { id: 'ess-subtab-btn-attendance', key: 'ess:report' },
+                { id: 'ess-subtab-btn-payslip', key: 'ess:payslip' },
+                { id: 'ess-subtab-btn-loans', key: 'ess:loans' },
+
+                // Products
+                { id: 'prod-subtab-btn-catalog', key: 'products:fg' },
+                { id: 'prod-subtab-btn-categories', key: 'products:cat' },
+                { id: 'prod-subtab-btn-types', key: 'products:cat' },
+                { id: 'prod-subtab-btn-units', key: 'products:cat' },
+                { id: 'prod-subtab-btn-taxes', key: 'products:cat' },
+                { id: 'prod-subtab-btn-opening_shift', key: 'products:fg' },
+
+                // Stocks
+                { id: 'subtab-btn-balance', key: 'stocks:balance' },
+                { id: 'subtab-btn-movements', key: 'stocks:movements' },
+
+                // Expenses
+                { id: 'subtab-btn-exp-ledger', key: 'expenses:ledger' },
+                { id: 'subtab-btn-exp-category', key: 'expenses:category' },
+
+                // Customers
+                { id: 'subtab-btn-cust-list', key: 'customers:list' },
+                { id: 'subtab-btn-cust-mitra', key: 'customers:mitra-pricing' },
+                { id: 'subtab-btn-cust-branch', key: 'customers:category' },
+                { id: 'subtab-btn-cust-category', key: 'customers:category' },
+                { id: 'subtab-btn-cust-maps', key: 'customers:maps' },
+
+                // Logistics
+                { id: 'subtab-btn-vehicles', key: 'logistics:couriers' },
+                { id: 'subtab-btn-fuel', key: 'logistics:logs' },
+                { id: 'subtab-btn-service', key: 'logistics:logs' },
+                { id: 'subtab-btn-settings', key: 'logistics:settings' },
+                { id: 'subtab-btn-maps', key: 'logistics:maps' },
+
+                // Branches
+                { id: 'subtab-btn-branch-table', key: 'branches:table' },
+                { id: 'subtab-btn-branch-maps', key: 'branches:maps' },
+
+                // Settings
+                { id: 'settings-tab-btn-general', key: 'settings:general' },
+                { id: 'settings-tab-btn-roles', key: 'settings:roles' },
+                { id: 'settings-tab-btn-printer', key: 'settings:general' },
+                { id: 'settings-tab-btn-receipt', key: 'settings:general' },
+                { id: 'settings-tab-btn-payslip', key: 'settings:general' },
+                { id: 'settings-tab-btn-notifications', key: 'settings:general' },
+                { id: 'settings-tab-btn-sync', key: 'settings:sync' }
+            ];
+
+            subTabMapping.forEach(item => {
+                const btn = document.getElementById(item.id);
+                if (!btn) return;
+                const allowed = isSuperAdmin ? true : hasUserPerm(item.key, 'view');
+                if (allowed) {
+                    btn.classList.remove('hidden');
+                    btn.style.display = '';
+                } else {
+                    btn.classList.add('hidden');
+                    btn.style.display = 'none';
+                }
+            });
+        }
+
         function applyRolePermissionsToSidebar() {
             const curUser = state.currentUser || state.loggedInUser;
             if (!curUser) return;
@@ -27598,7 +27766,6 @@ Manager / Supervisor: __________________
             const isSuperAdmin = (role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'SUPER ADMIN');
 
             // Ambil izin menu role
-            const userPerms = state.userPermissions || {};
             const allMenus = ['dashboard', 'pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
 
             allMenus.forEach(mKey => {
@@ -27610,12 +27777,8 @@ Manager / Supervisor: __________________
                 if (!isSuperAdmin) {
                     if (mKey === 'dashboard') {
                         canAccess = (role === 'MANAGER' || role === 'BRANCH_MANAGER');
-                    } else if (userPerms[mKey] !== undefined) {
-                        canAccess = (userPerms[mKey] == 1);
-                    } else if (role === 'MANAGER' || role === 'BRANCH_MANAGER') {
-                        canAccess = (mKey !== 'sale-cancellations');
                     } else {
-                        canAccess = false;
+                        canAccess = hasUserPerm(mKey, 'view');
                     }
                 }
 
@@ -27641,6 +27804,7 @@ Manager / Supervisor: __________________
             }
             updateShiftReportSubtabVisibility();
             updateStoreResetButtonsVisibility();
+            applySubTabPermissions();
         }
 
         state.settingsSelectedBranchId = 0;
@@ -27946,29 +28110,264 @@ Manager / Supervisor: __________________
             return '🛡️';
         }
 
+        // ========================================================
+        // STRUKTUR HIERARKI PERIZINAN: MENU, SUB-TAB & MODE CRUD
+        // ========================================================
+        const allPermissionsStructure = [
+            {
+                key: 'pos',
+                title: '1. POS Penjualan Kasir',
+                icon: 'shopping-cart',
+                subtabs: [
+                    { key: 'pos:cashier', title: 'Transaksi Kasir POS', desc: 'Buka transaksi kasir, scan barcode, dan cetak struk nota' }
+                ]
+            },
+            {
+                key: 'reports',
+                title: '2. Laporan Penjualan & Piutang',
+                icon: 'bar-chart-3',
+                subtabs: [
+                    { key: 'reports:sales', title: 'Laporan Penjualan (Sales)', desc: 'Rekap omzet, produk terlaris, filter kurun waktu, ekspor excel' },
+                    { key: 'reports:ar', title: 'Buku Piutang Usaha (AR)', desc: 'Monitoring piutang pelanggan & pelunasan faktur' },
+                    { key: 'reports:shifts', title: 'Laporan Shift Kasir', desc: 'Audit shift, saldo kas laci, selisih kas fisik' },
+                    { key: 'reports:bom', title: 'Analisis Penggunaan BOM', desc: 'Audit pemakaian bahan baku & efisiensi formula resep' }
+                ]
+            },
+            {
+                key: 'ess',
+                title: '3. Portal ESS Karyawan',
+                icon: 'user-check',
+                subtabs: [
+                    { key: 'ess:presensi', title: 'Presensi GPS & Swafoto', desc: 'Clock-in / clock-out presensi harian geofencing' },
+                    { key: 'ess:schedules', title: 'Jam Kerja & Roster Bulanan', desc: 'Penyusunan jadwal shift dan hari libur kerja' },
+                    { key: 'ess:swaps', title: 'Pertukaran Shift Karyawan', desc: 'Pengajuan dan persetujuan tukar shift sesama rekan cabang' },
+                    { key: 'ess:leaves', title: 'Permohonan Izin & Cuti', desc: 'Form izin sakit, cuti tahunan, dan persetujuan manajer' },
+                    { key: 'ess:reimburse', title: 'Klaim Reimbursement Toko', desc: 'Klaim pengeluaran operasional toko (petty cash)' },
+                    { key: 'ess:payslip', title: 'Slip Gaji Mandiri Karyawan', desc: 'Lihat dan cetak slip gaji pribadi karyawan' },
+                    { key: 'ess:loans', title: 'Pinjaman & Kasbon Gaji', desc: 'Pengajuan kasbon darurat potong gaji otomatis' },
+                    { key: 'ess:report', title: 'Rekapitulasi Presensi Staf', desc: 'Laporan rekap kehadiran bulanan seluruh karyawan' }
+                ]
+            },
+            {
+                key: 'employees',
+                title: '4. Kelola Karyawan (CRUD)',
+                icon: 'users',
+                subtabs: [
+                    { key: 'employees:list', title: 'Master Karyawan & Hak Akses', desc: 'CRUD master data staf, PIN kasir, dan penugasan cabang' }
+                ]
+            },
+            {
+                key: 'payroll',
+                title: '4b. Payroll & Slip Gaji',
+                icon: 'receipt',
+                subtabs: [
+                    { key: 'payroll:overview', title: 'Rekapitulasi Gaji & Slip Resmi', desc: 'Kalkulasi gaji bulanan, komisi, denda, dan cetak slip resmi' }
+                ]
+            },
+            {
+                key: 'products',
+                title: '5. Master Produk & Varian',
+                icon: 'package',
+                subtabs: [
+                    { key: 'products:fg', title: 'Barang Jadi (Finished Goods)', desc: 'Katalog barang siap jual dan penetapan harga dasar' },
+                    { key: 'products:raw', title: 'Bahan Baku (Raw Material)', desc: 'Inventori bahan baku produksi dan harga pokok beli' },
+                    { key: 'products:cat', title: 'Kategori, Jenis & Satuan', desc: 'Master kategori barang, satuan takar BOM, dan tipe produk' }
+                ]
+            },
+            {
+                key: 'bom',
+                title: '6. Resep / BOM Bahan',
+                icon: 'flask-conical',
+                subtabs: [
+                    { key: 'bom:recipes', title: 'Penyusunan Komposisi & HPP', desc: 'Formula bahan baku barang jadi dan kalkulasi HPP otomatis' }
+                ]
+            },
+            {
+                key: 'stocks',
+                title: '7. Stok & Kartu Mutasi',
+                icon: 'boxes',
+                subtabs: [
+                    { key: 'stocks:balance', title: 'Saldo Stok Cabang Aktif', desc: 'Pengecekan stok fisik, setel awal, dan stok masuk' },
+                    { key: 'stocks:movements', title: 'Buku Kartu Pergerakan (Ledger)', desc: 'Audit kartu mutasi masuk, keluar, dan penyesuaian stok' }
+                ]
+            },
+            {
+                key: 'pnl',
+                title: '8. Laporan Laba Rugi (P&L)',
+                icon: 'trending-up',
+                subtabs: [
+                    { key: 'pnl:statement', title: 'Laporan Income Statement', desc: 'Ikhtisar omzet bersih, HPP riil, dan laba bersih akhir' }
+                ]
+            },
+            {
+                key: 'partner-sales',
+                title: '8b. Penjualan Mitra (B2B)',
+                icon: 'handshake',
+                subtabs: [
+                    { key: 'partner-sales:report', title: 'Rekapitulasi Penjualan Mitra', desc: 'Laporan transaksi mitra B2B per invoice dan profitabilitas' }
+                ]
+            },
+            {
+                key: 'expenses',
+                title: '9. Beban Operasional Cabang',
+                icon: 'wallet',
+                subtabs: [
+                    { key: 'expenses:ledger', title: 'Buku Catatan Pengeluaran Beban', desc: 'Pencatatan kas operasional outlet keluar harian' },
+                    { key: 'expenses:category', title: 'Kelola Kategori Beban (CRUD)', desc: 'Master kategori beban operasional cabang' }
+                ]
+            },
+            {
+                key: 'customers',
+                title: '10. Pelanggan & Mitra CRM',
+                icon: 'user-check',
+                subtabs: [
+                    { key: 'customers:list', title: 'Daftar Pelanggan Reguler & Mitra', desc: 'Database pelanggan CRM, nomor telepon, dan alamat' },
+                    { key: 'customers:category', title: 'Kategori & Tiering Harga', desc: 'Penetapan diskon tier harga pelanggan setia' },
+                    { key: 'customers:mitra-pricing', title: 'Kontrak Harga Khusus Mitra B2B', desc: 'Harga jual kontrak khusus per item mitra' },
+                    { key: 'customers:maps', title: 'Peta Geospasial Pelanggan', desc: 'Sebaran titik koordinat pelanggan pada peta GPS' }
+                ]
+            },
+            {
+                key: 'logistics',
+                title: '11. Kurir & Biaya Kirim',
+                icon: 'truck',
+                subtabs: [
+                    { key: 'logistics:couriers', title: 'Armada Motor & Kurir Toko', desc: 'Master armada kendaraan operasional dan driver' },
+                    { key: 'logistics:calculator', title: 'Kalkulator Ongkir Jarak Peta', desc: 'Hitung ongkos kirim geospasial real-time' },
+                    { key: 'logistics:logs', title: 'Log BBM, Odometer & Servis', desc: 'Pencatatan bensin dan servis armada masuk beban' },
+                    { key: 'logistics:settings', title: 'Pengaturan Tarif Ongkir Dinamis', desc: 'Tarif dasar, radius gratis ongkir, dan tarif per km' },
+                    { key: 'logistics:maps', title: 'Peta Geospasial Outlet & Kurir', desc: 'Peta geospasial armada pengiriman pesanan' }
+                ]
+            },
+            {
+                key: 'branches',
+                title: '12. Kelola Cabang (CRUD)',
+                icon: 'store',
+                subtabs: [
+                    { key: 'branches:table', title: 'Tabel Cabang & Titik Koordinat GPS', desc: 'Master profil toko, radius presensi, dan nomor telepon' },
+                    { key: 'branches:maps', title: 'Peta Geospasial Jaringan Outlet', desc: 'Visualisasi seluruh outlet cabang pada Google/Leaflet Maps' }
+                ]
+            },
+            {
+                key: 'payments',
+                title: '13. Metode Pembayaran',
+                icon: 'credit-card',
+                subtabs: [
+                    { key: 'payments:methods', title: 'Master Saluran Pembayaran Kasir', desc: 'Aktivasi Tunai, QRIS Dinamis, Kartu Debit, Transfer Bank' }
+                ]
+            },
+            {
+                key: 'sale-cancellations',
+                title: '14. Pembatalan Penjualan (Void)',
+                icon: 'ban',
+                subtabs: [
+                    { key: 'sale-cancellations:logs', title: 'Otorisasi & Riwayat Void Kasir', desc: 'Persetujuan pembatalan transaksi dan audit trail' }
+                ]
+            },
+            {
+                key: 'settings',
+                title: '15. Konfigurasi Sistem & Cetak',
+                icon: 'settings',
+                subtabs: [
+                    { key: 'settings:general', title: 'Identitas Toko & Konfigurasi Nota', desc: 'Nama toko, header struk, alamat, dan koneksi printer thermal' },
+                    { key: 'settings:logo', title: 'Kustomisasi Logo & Avatar Staf', desc: 'Unggah foto logo toko dan avatar pengguna' },
+                    { key: 'settings:roles', title: 'Master Peran & Matriks Hak Akses', desc: 'Manajemen role akun dan izin granular menu & sub-tab' },
+                    { key: 'settings:sync', title: 'Sinkronisasi Master Hosting & Lokal', desc: 'Penyelarasan database server hosting dan SQLite offline' },
+                    { key: 'settings:danger', title: 'Pembersihan & Reset Data Toko', desc: 'Pengosongan data transaksi penjualan atau riwayat uji coba' }
+                ]
+            }
+        ];
+
+        // State untuk collapse/expand sub-tab di matriks
+        const rolePermsCollapsedMenus = new Set();
+
+        function hasUserPerm(key, mode = 'view') {
+            const curUser = state.currentUser || state.loggedInUser;
+            if (!curUser) return true;
+            const role = (curUser.role || 'CASHIER').toUpperCase().trim().replace(/_/g, '');
+            if (role === 'SUPERADMIN' || role === 'SUPER ADMIN') return true;
+
+            const userPerms = state.userPermissions || {};
+            let item = userPerms[key];
+            if (!item && key.includes(':')) {
+                const parentKey = key.split(':')[0];
+                item = userPerms[parentKey];
+            }
+            if (!item) {
+                if (role === 'BRANCHMANAGER' || role === 'MANAGER') {
+                    return (key !== 'sale-cancellations');
+                }
+                return false;
+            }
+
+            if (typeof item === 'object' && item !== null) {
+                if (mode === 'view' || mode === 'access') return (item.view == 1 || item.access == 1);
+                if (mode === 'create' || mode === 'tambah') return (item.create == 1);
+                if (mode === 'update' || mode === 'edit') return (item.update == 1);
+                if (mode === 'delete' || mode === 'hapus') return (item.delete == 1);
+                return false;
+            }
+            return (item == 1);
+        }
+
+        function toggleSubtabsForMenu(menuKey) {
+            if (rolePermsCollapsedMenus.has(menuKey)) {
+                rolePermsCollapsedMenus.delete(menuKey);
+            } else {
+                rolePermsCollapsedMenus.add(menuKey);
+            }
+            renderRolePermissionsMatrix();
+        }
+
+        function toggleAllSubtabsExpand(expand = true) {
+            if (expand) {
+                rolePermsCollapsedMenus.clear();
+            } else {
+                allPermissionsStructure.forEach(m => {
+                    if (m.subtabs && m.subtabs.length > 0) {
+                        rolePermsCollapsedMenus.add(m.key);
+                    }
+                });
+            }
+            renderRolePermissionsMatrix();
+        }
+
+        function filterRolePermissionsMatrix() {
+            const q = (document.getElementById('role-perm-filter-input')?.value || '').toLowerCase().trim();
+            const rows = document.querySelectorAll('#role-permissions-table-body tr');
+            rows.forEach(r => {
+                const text = r.innerText.toLowerCase();
+                if (!q || text.includes(q)) {
+                    r.style.display = '';
+                } else {
+                    r.style.display = 'none';
+                }
+            });
+        }
+
+        function toggleMenuAllModesForRole(roleCode, menuKey, checked) {
+            const menuObj = allPermissionsStructure.find(m => m.key === menuKey);
+            if (!menuObj) return;
+
+            ['view', 'create', 'update', 'delete'].forEach(mode => {
+                const cb = document.getElementById(`perm-${roleCode}-${menuKey}-${mode}`);
+                if (cb && !cb.disabled) cb.checked = checked;
+            });
+
+            if (menuObj.subtabs) {
+                menuObj.subtabs.forEach(sub => {
+                    ['view', 'create', 'update', 'delete'].forEach(mode => {
+                        const subCb = document.getElementById(`perm-${roleCode}-${sub.key}-${mode}`);
+                        if (subCb && !subCb.disabled) subCb.checked = checked;
+                    });
+                });
+            }
+        }
+
         function renderRolePermissionsMatrix() {
             const thead = document.getElementById('role-permissions-table-head');
             const tbody = document.getElementById('role-permissions-table-body');
             if (!tbody) return;
-
-            const allMenus = [
-                { key: 'pos', title: '1. POS Penjualan Kasir' },
-                { key: 'reports', title: '2. Laporan Penjualan & Piutang' },
-                { key: 'ess', title: '3. Portal ESS Karyawan' },
-                { key: 'employees', title: '4. Kelola Karyawan (CRUD)' },
-                { key: 'payroll', title: '4b. Payroll & Slip Gaji' },
-                { key: 'products', title: '5. Master Produk & Varian' },
-                { key: 'bom', title: '6. Resep / BOM Bahan' },
-                { key: 'stocks', title: '7. Stok & Kartu Mutasi' },
-                { key: 'pnl', title: '8. Laporan Laba Rugi' },
-                { key: 'expenses', title: '9. Beban Operasional Cabang' },
-                { key: 'customers', title: '10. Pelanggan & Mitra CRM' },
-                { key: 'logistics', title: '11. Kurir & Biaya Kirim' },
-                { key: 'branches', title: '12. Kelola Cabang (CRUD)' },
-                { key: 'payments', title: '13. Metode Pembayaran' },
-                { key: 'sale-cancellations', title: '14. Pembatalan Penjualan (Void)' },
-                { key: 'settings', title: '15. Konfigurasi Sistem & Cetak' }
-            ];
 
             const roles = (state.userRoles && state.userRoles.length > 0) ? state.userRoles : [
                 { id: 1, code: 'SUPER_ADMIN', name: 'Super Admin Pusat', is_system: 1, can_access_all_branches: 1 },
@@ -27983,24 +28382,30 @@ Manager / Supervisor: __________________
             if (thead) {
                 thead.innerHTML = `
                     <tr>
-                        <th class="py-3 px-4 min-w-[220px]">Menu Aplikasi</th>
+                        <th class="py-3 px-4 min-w-[280px]">Menu & Sub-Tab Akses</th>
                         ${roles.map(r => `
-                            <th class="py-3 px-4 text-center min-w-[140px] border-l border-slate-200/60">
+                            <th class="py-3 px-3 text-center min-w-[190px] border-l border-slate-200 dark:border-slate-700">
                                 <div class="flex flex-col items-center justify-center space-y-1">
-                                    <span class="font-black text-xs text-slate-800">${getRoleBadgeEmoji(r.code)} ${r.name}</span>
+                                    <span class="font-black text-xs text-slate-800 dark:text-white">${getRoleBadgeEmoji(r.code)} ${r.name}</span>
                                     <div class="flex items-center space-x-1">
-                                        <span class="font-mono text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded">${r.code}</span>
-                                        ${r.user_count !== undefined ? `<span class="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.2 rounded font-semibold" title="${r.user_count} karyawan">${r.user_count} staf</span>` : ''}
+                                        <span class="font-mono text-[10px] text-slate-500 font-bold bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">${r.code}</span>
+                                        ${r.user_count !== undefined ? `<span class="text-[9px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1 py-0.2 rounded font-semibold">${r.user_count} staf</span>` : ''}
                                     </div>
-                                    <span class="text-[9px] px-1.5 py-0.5 rounded font-bold ${r.can_access_all_branches ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}">
+                                    <span class="text-[9px] px-1.5 py-0.5 rounded font-bold ${r.can_access_all_branches ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}">
                                         ${r.can_access_all_branches ? '🌐 Multi-Cabang' : '🔒 Cabang Lokal'}
                                     </span>
                                     ${!r.is_system ? `
                                         <div class="flex items-center space-x-1 mt-1">
-                                            <button onclick='openEditRoleModal(${JSON.stringify(r).replace(/'/g, "&apos;")})' class="p-1 text-indigo-600 hover:bg-indigo-50 rounded" title="Edit Role"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
-                                            <button onclick='deleteUserRole(${r.id}, "${r.name.replace(/"/g, '&quot;')}")' class="p-1 text-rose-600 hover:bg-rose-50 rounded" title="Hapus Role"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                                            <button onclick='openEditRoleModal(${JSON.stringify(r).replace(/'/g, "&apos;")})' class="p-1 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded" title="Edit Role"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                                            <button onclick='deleteUserRole(${r.id}, "${r.name.replace(/"/g, '&quot;')}")' class="p-1 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded" title="Hapus Role"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
                                         </div>
                                     ` : ''}
+                                    <div class="grid grid-cols-4 gap-1 w-full pt-1.5 border-t border-slate-200 dark:border-slate-700 text-[10px] font-mono font-bold text-slate-400">
+                                        <span title="View / Lihat" class="text-blue-600 dark:text-blue-400">V</span>
+                                        <span title="Tambah / Create" class="text-emerald-600 dark:text-emerald-400">T</span>
+                                        <span title="Update / Ubah" class="text-amber-600 dark:text-amber-400">U</span>
+                                        <span title="Delete / Hapus" class="text-rose-600 dark:text-rose-400">D</span>
+                                    </div>
                                 </div>
                             </th>
                         `).join('')}
@@ -28008,38 +28413,143 @@ Manager / Supervisor: __________________
                 `;
             }
 
-            // Render Dynamic Body
-            tbody.innerHTML = allMenus.map(m => {
-                const cells = roles.map(r => {
+            // Render Dynamic Body: Menu & Sub-tabs
+            let rowsHtml = '';
+            allPermissionsStructure.forEach(m => {
+                const hasSubs = (m.subtabs && m.subtabs.length > 0);
+                const isCollapsed = rolePermsCollapsedMenus.has(m.key);
+
+                // Helper to extract values
+                const getPermValue = (roleCode, key) => {
+                    const isSuper = (roleCode === 'SUPER_ADMIN' || roleCode === 'SUPERADMIN');
+                    if (isSuper) {
+                        return { view: 1, create: 1, update: 1, delete: 1 };
+                    }
+                    const rData = grouped[roleCode] || grouped[roleCode.replace(/_/g, '')] || {};
+                    const item = rData[key];
+                    if (item && typeof item === 'object') {
+                        return {
+                            view: item.view ?? item.access ?? 0,
+                            create: item.create ?? 0,
+                            update: item.update ?? 0,
+                            delete: item.delete ?? 0
+                        };
+                    }
+                    if (item !== undefined) {
+                        const can = (item == 1) ? 1 : 0;
+                        return { view: can, create: can, update: can, delete: 0 };
+                    }
+                    // Default fallback
+                    return { view: 0, create: 0, update: 0, delete: 0 };
+                };
+
+                // Render Parent Menu Row
+                const parentCells = roles.map(r => {
                     const rCode = r.code;
                     const isSuper = (rCode === 'SUPER_ADMIN' || rCode === 'SUPERADMIN');
-                    let val = false;
-                    if (isSuper) {
-                        val = true;
-                    } else if (grouped[rCode] && grouped[rCode][m.key] !== undefined) {
-                        val = (grouped[rCode][m.key] == 1);
-                    } else {
-                        const norm = rCode.replace(/_/g, '');
-                        if (grouped[norm] && grouped[norm][m.key] !== undefined) {
-                            val = (grouped[norm][m.key] == 1);
-                        }
-                    }
+                    const vals = getPermValue(rCode, m.key);
 
                     return `
-                        <td class="py-3 px-4 text-center border-l border-slate-100">
-                            <input type="checkbox" id="perm-${rCode}-${m.key}" ${val ? 'checked' : ''} ${isSuper ? 'disabled title="Super Admin memiliki akses penuh mutlak"' : ''} class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                        <td class="py-3 px-2 text-center border-l border-slate-200 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/40">
+                            <div class="inline-flex items-center gap-1.5 p-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+                                <label title="Lihat / Akses Menu (View)" class="flex items-center space-x-0.5 cursor-pointer px-1 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800">
+                                    <input type="checkbox" id="perm-${rCode}-${m.key}-view" ${vals.view ? 'checked' : ''} ${isSuper ? 'disabled' : ''} onchange="toggleMenuAllModesForRole('${rCode}', '${m.key}', this.checked)" class="w-3.5 h-3.5 text-blue-600 rounded">
+                                    <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400">V</span>
+                                </label>
+                                <label title="Tambah / Create" class="flex items-center space-x-0.5 cursor-pointer px-1 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800">
+                                    <input type="checkbox" id="perm-${rCode}-${m.key}-create" ${vals.create ? 'checked' : ''} ${isSuper ? 'disabled' : ''} class="w-3.5 h-3.5 text-emerald-600 rounded">
+                                    <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">T</span>
+                                </label>
+                                <label title="Ubah / Edit" class="flex items-center space-x-0.5 cursor-pointer px-1 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800">
+                                    <input type="checkbox" id="perm-${rCode}-${m.key}-update" ${vals.update ? 'checked' : ''} ${isSuper ? 'disabled' : ''} class="w-3.5 h-3.5 text-amber-600 rounded">
+                                    <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400">U</span>
+                                </label>
+                                <label title="Hapus / Delete" class="flex items-center space-x-0.5 cursor-pointer px-1 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800">
+                                    <input type="checkbox" id="perm-${rCode}-${m.key}-delete" ${vals.delete ? 'checked' : ''} ${isSuper ? 'disabled' : ''} class="w-3.5 h-3.5 text-rose-600 rounded">
+                                    <span class="text-[10px] font-bold text-rose-600 dark:text-rose-400">D</span>
+                                </label>
+                            </div>
                         </td>
                     `;
                 }).join('');
 
-                return `
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="py-3 px-4 font-bold text-slate-800">${m.title}</td>
-                        ${cells}
+                rowsHtml += `
+                    <tr class="bg-slate-100/70 dark:bg-slate-800/80 font-bold border-t-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white transition-colors">
+                        <td class="py-3 px-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    ${hasSubs ? `
+                                        <button type="button" onclick="toggleSubtabsForMenu('${m.key}')" class="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-indigo-600 transition-colors">
+                                            <i data-lucide="${isCollapsed ? 'chevron-right' : 'chevron-down'}" class="w-4 h-4"></i>
+                                        </button>
+                                    ` : '<span class="w-5"></span>'}
+                                    <span class="text-xs font-black tracking-tight">${m.title}</span>
+                                </div>
+                                ${hasSubs ? `
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300">
+                                        ${m.subtabs.length} Sub-Tab
+                                    </span>
+                                ` : ''}
+                            </div>
+                        </td>
+                        ${parentCells}
                     </tr>
                 `;
-            }).join('');
 
+                // Render Sub-Tab Rows
+                if (hasSubs && !isCollapsed) {
+                    m.subtabs.forEach(sub => {
+                        const subCells = roles.map(r => {
+                            const rCode = r.code;
+                            const isSuper = (rCode === 'SUPER_ADMIN' || rCode === 'SUPERADMIN');
+                            const vals = getPermValue(rCode, sub.key);
+
+                            return `
+                                <td class="py-2.5 px-2 text-center border-l border-slate-200 dark:border-slate-700/60">
+                                    <div class="inline-flex items-center gap-1.5 p-1 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/80">
+                                        <label title="Lihat Sub-Tab (${sub.title})" class="flex items-center space-x-0.5 cursor-pointer px-1 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700">
+                                            <input type="checkbox" id="perm-${rCode}-${sub.key}-view" ${vals.view ? 'checked' : ''} ${isSuper ? 'disabled' : ''} class="w-3.5 h-3.5 text-blue-600 rounded">
+                                            <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400">V</span>
+                                        </label>
+                                        <label title="Tambah Data di ${sub.title}" class="flex items-center space-x-0.5 cursor-pointer px-1 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700">
+                                            <input type="checkbox" id="perm-${rCode}-${sub.key}-create" ${vals.create ? 'checked' : ''} ${isSuper ? 'disabled' : ''} class="w-3.5 h-3.5 text-emerald-600 rounded">
+                                            <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">T</span>
+                                        </label>
+                                        <label title="Ubah Data di ${sub.title}" class="flex items-center space-x-0.5 cursor-pointer px-1 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700">
+                                            <input type="checkbox" id="perm-${rCode}-${sub.key}-update" ${vals.update ? 'checked' : ''} ${isSuper ? 'disabled' : ''} class="w-3.5 h-3.5 text-amber-600 rounded">
+                                            <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400">U</span>
+                                        </label>
+                                        <label title="Hapus Data di ${sub.title}" class="flex items-center space-x-0.5 cursor-pointer px-1 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700">
+                                            <input type="checkbox" id="perm-${rCode}-${sub.key}-delete" ${vals.delete ? 'checked' : ''} ${isSuper ? 'disabled' : ''} class="w-3.5 h-3.5 text-rose-600 rounded">
+                                            <span class="text-[10px] font-bold text-rose-600 dark:text-rose-400">D</span>
+                                        </label>
+                                    </div>
+                                </td>
+                            `;
+                        }).join('');
+
+                        rowsHtml += `
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors border-t border-slate-100 dark:border-slate-700/40 text-slate-700 dark:text-slate-300">
+                                <td class="py-2.5 px-4 pl-9">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-slate-400 font-mono">↳</span>
+                                        <div>
+                                            <div class="flex items-center space-x-1.5">
+                                                <span class="font-bold text-xs text-slate-800 dark:text-slate-100">${sub.title}</span>
+                                                <span class="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 font-mono">${sub.key}</span>
+                                            </div>
+                                            <p class="text-[10px] text-slate-400">${sub.desc || ''}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                ${subCells}
+                            </tr>
+                        `;
+                    });
+                }
+            });
+
+            tbody.innerHTML = rowsHtml;
             lucide.createIcons();
         }
 
@@ -28047,15 +28557,49 @@ Manager / Supervisor: __________________
             const roles = (state.userRoles && state.userRoles.length > 0) ? state.userRoles : [
                 { code: 'SUPER_ADMIN' }, { code: 'BRANCH_MANAGER' }, { code: 'CASHIER' }, { code: 'STAFF' }
             ];
-            const allMenus = ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
 
             const payloadPerms = {};
             roles.forEach(r => {
                 const rCode = r.code;
                 payloadPerms[rCode] = {};
-                allMenus.forEach(m => {
-                    const cb = document.getElementById(`perm-${rCode}-${m}`);
-                    payloadPerms[rCode][m] = (cb && cb.checked) ? 1 : 0;
+
+                allPermissionsStructure.forEach(m => {
+                    const isSuper = (rCode === 'SUPER_ADMIN' || rCode === 'SUPERADMIN');
+                    // Parent menu
+                    const v = isSuper ? 1 : (document.getElementById(`perm-${rCode}-${m.key}-view`)?.checked ? 1 : 0);
+                    const c = isSuper ? 1 : (document.getElementById(`perm-${rCode}-${m.key}-create`)?.checked ? 1 : 0);
+                    const u = isSuper ? 1 : (document.getElementById(`perm-${rCode}-${m.key}-update`)?.checked ? 1 : 0);
+                    const d = isSuper ? 1 : (document.getElementById(`perm-${rCode}-${m.key}-delete`)?.checked ? 1 : 0);
+
+                    payloadPerms[rCode][m.key] = {
+                        view: v,
+                        create: c,
+                        update: u,
+                        delete: d,
+                        parent_key: null,
+                        is_subtab: 0,
+                        title: m.title
+                    };
+
+                    // Sub-tabs
+                    if (m.subtabs) {
+                        m.subtabs.forEach(sub => {
+                            const subV = isSuper ? 1 : (document.getElementById(`perm-${rCode}-${sub.key}-view`)?.checked ? 1 : 0);
+                            const subC = isSuper ? 1 : (document.getElementById(`perm-${rCode}-${sub.key}-create`)?.checked ? 1 : 0);
+                            const subU = isSuper ? 1 : (document.getElementById(`perm-${rCode}-${sub.key}-update`)?.checked ? 1 : 0);
+                            const subD = isSuper ? 1 : (document.getElementById(`perm-${rCode}-${sub.key}-delete`)?.checked ? 1 : 0);
+
+                            payloadPerms[rCode][sub.key] = {
+                                view: subV,
+                                create: subC,
+                                update: subU,
+                                delete: subD,
+                                parent_key: m.key,
+                                is_subtab: 1,
+                                title: sub.title
+                            };
+                        });
+                    }
                 });
             });
 
@@ -28066,13 +28610,14 @@ Manager / Supervisor: __________________
                     body: JSON.stringify({ permissions: payloadPerms })
                 });
                 const data = await res.json();
-                alert(data.message || 'Hak akses berhasil disimpan!');
+                alert(data.message || 'Matriks hak akses role & sub-tab berhasil disimpan!');
                 if (data.success) {
                     await initApp();
                     await loadAppSettingsModule();
                 }
             } catch (err) {
-                alert('Terjadi kesalahan jaringan.');
+                console.error(err);
+                alert('Terjadi kesalahan jaringan saat menyimpan hak akses.');
             }
         }
 

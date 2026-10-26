@@ -763,10 +763,32 @@ function initDatabaseSchema($pdo) {
         menu_key TEXT NOT NULL,
         menu_title TEXT NOT NULL,
         can_access INTEGER DEFAULT 1,
+        can_view INTEGER DEFAULT 1,
+        can_create INTEGER DEFAULT 0,
+        can_update INTEGER DEFAULT 0,
+        can_delete INTEGER DEFAULT 0,
+        parent_key TEXT DEFAULT NULL,
+        is_subtab INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(role, menu_key)
     )");
+
+    try {
+        $rmpCols = [];
+        $stmtCols = $pdo->query("PRAGMA table_info(role_menu_permissions)");
+        if ($stmtCols) {
+            foreach ($stmtCols->fetchAll(PDO::FETCH_ASSOC) as $c) {
+                $rmpCols[] = $c['name'];
+            }
+        }
+        if (!in_array('can_view', $rmpCols)) $pdo->exec("ALTER TABLE role_menu_permissions ADD COLUMN can_view INTEGER DEFAULT 1");
+        if (!in_array('can_create', $rmpCols)) $pdo->exec("ALTER TABLE role_menu_permissions ADD COLUMN can_create INTEGER DEFAULT 0");
+        if (!in_array('can_update', $rmpCols)) $pdo->exec("ALTER TABLE role_menu_permissions ADD COLUMN can_update INTEGER DEFAULT 0");
+        if (!in_array('can_delete', $rmpCols)) $pdo->exec("ALTER TABLE role_menu_permissions ADD COLUMN can_delete INTEGER DEFAULT 0");
+        if (!in_array('parent_key', $rmpCols)) $pdo->exec("ALTER TABLE role_menu_permissions ADD COLUMN parent_key TEXT DEFAULT NULL");
+        if (!in_array('is_subtab', $rmpCols)) $pdo->exec("ALTER TABLE role_menu_permissions ADD COLUMN is_subtab INTEGER DEFAULT 0");
+    } catch (Exception $e) {}
 
     // 32. User Roles / Group Pengguna Terpadu
     $pdo->exec("CREATE TABLE IF NOT EXISTS user_roles (
@@ -1896,6 +1918,12 @@ function autoMigrateAndSync($pdo) {
         menu_key TEXT NOT NULL,
         menu_title TEXT NOT NULL,
         can_access INTEGER DEFAULT 1,
+        can_view INTEGER DEFAULT 1,
+        can_create INTEGER DEFAULT 0,
+        can_update INTEGER DEFAULT 0,
+        can_delete INTEGER DEFAULT 0,
+        parent_key TEXT DEFAULT NULL,
+        is_subtab INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(role, menu_key)
@@ -1906,6 +1934,7 @@ function autoMigrateAndSync($pdo) {
         ['reports', '2. Laporan Penjualan & Piutang'],
         ['ess', '3. Portal ESS Karyawan'],
         ['employees', '4. Kelola Karyawan (CRUD)'],
+        ['payroll', '4b. Payroll & Slip Gaji'],
         ['products', '5. Master Produk & Varian'],
         ['bom', '6. Resep / BOM Bahan'],
         ['stocks', '7. Stok & Kartu Mutasi'],
@@ -1920,21 +1949,26 @@ function autoMigrateAndSync($pdo) {
     ];
 
     $roleAccessRules = [
-        'SUPERADMIN'     => ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'],
-        'SUPER_ADMIN'    => ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'],
-        'BRANCH_MANAGER' => ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
-        'MANAGER'        => ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
+        'SUPERADMIN'     => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'],
+        'SUPER_ADMIN'    => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'],
+        'BRANCH_MANAGER' => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
+        'MANAGER'        => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
         'CASHIER'        => ['pos', 'reports', 'ess'],
         'STAFF'          => ['ess', 'stocks', 'logistics']
     ];
 
-    $stmtRolePerm = $pdo->prepare("INSERT OR IGNORE INTO role_menu_permissions (role, menu_key, menu_title, can_access) VALUES (?, ?, ?, ?)");
+    $stmtRolePerm = $pdo->prepare("INSERT OR IGNORE INTO role_menu_permissions (role, menu_key, menu_title, can_access, can_view, can_create, can_update, can_delete) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     foreach ($roleAccessRules as $role => $allowedMenus) {
+        $isSuper = in_array($role, ['SUPERADMIN', 'SUPER_ADMIN']);
+        $isMgr = in_array($role, ['BRANCH_MANAGER', 'MANAGER']);
         foreach ($allMenus as $menu) {
             $mKey = $menu[0];
             $mTitle = $menu[1];
             $can = in_array($mKey, $allowedMenus) ? 1 : 0;
-            $stmtRolePerm->execute([$role, $mKey, $mTitle, $can]);
+            $canCreate = ($can && ($isSuper || $isMgr || in_array($mKey, ['pos', 'ess']))) ? 1 : 0;
+            $canUpdate = ($can && ($isSuper || $isMgr || in_array($mKey, ['pos', 'ess']))) ? 1 : 0;
+            $canDelete = ($can && ($isSuper || ($isMgr && !in_array($mKey, ['sale-cancellations', 'settings'])))) ? 1 : 0;
+            $stmtRolePerm->execute([$role, $mKey, $mTitle, $can, $can, $canCreate, $canUpdate, $canDelete]);
         }
     }
 
