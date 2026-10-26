@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.73",
-  "build": "20261026-28",
+  "version": "1.2.74",
+  "build": "20261026-29",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.74",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Optimalisasi Ruang Vertikal POS Kasir: Eliminasi Spasi Kosong (Blank Space) Header & Desain Kompak Pelanggan (FR-POS-35)",
+      "description": "Mengoptimalkan pemanfaatan ruang vertikal pada layar POS Kasir: (1) Eliminasi Spasi Kosong Atas (Blank Space): Menghilangkan kelas space-y-6 dan mengurangi padding atas pada kontainer utama <main> dari 24px (sm:p-6) menjadi pt-2 sm:pt-2.5 (8-10px) sehingga jarak kosong antara header topbar dan baris pelanggan menjadi sangat ramping dan rapi. (2) Desain Kompak Baris Pelanggan: Menyesuaikan padding kartu pemilihan pelanggan/tier CRM dari p-3.5 menjadi px-3 py-2 sm:px-4 sm:py-2.5 serta mempersempit jarak antar baris pada #tab-pos dari space-y-4 menjadi space-y-2.5 sm:space-y-3. Hal ini mengangkat seluruh grid katalog produk dan keranjang kasir ke atas sehingga baris kedua produk terlihat penuh tanpa harus menggulir layar.",
+      "rollback_command": "git checkout v1.2.73"
+    },
     {
       "version": "1.2.73",
       "commit": "HEAD",

@@ -483,7 +483,7 @@ try {
         </header>
 
         <!-- Main Content Viewports Container -->
-        <main class="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
+        <main class="flex-1 px-3 sm:px-6 pt-2 pb-4 sm:pt-2.5 sm:pb-6 max-w-7xl w-full mx-auto">
 
             <!-- ---------------------------------------------------- -->
             <!-- TAB 0: DASHBOARD EKSEKUTIF & LIVE MONITORING         -->
@@ -728,9 +728,9 @@ try {
             <!-- ---------------------------------------------------- -->
             <!-- TAB 1: MODUL PENJUALAN & POS KASIR                   -->
             <!-- ---------------------------------------------------- -->
-            <div id="tab-pos" class="space-y-4">
+            <div id="tab-pos" class="space-y-2.5 sm:space-y-3">
                 <!-- Customer & Pricing Tier Selection Bar (CRM & B2B Mitra) -->
-                <div class="bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/60 p-3.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
+                <div class="bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/60 px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl flex flex-wrap items-center justify-between gap-2.5 shadow-xs">
                     <div class="flex items-center space-x-3">
                         <span class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">👥</span>
                         <div>
