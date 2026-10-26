@@ -9404,8 +9404,178 @@ try {
             break;
 
         // ==========================================
-        // 8h. CETAK SLIP GAJI MANDIRI (SELF-SERVICE PAYSLIP)
+        // 8h. CETAK SLIP GAJI MANDIRI (SELF-SERVICE PAYSLIP) & PAYROLL MANAGEMENT
         // ==========================================
+        case 'get_monthly_payrolls':
+            $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : 1;
+            $month = !empty($_GET['month']) ? trim($_GET['month']) : date('Y-m');
+            $actorId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : (int)($_SESSION['user_id'] ?? 0);
+
+            if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
+                $month = date('Y-m');
+            }
+
+            $isManager = true;
+            $isSuperAdmin = false;
+            $userBranchId = null;
+            if ($actorId > 0) {
+                $stmtR = $pdo->prepare("SELECT role, branch_id FROM users WHERE id = ?");
+                $stmtR->execute([$actorId]);
+                $uData = $stmtR->fetch(PDO::FETCH_ASSOC);
+                if ($uData) {
+                    $userRole = strtoupper($uData['role'] ?? '');
+                    $userBranchId = (int)($uData['branch_id'] ?? 0);
+                    $isSuperAdmin = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN']);
+                    $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+                    if (!$isSuperAdmin && $userBranchId > 0) {
+                        $branchId = $userBranchId;
+                    }
+                }
+            }
+
+            $stmtEmp = $pdo->prepare("
+                SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.base_salary, u.allowance, u.daily_transport, u.commission_rate,
+                       b.name as branch_name
+                FROM users u
+                LEFT JOIN branches b ON b.id = u.branch_id
+                WHERE u.is_active = 1 AND (u.branch_id = ? OR ? = 0)
+                ORDER BY u.id ASC
+            ");
+            $stmtEmp->execute([$branchId, $branchId]);
+            $employees = $stmtEmp->fetchAll(PDO::FETCH_ASSOC);
+
+            $startDate = $month . '-01';
+            list($y, $m) = explode('-', $month);
+            $daysInM = cal_days_in_month(CAL_GREGORIAN, (int)$m, (int)$y);
+            $endDate = $month . '-' . str_pad($daysInM, 2, '0', STR_PAD_LEFT);
+
+            $payrolls = [];
+            $totalGross = 0;
+            $totalDeductions = 0;
+            $totalNet = 0;
+
+            foreach ($employees as $emp) {
+                $uId = (int)$emp['id'];
+
+                $stmtSaved = $pdo->prepare("SELECT * FROM employee_payrolls WHERE user_id = ? AND period_month = ?");
+                $stmtSaved->execute([$uId, $month]);
+                $saved = $stmtSaved->fetch(PDO::FETCH_ASSOC);
+
+                if ($saved) {
+                    $p = [
+                        'id' => (int)$saved['id'],
+                        'user_id' => $uId,
+                        'nik' => $emp['nik'],
+                        'name' => $emp['name'],
+                        'role' => $emp['role'],
+                        'branch_id' => (int)$saved['branch_id'],
+                        'branch_name' => $emp['branch_name'] ?: 'Cabang Penugasan',
+                        'period_month' => $month,
+                        'base_salary' => (float)$saved['base_salary'],
+                        'allowance' => (float)$saved['allowance'],
+                        'attendance_days' => (int)$saved['attendance_days'],
+                        'daily_transport_rate' => (float)$saved['daily_transport_rate'],
+                        'transport_total' => (float)$saved['transport_total'],
+                        'sales_commission' => (float)$saved['sales_commission'],
+                        'overtime_pay' => (float)($saved['overtime_pay'] ?? 0),
+                        'bonus_pay' => (float)($saved['bonus_pay'] ?? 0),
+                        'gross_salary' => (float)$saved['gross_salary'],
+                        'late_deduction' => (float)$saved['late_deduction'],
+                        'absence_deduction' => (float)$saved['absence_deduction'],
+                        'loan_deduction' => (float)$saved['loan_deduction'],
+                        'tax_deduction' => (float)$saved['tax_deduction'],
+                        'other_deduction' => (float)$saved['other_deduction'],
+                        'total_deductions' => (float)$saved['total_deductions'],
+                        'net_salary' => (float)$saved['net_salary'],
+                        'payment_status' => $saved['payment_status'] ?: 'PAID',
+                        'is_locked' => true,
+                        'notes' => $saved['notes'] ?: 'Tersimpan & Terverifikasi'
+                    ];
+                } else {
+                    $baseSal = (float)($emp['base_salary'] ?: 3000000);
+                    $allow = (float)($emp['allowance'] ?: 500000);
+                    $dailyTrans = (float)($emp['daily_transport'] ?: 25000);
+
+                    $stmtAtt = $pdo->prepare("SELECT COUNT(DISTINCT date(clock_in)) FROM attendance_logs WHERE user_id = ? AND date(clock_in) BETWEEN ? AND ?");
+                    $stmtAtt->execute([$uId, $startDate, $endDate]);
+                    $attDays = (int)$stmtAtt->fetchColumn();
+                    if ($attDays === 0) $attDays = 22;
+
+                    $transTot = $attDays * $dailyTrans;
+
+                    $stmtComm = $pdo->prepare("SELECT COALESCE(SUM(grand_total), 0) FROM sales WHERE user_id = ? AND date(created_at) BETWEEN ? AND ?");
+                    $stmtComm->execute([$uId, $startDate, $endDate]);
+                    $totOmzet = (float)$stmtComm->fetchColumn();
+                    $comm = $totOmzet * ((float)($emp['commission_rate'] ?: 0.015));
+
+                    $gross = $baseSal + $allow + $transTot + $comm;
+
+                    $stmtLate = $pdo->prepare("SELECT COUNT(*) FROM attendance_logs WHERE user_id = ? AND status = 'LATE' AND date(clock_in) BETWEEN ? AND ?");
+                    $stmtLate->execute([$uId, $startDate, $endDate]);
+                    $lateCount = (int)$stmtLate->fetchColumn();
+                    $lateDeduct = $lateCount * 15000;
+
+                    $stmtLoan = $pdo->prepare("SELECT COALESCE(SUM(monthly_deduction), 0) FROM salary_loans WHERE user_id = ? AND status = 'ACTIVE' AND remaining_amount > 0");
+                    $stmtLoan->execute([$uId]);
+                    $loanDeduct = (float)$stmtLoan->fetchColumn();
+
+                    $taxDeduct = 125000;
+                    $otherDeduct = 0;
+                    $absDeduct = 0;
+                    $totDeduct = $lateDeduct + $absDeduct + $loanDeduct + $taxDeduct + $otherDeduct;
+                    $net = max(0, $gross - $totDeduct);
+
+                    $p = [
+                        'id' => null,
+                        'user_id' => $uId,
+                        'nik' => $emp['nik'],
+                        'name' => $emp['name'],
+                        'role' => $emp['role'],
+                        'branch_id' => (int)$emp['branch_id'],
+                        'branch_name' => $emp['branch_name'] ?: 'Cabang Penugasan',
+                        'period_month' => $month,
+                        'base_salary' => $baseSal,
+                        'allowance' => $allow,
+                        'attendance_days' => $attDays,
+                        'daily_transport_rate' => $dailyTrans,
+                        'transport_total' => $transTot,
+                        'sales_commission' => $comm,
+                        'overtime_pay' => 0,
+                        'bonus_pay' => 0,
+                        'gross_salary' => $gross,
+                        'late_deduction' => $lateDeduct,
+                        'absence_deduction' => $absDeduct,
+                        'loan_deduction' => $loanDeduct,
+                        'tax_deduction' => $taxDeduct,
+                        'other_deduction' => $otherDeduct,
+                        'total_deductions' => $totDeduct,
+                        'net_salary' => $net,
+                        'payment_status' => 'DRAFT',
+                        'is_locked' => false,
+                        'notes' => 'Kalkulasi Otomatis (Draft)'
+                    ];
+                }
+
+                $totalGross += $p['gross_salary'];
+                $totalDeductions += $p['total_deductions'];
+                $totalNet += $p['net_salary'];
+                $payrolls[] = $p;
+            }
+
+            echo json_encode([
+                'success' => true,
+                'month' => $month,
+                'branch_id' => $branchId,
+                'payrolls' => $payrolls,
+                'totals' => [
+                    'employee_count' => count($payrolls),
+                    'total_gross' => $totalGross,
+                    'total_deductions' => $totalDeductions,
+                    'total_net' => $totalNet
+                ]
+            ]);
+            break;
+
         case 'get_employee_payslip':
             $reqUserId = !empty($_GET['req_user_id']) ? (int)$_GET['req_user_id'] : (int)($_SESSION['user_id'] ?? 0);
             $targetUserId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : 3;
@@ -9427,7 +9597,7 @@ try {
 
             $stmtU = $pdo->prepare("SELECT u.*, b.name as branch_name, b.address as branch_address FROM users u LEFT JOIN branches b ON b.id = u.branch_id WHERE u.id = ?");
             $stmtU->execute([$userId]);
-            $user = $stmtU->fetch();
+            $user = $stmtU->fetch(PDO::FETCH_ASSOC);
             if (!$user) {
                 echo json_encode(['success' => false, 'message' => 'Karyawan tidak ditemukan.']);
                 exit;
@@ -9440,10 +9610,33 @@ try {
 
             $stmtP = $pdo->prepare("SELECT * FROM employee_payrolls WHERE user_id = ? AND period_month = ?");
             $stmtP->execute([$userId, $month]);
-            $saved = $stmtP->fetch();
+            $saved = $stmtP->fetch(PDO::FETCH_ASSOC);
 
             if ($saved) {
-                $payroll = $saved;
+                $payroll = [
+                    'id' => (int)$saved['id'],
+                    'user_id' => (int)$saved['user_id'],
+                    'branch_id' => (int)$saved['branch_id'],
+                    'period_month' => $saved['period_month'],
+                    'base_salary' => (float)$saved['base_salary'],
+                    'allowance' => (float)$saved['allowance'],
+                    'attendance_days' => (int)$saved['attendance_days'],
+                    'daily_transport_rate' => (float)$saved['daily_transport_rate'],
+                    'transport_total' => (float)$saved['transport_total'],
+                    'sales_commission' => (float)$saved['sales_commission'],
+                    'overtime_pay' => (float)($saved['overtime_pay'] ?? 0),
+                    'bonus_pay' => (float)($saved['bonus_pay'] ?? 0),
+                    'gross_salary' => (float)$saved['gross_salary'],
+                    'late_deduction' => (float)$saved['late_deduction'],
+                    'absence_deduction' => (float)$saved['absence_deduction'],
+                    'loan_deduction' => (float)$saved['loan_deduction'],
+                    'tax_deduction' => (float)$saved['tax_deduction'],
+                    'other_deduction' => (float)$saved['other_deduction'],
+                    'total_deductions' => (float)$saved['total_deductions'],
+                    'net_salary' => (float)$saved['net_salary'],
+                    'payment_status' => $saved['payment_status'] ?: 'PAID',
+                    'notes' => $saved['notes'] ?: 'Slip Gaji Resmi Tersimpan'
+                ];
             } else {
                 $baseSalary = (float)($user['base_salary'] ?: 3000000);
                 $allowance = (float)($user['allowance'] ?: 500000);
@@ -9459,7 +9652,7 @@ try {
                 $stmtComm = $pdo->prepare("SELECT COALESCE(SUM(grand_total), 0) FROM sales WHERE user_id = ? AND date(created_at) BETWEEN ? AND ?");
                 $stmtComm->execute([$userId, $startDate, $endDate]);
                 $totalOmzet = (float)$stmtComm->fetchColumn();
-                $salesCommission = $totalOmzet * ($user['commission_rate'] ?: 0.015);
+                $salesCommission = $totalOmzet * ((float)($user['commission_rate'] ?: 0.015));
 
                 $overtimePay = 0;
                 $bonusPay = 0;
@@ -9484,7 +9677,7 @@ try {
 
                 $payroll = [
                     'user_id' => $userId,
-                    'branch_id' => $user['branch_id'],
+                    'branch_id' => (int)$user['branch_id'],
                     'period_month' => $month,
                     'base_salary' => $baseSalary,
                     'allowance' => $allowance,
@@ -9509,7 +9702,7 @@ try {
 
             $stmtActiveLoans = $pdo->prepare("SELECT * FROM salary_loans WHERE user_id = ? AND status = 'ACTIVE'");
             $stmtActiveLoans->execute([$userId]);
-            $activeLoans = $stmtActiveLoans->fetchAll();
+            $activeLoans = $stmtActiveLoans->fetchAll(PDO::FETCH_ASSOC);
 
             $stmtMeal = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) FROM employee_meal_allowances WHERE user_id = ? AND date(meal_date) BETWEEN ? AND ?");
             $stmtMeal->execute([$userId, $startDate, $endDate]);
@@ -9517,7 +9710,7 @@ try {
 
             $stmtMealLogs = $pdo->prepare("SELECT * FROM employee_meal_allowances WHERE user_id = ? AND date(meal_date) BETWEEN ? AND ? ORDER BY meal_date ASC");
             $stmtMealLogs->execute([$userId, $startDate, $endDate]);
-            $mealLogs = $stmtMealLogs->fetchAll();
+            $mealLogs = $stmtMealLogs->fetchAll(PDO::FETCH_ASSOC);
 
             echo json_encode([
                 'success' => true,
@@ -9542,25 +9735,25 @@ try {
                 }
             }
             $userId = (int)($input['user_id'] ?? 3);
-            $month = trim($input['month'] ?? date('Y-m'));
+            $month = trim($input['month'] ?? ($input['period_month'] ?? date('Y-m')));
             $branchId = (int)($input['branch_id'] ?? 1);
             $baseSalary = (float)($input['base_salary'] ?? 3000000);
             $allowance = (float)($input['allowance'] ?? 500000);
             $attendanceDays = (int)($input['attendance_days'] ?? 22);
             $dailyTransportRate = (float)($input['daily_transport_rate'] ?? 25000);
-            $transportTotal = $attendanceDays * $dailyTransportRate;
+            $transportTotal = isset($input['transport_total']) ? (float)$input['transport_total'] : ($attendanceDays * $dailyTransportRate);
             $salesCommission = (float)($input['sales_commission'] ?? 0);
             $overtimePay = (float)($input['overtime_pay'] ?? 0);
             $bonusPay = (float)($input['bonus_pay'] ?? 0);
-            $grossSalary = $baseSalary + $allowance + $transportTotal + $salesCommission + $overtimePay + $bonusPay;
+            $grossSalary = (float)($input['gross_salary'] ?? ($baseSalary + $allowance + $transportTotal + $salesCommission + $overtimePay + $bonusPay));
 
             $lateDeduction = (float)($input['late_deduction'] ?? 0);
             $absenceDeduction = (float)($input['absence_deduction'] ?? 0);
             $loanDeduction = (float)($input['loan_deduction'] ?? 0);
             $taxDeduction = (float)($input['tax_deduction'] ?? 0);
             $otherDeduction = (float)($input['other_deduction'] ?? 0);
-            $totalDeductions = $lateDeduction + $absenceDeduction + $loanDeduction + $taxDeduction + $otherDeduction;
-            $netSalary = max(0, $grossSalary - $totalDeductions);
+            $totalDeductions = (float)($input['total_deductions'] ?? ($lateDeduction + $absenceDeduction + $loanDeduction + $taxDeduction + $otherDeduction));
+            $netSalary = (float)($input['net_salary'] ?? max(0, $grossSalary - $totalDeductions));
             $paymentStatus = trim($input['payment_status'] ?? 'PAID');
             $notes = trim($input['notes'] ?? 'Slip gaji diproses resmi');
 
@@ -9606,6 +9799,20 @@ try {
             }
 
             echo json_encode(['success' => true, 'message' => "Slip gaji periode {$month} berhasil disimpan & dikunci."]);
+            break;
+
+        case 'delete_saved_payroll':
+            $payrollId = (int)($input['payroll_id'] ?? ($_GET['id'] ?? 0));
+            $userId = (int)($input['user_id'] ?? 0);
+            $month = trim($input['month'] ?? '');
+
+            if ($payrollId > 0) {
+                $pdo->prepare("DELETE FROM employee_payrolls WHERE id = ?")->execute([$payrollId]);
+            } elseif ($userId > 0 && !empty($month)) {
+                $pdo->prepare("DELETE FROM employee_payrolls WHERE user_id = ? AND period_month = ?")->execute([$userId, $month]);
+            }
+
+            echo json_encode(['success' => true, 'message' => 'Data slip gaji tersimpan berhasil direset/dihapus.']);
             break;
 
         // ==========================================

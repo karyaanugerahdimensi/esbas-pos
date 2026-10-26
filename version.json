@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.88",
-  "build": "20261026-43",
+  "version": "1.2.89",
+  "build": "20261026-44",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.89",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Modul Payroll & Slip Gaji Karyawan Cabang Terpadu Sesuai Format Dokumen Resmi (FR-PAYROLL-01)",
+      "description": "Menghadirkan fitur Payroll & Slip Gaji Karyawan terpadu yang 100% selaras dengan desain dokumen slip gaji resmi: (1) Menu Sidebar & Tab Payroll (#tab-payroll): Menambahkan menu 'Payroll & Slip Gaji' pada sidebar dan matriks perizinan role, dilengkapi 4 kartu ringkasan KPI (Total Karyawan, Gaji Kotor, Total Potongan, Take Home Pay), pemfilteran periode bulan & cabang, pencarian cepat staf, dan tabel rekapitulasi penggajian. (2) Modal Dokumen Slip Gaji Resmi (#payroll-slip-modal): Menampilkan slip gaji berformat resmi dengan header cabang, identitas staf (NIK, Jabatan, Hari Hadir, Rate Komisi), rincian Pendapatan A (Gaji Pokok, Tunjangan, Kehadiran & Transport, Komisi Kasir, Lembur/Bonus, Uang Makan Shift), Potongan B (Denda Keterlambatan, Alpa, Kasbon/Pinjaman, BPJS/PPh, Potongan Lainnya), kotak Navy Take Home Pay dengan nominal besar warna kuning dan teks Terbilang rapi tanpa kata menempel, serta tanda tangan Karyawan dan Manager HRD. (3) Modal Penyesuaian / Editor Komponen Gaji (#payroll-editor-modal): Form interaktif untuk koreksi dan kustomisasi seluruh komponen penerimaan maupun potongan gaji dengan kalkulasi otomatis realtime subtotal bruto, potongan, dan net gaji serta penyimpanan status TERVERIFIKASI/DRAFT. (4) Optimalisasi Cetak & Integrasi Tabel: Memperbaiki CSS @media print dengan class printing-payslip agar pencetakan slip tidak tertutup aturan cetak struk thermal kasir, serta menambahkan tombol akses cepat '💵 Slip Gaji' pada tabel Kelola Karyawan.",
+      "rollback_command": "git checkout v1.2.88"
+    },
     {
       "version": "1.2.88",
       "commit": "HEAD",
