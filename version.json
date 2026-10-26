@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.2.92",
-    "build": "20261026-47",
+    "version": "1.2.93",
+    "build": "20261026-48",
     "release_date": "2026-10-26",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.2.93",
+            "commit": "HEAD",
+            "date": "2026-10-26",
+            "title": "Perbaikan Filter Semua Cabang pada Modul Payroll & Penggajian Karyawan untuk Super Admin (FR-PAYROLL-04)",
+            "description": "Memperbaiki masalah data payroll karyawan yang tidak muncul ketika filter Semua Cabang dipilih oleh Super Admin: (1) Root Cause SQLite Parameter Type Affinity: Ditemukan bahwa klausa SQL sebelumnya (u.branch_id = ? OR ? = 0) mengalami kegagalan evaluasi pada driver SQLite PDO karena nilai integer 0 yang di-pass melalui execute() secara default dibinding sebagai string ('0'), dan perbandingan '0' = 0 pada SQLite tanpa kolom affinity menghasilkan FALSE sehingga query tidak mengembalikan data staf manapun saat branch_id bernilai 0/ALL. (2) Pemisahan Query Dinamis: Memisahkan query SQL menjadi dua jalur eksplisit: jika branch_id > 0, filter spesifik u.branch_id = ?, dan jika branch_id == 0 ('ALL' untuk Super Admin), query mengambil seluruh karyawan aktif tanpa WHERE branch_id dengan fallback nama cabang Kantor Pusat untuk staf tanpa branch_id. (3) Pengamanan Kontrol Dropdown Frontend: Memastikan elemen select #payroll-branch-select mengizinkan opsi Semua Cabang secara leluasa bagi Super Admin, dan mengunci ke cabang penugasan untuk role non-superadmin.",
+            "rollback_command": "git checkout v1.2.92"
+        },
         {
             "version": "1.2.92",
             "commit": "HEAD",

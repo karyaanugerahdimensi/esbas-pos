@@ -9442,7 +9442,12 @@ try {
         // 8h. CETAK SLIP GAJI MANDIRI (SELF-SERVICE PAYSLIP) & PAYROLL MANAGEMENT
         // ==========================================
         case 'get_monthly_payrolls':
-            $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : 1;
+            $rawBranch = trim($_GET['branch_id'] ?? '');
+            if ($rawBranch === 'ALL' || $rawBranch === '0' || $rawBranch === '') {
+                $branchId = 0;
+            } else {
+                $branchId = (int)$rawBranch;
+            }
             $month = !empty($_GET['month']) ? trim($_GET['month']) : date('Y-m');
             $actorId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : (int)($_SESSION['user_id'] ?? 0);
 
@@ -9460,23 +9465,35 @@ try {
                 if ($uData) {
                     $userRole = strtoupper($uData['role'] ?? '');
                     $userBranchId = (int)($uData['branch_id'] ?? 0);
-                    $isSuperAdmin = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN']);
-                    $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+                    $isSuperAdmin = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'SUPER ADMIN']);
+                    $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'SUPER ADMIN', 'BRANCH_MANAGER', 'MANAGER']);
                     if (!$isSuperAdmin && $userBranchId > 0) {
                         $branchId = $userBranchId;
                     }
                 }
             }
 
-            $stmtEmp = $pdo->prepare("
-                SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.base_salary, u.allowance, u.daily_transport, u.commission_rate,
-                       b.name as branch_name
-                FROM users u
-                LEFT JOIN branches b ON b.id = u.branch_id
-                WHERE u.is_active = 1 AND (u.branch_id = ? OR ? = 0)
-                ORDER BY u.id ASC
-            ");
-            $stmtEmp->execute([$branchId, $branchId]);
+            if ($branchId > 0) {
+                $stmtEmp = $pdo->prepare("
+                    SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.base_salary, u.allowance, u.daily_transport, u.commission_rate,
+                           b.name as branch_name
+                    FROM users u
+                    LEFT JOIN branches b ON b.id = u.branch_id
+                    WHERE u.is_active = 1 AND u.branch_id = ?
+                    ORDER BY u.id ASC
+                ");
+                $stmtEmp->execute([$branchId]);
+            } else {
+                $stmtEmp = $pdo->prepare("
+                    SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.base_salary, u.allowance, u.daily_transport, u.commission_rate,
+                           COALESCE(b.name, 'Kantor Pusat') as branch_name
+                    FROM users u
+                    LEFT JOIN branches b ON b.id = u.branch_id
+                    WHERE u.is_active = 1
+                    ORDER BY u.id ASC
+                ");
+                $stmtEmp->execute();
+            }
             $employees = $stmtEmp->fetchAll(PDO::FETCH_ASSOC);
 
             $startDate = $month . '-01';

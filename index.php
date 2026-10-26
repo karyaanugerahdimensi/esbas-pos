@@ -17166,16 +17166,27 @@ Manager / Supervisor: __________________
 
             // Render opsi cabang
             const bSelect = document.getElementById('payroll-branch-select');
+            const curUser = state.currentUser || state.loggedInUser || { id: 1 };
+            const userRole = (curUser.role || 'CASHIER').toUpperCase().trim();
+            const isSuperAdmin = (userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'SUPER ADMIN');
+            const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
+
             if (bSelect && bSelect.options.length <= 1) {
                 const currentVal = bSelect.value || 'ALL';
-                let bOpts = '<option value="ALL">Semua Cabang</option>';
-                (state.branches || []).forEach(b => {
-                    bOpts += `<option value="${b.id}">${b.name}</option>`;
-                });
+                let bOpts = '';
+                if (isSuperAdmin) {
+                    bOpts += '<option value="ALL">Semua Cabang</option>';
+                    (state.branches || []).forEach(b => {
+                        bOpts += `<option value="${b.id}">${b.name}</option>`;
+                    });
+                } else {
+                    const myBranch = (state.branches || []).find(b => b.id == userBranchId) || state.currentBranch || { id: userBranchId, name: 'Cabang Penugasan' };
+                    bOpts += `<option value="${myBranch.id}">${myBranch.name}</option>`;
+                }
                 bSelect.innerHTML = bOpts;
-                bSelect.value = currentVal;
+                bSelect.value = isSuperAdmin ? currentVal : userBranchId;
             }
-            const branchId = bSelect ? bSelect.value : 'ALL';
+            const branchId = bSelect ? bSelect.value : (isSuperAdmin ? 'ALL' : userBranchId);
             payrollModuleState.branchId = branchId;
 
             // Set badge periode
