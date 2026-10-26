@@ -3397,8 +3397,7 @@ try {
                         <div>
                             <p class="font-bold">Ketentuan & Aturan Transaksi Mitra Rekanan B2B:</p>
                             <p class="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
-                                Setiap mitra bisnis memiliki **kesepakatan harga kontrak jual khusus per produk**. 
-                                **Aturan Penjualan POS Kasir**: Ketika tier mitra dipilih pada transaksi POS kasir, sistem **HANYA memunculkan produk-produk yang telah diset kontrak khususnya**. Produk yang status kontraknya belum dibuat tidak akan dimunculkan di katalog penjualan kasir.
+                                Setiap mitra bisnis dapat memiliki <strong>kesepakatan harga kontrak khusus per produk</strong>. Jika kontrak khusus diset, POS kasir akan memprioritaskan harga kontrak tersebut. Jika kontrak khusus belum diset, kasir otomatis menerapkan <strong>Harga Tier Mitra Umum</strong> yang dapat Anda sesuaikan langsung dengan klik tombol edit pada kolom di bawah atau di Master Produk.
                             </p>
                         </div>
                     </div>
@@ -3411,7 +3410,10 @@ try {
                                         <th class="py-3 px-4">Produk</th>
                                         <th class="py-3 px-4">SKU</th>
                                         <th class="py-3 px-4 text-right">Harga Ritel Standar</th>
-                                        <th class="py-3 px-4 text-right">Harga Tier Mitra Umum</th>
+                                        <th class="py-3 px-4 text-right">
+                                            <span>Harga Tier Mitra Umum</span>
+                                            <span class="block text-[9px] text-indigo-600 font-semibold lowercase">(klik untuk ubah)</span>
+                                        </th>
                                         <th class="py-3 px-4 text-right">Harga Kontrak Mitra Ini</th>
                                         <th class="py-3 px-4 text-center">Status Kontrak</th>
                                         <th class="py-3 px-4 text-center">Aksi</th>
@@ -7467,7 +7469,7 @@ try {
                                 </div>
                                 <div>
                                     <label class="block font-bold text-slate-700 mb-1">Harga Jual (Rp):</label>
-                                    <input type="number" id="prod-price" value="25000" class="w-full p-2.5 bg-white border border-indigo-200 rounded-xl font-mono font-black text-indigo-700 focus:ring-2 focus:ring-indigo-500">
+                                    <input type="number" id="prod-price" value="25000" oninput="onSellingPriceChange()" class="w-full p-2.5 bg-white border border-indigo-200 rounded-xl font-mono font-black text-indigo-700 focus:ring-2 focus:ring-indigo-500">
                                 </div>
                             </div>
 
@@ -7543,6 +7545,47 @@ try {
                             <p id="prod-stockable-desc-text" class="text-[11px] text-violet-900/80 leading-relaxed">
                                 Jika diset <strong>Tidak Di-Stok</strong>, kasir dapat menjual produk ini tanpa dibatasi sisa stok fisik jadi, dan sistem akan langsung memotong stok bahan baku BOM terkait.
                             </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOX TIER PRICING CRM MULTI-TIER -->
+                <div class="p-3.5 bg-gradient-to-r from-emerald-50/70 via-teal-50/70 to-indigo-50/70 border border-emerald-200/80 rounded-2xl space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <label class="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
+                                <span>🏷️ Konfigurasi Tingkat Harga Tier Pelanggan (CRM Multi-Tier)</span>
+                            </label>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Atur harga khusus per tier pelanggan atau gunakan hitung otomatis dari harga ritel standar.</p>
+                        </div>
+                        <button type="button" onclick="calcDefaultTierPrices(true)" class="text-[11px] text-emerald-700 hover:text-emerald-900 font-bold bg-white px-2.5 py-1 rounded-xl border border-emerald-300 shadow-xs flex items-center gap-1.5 hover:bg-emerald-50 transition-all">
+                            <span>⚡ Hitung Otomatis (72%, 80%, 90%)</span>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                        <div class="bg-white/80 p-2.5 rounded-xl border border-emerald-200/60 shadow-xs">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="font-bold text-slate-700">Mitra Umum (Rp):</label>
+                                <span class="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-1.5 py-0.2 rounded">Tier Mitra (~72%)</span>
+                            </div>
+                            <input type="number" id="prod-mitra-price" placeholder="Contoh: 18000" class="w-full p-2 bg-white border border-emerald-300 rounded-lg font-mono font-bold text-emerald-900 focus:ring-2 focus:ring-emerald-500 text-sm">
+                            <p class="text-[10px] text-slate-500 mt-1">Diterapkan jika pelanggan berada pada kategori tier MITRA tanpa kontrak individu.</p>
+                        </div>
+                        <div class="bg-white/80 p-2.5 rounded-xl border border-blue-200/60 shadow-xs">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="font-bold text-slate-700">Reseller / Grosir (Rp):</label>
+                                <span class="text-[10px] text-blue-700 font-bold bg-blue-100 px-1.5 py-0.2 rounded">Tier Reseller (~80%)</span>
+                            </div>
+                            <input type="number" id="prod-reseller-price" placeholder="Contoh: 20000" class="w-full p-2 bg-white border border-blue-300 rounded-lg font-mono font-bold text-blue-900 focus:ring-2 focus:ring-blue-500 text-sm">
+                            <p class="text-[10px] text-slate-500 mt-1">Diterapkan untuk pelanggan pada kategori tier RESELLER / Grosir.</p>
+                        </div>
+                        <div class="bg-white/80 p-2.5 rounded-xl border border-purple-200/60 shadow-xs">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="font-bold text-slate-700">Member VIP (Rp):</label>
+                                <span class="text-[10px] text-purple-700 font-bold bg-purple-100 px-1.5 py-0.2 rounded">Tier Member (~90%)</span>
+                            </div>
+                            <input type="number" id="prod-member-price" placeholder="Contoh: 22500" class="w-full p-2 bg-white border border-purple-300 rounded-lg font-mono font-bold text-purple-900 focus:ring-2 focus:ring-purple-500 text-sm">
+                            <p class="text-[10px] text-slate-500 mt-1">Diterapkan untuk pelanggan pada kategori tier MEMBER.</p>
                         </div>
                     </div>
                 </div>
@@ -8157,6 +8200,74 @@ try {
                     <button type="submit" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow transition-colors flex items-center justify-center space-x-1.5">
                         <i data-lucide="check" class="w-4 h-4"></i>
                         <span>Simpan Kontrak</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 8B: Ubah Harga Tier Mitra Umum & Multi-Tier Produk -->
+    <div id="quick-tier-price-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+                <div class="flex items-center space-x-2">
+                    <span class="p-2 bg-indigo-100 text-indigo-800 rounded-xl text-lg">🏷️</span>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">Atur Harga Tier Mitra Umum</h3>
+                        <p id="qtp-product-title" class="text-xs text-indigo-700 font-bold truncate max-w-[260px]">Produk</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeQuickTierPriceModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="saveQuickTierPriceForm(event)" class="space-y-3.5 text-xs">
+                <input type="hidden" id="qtp-product-id">
+                
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex justify-between items-center text-xs">
+                    <div>
+                        <span class="text-slate-500 block text-[11px]">Harga Ritel Standar:</span>
+                        <span id="qtp-retail-price" class="font-mono font-bold text-slate-800 text-sm">Rp 0</span>
+                    </div>
+                    <button type="button" onclick="calcQuickTierPrices(true)" class="px-2.5 py-1 bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl font-bold shadow-xs transition-all text-[11px] flex items-center gap-1">
+                        <span>⚡ Hitung Otomatis</span>
+                    </button>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="bg-emerald-50/60 p-3 rounded-2xl border border-emerald-200/80">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block font-bold text-emerald-950">Harga Tier Mitra Umum (Rp):</label>
+                            <span class="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-1.5 py-0.5 rounded">~72%</span>
+                        </div>
+                        <input type="number" id="qtp-mitra-price" placeholder="Contoh: 18000" class="w-full p-2 bg-white border border-emerald-300 rounded-xl font-mono font-black text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" required>
+                        <p class="text-[10px] text-slate-500 mt-1">Harga acuan untuk semua pelanggan berkategori Mitra B2B tanpa kontrak perorangan.</p>
+                    </div>
+
+                    <div class="bg-blue-50/60 p-3 rounded-2xl border border-blue-200/80">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block font-bold text-blue-950">Harga Tier Reseller / Grosir (Rp):</label>
+                            <span class="text-[10px] text-blue-700 font-bold bg-blue-100 px-1.5 py-0.5 rounded">~80%</span>
+                        </div>
+                        <input type="number" id="qtp-reseller-price" placeholder="Contoh: 20000" class="w-full p-2 bg-white border border-blue-300 rounded-xl font-mono font-bold text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <p class="text-[10px] text-slate-500 mt-1">Diterapkan untuk pelanggan berkategori Reseller / Grosir.</p>
+                    </div>
+
+                    <div class="bg-purple-50/60 p-3 rounded-2xl border border-purple-200/80">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block font-bold text-purple-950">Harga Tier Member VIP (Rp):</label>
+                            <span class="text-[10px] text-purple-700 font-bold bg-purple-100 px-1.5 py-0.5 rounded">~90%</span>
+                        </div>
+                        <input type="number" id="qtp-member-price" placeholder="Contoh: 22500" class="w-full p-2 bg-white border border-purple-300 rounded-xl font-mono font-bold text-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm">
+                        <p class="text-[10px] text-slate-500 mt-1">Diterapkan untuk pelanggan berkategori Member.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" onclick="closeQuickTierPriceModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700 transition-colors">Batal</button>
+                    <button type="submit" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow transition-colors flex items-center justify-center space-x-1.5">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Simpan Harga Tier</span>
                     </button>
                 </div>
             </form>
@@ -10216,32 +10327,11 @@ try {
             const filtered = state.products.filter(p => {
                 const matchCat = (state.selectedCategory === 'ALL' || (p.category || '').toLowerCase() === (state.selectedCategory || '').toLowerCase());
                 const matchKeyword = (!state.searchKeyword || p.name.toLowerCase().includes(state.searchKeyword) || p.sku.toLowerCase().includes(state.searchKeyword));
-                
-                // Jika tier aktif adalah MITRA, produk HANYA dimunculkan jika status kontrak khusus mitra telah dibuat
-                if (activeCat === 'MITRA') {
-                    if (!activeCust) return false;
-                    const contract = (state.mitraPrices || []).find(mp => mp.customer_id == activeCust.id && mp.product_id == p.id);
-                    const isContractSet = contract && Number(contract.custom_price) > 0;
-                    if (!isContractSet) return false;
-                }
-
                 return matchCat && matchKeyword;
             });
 
             if (filtered.length === 0) {
-                if (activeCat === 'MITRA') {
-                    grid.innerHTML = `
-                        <div class="col-span-3 text-center py-12 px-4 bg-emerald-50/50 dark:bg-emerald-950/30 rounded-2xl border border-dashed border-emerald-200 dark:border-emerald-800">
-                            <span class="text-3xl">🤝</span>
-                            <p class="font-bold text-slate-700 dark:text-slate-200 text-sm mt-2">Tidak Ada Produk Kontrak Khusus</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
-                                Mitra <strong>${activeCust ? activeCust.name : 'ini'}</strong> belum memiliki produk yang diset harga kontraknya. Produk hanya muncul di kasir jika status kontrak khusus telah dibuat di menu <strong>Manajemen Pelanggan &gt; Harga Kontrak Khusus Mitra</strong>.
-                            </p>
-                        </div>
-                    `;
-                } else {
-                    grid.innerHTML = `<div class="col-span-3 text-center py-12 text-slate-400 dark:text-slate-500 text-sm">Tidak ada produk jadi ditemukan</div>`;
-                }
+                grid.innerHTML = `<div class="col-span-3 text-center py-12 text-slate-400 dark:text-slate-500 text-sm">Tidak ada produk jadi ditemukan</div>`;
                 return;
             }
 
@@ -10294,15 +10384,6 @@ try {
             const product = state.products.find(p => p.id === productId);
             if (!product) return;
 
-            const activeCust = state.selectedCustomer;
-            const activeCat = state.selectedCustomerCategory || (activeCust ? activeCust.category : 'REGULER');
-            if (activeCat === 'MITRA') {
-                const contract = (state.mitraPrices || []).find(mp => mp.customer_id == (activeCust ? activeCust.id : 0) && mp.product_id == product.id);
-                if (!contract || !(Number(contract.custom_price) > 0)) {
-                    alert(`Produk '${product.name}' tidak dapat dijual ke Mitra ini karena belum memiliki kesepakatan harga kontrak khusus.`);
-                    return;
-                }
-            }
             const isProductStrictStock = (Number(product.is_stockable ?? 1) === 1 && Number(product.cat_is_stockable ?? 1) === 1 && product.requires_stock !== 0);
             if (isProductStrictStock && product.stock <= 0) {
                 alert(`Stok '${product.name}' habis di cabang ini!`);
@@ -10372,16 +10453,6 @@ try {
         function addToCart(productId, variantId = null) {
             const product = state.products.find(p => p.id === productId);
             if (!product) return;
-
-            const activeCust = state.selectedCustomer;
-            const activeCat = state.selectedCustomerCategory || (activeCust ? activeCust.category : 'REGULER');
-            if (activeCat === 'MITRA') {
-                const contract = (state.mitraPrices || []).find(mp => mp.customer_id == (activeCust ? activeCust.id : 0) && mp.product_id == product.id);
-                if (!contract || !(Number(contract.custom_price) > 0)) {
-                    alert(`Produk '${product.name}' tidak dapat ditambahkan ke keranjang karena belum memiliki status harga kontrak khusus untuk Mitra ini.`);
-                    return;
-                }
-            }
 
             const isProductStrictStock = (Number(product.is_stockable ?? 1) === 1 && Number(product.cat_is_stockable ?? 1) === 1 && product.requires_stock !== 0);
             if (isProductStrictStock && product.stock <= 0) {
@@ -16577,7 +16648,12 @@ Manager / Supervisor: __________________
                         <td class="py-2.5 px-3 text-slate-600">${p.category}</td>
                         <td class="py-2.5 px-3 text-slate-500 font-medium">${p.unit}</td>
                         <td class="py-2.5 px-3 text-right font-medium text-slate-700 font-mono">${formatRupiah(p.cogs)}</td>
-                        <td class="py-2.5 px-3 text-right font-bold text-indigo-900 font-mono">${p.product_type === 'RAW_MATERIAL' ? '-' : formatRupiah(p.selling_price)}</td>
+                        <td class="py-2.5 px-3 text-right font-mono">
+                            ${p.product_type === 'RAW_MATERIAL' ? '-' : `
+                                <span class="font-bold text-indigo-900">${formatRupiah(p.selling_price)}</span>
+                                <div class="text-[9px] text-emerald-700 font-semibold tracking-tight" title="Harga Tier Mitra Umum">Mitra: ${formatRupiah(p.mitra_price > 0 ? p.mitra_price : Math.round(p.selling_price * 0.72))}</div>
+                            `}
+                        </td>
                         <td class="py-2.5 px-3 text-center">
                             <div class="flex flex-col items-center gap-1">
                                 ${taxBadge}
@@ -16760,6 +16836,31 @@ Manager / Supervisor: __________________
             }
         }
 
+        function calcDefaultTierPrices(force = false) {
+            const retail = parseFloat(document.getElementById('prod-price')?.value) || 0;
+            const elMitra = document.getElementById('prod-mitra-price');
+            const elReseller = document.getElementById('prod-reseller-price');
+            const elMember = document.getElementById('prod-member-price');
+            if (!elMitra || !elReseller || !elMember) return;
+
+            if (force || !elMitra.value || elMitra.value == 0) {
+                elMitra.value = Math.round(retail * 0.72);
+            }
+            if (force || !elReseller.value || elReseller.value == 0) {
+                elReseller.value = Math.round(retail * 0.80);
+            }
+            if (force || !elMember.value || elMember.value == 0) {
+                elMember.value = Math.round(retail * 0.90);
+            }
+        }
+
+        function onSellingPriceChange() {
+            const isNew = !document.getElementById('prod-id')?.value;
+            if (isNew) {
+                calcDefaultTierPrices(true);
+            }
+        }
+
         async function openProductModal() {
             document.getElementById('prod-id').value = '';
             document.getElementById('prod-sku').value = '';
@@ -16767,6 +16868,9 @@ Manager / Supervisor: __________________
             document.getElementById('prod-name').value = '';
             document.getElementById('prod-cogs').value = '10000';
             document.getElementById('prod-price').value = '25000';
+            document.getElementById('prod-mitra-price').value = Math.round(25000 * 0.72);
+            document.getElementById('prod-reseller-price').value = Math.round(25000 * 0.80);
+            document.getElementById('prod-member-price').value = Math.round(25000 * 0.90);
             document.getElementById('prod-emoji').value = '📦';
             document.getElementById('prod-has-bom').checked = false;
             document.getElementById('prod-reorder').value = '10';
@@ -16810,6 +16914,10 @@ Manager / Supervisor: __________________
             document.getElementById('prod-name').value = p.name;
             document.getElementById('prod-cogs').value = p.cogs;
             document.getElementById('prod-price').value = p.selling_price;
+            const retPrice = Number(p.selling_price || 0);
+            document.getElementById('prod-mitra-price').value = (p.mitra_price !== undefined && p.mitra_price !== null && Number(p.mitra_price) > 0) ? Number(p.mitra_price) : Math.round(retPrice * 0.72);
+            document.getElementById('prod-reseller-price').value = (p.reseller_price !== undefined && p.reseller_price !== null && Number(p.reseller_price) > 0) ? Number(p.reseller_price) : Math.round(retPrice * 0.80);
+            document.getElementById('prod-member-price').value = (p.member_price !== undefined && p.member_price !== null && Number(p.member_price) > 0) ? Number(p.member_price) : Math.round(retPrice * 0.90);
             document.getElementById('prod-emoji').value = p.image_emoji || '📦';
             document.getElementById('prod-has-bom').checked = !!p.has_bom;
             document.getElementById('prod-reorder').value = p.reorder_point || 10;
@@ -16909,6 +17017,9 @@ Manager / Supervisor: __________________
                 unit: document.getElementById('prod-unit').value,
                 cogs: parseFloat(document.getElementById('prod-cogs').value) || 0,
                 selling_price: parseFloat(document.getElementById('prod-price').value) || 0,
+                mitra_price: parseFloat(document.getElementById('prod-mitra-price').value) || 0,
+                reseller_price: parseFloat(document.getElementById('prod-reseller-price').value) || 0,
+                member_price: parseFloat(document.getElementById('prod-member-price').value) || 0,
                 image_emoji: document.getElementById('prod-emoji').value,
                 has_bom: document.getElementById('prod-has-bom').checked ? 1 : 0,
                 reorder_point: parseInt(document.getElementById('prod-reorder').value) || 10,
@@ -20337,8 +20448,12 @@ Manager / Supervisor: __________________
             const cat = category || state.selectedCustomerCategory || (cust ? cust.category : 'REGULER');
             const baseBranchPrice = Number(product.selling_price || 0);
 
-            if (cat === 'MITRA') {
-                // Check if specific mitra has contracted custom price
+            // Hubungkan kategori pelanggan ke default_tier dari master customer_categories
+            const catObj = (state.customerCategories || []).find(c => c.code === cat || c.name === cat || c.id == cat);
+            const tier = (catObj && catObj.default_tier) ? catObj.default_tier : cat;
+
+            if (tier === 'MITRA') {
+                // Prioritas 1: Jika mitra ini memiliki harga kontrak khusus tersimpan
                 if (cust && state.mitraPrices && state.mitraPrices.length > 0) {
                     const custom = state.mitraPrices.find(mp => mp.customer_id == cust.id && mp.product_id == product.id);
                     if (custom && Number(custom.custom_price) > 0) {
@@ -20349,22 +20464,24 @@ Manager / Supervisor: __________________
                         };
                     }
                 }
+                // Prioritas 2: Harga Tier Mitra Umum produk
                 if (Number(product.mitra_price) > 0) {
                     return { price: Number(product.mitra_price), tag: '🤝 Tier Mitra', isContract: false };
                 }
-                return { price: Math.round(baseBranchPrice * 0.72), tag: '🤝 Tier Mitra', isContract: false };
+                // Fallback otomatis 72% dari ritel
+                return { price: Math.round(baseBranchPrice * 0.72), tag: '🤝 Tier Mitra (~72%)', isContract: false };
             }
 
-            if (cat === 'RESELLER') {
+            if (tier === 'RESELLER') {
                 if (Number(product.reseller_price) > 0) {
-                    return { price: Number(product.reseller_price), tag: '📦 Reseller (-20%)', isContract: false };
+                    return { price: Number(product.reseller_price), tag: '📦 Reseller', isContract: false };
                 }
                 return { price: Math.round(baseBranchPrice * 0.8), tag: '📦 Reseller (-20%)', isContract: false };
             }
 
-            if (cat === 'MEMBER') {
+            if (tier === 'MEMBER') {
                 if (Number(product.member_price) > 0) {
-                    return { price: Number(product.member_price), tag: '⭐ Member VIP (-10%)', isContract: false };
+                    return { price: Number(product.member_price), tag: '⭐ Member VIP', isContract: false };
                 }
                 return { price: Math.round(baseBranchPrice * 0.9), tag: '⭐ Member VIP (-10%)', isContract: false };
             }
@@ -20462,7 +20579,9 @@ Manager / Supervisor: __________________
 
             select.innerHTML = filteredCusts.map(c => {
                 const isSelected = state.selectedCustomer && state.selectedCustomer.id === c.id;
-                const catLabel = c.category === 'MITRA' ? '🤝 MITRA' : (c.category === 'MEMBER' ? '⭐ MEMBER' : (c.category === 'RESELLER' ? '📦 RESELLER' : 'RITEL'));
+                const catObj = (state.customerCategories || []).find(cat => cat.code === c.category || cat.name === c.category);
+                const tier = (catObj && catObj.default_tier) ? catObj.default_tier : c.category;
+                const catLabel = tier === 'MITRA' ? '🤝 MITRA' : (tier === 'MEMBER' ? '⭐ MEMBER' : (tier === 'RESELLER' ? '📦 RESELLER' : 'RITEL'));
                 return `<option value="${c.id}" ${isSelected ? 'selected' : ''}>${c.name} [${catLabel}]</option>`;
             }).join('');
 
@@ -20480,23 +20599,27 @@ Manager / Supervisor: __________________
         function updatePosCustomerUI() {
             const cust = state.selectedCustomer;
             const cat = state.selectedCustomerCategory || (cust ? cust.category : 'REGULER');
+            const catObj = (state.customerCategories || []).find(c => c.code === cat || c.name === cat);
+            const tier = (catObj && catObj.default_tier) ? catObj.default_tier : cat;
+            const catDisplayName = catObj ? catObj.name : cat;
+
             const badge = document.getElementById('pos-customer-category-badge');
             const desc = document.getElementById('pos-customer-tier-desc');
 
             if (badge) {
-                badge.innerText = cat;
-                if (cat === 'MITRA') {
+                badge.innerText = catDisplayName;
+                if (tier === 'MITRA') {
                     badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300';
-                    if (desc) desc.innerText = `• Mitra Rekanan: ${cust ? cust.name : 'B2B'} (Harga Kontrak)`;
-                } else if (cat === 'MEMBER') {
+                    if (desc) desc.innerText = `• Mitra Rekanan: ${cust ? cust.name : 'B2B'} (Tier Mitra / Kontrak)`;
+                } else if (tier === 'MEMBER') {
                     badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800 border border-purple-300';
-                    if (desc) desc.innerText = '• Diskon Member Terdaftar (-10%)';
-                } else if (cat === 'RESELLER') {
+                    if (desc) desc.innerText = `• Diskon Member VIP (${catDisplayName})`;
+                } else if (tier === 'RESELLER') {
                     badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300';
-                    if (desc) desc.innerText = '• Harga Grosir Reseller (-20%)';
+                    if (desc) desc.innerText = `• Harga Reseller / Grosir (${catDisplayName})`;
                 } else {
                     badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-200 text-slate-700';
-                    if (desc) desc.innerText = '• Harga Ritel Standar Cabang';
+                    if (desc) desc.innerText = `• Harga Ritel Standar (${catDisplayName})`;
                 }
             }
 
@@ -20563,20 +20686,6 @@ Manager / Supervisor: __________________
 
         function recalculateCartPrices() {
             if (!state.cart || state.cart.length === 0) return;
-            const activeCust = state.selectedCustomer;
-            const activeCat = state.selectedCustomerCategory || (activeCust ? activeCust.category : 'REGULER');
-
-            if (activeCat === 'MITRA') {
-                // Keluarkan produk dari keranjang jika tidak memiliki status kontrak khusus mitra ini
-                const beforeLen = state.cart.length;
-                state.cart = state.cart.filter(item => {
-                    const contract = (state.mitraPrices || []).find(mp => mp.customer_id == (activeCust ? activeCust.id : 0) && mp.product_id == item.product_id);
-                    return contract && Number(contract.custom_price) > 0;
-                });
-                if (state.cart.length < beforeLen) {
-                    alert('Beberapa produk telah dikeluarkan dari keranjang belanja karena belum memiliki kesepakatan harga kontrak khusus untuk Mitra ini.');
-                }
-            }
 
             state.cart = state.cart.map(item => {
                 const prod = state.products.find(p => p.id === item.product_id);
@@ -21904,14 +22013,19 @@ Manager / Supervisor: __________________
                             <td class="py-3 px-4 font-bold text-slate-900">${p.image_emoji || '📦'} ${p.name}</td>
                             <td class="py-3 px-4 font-mono text-slate-500">${p.sku}</td>
                             <td class="py-3 px-4 text-right text-slate-600 font-semibold">${formatRupiah(defaultRetail)}</td>
-                            <td class="py-3 px-4 text-right text-indigo-700 font-semibold">${formatRupiah(defaultMitra)}</td>
+                            <td class="py-3 px-4 text-right">
+                                <button type="button" onclick="openQuickTierPriceModal(${p.id})" class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-indigo-50/80 hover:bg-indigo-600 text-indigo-700 hover:text-white font-bold border border-indigo-200 transition-all text-xs group" title="Klik untuk mengubah Harga Tier Mitra Umum produk ini">
+                                    <span>${formatRupiah(defaultMitra)}</span>
+                                    <i data-lucide="edit-3" class="w-3.5 h-3.5 opacity-70 group-hover:opacity-100"></i>
+                                </button>
+                            </td>
                             <td class="py-3 px-4 text-right font-black ${isContractSet ? 'text-emerald-700 text-sm' : 'text-slate-400'}">
                                 ${formatRupiah(contractPrice)}
                             </td>
                             <td class="py-3 px-4 text-center">
                                 ${isContractSet ? 
                                     '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✅ Kontrak Aktif</span>' :
-                                    '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500">Tier Default</span>'
+                                    '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500">Tier Mitra Umum</span>'
                                 }
                             </td>
                             <td class="py-3 px-4 text-center">
@@ -22059,6 +22173,97 @@ Manager / Supervisor: __________________
             if (data.success) {
                 loadMitraPricing();
                 initApp();
+            }
+        }
+
+        // QUICK EDIT HARGA TIER MITRA UMUM & MULTI-TIER PRODUK
+        function openQuickTierPriceModal(productId) {
+            const p = (state.products || []).find(pr => pr.id === productId) || (state.allProducts || []).find(pr => pr.id === productId);
+            if (!p) {
+                alert('Data produk tidak ditemukan!');
+                return;
+            }
+
+            document.getElementById('qtp-product-id').value = p.id;
+            document.getElementById('qtp-product-title').innerText = `${p.image_emoji || '📦'} ${p.name} (${p.sku})`;
+            
+            const retail = Number(p.selling_price || 0);
+            document.getElementById('qtp-retail-price').innerText = formatRupiah(retail);
+
+            const mPrice = Number(p.mitra_price > 0 ? p.mitra_price : Math.round(retail * 0.72));
+            const rPrice = Number(p.reseller_price > 0 ? p.reseller_price : Math.round(retail * 0.80));
+            const vPrice = Number(p.member_price > 0 ? p.member_price : Math.round(retail * 0.90));
+
+            document.getElementById('qtp-mitra-price').value = mPrice;
+            document.getElementById('qtp-reseller-price').value = rPrice;
+            document.getElementById('qtp-member-price').value = vPrice;
+
+            document.getElementById('quick-tier-price-modal').classList.remove('hidden');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function closeQuickTierPriceModal() {
+            document.getElementById('quick-tier-price-modal').classList.add('hidden');
+        }
+
+        function calcQuickTierPrices(force = false) {
+            const pId = parseInt(document.getElementById('qtp-product-id').value);
+            const p = (state.products || []).find(pr => pr.id === pId) || (state.allProducts || []).find(pr => pr.id === pId);
+            if (!p) return;
+            const retail = Number(p.selling_price || 0);
+            document.getElementById('qtp-mitra-price').value = Math.round(retail * 0.72);
+            document.getElementById('qtp-reseller-price').value = Math.round(retail * 0.80);
+            document.getElementById('qtp-member-price').value = Math.round(retail * 0.90);
+        }
+
+        async function saveQuickTierPriceForm(e) {
+            e.preventDefault();
+            const pId = parseInt(document.getElementById('qtp-product-id').value);
+            const mitraPrice = parseFloat(document.getElementById('qtp-mitra-price').value);
+            const resellerPrice = parseFloat(document.getElementById('qtp-reseller-price').value);
+            const memberPrice = parseFloat(document.getElementById('qtp-member-price').value);
+
+            if (!pId || isNaN(mitraPrice) || mitraPrice <= 0) {
+                alert('Harga Tier Mitra Umum wajib diisi dengan nominal yang valid (> 0)!');
+                return;
+            }
+
+            try {
+                const res = await fetch('api.php?action=update_product_tier_price', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        product_id: pId,
+                        mitra_price: mitraPrice,
+                        reseller_price: isNaN(resellerPrice) ? null : resellerPrice,
+                        member_price: isNaN(memberPrice) ? null : memberPrice
+                    })
+                });
+                const data = await res.json();
+                alert(data.message || (data.success ? 'Harga tier berhasil disimpan!' : 'Gagal menyimpan harga tier'));
+                if (data.success) {
+                    closeQuickTierPriceModal();
+                    
+                    // Update objek produk lokal di state
+                    const updateProdInList = (list) => {
+                        if (!list) return;
+                        const item = list.find(x => x.id === pId);
+                        if (item) {
+                            item.mitra_price = mitraPrice;
+                            if (!isNaN(resellerPrice)) item.reseller_price = resellerPrice;
+                            if (!isNaN(memberPrice)) item.member_price = memberPrice;
+                        }
+                    };
+                    updateProdInList(state.products);
+                    updateProdInList(state.allProducts);
+
+                    await loadMitraPricing();
+                    await initApp();
+                    recalculateCartPrices();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan jaringan saat menyimpan harga tier: ' + err.message);
             }
         }
 

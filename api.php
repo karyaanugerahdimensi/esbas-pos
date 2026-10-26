@@ -2095,9 +2095,9 @@ try {
             $unit = trim($input['unit'] ?? 'pcs');
             $cogs = (float)($input['cogs'] ?? 0);
             $sellingPrice = (float)($input['selling_price'] ?? 0);
-            $memberPrice = !empty($input['member_price']) ? (float)$input['member_price'] : round($sellingPrice * 0.9, -2);
-            $resellerPrice = !empty($input['reseller_price']) ? (float)$input['reseller_price'] : round($sellingPrice * 0.8, -2);
-            $mitraPrice = !empty($input['mitra_price']) ? (float)$input['mitra_price'] : round($sellingPrice * 0.72, -2);
+            $memberPrice = (isset($input['member_price']) && is_numeric($input['member_price']) && (float)$input['member_price'] > 0) ? (float)$input['member_price'] : round($sellingPrice * 0.9, -2);
+            $resellerPrice = (isset($input['reseller_price']) && is_numeric($input['reseller_price']) && (float)$input['reseller_price'] > 0) ? (float)$input['reseller_price'] : round($sellingPrice * 0.8, -2);
+            $mitraPrice = (isset($input['mitra_price']) && is_numeric($input['mitra_price']) && (float)$input['mitra_price'] > 0) ? (float)$input['mitra_price'] : round($sellingPrice * 0.72, -2);
             $visibleCategories = trim($input['visible_categories'] ?? 'ALL');
             $imageEmoji = trim($input['image_emoji'] ?? '📦');
             $hasBom = !empty($input['has_bom']) ? 1 : 0;
@@ -11581,6 +11581,49 @@ try {
             $id = (int)($input['id'] ?? 0);
             $pdo->prepare("DELETE FROM mitra_custom_prices WHERE id = ?")->execute([$id]);
             echo json_encode(['success' => true, 'message' => 'Harga khusus mitra berhasil dihapus, kembali ke harga default.']);
+            break;
+
+        case 'update_product_tier_price':
+            $productId = (int)($input['product_id'] ?? 0);
+            $mitraPrice = isset($input['mitra_price']) && is_numeric($input['mitra_price']) ? (float)$input['mitra_price'] : null;
+            $resellerPrice = isset($input['reseller_price']) && is_numeric($input['reseller_price']) ? (float)$input['reseller_price'] : null;
+            $memberPrice = isset($input['member_price']) && is_numeric($input['member_price']) ? (float)$input['member_price'] : null;
+
+            if (!$productId) {
+                echo json_encode(['success' => false, 'message' => 'Produk tidak valid.']);
+                exit;
+            }
+
+            $updates = [];
+            $params = [];
+            if ($mitraPrice !== null) {
+                $updates[] = "mitra_price = ?";
+                $params[] = $mitraPrice;
+            }
+            if ($resellerPrice !== null) {
+                $updates[] = "reseller_price = ?";
+                $params[] = $resellerPrice;
+            }
+            if ($memberPrice !== null) {
+                $updates[] = "member_price = ?";
+                $params[] = $memberPrice;
+            }
+
+            if (empty($updates)) {
+                echo json_encode(['success' => false, 'message' => 'Tidak ada perubahan harga tier yang dikirim.']);
+                exit;
+            }
+
+            $params[] = $productId;
+            $stmt = $pdo->prepare("UPDATE products SET " . implode(', ', $updates) . " WHERE id = ?");
+            $stmt->execute($params);
+
+            // Ambil data produk terupdate
+            $stmtProd = $pdo->prepare("SELECT id, name, sku, selling_price, member_price, reseller_price, mitra_price FROM products WHERE id = ?");
+            $stmtProd->execute([$productId]);
+            $updatedProduct = $stmtProd->fetch();
+
+            echo json_encode(['success' => true, 'message' => 'Harga tier produk berhasil diperbarui!', 'product' => $updatedProduct]);
             break;
 
         // ==========================================

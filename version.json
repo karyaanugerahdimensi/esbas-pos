@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.75",
-  "build": "20261026-30",
+  "version": "1.2.76",
+  "build": "20261026-31",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.76",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Konfigurasi Harga Tier Mitra Umum & Multi-Tier Terhubung Langsung ke Kategori Pelanggan (FR-CRM-11)",
+      "description": "Menambahkan pengaturan mandiri dan fleksibel untuk harga tier pelanggan serta integrasi langsung ke kategori pelanggan di CRM & POS Kasir: (1) Konfigurasi Multi-Tier di Master Produk: Menambahkan input Harga Tier Mitra Umum (Rp), Harga Tier Reseller / Grosir (Rp), dan Harga Tier Member VIP (Rp) pada modal penambahan/edit produk (#product-modal), lengkap dengan tombol kalkulasi otomatis (72% Mitra, 80% Reseller, 90% Member) dan kebebasan menginput nominal rupiah manual berapapun. (2) Quick Edit Harga Tier Mitra Umum di CRM Subtab 2: Menyediakan tombol edit interaktif pada kolom 'Harga Tier Mitra Umum' di tabel 'Harga Kontrak Khusus Mitra' yang membuka modal instan (#quick-tier-price-modal) untuk mengubah harga tier mitra umum tanpa harus berpindah ke tab Master Produk. (3) Backend Endpoint update_product_tier_price: Menyediakan endpoint API baru untuk pembaruan harga tier produk secara instan dan memperbarui database serta state lokal. (4) Dynamic Category-to-Tier Linkage: Memperbarui getEffectiveProductPrice() dan komponen kasir POS agar mencari kode kategori pelanggan ke customer_categories.default_tier sehingga kategori pelanggan kustom apapun (misal: 'AGEN', 'DISTRIBUTOR', 'VIP') otomatis menerapkan harga tier yang sesuai. (5) Aksesibilitas Transaksi Mitra: Menghilangkan pembatasan penjualan produk tanpa kontrak khusus untuk mitra di POS, sehingga mitra dapat bertransaksi seluruh produk dengan harga default Tier Mitra Umum, dan beralih ke harga kontrak khusus jika kontrak telah dibuat.",
+      "rollback_command": "git checkout v1.2.75"
+    },
     {
       "version": "1.2.75",
       "commit": "HEAD",
