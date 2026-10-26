@@ -1608,7 +1608,13 @@ $initialAppSubtitle = $initialAppSettings['app_subtitle'] ?? 'POS, BOM & ESS';
                             </div>
 
                             <div class="pt-2 border-t">
-                                <h4 id="ess-reimburse-table-title" class="text-xs font-bold text-slate-700 mb-2">Daftar Klaim Toko & Aksi Pencairan (Manager / Finance):</h4>
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 id="ess-reimburse-table-title" class="text-xs font-bold text-slate-700 dark:text-slate-300">Daftar Klaim Toko & Aksi Pencairan (Manager / Finance):</h4>
+                                    <button type="button" onclick="clearAllReimbursements()" id="btn-clear-all-reimburse" title="Kosongkan Semua Data Reimbursement" class="text-[11px] text-rose-600 hover:text-rose-700 dark:text-rose-400 font-semibold px-2 py-0.5 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg border border-rose-200 dark:border-rose-800 transition-colors inline-flex items-center space-x-1">
+                                        <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                        <span>Kosongkan Riwayat</span>
+                                    </button>
+                                </div>
                                 <div class="overflow-x-auto">
                                     <table class="w-full text-left text-xs">
                                         <thead class="bg-slate-50 text-slate-500 font-bold border-b">
@@ -15059,21 +15065,37 @@ Manager / Supervisor: __________________
                 titleEl.innerText = isManager ? 'Daftar Klaim Toko & Aksi Pencairan (Manager / Finance):' : 'Riwayat Pengajuan Klaim Reimbursement Saya:';
             }
 
+            const btnClearAll = document.getElementById('btn-clear-all-reimburse');
+            if (btnClearAll) {
+                if (isManager && data.branch_reimbursements && data.branch_reimbursements.length > 0) {
+                    btnClearAll.classList.remove('hidden');
+                } else {
+                    btnClearAll.classList.add('hidden');
+                }
+            }
+
             document.getElementById('ess-reimburse-table-body').innerHTML = data.branch_reimbursements.map(r => `
-                <tr class="hover:bg-slate-50">
-                    <td class="py-2.5 px-2.5 font-semibold text-slate-800">${r.employee_name}</td>
-                    <td class="py-2.5 px-2.5 text-slate-600">${r.category}<br><span class="text-[10px] text-slate-400">${r.description}</span></td>
-                    <td class="py-2.5 px-2.5 text-right font-bold text-slate-800">${formatRupiah(r.amount)}</td>
-                    <td class="py-2.5 px-2.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.status === 'DISBURSED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${r.status}</span></td>
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="py-2.5 px-2.5 font-semibold text-slate-800 dark:text-slate-200">${r.employee_name}</td>
+                    <td class="py-2.5 px-2.5 text-slate-600 dark:text-slate-300">${r.category}<br><span class="text-[10px] text-slate-400">${r.description}</span></td>
+                    <td class="py-2.5 px-2.5 text-right font-bold text-slate-800 dark:text-white">${formatRupiah(r.amount)}</td>
+                    <td class="py-2.5 px-2.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.status === 'DISBURSED' ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' : (r.status === 'REJECTED' ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300' : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300')}">${r.status}</span></td>
                     <td class="py-2.5 px-2.5 text-center">
-                        ${r.status !== 'DISBURSED' ? (
-                            isManager ? `
-                                <button onclick="disburseReimbursement(${r.id})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-sm">Cairkan & Catat</button>
-                            ` : `<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full text-[10px] font-semibold">⏳ Menunggu</span>`
-                        ) : `<span class="text-emerald-700 font-bold text-[10px]">✓ Dicairkan</span>`}
+                        <div class="flex items-center justify-center space-x-1.5">
+                            ${r.status !== 'DISBURSED' ? (
+                                isManager ? `
+                                    <button onclick="disburseReimbursement(${r.id})" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-sm whitespace-nowrap">Cairkan & Catat</button>
+                                ` : `<span class="px-2 py-0.5 bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 rounded-full text-[10px] font-semibold whitespace-nowrap">⏳ Menunggu</span>`
+                            ) : `<span class="text-emerald-700 dark:text-emerald-400 font-bold text-[10px] whitespace-nowrap">✓ Dicairkan</span>`}
+                            ${(isManager || r.status !== 'DISBURSED') ? `
+                                <button onclick="deleteReimbursement(${r.id})" title="Hapus Data Reimbursement" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            ` : ''}
+                        </div>
                     </td>
                 </tr>
-            `).join('') || `<tr><td colspan="5" class="text-center py-3 text-slate-400">Belum ada klaim</td></tr>`;
+            `).join('') || `<tr><td colspan="5" class="text-center py-4 text-slate-400">Belum ada klaim reimbursement</td></tr>`;
             lucide.createIcons();
         }
 
@@ -15146,6 +15168,42 @@ Manager / Supervisor: __________________
             const data = await res.json();
             alert(data.message || data.error);
             if (data.success) loadEssData();
+        }
+
+        async function deleteReimbursement(id) {
+            if (!confirm('Apakah Anda yakin ingin menghapus data klaim reimbursement ini?')) return;
+            try {
+                const res = await fetch('api.php?action=ess_delete_reimbursement', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reimbursement_id: id })
+                });
+                const data = await res.json();
+                alert(data.message || (data.success ? 'Data reimbursement berhasil dihapus.' : 'Gagal menghapus data.'));
+                if (data.success) {
+                    loadEssData();
+                }
+            } catch (err) {
+                alert('Gagal menghubungi server: ' + err.message);
+            }
+        }
+
+        async function clearAllReimbursements() {
+            if (!confirm('Apakah Anda yakin ingin menghapus dan mengosongkan seluruh data reimbursement? Tindakan ini tidak dapat dibatalkan.')) return;
+            try {
+                const res = await fetch('api.php?action=ess_clear_all_reimbursements', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ branch_id: state.currentBranch ? state.currentBranch.id : 0 })
+                });
+                const data = await res.json();
+                alert(data.message || (data.success ? 'Seluruh data reimbursement berhasil dikosongkan.' : 'Gagal mengosongkan data.'));
+                if (data.success) {
+                    loadEssData();
+                }
+            } catch (err) {
+                alert('Gagal menghubungi server: ' + err.message);
+            }
         }
 
         // ==========================================

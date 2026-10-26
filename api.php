@@ -8235,6 +8235,52 @@ try {
             echo json_encode(['success' => true, 'message' => 'Klaim dicairkan dan otomatis dibukukan ke Beban Operasional Laba Rugi!']);
             break;
 
+        case 'ess_delete_reimbursement':
+            $approverRole = strtoupper($currentUser['role'] ?? ($_SESSION['role'] ?? ''));
+            $isManager = in_array($approverRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+            
+            $reimburseId = (int)($input['reimbursement_id'] ?? 0);
+            if ($reimburseId <= 0) {
+                echo json_encode(['success' => false, 'message' => 'ID reimbursement tidak valid.']);
+                break;
+            }
+
+            $stmt = $pdo->prepare("SELECT * FROM reimbursements WHERE id = ?");
+            $stmt->execute([$reimburseId]);
+            $claim = $stmt->fetch();
+            if (!$claim) {
+                echo json_encode(['success' => false, 'message' => 'Data reimbursement tidak ditemukan.']);
+                break;
+            }
+
+            // Staf biasa hanya bisa menghapus klaim miliknya yang belum dicairkan
+            if (!$isManager && ($claim['user_id'] != ($currentUser['id'] ?? 0) || $claim['status'] === 'DISBURSED')) {
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak! Anda tidak memiliki wewenang untuk menghapus reimbursement ini.']);
+                break;
+            }
+
+            $pdo->prepare("DELETE FROM reimbursements WHERE id = ?")->execute([$reimburseId]);
+            echo json_encode(['success' => true, 'message' => 'Data reimbursement berhasil dihapus.']);
+            break;
+
+        case 'ess_clear_all_reimbursements':
+            $approverRole = strtoupper($currentUser['role'] ?? ($_SESSION['role'] ?? ''));
+            $isManager = in_array($approverRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+            if (!$isManager) {
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak! Hanya Super Admin atau Branch Manager yang dapat mengosongkan data reimbursement.']);
+                break;
+            }
+
+            $branchId = isset($input['branch_id']) ? (int)$input['branch_id'] : (int)($currentBranch['id'] ?? 0);
+            if ($branchId > 0 && !in_array($approverRole, ['SUPERADMIN', 'SUPER_ADMIN'])) {
+                $pdo->prepare("DELETE FROM reimbursements WHERE branch_id = ?")->execute([$branchId]);
+                echo json_encode(['success' => true, 'message' => 'Seluruh data reimbursement cabang berhasil dikosongkan.']);
+            } else {
+                $pdo->exec("DELETE FROM reimbursements");
+                echo json_encode(['success' => true, 'message' => 'Seluruh data reimbursement berhasil dikosongkan.']);
+            }
+            break;
+
         // ==========================================
         // 8b. ESS EXTENSIONS: WORK SHIFTS CRUD
         // ==========================================

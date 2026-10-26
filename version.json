@@ -1,11 +1,19 @@
 {
   "app_name": "ESBAS POS Multicabang",
-  "version": "1.2.85",
-  "build": "20261026-40",
+  "version": "1.2.86",
+  "build": "20261026-41",
   "release_date": "2026-10-26",
   "commit_hash": "HEAD",
   "branch": "main",
   "history": [
+    {
+      "version": "1.2.86",
+      "commit": "HEAD",
+      "date": "2026-10-26",
+      "title": "Pembersihan Data Reimbursement & Penambahan Fitur Hapus Klaim ESS (FR-ESS-13)",
+      "description": "Menghapus seluruh data pengujian klaim reimbursement (Abdul Latif & Bima) dari basis data serta menambahkan fitur hapus klaim terpadu pada Employee Self Service (ESS): (1) Pembersihan Basis Data: Mengosongkan data klaim lama pada tabel reimbursements (SQLite database.sqlite & seed dump esbas_pos_mysql.sql). (2) Endpoint Hapus & Kosongkan Data (`api.php`): Menambahkan endpoint `ess_delete_reimbursement` untuk menghapus baris klaim individu dan `ess_clear_all_reimbursements` untuk mengosongkan seluruh riwayat reimbursement cabang oleh Superadmin/Manager. (3) Antarmuka Klien (`index.php`): Menambahkan tombol ikon hapus (trash-2) pada setiap baris klaim reimbursement serta tombol 'Kosongkan Riwayat' pada header tabel daftar klaim toko untuk pengelolaan data yang mudah dan fleksibel.",
+      "rollback_command": "git checkout v1.2.85"
+    },
     {
       "version": "1.2.85",
       "commit": "HEAD",

@@ -1184,13 +1184,6 @@ CREATE TABLE `reimbursements` (
     `disbursed_at` DATETIME
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table `reimbursements`
-INSERT INTO `reimbursements` (`id`, `user_id`, `branch_id`, `expense_date`, `category`, `amount`, `description`, `status`, `receipt_photo`, `created_at`, `disbursed_at`) VALUES
-(1, 3, 1, '2026-10-09', 'KERTAS_KASIR', 65000, 'Beli 3 roll kertas thermal 80mm darurat karena stok habis', 'DISBURSED', NULL, '2026-10-09 14:53:25', '2026-10-09 12:53:25'),
-(2, 4, 1, '2026-10-09', 'UTILITAS_DARURAT', 50000, 'Isi token listrik darurat toko saat alarm berbunyi', 'APPROVED_BM', NULL, '2026-10-09 14:53:25', NULL),
-(3, 4, 1, '2026-10-15', 'BENSIN', 75000, 'Bensin antar barang Abdul Latif', 'DISBURSED', NULL, '2026-10-15 17:09:38', '2026-10-16 00:09:38'),
-(4, 4, 1, '2026-10-15', 'BENSIN', 75000, 'Bensin antar barang Abdul Latif', 'PENDING', NULL, '2026-10-15 17:10:02', NULL);
-
 -- --------------------------------------------------------
 -- Table structure for `branch_expenses`
 -- --------------------------------------------------------
