@@ -11884,8 +11884,9 @@ try {
 
         case 'preview_customer_import':
             $filePath = !empty($_FILES['file']['tmp_name']) && is_uploaded_file($_FILES['file']['tmp_name']) ? $_FILES['file']['tmp_name'] : '';
-            $rawContent = $input['csv_content'] ?? '';
+            $rawContent = $input['csv_content'] ?? ($_POST['csv_content'] ?? '');
             $fileName = $_FILES['file']['name'] ?? 'Data Pelanggan';
+            $targetBranchId = !empty($_POST['branch_id']) ? (int)$_POST['branch_id'] : (!empty($input['branch_id']) ? (int)$input['branch_id'] : (!empty($_SESSION['branch_id']) ? (int)$_SESSION['branch_id'] : 1));
 
             if (empty($filePath) && empty($rawContent)) {
                 echo json_encode(['success' => false, 'message' => 'Tidak ada berkas Excel atau teks data yang diunggah.']);
@@ -11898,14 +11899,62 @@ try {
                 exit;
             }
 
+            // Ambil nama cabang tujuan
+            $stmtBranch = $pdo->prepare("SELECT name FROM branches WHERE id = ?");
+            $stmtBranch->execute([$targetBranchId]);
+            $targetBranchName = $stmtBranch->fetchColumn() ?: 'Cabang #' . $targetBranchId;
+
+            // Preload data pelanggan seluruh cabang untuk validasi cabang terpilih vs cabang berbeda
+            $allExisting = $pdo->query("
+                SELECT c.id, c.code, c.name, c.phone, c.branch_id, COALESCE(b.name, 'Kantor Pusat') as branch_name 
+                FROM customers c 
+                LEFT JOIN branches b ON b.id = c.branch_id 
+                WHERE c.is_active = 1
+            ")->fetchAll(PDO::FETCH_ASSOC);
+
+            $targetByNormPhone = [];
+            $targetByRawPhone = [];
+            $targetByCode = [];
+            $targetByName = [];
+
+            $otherByNormPhone = [];
+            $otherByRawPhone = [];
+            $otherByCode = [];
+            $otherByName = [];
+
+            foreach ($allExisting as $c) {
+                $isTarget = ((int)$c['branch_id'] === $targetBranchId);
+                $cCode = !empty($c['code']) ? strtoupper(trim($c['code'])) : '';
+                $rawP = !empty($c['phone']) ? preg_replace('/\D+/', '', $c['phone']) : '';
+                $normP = !empty($c['phone']) ? normalizeCustomerPhone($c['phone']) : '';
+                $normN = !empty($c['name']) ? strtolower(trim($c['name'])) : '';
+
+                if ($isTarget) {
+                    if ($cCode) $targetByCode[$cCode] = $c;
+                    if ($rawP) $targetByRawPhone[$rawP] = $c;
+                    if ($normP) $targetByNormPhone[$normP] = $c;
+                    if ($normN) $targetByName[$normN] = $c;
+                } else {
+                    if ($cCode && !isset($otherByCode[$cCode])) $otherByCode[$cCode] = $c;
+                    if ($rawP && !isset($otherByRawPhone[$rawP])) $otherByRawPhone[$rawP] = $c;
+                    if ($normP && !isset($otherByNormPhone[$normP])) $otherByNormPhone[$normP] = $c;
+                    if ($normN && !isset($otherByName[$normN])) $otherByName[$normN] = $c;
+                }
+            }
+
             $validCount = 0;
             $invalidCount = 0;
+            $updateCount = 0;
+            $crossBranchCount = 0;
             $previewRows = [];
+            $crossBranchList = [];
 
             foreach ($rawRows as $idx => $r) {
                 $name = trim($r['name'] ?? '');
                 $phone = trim($r['phone'] ?? '');
+                $code = trim($r['code'] ?? ($r['kode'] ?? ''));
                 $cleanPhone = preg_replace('/[^\d+]/', '', $phone);
+                $normPhone = normalizeCustomerPhone($phone);
                 $isValid = (!empty($name) && strlen($cleanPhone) >= 6);
 
                 if ($isValid) $validCount++; else $invalidCount++;
@@ -11913,31 +11962,95 @@ try {
                 $coords = parseCustomerGoogleCoords($r['maps_url'] ?? '');
                 $coordsObj = ($coords[0] !== null && $coords[1] !== null) ? ['lat' => $coords[0], 'lon' => $coords[1]] : null;
 
+                $matchType = 'NEW';
+                $otherBranchName = null;
+                $otherBranchId = null;
+
+                if ($isValid) {
+                    // 1. Cek pada cabang tujuan (Target Branch)
+                    $matchedTarget = null;
+                    if (!empty($code) && isset($targetByCode[strtoupper($code)])) {
+                        $matchedTarget = $targetByCode[strtoupper($code)];
+                    } elseif (!empty($normPhone) && isset($targetByNormPhone[$normPhone])) {
+                        $matchedTarget = $targetByNormPhone[$normPhone];
+                    } elseif (!empty($cleanPhone) && isset($targetByRawPhone[$cleanPhone])) {
+                        $matchedTarget = $targetByRawPhone[$cleanPhone];
+                    } elseif (!empty($name) && isset($targetByName[strtolower($name)])) {
+                        $matchedTarget = $targetByName[strtolower($name)];
+                    }
+
+                    if ($matchedTarget) {
+                        $matchType = 'UPDATE';
+                        $updateCount++;
+                    } else {
+                        // 2. Cek apakah sudah terdaftar di cabang lain
+                        $matchedOther = null;
+                        if (!empty($code) && isset($otherByCode[strtoupper($code)])) {
+                            $matchedOther = $otherByCode[strtoupper($code)];
+                        } elseif (!empty($normPhone) && isset($otherByNormPhone[$normPhone])) {
+                            $matchedOther = $otherByNormPhone[$normPhone];
+                        } elseif (!empty($cleanPhone) && isset($otherByRawPhone[$cleanPhone])) {
+                            $matchedOther = $otherByRawPhone[$cleanPhone];
+                        } elseif (!empty($name) && isset($otherByName[strtolower($name)])) {
+                            $matchedOther = $otherByName[strtolower($name)];
+                        }
+
+                        if ($matchedOther) {
+                            $matchType = 'CROSS_BRANCH';
+                            $otherBranchName = $matchedOther['branch_name'] ?: 'Cabang Lain';
+                            $otherBranchId = (int)$matchedOther['branch_id'];
+                            $crossBranchCount++;
+                            $crossBranchList[] = [
+                                'row' => $idx + 1,
+                                'name' => $name,
+                                'phone' => $phone,
+                                'existing_name' => $matchedOther['name'],
+                                'other_branch_name' => $otherBranchName,
+                                'other_branch_id' => $otherBranchId
+                            ];
+                        }
+                    }
+                }
+
                 $previewRows[] = [
-                    'code' => $r['code'] ?? ($r['kode'] ?? ''),
+                    'code' => $code,
                     'name' => $name,
                     'phone' => $phone,
                     'address' => $r['address'] ?? '',
                     'maps_url' => $r['maps_url'] ?? '',
                     'category' => !empty($r['category']) ? strtoupper($r['category']) : 'REGULER',
                     'is_valid' => $isValid,
-                    'coords' => $coordsObj
+                    'coords' => $coordsObj,
+                    'match_type' => $matchType,
+                    'other_branch_name' => $otherBranchName,
+                    'other_branch_id' => $otherBranchId
                 ];
             }
 
             echo json_encode([
                 'success' => true,
                 'filename' => $fileName,
+                'target_branch_id' => $targetBranchId,
+                'target_branch_name' => $targetBranchName,
                 'rows' => $previewRows,
                 'total' => count($previewRows),
                 'valid_count' => $validCount,
-                'invalid_count' => $invalidCount
+                'invalid_count' => $invalidCount,
+                'update_count' => $updateCount,
+                'cross_branch_count' => $crossBranchCount,
+                'cross_branch_list' => $crossBranchList
             ]);
             exit;
 
         case 'import_customers':
             $filePath = !empty($_FILES['file']['tmp_name']) && is_uploaded_file($_FILES['file']['tmp_name']) ? $_FILES['file']['tmp_name'] : '';
-            $rawContent = $input['csv_content'] ?? '';
+            $rawContent = $input['csv_content'] ?? ($_POST['csv_content'] ?? '');
+            $targetBranchId = !empty($_POST['branch_id']) ? (int)$_POST['branch_id'] : (!empty($input['branch_id']) ? (int)$input['branch_id'] : (!empty($_SESSION['branch_id']) ? (int)$_SESSION['branch_id'] : 1));
+
+            // Ambil nama cabang tujuan
+            $stmtBranch = $pdo->prepare("SELECT name FROM branches WHERE id = ?");
+            $stmtBranch->execute([$targetBranchId]);
+            $targetBranchName = $stmtBranch->fetchColumn() ?: 'Cabang #' . $targetBranchId;
 
             $rows = [];
             if (!empty($input['rows']) && is_array($input['rows'])) {
@@ -11951,8 +12064,6 @@ try {
                 exit;
             }
 
-            // Google coords parser is defined globally above
-
             // Normalisasi kategori yang diizinkan
             $validCategories = ['REGULER', 'MEMBER', 'RESELLER', 'MITRA'];
             try {
@@ -11962,29 +12073,44 @@ try {
                 }
             } catch (Exception $e) {}
 
-            // Preload seluruh pelanggan yang ada ke dalam memory map untuk pencocokan multi-strategi yang instan & presisi
-            $allExistingCustomers = $pdo->query("SELECT id, code, name, phone, address, category, latitude, longitude FROM customers")->fetchAll(PDO::FETCH_ASSOC);
-            $byCode = [];
-            $byNormPhone = [];
-            $byRawPhone = [];
-            $byName = [];
+            // Preload seluruh pelanggan yang ada ke dalam memory map:
+            // 1. Map target branch (untuk deduplikasi & update data pada cabang yang dipilih)
+            // 2. Map other branches (untuk mendeteksi & mencatat data yang sudah terdaftar di cabang lain)
+            $allExistingCustomers = $pdo->query("
+                SELECT c.id, c.code, c.name, c.phone, c.address, c.category, c.latitude, c.longitude, c.branch_id,
+                       COALESCE(b.name, 'Kantor Pusat') as branch_name 
+                FROM customers c 
+                LEFT JOIN branches b ON b.id = c.branch_id 
+                WHERE c.is_active = 1
+            ")->fetchAll(PDO::FETCH_ASSOC);
+
+            $targetByCode = [];
+            $targetByNormPhone = [];
+            $targetByRawPhone = [];
+            $targetByName = [];
+
+            $otherByCode = [];
+            $otherByNormPhone = [];
+            $otherByRawPhone = [];
+            $otherByName = [];
 
             foreach ($allExistingCustomers as $c) {
-                if (!empty($c['code'])) {
-                    $byCode[strtoupper(trim($c['code']))] = $c;
-                }
-                if (!empty($c['phone'])) {
-                    $rawP = preg_replace('/\D+/', '', $c['phone']);
-                    if (!empty($rawP)) {
-                        $byRawPhone[$rawP] = $c;
-                    }
-                    $normP = normalizeCustomerPhone($c['phone']);
-                    if (!empty($normP)) {
-                        $byNormPhone[$normP] = $c;
-                    }
-                }
-                if (!empty($c['name'])) {
-                    $byName[strtolower(trim($c['name']))] = $c;
+                $isTarget = ((int)$c['branch_id'] === $targetBranchId);
+                $cCode = !empty($c['code']) ? strtoupper(trim($c['code'])) : '';
+                $rawP = !empty($c['phone']) ? preg_replace('/\D+/', '', $c['phone']) : '';
+                $normP = !empty($c['phone']) ? normalizeCustomerPhone($c['phone']) : '';
+                $normN = !empty($c['name']) ? strtolower(trim($c['name'])) : '';
+
+                if ($isTarget) {
+                    if ($cCode) $targetByCode[$cCode] = $c;
+                    if ($rawP) $targetByRawPhone[$rawP] = $c;
+                    if ($normP) $targetByNormPhone[$normP] = $c;
+                    if ($normN) $targetByName[$normN] = $c;
+                } else {
+                    if ($cCode && !isset($otherByCode[$cCode])) $otherByCode[$cCode] = $c;
+                    if ($rawP && !isset($otherByRawPhone[$rawP])) $otherByRawPhone[$rawP] = $c;
+                    if ($normP && !isset($otherByNormPhone[$normP])) $otherByNormPhone[$normP] = $c;
+                    if ($normN && !isset($otherByName[$normN])) $otherByName[$normN] = $c;
                 }
             }
 
@@ -11994,7 +12120,7 @@ try {
                 UPDATE customers 
                 SET name = ?, phone = ?, address = ?, category = ?, 
                     latitude = COALESCE(?, latitude), longitude = COALESCE(?, longitude)
-                WHERE id = ?
+                WHERE id = ? AND branch_id = ?
             ");
 
             $stmtInsert = $pdo->prepare("
@@ -12006,7 +12132,7 @@ try {
             $updated = 0;
             $skipped = 0;
             $skippedDetails = [];
-            $branchId = !empty($_SESSION['branch_id']) ? (int)$_SESSION['branch_id'] : 1;
+            $crossBranchNotices = [];
 
             foreach ($rows as $idx => $r) {
                 $rowNum = $idx + 1;
@@ -12050,44 +12176,40 @@ try {
                 // Ekstraksi koordinat Google Maps
                 list($lat, $lon) = parseCustomerGoogleCoords($mapsUrl);
 
-                // Multi-Strategy Deduplication & Existing Customer Matcher:
+                // Multi-Strategy Deduplication pada CABANG YANG DIPILIH:
                 $existing = null;
 
-                // 1. Cek berdasarkan Kode Pelanggan jika tersedia di file import
-                if (!empty($code) && isset($byCode[strtoupper($code)])) {
-                    $existing = $byCode[strtoupper($code)];
+                // 1. Cek Kode Pelanggan di cabang tujuan
+                if (!empty($code) && isset($targetByCode[strtoupper($code)])) {
+                    $existing = $targetByCode[strtoupper($code)];
                 }
-
-                // 2. Cek berdasarkan No Telepon ternormalisasi (kebal pemotongan angka 0 Excel, format +62, dan tanda baca)
-                if (!$existing && !empty($normPhone) && isset($byNormPhone[$normPhone])) {
-                    $existing = $byNormPhone[$normPhone];
+                // 2. Cek No Telepon ternormalisasi di cabang tujuan
+                if (!$existing && !empty($normPhone) && isset($targetByNormPhone[$normPhone])) {
+                    $existing = $targetByNormPhone[$normPhone];
                 }
-
-                // 3. Fallback cek No Telepon raw digits
-                if (!$existing && !empty($cleanPhone) && isset($byRawPhone[$cleanPhone])) {
-                    $existing = $byRawPhone[$cleanPhone];
+                // 3. Fallback cek No Telepon raw digits di cabang tujuan
+                if (!$existing && !empty($cleanPhone) && isset($targetByRawPhone[$cleanPhone])) {
+                    $existing = $targetByRawPhone[$cleanPhone];
                 }
-
-                // 4. Fallback jika nomor telepon diubah/dikoreksi oleh pengguna, cocokkan nama lama yang persis
+                // 4. Fallback cek Nama persis di cabang tujuan
                 if (!$existing && !empty($name)) {
                     $normName = strtolower(trim($name));
-                    if (isset($byName[$normName])) {
-                        $existing = $byName[$normName];
+                    if (isset($targetByName[$normName])) {
+                        $existing = $targetByName[$normName];
                     }
                 }
 
                 if ($existing) {
-                    // Update data pelanggan yang sudah ada
+                    // Update data pelanggan yang sudah ada di CABANG TUJUAN
                     $targetLat = ($lat !== null) ? $lat : $existing['latitude'];
                     $targetLon = ($lon !== null) ? $lon : $existing['longitude'];
                     $targetAddr = !empty($address) ? $address : $existing['address'];
                     $targetCat = !empty($rawCat) ? $category : $existing['category'];
                     $targetPhone = !empty($cleanPhone) ? $cleanPhone : $existing['phone'];
 
-                    $stmtUpdate->execute([$name, $targetPhone, $targetAddr, $targetCat, $targetLat, $targetLon, $existing['id']]);
+                    $stmtUpdate->execute([$name, $targetPhone, $targetAddr, $targetCat, $targetLat, $targetLon, $existing['id'], $targetBranchId]);
                     $updated++;
 
-                    // Perbarui data index in-memory untuk referensi baris berikutnya
                     $updatedRecord = [
                         'id' => $existing['id'],
                         'code' => $existing['code'],
@@ -12096,22 +12218,46 @@ try {
                         'address' => $targetAddr,
                         'category' => $targetCat,
                         'latitude' => $targetLat,
-                        'longitude' => $targetLon
+                        'longitude' => $targetLon,
+                        'branch_id' => $targetBranchId
                     ];
-                    $byCode[strtoupper($existing['code'])] = $updatedRecord;
+                    $targetByCode[strtoupper($existing['code'])] = $updatedRecord;
                     if (!empty($targetPhone)) {
                         $rawTP = preg_replace('/\D+/', '', $targetPhone);
-                        if (!empty($rawTP)) $byRawPhone[$rawTP] = $updatedRecord;
+                        if (!empty($rawTP)) $targetByRawPhone[$rawTP] = $updatedRecord;
                         $tNorm = normalizeCustomerPhone($targetPhone);
-                        if (!empty($tNorm)) $byNormPhone[$tNorm] = $updatedRecord;
+                        if (!empty($tNorm)) $targetByNormPhone[$tNorm] = $updatedRecord;
                     }
-                    $byName[strtolower(trim($name))] = $updatedRecord;
+                    $targetByName[strtolower(trim($name))] = $updatedRecord;
                 } else {
-                    // Buat pelanggan baru dengan jaminan kode unik (Anti-Collision Unique Code Generator)
+                    // Belum ada di cabang tujuan.
+                    // Sekarang periksa apakah sudah terdaftar di CABANG BERBEDA (Cross-Branch Detection)
+                    $matchedOther = null;
+                    if (!empty($code) && isset($otherByCode[strtoupper($code)])) {
+                        $matchedOther = $otherByCode[strtoupper($code)];
+                    } elseif (!empty($normPhone) && isset($otherByNormPhone[$normPhone])) {
+                        $matchedOther = $otherByNormPhone[$normPhone];
+                    } elseif (!empty($cleanPhone) && isset($otherByRawPhone[$cleanPhone])) {
+                        $matchedOther = $otherByRawPhone[$cleanPhone];
+                    } elseif (!empty($name) && isset($otherByName[strtolower(trim($name))])) {
+                        $matchedOther = $otherByName[strtolower(trim($name))];
+                    }
+
+                    if ($matchedOther) {
+                        $crossBranchNotices[] = [
+                            'name' => $name,
+                            'phone' => $cleanPhone ?: $phone,
+                            'existing_name' => $matchedOther['name'],
+                            'other_branch_name' => $matchedOther['branch_name'] ?: 'Cabang Lain',
+                            'other_branch_id' => $matchedOther['branch_id']
+                        ];
+                    }
+
+                    // Buat pelanggan baru untuk CABANG TUJUAN dengan jaminan kode unik (Anti-Collision Unique Code Generator)
                     $newCode = null;
 
-                    // Jika kode dicantumkan di file dan belum dipakai siapa pun di DB
-                    if (!empty($code) && !isset($byCode[strtoupper($code)])) {
+                    // Jika kode dicantumkan di file dan belum dipakai siapa pun di DB secara global
+                    if (!empty($code) && !isset($targetByCode[strtoupper($code)]) && !isset($otherByCode[strtoupper($code)])) {
                         $stmtCheckCode->execute([$code]);
                         if (!$stmtCheckCode->fetch()) {
                             $newCode = $code;
@@ -12125,28 +12271,25 @@ try {
                         $attempts = 0;
                         while ($attempts < 500) {
                             $attempts++;
-                            // Gunakan 5 digit angka acak (10000 - 99999) untuk 100.000 kombinasi per prefix per hari
                             $candidate = $todayPrefix . str_pad((string)mt_rand(100, 99999), 5, '0', STR_PAD_LEFT);
-                            if (!isset($byCode[strtoupper($candidate)])) {
+                            if (!isset($targetByCode[strtoupper($candidate)]) && !isset($otherByCode[strtoupper($candidate)])) {
                                 $stmtCheckCode->execute([$candidate]);
                                 if (!$stmtCheckCode->fetch()) {
                                     $newCode = $candidate;
                                     break;
                                 }
-                                $byCode[strtoupper($candidate)] = true;
+                                $otherByCode[strtoupper($candidate)] = true;
                             }
                         }
-                        // Fallback unik tak terbatas jika ribuan record diimport serentak
                         if (empty($newCode)) {
                             $newCode = $todayPrefix . substr(bin2hex(random_bytes(4)), 0, 6);
                         }
                     }
 
-                    $stmtInsert->execute([$newCode, $name, $cleanPhone, $address, $category, $lat, $lon, $branchId]);
+                    $stmtInsert->execute([$newCode, $name, $cleanPhone, $address, $category, $lat, $lon, $targetBranchId]);
                     $newId = (int)$pdo->lastInsertId();
                     $inserted++;
 
-                    // Daftarkan ke in-memory index
                     $newRecord = [
                         'id' => $newId,
                         'code' => $newCode,
@@ -12155,32 +12298,47 @@ try {
                         'address' => $address,
                         'category' => $category,
                         'latitude' => $lat,
-                        'longitude' => $lon
+                        'longitude' => $lon,
+                        'branch_id' => $targetBranchId
                     ];
-                    $byCode[strtoupper($newCode)] = $newRecord;
+                    $targetByCode[strtoupper($newCode)] = $newRecord;
                     if (!empty($cleanPhone)) {
                         $rawCP = preg_replace('/\D+/', '', $cleanPhone);
-                        if (!empty($rawCP)) $byRawPhone[$rawCP] = $newRecord;
+                        if (!empty($rawCP)) $targetByRawPhone[$rawCP] = $newRecord;
                         $nP = normalizeCustomerPhone($cleanPhone);
-                        if (!empty($nP)) $byNormPhone[$nP] = $newRecord;
+                        if (!empty($nP)) $targetByNormPhone[$nP] = $newRecord;
                     }
-                    $byName[strtolower(trim($name))] = $newRecord;
+                    $targetByName[strtolower(trim($name))] = $newRecord;
                 }
             }
 
             $totalProcessed = $inserted + $updated;
-            $msg = "Import data pelanggan selesai! {$totalProcessed} pelanggan berhasil diproses ({$inserted} baru, {$updated} diperbarui).";
+            $msg = "Import data pelanggan selesai! {$totalProcessed} pelanggan berhasil diproses ke cabang {$targetBranchName} ({$inserted} baru, {$updated} diperbarui).";
             if ($skipped > 0) {
                 $msg .= " {$skipped} baris dilewati karena Nama atau No Telepon kosong.";
+            }
+            if (!empty($crossBranchNotices)) {
+                $crossCount = count($crossBranchNotices);
+                $msg .= "\n\n⚠️ PEMBERITAHUAN CABANG LAIN ({$crossCount} Data):\n";
+                foreach (array_slice($crossBranchNotices, 0, 10) as $n) {
+                    $msg .= "• {$n['name']} ({$n['phone']}): Sudah terdaftar di '{$n['other_branch_name']}'\n";
+                }
+                if ($crossCount > 10) {
+                    $msg .= "• ...dan " . ($crossCount - 10) . " pelanggan lainnya.\n";
+                }
             }
 
             echo json_encode([
                 'success' => true,
                 'message' => $msg,
+                'target_branch_id' => $targetBranchId,
+                'target_branch_name' => $targetBranchName,
                 'inserted' => $inserted,
                 'updated' => $updated,
                 'skipped' => $skipped,
-                'skipped_details' => $skippedDetails
+                'skipped_details' => $skippedDetails,
+                'cross_branch_count' => count($crossBranchNotices),
+                'cross_branch_notices' => $crossBranchNotices
             ]);
             break;
 

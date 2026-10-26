@@ -8361,6 +8361,21 @@ try {
             </div>
 
             <form onsubmit="submitImportCustomers(event)" class="space-y-4 text-xs">
+                <!-- Dropdown Cabang Tujuan Import -->
+                <div class="bg-indigo-50/70 p-3.5 rounded-2xl border border-indigo-100 space-y-1.5">
+                    <label class="block font-bold text-slate-800 text-xs flex items-center justify-between">
+                        <span class="flex items-center space-x-1.5">
+                            <i data-lucide="store" class="w-4 h-4 text-indigo-600"></i>
+                            <span>Pilih Cabang Tujuan Import: <span class="text-rose-500">*</span></span>
+                        </span>
+                        <span id="cust-import-branch-badge" class="text-[10px] text-indigo-700 font-semibold bg-white px-2 py-0.5 rounded-full border border-indigo-200">Pilih outlet tujuan</span>
+                    </label>
+                    <select id="cust-import-branch-select" onchange="onCustomerImportBranchChange()" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs">
+                        <!-- Populated dynamically via JS -->
+                    </select>
+                    <p class="text-[10px] text-slate-500 leading-tight">Data pelanggan yang diimport akan ditugaskan ke cabang ini. Validasi pembaruan & deduplikasi data hanya akan memeriksa data cabang terpilih agar tidak salah menimpa cabang lain.</p>
+                </div>
+
                 <div>
                     <label class="block font-bold text-slate-700 mb-1.5">Pilih Berkas Excel / CSV (.xlsx, .xls, .csv):</label>
                     <input type="file" id="cust-import-file-input" accept=".xlsx, .xls, .csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, text/csv, text/plain" onchange="handleCustomerImportFileSelect(event)" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
@@ -8378,6 +8393,15 @@ try {
 
                 <!-- Preview container if rows detected -->
                 <div id="cust-import-preview-box" class="hidden space-y-2">
+                    <!-- Banner Konfirmasi Pelanggan Terdaftar di Cabang Lain -->
+                    <div id="cust-import-cross-warning-banner" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 space-y-1">
+                        <div class="flex items-center space-x-1.5 font-bold text-amber-800">
+                            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0"></i>
+                            <span id="cust-import-cross-warning-title">Konfirmasi: Data Sudah Terdaftar di Cabang Lain</span>
+                        </div>
+                        <p id="cust-import-cross-warning-desc" class="text-[11px] text-amber-700 leading-relaxed"></p>
+                    </div>
+
                     <div class="flex items-center justify-between text-xs">
                         <span id="cust-import-preview-count" class="font-bold text-slate-700">Pratinjau Data (0 baris):</span>
                         <span id="cust-import-valid-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Siap Diimport</span>
@@ -24315,13 +24339,76 @@ Manager / Supervisor: __________________
         // ==========================================
         // IMPORT MASSAL PELANGGAN & MITRA (EXCEL / CSV / TSV)
         // ==========================================
+        function populateCustomerImportBranches() {
+            const select = document.getElementById('cust-import-branch-select');
+            const badge = document.getElementById('cust-import-branch-badge');
+            if (!select) return;
+
+            const branches = state.branches || [];
+            const curUser = state.currentUser || state.loggedInUser || {};
+            const isSuper = curUser && (Number(curUser.can_access_all_branches) === 1 || ['SUPER_ADMIN', 'SUPERADMIN'].includes((curUser.role || '').toUpperCase().replace(/_/g, '')));
+
+            let html = '';
+            branches.forEach(b => {
+                html += `<option value="${b.id}">${escapeHtml(b.name)} (${b.code || 'CAB-' + b.id})</option>`;
+            });
+            select.innerHTML = html;
+
+            const defaultBranchId = state.currentBranch?.id || curUser.branch_id || (branches[0] ? branches[0].id : 1);
+            select.value = defaultBranchId;
+
+            if (!isSuper) {
+                select.disabled = true;
+                select.value = curUser.branch_id || defaultBranchId;
+                if (badge) {
+                    badge.innerText = 'Terkunci ke Cabang Tugas Anda';
+                    badge.className = 'text-[10px] text-amber-700 font-semibold bg-white px-2 py-0.5 rounded-full border border-amber-200';
+                }
+            } else {
+                select.disabled = false;
+                if (badge) {
+                    badge.innerText = 'Super Admin: Bebas pilih cabang tujuan';
+                    badge.className = 'text-[10px] text-emerald-700 font-semibold bg-white px-2 py-0.5 rounded-full border border-emerald-200';
+                }
+            }
+        }
+
+        function onCustomerImportBranchChange() {
+            const fileInput = document.getElementById('cust-import-file-input');
+            const textInput = document.getElementById('cust-import-text-input');
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                handleCustomerImportFileSelect({ target: fileInput });
+            } else if (textInput && textInput.value.trim().length > 0) {
+                handleCustomerImportTextChange();
+            }
+        }
+
+        function normalizeCustomerPhoneJS(phone) {
+            let digits = (phone || '').replace(/\D+/g, '');
+            if (!digits) return '';
+            if (digits.startsWith('62') && digits.length >= 9) {
+                digits = '0' + digits.substring(2);
+            } else if (!digits.startsWith('0') && digits.length >= 8) {
+                digits = '0' + digits;
+            }
+            return digits;
+        }
+
         function openImportCustomerModal() {
             const fileInput = document.getElementById('cust-import-file-input');
             const textInput = document.getElementById('cust-import-text-input');
             const previewBox = document.getElementById('cust-import-preview-box');
+            const warningBanner = document.getElementById('cust-import-cross-warning-banner');
             if (fileInput) fileInput.value = '';
             if (textInput) textInput.value = '';
             if (previewBox) previewBox.classList.add('hidden');
+            if (warningBanner) warningBanner.classList.add('hidden');
+            window.customerImportPreviewRows = [];
+            window.customerImportCrossBranchRows = [];
+
+            // Isi pilihan cabang tujuan import
+            populateCustomerImportBranches();
+
             const modal = document.getElementById('customer-import-modal');
             if (modal) {
                 modal.classList.remove('hidden');
@@ -24351,6 +24438,8 @@ Manager / Supervisor: __________________
             const countEl = document.getElementById('cust-import-preview-count');
             const badgeEl = document.getElementById('cust-import-valid-badge');
             const textInput = document.getElementById('cust-import-text-input');
+            const branchSelect = document.getElementById('cust-import-branch-select');
+            const targetBranchId = branchSelect ? parseInt(branchSelect.value) : (state.currentBranch?.id || 1);
 
             const fileName = file.name.toLowerCase();
             const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
@@ -24362,14 +24451,15 @@ Manager / Supervisor: __________________
                     if (countEl) countEl.innerText = `Membaca berkas Excel: ${file.name}...`;
                     if (badgeEl) {
                         badgeEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800';
-                        badgeEl.innerText = 'Memeriksa Format Excel...';
+                        badgeEl.innerText = 'Memeriksa Format Excel & Data Cabang...';
                     }
-                    tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500 font-semibold"><span class="inline-block animate-spin mr-1.5">⏳</span> Sedang membaca data dari berkas Excel...</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500 font-semibold"><span class="inline-block animate-spin mr-1.5">⏳</span> Sedang membaca data dari berkas Excel & memvalidasi cabang...</td></tr>`;
                 }
 
                 try {
                     const formData = new FormData();
                     formData.append('file', file);
+                    formData.append('branch_id', targetBranchId);
                     const res = await fetch('api.php?action=preview_customer_import', {
                         method: 'POST',
                         body: formData
@@ -24382,7 +24472,7 @@ Manager / Supervisor: __________________
                         throw new Error('Respon server bukan JSON: ' + (rawText ? rawText.substring(0, 150) : 'Kosong (HTTP ' + res.status + ')'));
                     }
                     if (result.success && Array.isArray(result.rows) && result.rows.length > 0) {
-                        renderCustomerImportPreviewRows(result.rows, result.total, result.valid_count, result.invalid_count);
+                        renderCustomerImportPreviewRows(result.rows, result.total, result.valid_count, result.invalid_count, result.cross_branch_count, result.target_branch_name, result.cross_branch_list);
                     } else {
                         if (tbody) {
                             tbody.innerHTML = `<tr><td colspan="7" class="p-3 text-center text-rose-600 font-semibold">⚠️ ${result.message || 'Tidak ada baris data yang ditemukan dalam berkas Excel ini.'}</td></tr>`;
@@ -24436,12 +24526,33 @@ Manager / Supervisor: __________________
             return null;
         }
 
-        function renderCustomerImportPreviewRows(rows, total, validCount, invalidCount) {
+        function renderCustomerImportPreviewRows(rows, total, validCount, invalidCount, crossBranchCount = 0, targetBranchName = '', crossBranchList = []) {
             const previewBox = document.getElementById('cust-import-preview-box');
             const tbody = document.getElementById('cust-import-preview-tbody');
             const countEl = document.getElementById('cust-import-preview-count');
             const badgeEl = document.getElementById('cust-import-valid-badge');
+            const warningBanner = document.getElementById('cust-import-cross-warning-banner');
+            const warningDesc = document.getElementById('cust-import-cross-warning-desc');
             if (!previewBox || !tbody) return;
+
+            window.customerImportPreviewRows = rows || [];
+            window.customerImportCrossBranchRows = (crossBranchList && crossBranchList.length > 0) 
+                ? crossBranchList 
+                : (rows || []).filter(r => r.match_type === 'CROSS_BRANCH');
+
+            const actualCrossCount = crossBranchCount || window.customerImportCrossBranchRows.length;
+
+            // Handle warning banner
+            if (warningBanner && warningDesc) {
+                if (actualCrossCount > 0) {
+                    warningBanner.classList.remove('hidden');
+                    const sampleNames = window.customerImportCrossBranchRows.slice(0, 3).map(r => `<strong>${escapeHtml(r.name)}</strong> (di <em>${escapeHtml(r.other_branch_name)}</em>)`).join(', ');
+                    const more = actualCrossCount > 3 ? ` dan ${actualCrossCount - 3} pelanggan lainnya` : '';
+                    warningDesc.innerHTML = `Ditemukan <strong>${actualCrossCount} data</strong> yang sudah terdaftar di cabang lain (${sampleNames}${more}). Jika diimport, data akan otomatis didaftarkan sebagai pelanggan baru untuk <strong>${escapeHtml(targetBranchName || 'cabang yang dipilih')}</strong>.`;
+                } else {
+                    warningBanner.classList.add('hidden');
+                }
+            }
 
             const rowsHtml = rows.slice(0, 15).map((r, idx) => {
                 const name = r.name || '';
@@ -24460,18 +24571,27 @@ Manager / Supervisor: __________________
                     ? `<span class="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 font-mono text-[9px] rounded font-bold" title="${escapeHtml(gmaps)}">📍 ${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}</span>`
                     : (gmaps ? `<span class="text-slate-400 truncate max-w-[120px] inline-block text-[10px]" title="${escapeHtml(gmaps)}">${escapeHtml(gmaps)}</span>` : '<span class="text-slate-300">-</span>');
 
+                let statusBadge = '';
+                if (!isValid) {
+                    statusBadge = '<span class="px-1.5 py-0.5 bg-rose-100 text-rose-800 rounded-full font-bold text-[9px]">Gagal</span>';
+                } else if (r.match_type === 'UPDATE') {
+                    statusBadge = '<span class="px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded-full font-bold text-[9px]" title="Sudah terdaftar di cabang ini, profil akan diperbarui">Update Cabang</span>';
+                } else if (r.match_type === 'CROSS_BRANCH') {
+                    statusBadge = `<span class="px-1.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded-full font-bold text-[9px]" title="Sudah terdaftar di cabang ${escapeHtml(r.other_branch_name)}">⚠️ Di: ${escapeHtml(r.other_branch_name)}</span>`;
+                } else {
+                    statusBadge = '<span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-bold text-[9px]">Baru</span>';
+                }
+
                 return `
-                    <tr class="${isValid ? 'hover:bg-slate-50' : 'bg-rose-50/50'}">
+                    <tr class="${!isValid ? 'bg-rose-50/50' : (r.match_type === 'CROSS_BRANCH' ? 'bg-amber-50/30' : 'hover:bg-slate-50')}">
                         <td class="p-2 text-slate-400 font-mono">${idx + 1}</td>
                         <td class="p-2 font-bold ${isValid ? 'text-slate-800' : 'text-rose-600'}">${escapeHtml(name) || '<span class="italic text-rose-500 font-normal">Kosong (Wajib)</span>'}</td>
                         <td class="p-2 font-mono ${phone.replace(/[^\d+]/g, '').length >= 6 ? 'text-slate-700' : 'text-rose-600'}">${escapeHtml(phone) || '<span class="italic text-rose-500 font-normal">Kosong (Wajib)</span>'}</td>
                         <td class="p-2 text-slate-500 truncate max-w-[140px]" title="${escapeHtml(addr)}">${escapeHtml(addr)}</td>
                         <td class="p-2">${coordsBadge}</td>
                         <td class="p-2"><span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${escapeHtml(cat || 'REGULER')}</span></td>
-                        <td class="p-2 text-center">
-                            ${isValid 
-                                ? '<span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-bold text-[9px]">Valid</span>' 
-                                : '<span class="px-1.5 py-0.5 bg-rose-100 text-rose-800 rounded-full font-bold text-[9px]">Gagal</span>'}
+                        <td class="p-2 text-center whitespace-nowrap">
+                            ${statusBadge}
                         </td>
                     </tr>
                 `;
@@ -24484,20 +24604,25 @@ Manager / Supervisor: __________________
                 countEl.innerText = `Pratinjau: ${total} Baris Ditemukan (${validCount} Valid${total > 15 ? ', menampilkan 15 baris pertama' : ''})`;
             }
             if (badgeEl) {
-                if (invalidCount === 0) {
+                if (invalidCount === 0 && actualCrossCount === 0) {
                     badgeEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800';
                     badgeEl.innerText = `${validCount} Baris Siap Diimport`;
+                } else if (actualCrossCount > 0) {
+                    badgeEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300';
+                    badgeEl.innerText = `${validCount} Valid (${actualCrossCount} Terdaftar di Cabang Lain)`;
                 } else {
                     badgeEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800';
                     badgeEl.innerText = `${validCount} Valid, ${invalidCount} Baris Tidak Lengkap (Akan Dilewati)`;
                 }
             }
+            if (window.lucide) lucide.createIcons();
         }
 
         function handleCustomerImportTextChange() {
             const textInput = document.getElementById('cust-import-text-input');
             const previewBox = document.getElementById('cust-import-preview-box');
             const tbody = document.getElementById('cust-import-preview-tbody');
+            const branchSelect = document.getElementById('cust-import-branch-select');
             if (!textInput || !previewBox || !tbody) return;
 
             const text = textInput.value.trim();
@@ -24505,6 +24630,9 @@ Manager / Supervisor: __________________
                 previewBox.classList.add('hidden');
                 return;
             }
+
+            const targetBranchId = branchSelect ? parseInt(branchSelect.value) : (state.currentBranch?.id || 1);
+            const targetBranchName = (branchSelect && branchSelect.selectedOptions[0]) ? branchSelect.selectedOptions[0].text : 'Cabang Terpilih';
 
             const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
             if (lines.length === 0) {
@@ -24540,11 +24668,33 @@ Manager / Supervisor: __________________
                 return;
             }
 
+            // Index existing customers in memory
+            const existingCusts = state.customers || [];
+            const targetNormMap = {};
+            const targetNameMap = {};
+            const otherNormMap = {};
+            const otherNameMap = {};
+
+            existingCusts.forEach(c => {
+                const isTarget = (parseInt(c.branch_id) === targetBranchId);
+                const normP = normalizeCustomerPhoneJS(c.phone);
+                const normN = (c.name || '').trim().toLowerCase();
+                if (isTarget) {
+                    if (normP) targetNormMap[normP] = c;
+                    if (normN) targetNameMap[normN] = c;
+                } else {
+                    if (normP && !otherNormMap[normP]) otherNormMap[normP] = c;
+                    if (normN && !otherNameMap[normN]) otherNameMap[normN] = c;
+                }
+            });
+
             let validCount = 0;
             let invalidCount = 0;
+            let crossBranchCount = 0;
             const rows = [];
+            const crossBranchList = [];
 
-            dataLines.forEach((l) => {
+            dataLines.forEach((l, idx) => {
                 let cols = l.split(delim).map(s => s.trim().replace(/^["']|["']$/g, ''));
                 if (cols.length > 5 && colMap.maps_url !== undefined && cols[colMap.maps_url]) {
                     const candidate = cols[colMap.maps_url] + ',' + (cols[colMap.maps_url + 1] || '');
@@ -24562,13 +24712,42 @@ Manager / Supervisor: __________________
                 const cat = cols[colMap.category] || 'REGULER';
                 const isValid = (name.length > 0 && phone.replace(/[^\d+]/g, '').length >= 6);
 
-                if (isValid) validCount++; else invalidCount++;
+                let matchType = 'NEW';
+                let otherBranchName = null;
+                let otherBranchId = null;
+
+                if (isValid) {
+                    validCount++;
+                    const normP = normalizeCustomerPhoneJS(phone);
+                    const normN = name.trim().toLowerCase();
+
+                    if (targetNormMap[normP] || targetNameMap[normN]) {
+                        matchType = 'UPDATE';
+                    } else if (otherNormMap[normP] || otherNameMap[normN]) {
+                        const other = otherNormMap[normP] || otherNameMap[normN];
+                        matchType = 'CROSS_BRANCH';
+                        otherBranchName = other.branch_name || 'Cabang Lain';
+                        otherBranchId = other.branch_id;
+                        crossBranchCount++;
+                        crossBranchList.push({
+                            row: idx + 1,
+                            name,
+                            phone,
+                            other_branch_name: otherBranchName,
+                            other_branch_id: otherBranchId
+                        });
+                    }
+                } else {
+                    invalidCount++;
+                }
+
                 rows.push({
-                    name, phone, address: addr, maps_url: gmaps, category: cat, is_valid: isValid
+                    name, phone, address: addr, maps_url: gmaps, category: cat, is_valid: isValid,
+                    match_type: matchType, other_branch_name: otherBranchName, other_branch_id: otherBranchId
                 });
             });
 
-            renderCustomerImportPreviewRows(rows, dataLines.length, validCount, invalidCount);
+            renderCustomerImportPreviewRows(rows, dataLines.length, validCount, invalidCount, crossBranchCount, targetBranchName, crossBranchList);
         }
 
         async function submitImportCustomers(e) {
@@ -24576,23 +24755,44 @@ Manager / Supervisor: __________________
             const fileInput = document.getElementById('cust-import-file-input');
             const textInput = document.getElementById('cust-import-text-input');
             const btnSubmit = document.getElementById('btn-submit-import-customers');
+            const branchSelect = document.getElementById('cust-import-branch-select');
+
+            const targetBranchId = branchSelect ? parseInt(branchSelect.value) : (state.currentBranch?.id || 1);
+            const targetBranchName = (branchSelect && branchSelect.selectedOptions[0]) ? branchSelect.selectedOptions[0].text : 'Cabang Terpilih';
 
             const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
             const hasText = textInput && textInput.value.trim().length > 0;
 
             if (!hasFile && !hasText) {
-                alert('Silakan pilih berkas CSV / TXT atau tempel teks data pelanggan terlebih dahulu.');
+                alert('Silakan pilih berkas CSV / Excel atau tempel teks data pelanggan terlebih dahulu.');
                 return;
             }
 
+            // Konfirmasi jika terdapat data yang sudah terdaftar di cabang lain
+            const crossList = window.customerImportCrossBranchRows || [];
+            if (crossList.length > 0) {
+                const listPreview = crossList.slice(0, 5).map(r => `• ${r.name} (${r.phone}): Terdaftar di "${r.other_branch_name}"`).join('\n');
+                const moreText = crossList.length > 5 ? `\n...dan ${crossList.length - 5} pelanggan lainnya` : '';
+                const confirmMsg = `⚠️ KONFIRMASI DATA TERDAFTAR DI CABANG LAIN:\n\n` +
+                    `Terdapat ${crossList.length} data pelanggan yang sudah terdaftar di cabang berbeda:\n` +
+                    `${listPreview}${moreText}\n\n` +
+                    `Data ini akan tetap didaftarkan sebagai pelanggan untuk cabang:\n` +
+                    `👉 "${targetBranchName}"\n\n` +
+                    `Apakah Anda yakin ingin melanjutkan proses import?`;
+                if (!confirm(confirmMsg)) {
+                    return;
+                }
+            }
+
             btnSubmit.disabled = true;
-            btnSubmit.innerHTML = `<span class="inline-block animate-spin mr-1">⏳</span><span>Memproses Import...</span>`;
+            btnSubmit.innerHTML = `<span class="inline-block animate-spin mr-1">⏳</span><span>Memproses Import ke ${escapeHtml(targetBranchName)}...</span>`;
 
             try {
                 let res;
                 if (hasFile) {
                     const formData = new FormData();
                     formData.append('file', fileInput.files[0]);
+                    formData.append('branch_id', targetBranchId);
                     res = await fetch('api.php?action=import_customers', {
                         method: 'POST',
                         body: formData
@@ -24601,7 +24801,10 @@ Manager / Supervisor: __________________
                     res = await fetch('api.php?action=import_customers', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ csv_content: textInput.value.trim() })
+                        body: JSON.stringify({ 
+                            csv_content: textInput.value.trim(),
+                            branch_id: targetBranchId 
+                        })
                     });
                 }
 

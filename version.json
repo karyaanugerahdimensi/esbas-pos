@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.2.95",
-    "build": "20261026-50",
+    "version": "1.2.96",
+    "build": "20261026-51",
     "release_date": "2026-10-26",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.2.96",
+            "commit": "HEAD",
+            "date": "2026-10-26",
+            "title": "Pemilihan Cabang Tujuan Import Pelanggan, Validasi Terisolasi Per-Cabang & Konfirmasi Lintas Cabang (FR-CRM-13)",
+            "description": "Menghadirkan pembaruan komprehensif pada fitur import massal pelanggan & mitra (#customer-import-modal) untuk mendukung operasi multi-cabang yang presisi: (1) Pemilihan Cabang Tujuan Import: Menambahkan dropdown pemilihan cabang tujuan import dengan proteksi wewenang (Super Admin bebas memilih cabang tujuan, sedangkan pengguna non-superadmin terkunci otomatis pada cabang penugasan). (2) Validasi & Deduplikasi Terisolasi Per-Cabang: Membatasi pemeriksaan pembaruan data (UPDATE) hanya pada basis data cabang yang dipilih (WHERE branch_id = targetBranchId) sehingga data tidak salah menimpa pelanggan di cabang lain. (3) Deteksi & Konfirmasi Lintas Cabang (Cross-Branch Detection): Mendeteksi jika nomor telepon/kode pelanggan sudah terdaftar di cabang berbeda, menampilkan lencana peringatan dan banner informatif pada tabel pratinjau, memunculkan dialog konfirmasi sebelum eksekusi, serta memberikan rekapitulasi konfirmasi cabang asal pelanggan yang bersangkutan pada hasil akhir import.",
+            "rollback_command": "git checkout v1.2.95"
+        },
         {
             "version": "1.2.95",
             "commit": "HEAD",
