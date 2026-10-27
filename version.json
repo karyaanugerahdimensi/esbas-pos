@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.2.97",
-    "build": "20261027-52",
+    "version": "1.2.98",
+    "build": "20261027-53",
     "release_date": "2026-10-27",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.2.98",
+            "commit": "HEAD",
+            "date": "2026-10-27",
+            "title": "Eliminasi Kolom Redundan Harga Tier pada CRM Subtab Kontrak Khusus Mitra (FR-CRM-15)",
+            "description": "Menghilangkan kolom redundan 'Harga Tier Mitra Umum' pada tabel Subtab 2 CRM ('Harga Kontrak Khusus Mitra') dan memusatkan pengelolaan harga tier secara bersih pada Master Produk: (1) Analisis Dampak & Keamanan Fungsional: Memastikan bahwa data harga tier mitra (mitra_price), reseller_price, dan member_price tetap tersimpan aman di basis data produk dan dikelola terpusat via menu Master Produk & Varian (#product-modal). Transaksi POS kasir tetap 100% aman memprioritaskan kontrak khusus perorangan dan fallback ke tier harga Master Produk / ritel standar. (2) Pembersihan Antarmuka Tabel Subtab 2 CRM (index.php): Menghapus kolom header 'Harga Tier Mitra Umum' dan tombol ubah di setiap baris produk, menyelaraskan colspan baris kosong menjadi 6 kolom, serta menyelaraskan teks panduan ketentuan transaksi mitra. (3) Eliminasi Dead Modal & Dead Code: Menghapus modal legasi #quick-tier-price-modal dan fungsi JavaScript openQuickTierPriceModal, closeQuickTierPriceModal, calcQuickTierPrices, dan saveQuickTierPriceForm. (4) Penyelarasan Modal Kontrak Mitra (mitra-price-modal): Memperjelas label acuan harga menjadi 'Harga Tier Mitra (Master Produk)'.",
+            "rollback_command": "git checkout v1.2.97"
+        },
         {
             "version": "1.2.97",
             "commit": "HEAD",

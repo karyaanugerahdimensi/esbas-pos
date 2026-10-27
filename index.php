@@ -3654,7 +3654,7 @@ try {
                         <div>
                             <p class="font-bold">Ketentuan & Aturan Transaksi Mitra Rekanan B2B:</p>
                             <p class="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
-                                Setiap mitra bisnis dapat memiliki <strong>kesepakatan harga kontrak khusus per produk</strong>. Jika kontrak khusus diset, POS kasir akan memprioritaskan harga kontrak tersebut. Jika kontrak khusus belum diset, kasir otomatis menerapkan <strong>Harga Tier Mitra Umum</strong> yang dapat Anda sesuaikan langsung dengan klik tombol edit pada kolom di bawah atau di Master Produk.
+                                Setiap mitra bisnis dapat memiliki <strong>kesepakatan harga kontrak khusus per produk</strong>. Jika kontrak khusus diset, POS kasir akan memprioritaskan harga kontrak tersebut. Jika kontrak khusus belum diset, kasir otomatis menerapkan <strong>Harga Tier Mitra</strong> yang telah dikonfigurasi pada menu Master Produk.
                             </p>
                         </div>
                     </div>
@@ -3667,10 +3667,6 @@ try {
                                         <th class="py-3 px-4">Produk</th>
                                         <th class="py-3 px-4">SKU</th>
                                         <th class="py-3 px-4 text-right">Harga Ritel Standar</th>
-                                        <th class="py-3 px-4 text-right">
-                                            <span>Harga Tier Mitra Umum</span>
-                                            <span class="block text-[9px] text-indigo-600 font-semibold lowercase">(klik untuk ubah)</span>
-                                        </th>
                                         <th class="py-3 px-4 text-right">Harga Kontrak Mitra Ini</th>
                                         <th class="py-3 px-4 text-center">Status Kontrak</th>
                                         <th class="py-3 px-4 text-center">Aksi</th>
@@ -8536,7 +8532,7 @@ try {
                         <span id="mp-info-retail" class="font-bold text-slate-800">Rp 0</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span>Harga Tier Mitra Umum (Default):</span>
+                        <span>Harga Tier Mitra (Master Produk):</span>
                         <span id="mp-info-mitra-default" class="font-bold text-indigo-700">Rp 0</span>
                     </div>
                 </div>
@@ -8554,74 +8550,6 @@ try {
                     <button type="submit" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow transition-colors flex items-center justify-center space-x-1.5">
                         <i data-lucide="check" class="w-4 h-4"></i>
                         <span>Simpan Kontrak</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal 8B: Ubah Harga Tier Mitra Umum & Multi-Tier Produk -->
-    <div id="quick-tier-price-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div class="flex items-center justify-between border-b pb-3 border-slate-100">
-                <div class="flex items-center space-x-2">
-                    <span class="p-2 bg-indigo-100 text-indigo-800 rounded-xl text-lg">🏷️</span>
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-base">Atur Harga Tier Mitra Umum</h3>
-                        <p id="qtp-product-title" class="text-xs text-indigo-700 font-bold truncate max-w-[260px]">Produk</p>
-                    </div>
-                </div>
-                <button type="button" onclick="closeQuickTierPriceModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            <form onsubmit="saveQuickTierPriceForm(event)" class="space-y-3.5 text-xs">
-                <input type="hidden" id="qtp-product-id">
-                
-                <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex justify-between items-center text-xs">
-                    <div>
-                        <span class="text-slate-500 block text-[11px]">Harga Ritel Standar:</span>
-                        <span id="qtp-retail-price" class="font-mono font-bold text-slate-800 text-sm">Rp 0</span>
-                    </div>
-                    <button type="button" onclick="calcQuickTierPrices(true)" class="px-2.5 py-1 bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl font-bold shadow-xs transition-all text-[11px] flex items-center gap-1">
-                        <span>⚡ Samakan dengan Ritel</span>
-                    </button>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="bg-emerald-50/60 p-3 rounded-2xl border border-emerald-200/80">
-                        <div class="flex items-center justify-between mb-1">
-                            <label class="block font-bold text-emerald-950">Harga Tier Mitra Umum (Rp):</label>
-                            <span class="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-1.5 py-0.5 rounded">Tier Mitra</span>
-                        </div>
-                        <input type="number" id="qtp-mitra-price" placeholder="Contoh: 25000" class="w-full p-2 bg-white border border-emerald-300 rounded-xl font-mono font-black text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" required>
-                        <p class="text-[10px] text-slate-500 mt-1">Harga acuan untuk semua pelanggan berkategori Mitra B2B tanpa kontrak perorangan (Default mengikuti harga ritel standar).</p>
-                    </div>
-
-                    <div class="bg-blue-50/60 p-3 rounded-2xl border border-blue-200/80">
-                        <div class="flex items-center justify-between mb-1">
-                            <label class="block font-bold text-blue-950">Harga Tier Reseller / Grosir (Rp):</label>
-                            <span class="text-[10px] text-blue-700 font-bold bg-blue-100 px-1.5 py-0.5 rounded">Tier Reseller</span>
-                        </div>
-                        <input type="number" id="qtp-reseller-price" placeholder="Contoh: 25000" class="w-full p-2 bg-white border border-blue-300 rounded-xl font-mono font-bold text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                        <p class="text-[10px] text-slate-500 mt-1">Diterapkan untuk pelanggan berkategori Reseller / Grosir (Default mengikuti harga ritel standar).</p>
-                    </div>
-
-                    <div class="bg-purple-50/60 p-3 rounded-2xl border border-purple-200/80">
-                        <div class="flex items-center justify-between mb-1">
-                            <label class="block font-bold text-purple-950">Harga Tier Member VIP (Rp):</label>
-                            <span class="text-[10px] text-purple-700 font-bold bg-purple-100 px-1.5 py-0.5 rounded">Tier Member</span>
-                        </div>
-                        <input type="number" id="qtp-member-price" placeholder="Contoh: 25000" class="w-full p-2 bg-white border border-purple-300 rounded-xl font-mono font-bold text-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm">
-                        <p class="text-[10px] text-slate-500 mt-1">Diterapkan untuk pelanggan berkategori Member (Default mengikuti harga ritel standar).</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
-                    <button type="button" onclick="closeQuickTierPriceModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700 transition-colors">Batal</button>
-                    <button type="submit" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow transition-colors flex items-center justify-center space-x-1.5">
-                        <i data-lucide="check" class="w-4 h-4"></i>
-                        <span>Simpan Harga Tier</span>
                     </button>
                 </div>
             </form>
@@ -24864,7 +24792,7 @@ Manager / Supervisor: __________________
                 if (mitraPartners.length === 0) {
                     partnerSelect.innerHTML = '<option value="">Tidak ada Mitra B2B terdaftar</option>';
                     document.getElementById('mitra-pricing-table-body').innerHTML = `
-                        <tr><td colspan="7" class="text-center py-8 text-slate-400">Belum ada mitra rekanan B2B. Daftarkan mitra baru di tab Data Pelanggan.</td></tr>
+                        <tr><td colspan="6" class="text-center py-8 text-slate-400">Belum ada mitra rekanan B2B. Daftarkan mitra baru di tab Data Pelanggan.</td></tr>
                     `;
                     return;
                 }
@@ -24898,12 +24826,6 @@ Manager / Supervisor: __________________
                             <td class="py-3 px-4 font-bold text-slate-900">${p.image_emoji || '📦'} ${p.name}</td>
                             <td class="py-3 px-4 font-mono text-slate-500">${p.sku}</td>
                             <td class="py-3 px-4 text-right text-slate-600 font-semibold">${formatRupiah(defaultRetail)}</td>
-                            <td class="py-3 px-4 text-right">
-                                <button type="button" onclick="openQuickTierPriceModal(${p.id})" class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-indigo-50/80 hover:bg-indigo-600 text-indigo-700 hover:text-white font-bold border border-indigo-200 transition-all text-xs group" title="Klik untuk mengubah Harga Tier Mitra Umum produk ini">
-                                    <span>${formatRupiah(defaultMitra)}</span>
-                                    <i data-lucide="edit-3" class="w-3.5 h-3.5 opacity-70 group-hover:opacity-100"></i>
-                                </button>
-                            </td>
                             <td class="py-3 px-4 text-right font-black ${isContractSet ? 'text-emerald-700 text-sm' : 'text-slate-400'}">
                                 ${formatRupiah(contractPrice)}
                             </td>
@@ -25058,97 +24980,6 @@ Manager / Supervisor: __________________
             if (data.success) {
                 loadMitraPricing();
                 initApp();
-            }
-        }
-
-        // QUICK EDIT HARGA TIER MITRA UMUM & MULTI-TIER PRODUK
-        function openQuickTierPriceModal(productId) {
-            const p = (state.products || []).find(pr => pr.id === productId) || (state.allProducts || []).find(pr => pr.id === productId);
-            if (!p) {
-                alert('Data produk tidak ditemukan!');
-                return;
-            }
-
-            document.getElementById('qtp-product-id').value = p.id;
-            document.getElementById('qtp-product-title').innerText = `${p.image_emoji || '📦'} ${p.name} (${p.sku})`;
-            
-            const retail = Number(p.selling_price || 0);
-            document.getElementById('qtp-retail-price').innerText = formatRupiah(retail);
-
-            const mPrice = Number(p.mitra_price > 0 ? p.mitra_price : retail);
-            const rPrice = Number(p.reseller_price > 0 ? p.reseller_price : retail);
-            const vPrice = Number(p.member_price > 0 ? p.member_price : retail);
-
-            document.getElementById('qtp-mitra-price').value = mPrice;
-            document.getElementById('qtp-reseller-price').value = rPrice;
-            document.getElementById('qtp-member-price').value = vPrice;
-
-            document.getElementById('quick-tier-price-modal').classList.remove('hidden');
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
-
-        function closeQuickTierPriceModal() {
-            document.getElementById('quick-tier-price-modal').classList.add('hidden');
-        }
-
-        function calcQuickTierPrices(force = false) {
-            const pId = parseInt(document.getElementById('qtp-product-id').value);
-            const p = (state.products || []).find(pr => pr.id === pId) || (state.allProducts || []).find(pr => pr.id === pId);
-            if (!p) return;
-            const retail = Number(p.selling_price || 0);
-            document.getElementById('qtp-mitra-price').value = retail;
-            document.getElementById('qtp-reseller-price').value = retail;
-            document.getElementById('qtp-member-price').value = retail;
-        }
-
-        async function saveQuickTierPriceForm(e) {
-            e.preventDefault();
-            const pId = parseInt(document.getElementById('qtp-product-id').value);
-            const mitraPrice = parseFloat(document.getElementById('qtp-mitra-price').value);
-            const resellerPrice = parseFloat(document.getElementById('qtp-reseller-price').value);
-            const memberPrice = parseFloat(document.getElementById('qtp-member-price').value);
-
-            if (!pId || isNaN(mitraPrice) || mitraPrice <= 0) {
-                alert('Harga Tier Mitra Umum wajib diisi dengan nominal yang valid (> 0)!');
-                return;
-            }
-
-            try {
-                const res = await fetch('api.php?action=update_product_tier_price', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        product_id: pId,
-                        mitra_price: mitraPrice,
-                        reseller_price: isNaN(resellerPrice) ? null : resellerPrice,
-                        member_price: isNaN(memberPrice) ? null : memberPrice
-                    })
-                });
-                const data = await res.json();
-                alert(data.message || (data.success ? 'Harga tier berhasil disimpan!' : 'Gagal menyimpan harga tier'));
-                if (data.success) {
-                    closeQuickTierPriceModal();
-                    
-                    // Update objek produk lokal di state
-                    const updateProdInList = (list) => {
-                        if (!list) return;
-                        const item = list.find(x => x.id === pId);
-                        if (item) {
-                            item.mitra_price = mitraPrice;
-                            if (!isNaN(resellerPrice)) item.reseller_price = resellerPrice;
-                            if (!isNaN(memberPrice)) item.member_price = memberPrice;
-                        }
-                    };
-                    updateProdInList(state.products);
-                    updateProdInList(state.allProducts);
-
-                    await loadMitraPricing();
-                    await initApp();
-                    recalculateCartPrices();
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Terjadi kesalahan jaringan saat menyimpan harga tier: ' + err.message);
             }
         }
 
