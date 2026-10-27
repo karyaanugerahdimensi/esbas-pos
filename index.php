@@ -858,10 +858,35 @@ try {
                                 <span id="pos-customer-category-badge" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200">REGULER</span>
                             </div>
                             <div class="flex items-center space-x-2 mt-1">
-                                <select id="pos-customer-select" onchange="onPosCustomerChange()" class="bg-white dark:bg-slate-800 border border-indigo-300 dark:border-indigo-700 rounded-xl px-2.5 py-1 text-xs font-bold text-indigo-950 dark:text-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs">
-                                    <!-- Populated via JS -->
-                                </select>
-                                <button type="button" onclick="openCustomerModal()" title="Daftar Pelanggan Baru Cepat" class="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-indigo-600 dark:hover:bg-indigo-600 hover:text-white text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-bold border border-indigo-300 dark:border-indigo-700 transition-colors flex items-center space-x-1 cursor-pointer">
+                                <div id="pos-customer-search-container" class="relative">
+                                    <div class="relative flex items-center">
+                                        <i data-lucide="search" class="w-3.5 h-3.5 text-indigo-400 dark:text-indigo-500 absolute left-2.5 pointer-events-none"></i>
+                                        <input type="text"
+                                               id="pos-customer-search-input"
+                                               oninput="onPosCustomerSearchInput(this.value)"
+                                               onfocus="onPosCustomerSearchFocus()"
+                                               onkeydown="onPosCustomerSearchKeydown(event)"
+                                               placeholder="Cari pelanggan (ketik nama / HP)..."
+                                               autocomplete="off"
+                                               class="bg-white dark:bg-slate-800 border border-indigo-300 dark:border-indigo-700 rounded-xl pl-8 pr-7 py-1 text-xs font-bold text-indigo-950 dark:text-indigo-100 placeholder-indigo-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs w-52 sm:w-64 transition-all">
+                                        <button type="button"
+                                                id="pos-customer-search-clear"
+                                                onclick="clearPosCustomerSearch()"
+                                                title="Reset ke Pelanggan Umum"
+                                                class="absolute right-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 hidden cursor-pointer">
+                                            ✕
+                                        </button>
+                                    </div>
+                                    <!-- Hidden input untuk kompatibilitas data id pelanggan aktif -->
+                                    <input type="hidden" id="pos-customer-select" value="1">
+
+                                    <!-- Floating Dropdown Hasil Pencarian Kata Kunci -->
+                                    <div id="pos-customer-search-results"
+                                         class="absolute left-0 top-full mt-1.5 w-72 sm:w-80 bg-white dark:bg-slate-900 border border-indigo-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden hidden max-h-72 flex flex-col">
+                                        <!-- Diisi secara dinamis saat mengetik kata kunci -->
+                                    </div>
+                                </div>
+                                <button type="button" onclick="openCustomerModal()" title="Daftar Pelanggan Baru Cepat" class="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-indigo-600 dark:hover:bg-indigo-600 hover:text-white text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-bold border border-indigo-300 dark:border-indigo-700 transition-colors flex items-center space-x-1 cursor-pointer shrink-0">
                                     <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
                                     <span>+ Baru</span>
                                 </button>
@@ -23213,9 +23238,200 @@ Manager / Supervisor: __________________
             }).join('');
         }
 
+        // ========================================================
+        // FITUR PENCARIAN PELANGGAN POS BERBASIS KATA KUNCI (KEYWORD SEARCH)
+        // ========================================================
+
+        function onPosCustomerSearchInput(query) {
+            const q = (query || '').trim().toLowerCase();
+            const resultsContainer = document.getElementById('pos-customer-search-results');
+            const clearBtn = document.getElementById('pos-customer-search-clear');
+            if (!resultsContainer) return;
+
+            if (clearBtn) {
+                if (query && query.trim().length > 0) {
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                }
+            }
+
+            // Jika kata kunci kosong, sembunyikan dropdown hasil pencarian
+            if (q.length === 0) {
+                resultsContainer.innerHTML = '';
+                resultsContainer.classList.add('hidden');
+                return;
+            }
+
+            // Filter pelanggan berdasarkan kata kunci (nama, nomor HP, kode, atau alamat)
+            const matches = (state.customers || []).filter(c => {
+                if (c.is_active != 1 && c.is_active !== undefined) return false;
+                const name = (c.name || '').toLowerCase();
+                const phone = (c.phone || '').toLowerCase();
+                const code = (c.code || '').toLowerCase();
+                const address = (c.address || '').toLowerCase();
+                return name.includes(q) || phone.includes(q) || code.includes(q) || address.includes(q);
+            }).slice(0, 15); // Batasi maksimal 15 hasil pencarian relevan
+
+            if (matches.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="p-3 text-center text-xs text-slate-500 dark:text-slate-400">
+                        <i data-lucide="search-x" class="w-5 h-5 mx-auto mb-1 text-slate-400"></i>
+                        <p>Tidak ada pelanggan dengan kata kunci "<span class="font-bold text-slate-700 dark:text-slate-200">${escapeHtml(query)}</span>"</p>
+                        <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center space-x-2">
+                            <button type="button" onclick="selectPosWalkInCustomer()" class="px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+                                Pilih Pelanggan Umum
+                            </button>
+                            <button type="button" onclick="closePosCustomerSearch(); openCustomerModal();" class="px-2.5 py-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-lg">
+                                + Pelanggan Baru
+                            </button>
+                        </div>
+                    </div>
+                `;
+                resultsContainer.classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+
+            // Render daftar kartu hasil pencarian kata kunci
+            let html = `
+                <div class="p-2 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3">
+                    <span>Hasil Pencarian (${matches.length})</span>
+                    <span>Klik / Tekan Enter</span>
+                </div>
+                <div class="divide-y divide-slate-100 dark:divide-slate-800/60 overflow-y-auto max-h-60">
+            `;
+
+            matches.forEach((c) => {
+                const cat = c.category || 'REGULER';
+                let badgeColor = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
+                if (cat === 'MITRA') badgeColor = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300/60';
+                else if (cat === 'MEMBER') badgeColor = 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-300/60';
+                else if (cat === 'RESELLER') badgeColor = 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300/60';
+
+                const isCurrent = state.selectedCustomer && state.selectedCustomer.id === c.id;
+                const phoneText = c.phone && c.phone !== '-' ? `<span class="flex items-center space-x-1 text-slate-400 dark:text-slate-500"><i data-lucide="phone" class="w-3 h-3"></i><span>${escapeHtml(c.phone)}</span></span>` : '';
+                const codeText = c.code ? `<span class="text-slate-400 dark:text-slate-500 font-mono text-[10px]">${escapeHtml(c.code)}</span>` : '';
+
+                html += `
+                    <div onclick="selectPosCustomer(${c.id})" 
+                         class="p-2.5 hover:bg-indigo-50/80 dark:hover:bg-indigo-950/50 cursor-pointer transition-colors flex items-center justify-between gap-2.5 ${isCurrent ? 'bg-indigo-50/50 dark:bg-indigo-950/30' : ''}">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center space-x-1.5">
+                                <span class="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">${escapeHtml(c.name)}</span>
+                                ${isCurrent ? '<span class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold shrink-0">✓ Aktif</span>' : ''}
+                            </div>
+                            <div class="flex items-center space-x-2 text-[10px] mt-0.5">
+                                ${phoneText}
+                                ${codeText}
+                            </div>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase shrink-0 ${badgeColor}">
+                            ${escapeHtml(cat)}
+                        </span>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            resultsContainer.innerHTML = html;
+            resultsContainer.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function onPosCustomerSearchFocus() {
+            const input = document.getElementById('pos-customer-search-input');
+            if (input) {
+                setTimeout(() => input.select(), 50);
+            }
+        }
+
+        function onPosCustomerSearchKeydown(event) {
+            if (event.key === 'Escape') {
+                closePosCustomerSearch();
+                const input = document.getElementById('pos-customer-search-input');
+                if (input && state.selectedCustomer) {
+                    input.value = state.selectedCustomer.name;
+                }
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                const resultsContainer = document.getElementById('pos-customer-search-results');
+                if (resultsContainer && !resultsContainer.classList.contains('hidden')) {
+                    const firstItem = resultsContainer.querySelector('[onclick^="selectPosCustomer"]');
+                    if (firstItem) {
+                        firstItem.click();
+                    }
+                }
+            }
+        }
+
+        function closePosCustomerSearch() {
+            const resultsContainer = document.getElementById('pos-customer-search-results');
+            if (resultsContainer) {
+                resultsContainer.classList.add('hidden');
+                resultsContainer.innerHTML = '';
+            }
+        }
+
+        function selectPosCustomer(customerId) {
+            const cust = (state.customers || []).find(c => c.id == customerId);
+            if (!cust) return;
+
+            const prevCustId = state.selectedCustomer ? state.selectedCustomer.id : null;
+            const prevCat = state.selectedCustomerCategory;
+
+            state.selectedCustomer = cust;
+            state.selectedCustomerCategory = cust.category || 'REGULER';
+
+            const hiddenSelect = document.getElementById('pos-customer-select');
+            if (hiddenSelect) hiddenSelect.value = cust.id;
+
+            const searchInput = document.getElementById('pos-customer-search-input');
+            if (searchInput) searchInput.value = cust.name;
+
+            const clearBtn = document.getElementById('pos-customer-search-clear');
+            if (clearBtn) {
+                const isWalkIn = cust.id == 1 || (cust.name || '').toLowerCase().includes('umum');
+                if (isWalkIn) clearBtn.classList.add('hidden');
+                else clearBtn.classList.remove('hidden');
+            }
+
+            closePosCustomerSearch();
+            updatePosCustomerUI();
+
+            // Jika ganti pelanggan: list order dan fitur delivery direset agar kasir menginput ulang sesuai pelanggan
+            if (prevCustId !== cust.id || prevCat !== state.selectedCustomerCategory || (state.cart && state.cart.length > 0)) {
+                state.cart = [];
+                resetPosDelivery(true);
+                renderCart();
+            }
+
+            renderProducts();
+        }
+
+        function selectPosWalkInCustomer() {
+            let walkIn = (state.customers || []).find(c => c.id == 1 || (c.name || '').toLowerCase().includes('umum') || (c.name || '').toLowerCase().includes('walk-in'));
+            if (!walkIn) {
+                walkIn = (state.customers || []).find(c => (c.category || 'REGULER') === 'REGULER') || { id: 1, name: 'Pelanggan Umum (Walk-in)', category: 'REGULER' };
+            }
+            selectPosCustomer(walkIn.id);
+        }
+
+        function clearPosCustomerSearch() {
+            selectPosWalkInCustomer();
+            const input = document.getElementById('pos-customer-search-input');
+            if (input) {
+                input.value = state.selectedCustomer ? state.selectedCustomer.name : 'Pelanggan Umum (Walk-in)';
+                input.focus();
+                input.select();
+            }
+            closePosCustomerSearch();
+        }
+
         function renderPosCustomerSelect() {
-            const select = document.getElementById('pos-customer-select');
-            if (!select) return;
+            const hiddenSelect = document.getElementById('pos-customer-select');
+            const searchInput = document.getElementById('pos-customer-search-input');
+            const clearBtn = document.getElementById('pos-customer-search-clear');
 
             // Ambil daftar kategori aktif
             const activeCats = (state.customerCategories || []).filter(c => c.is_active == 1);
@@ -23226,42 +23442,30 @@ Manager / Supervisor: __________________
                 state.selectedCustomerCategory = activeCodes.includes('REGULER') ? 'REGULER' : activeCodes[0];
             }
 
-            const activeCat = state.selectedCustomerCategory || (state.selectedCustomer ? state.selectedCustomer.category : 'REGULER');
-
-            if (!state.customers || state.customers.length === 0) {
-                select.innerHTML = '<option value="1">Pelanggan Umum (Walk-in)</option>';
-                return;
+            // Pastikan ada selectedCustomer
+            if (!state.selectedCustomer) {
+                let defaultCust = (state.customers || []).find(c => c.id == 1);
+                if (!defaultCust && state.customers && state.customers.length > 0) {
+                    defaultCust = state.customers.find(c => (c.category || 'REGULER') === (state.selectedCustomerCategory || 'REGULER') && c.is_active == 1) || state.customers[0];
+                }
+                state.selectedCustomer = defaultCust || { id: 1, name: 'Pelanggan Umum (Walk-in)', category: 'REGULER' };
             }
 
-            // Filter pelanggan yang ditampilkan: harus berstatus aktif dan berkategori aktif
-            let filteredCusts = state.customers.filter(c => {
-                const cCat = c.category || 'REGULER';
-                return cCat === activeCat && (activeCodes.length === 0 || activeCodes.includes(cCat)) && c.is_active == 1;
-            });
-
-            // Jika belum ada pelanggan di tier ini, berikan placeholder
-            if (filteredCusts.length === 0) {
-                select.innerHTML = `<option value="">(Belum ada data pelanggan tier ${activeCat})</option>`;
-                updatePosCustomerUI();
-            if (document.getElementById('check-delivery-mode')?.checked) {
-                calculateDeliveryFeeForPOS();
-            }
-                return;
+            if (hiddenSelect) {
+                hiddenSelect.value = state.selectedCustomer ? state.selectedCustomer.id : 1;
             }
 
-            // Pastikan state.selectedCustomer ada dalam daftar tier aktif
-            if (!state.selectedCustomer || (state.selectedCustomer.category || 'REGULER') !== activeCat || state.selectedCustomer.is_active != 1) {
-                state.selectedCustomer = filteredCusts[0];
+            if (searchInput && document.activeElement !== searchInput) {
+                searchInput.value = state.selectedCustomer ? state.selectedCustomer.name : 'Pelanggan Umum (Walk-in)';
             }
 
-            select.innerHTML = filteredCusts.map(c => {
-                const isSelected = state.selectedCustomer && state.selectedCustomer.id === c.id;
-                return `<option value="${c.id}" ${isSelected ? 'selected' : ''}>${escapeHtml(c.name)}</option>`;
-            }).join('');
-
-            // Set value select ke customer yang terpilih
-            if (state.selectedCustomer) {
-                select.value = state.selectedCustomer.id;
+            if (clearBtn) {
+                const isWalkIn = !state.selectedCustomer || state.selectedCustomer.id == 1 || (state.selectedCustomer.name || '').toLowerCase().includes('umum');
+                if (isWalkIn) {
+                    clearBtn.classList.add('hidden');
+                } else {
+                    clearBtn.classList.remove('hidden');
+                }
             }
 
             updatePosCustomerUI();
@@ -23304,23 +23508,7 @@ Manager / Supervisor: __________________
         function onPosCustomerChange() {
             const select = document.getElementById('pos-customer-select');
             if (!select) return;
-            const cId = parseInt(select.value);
-            const prevCustId = state.selectedCustomer ? state.selectedCustomer.id : null;
-            const found = (state.customers || []).find(c => c.id === cId);
-            if (found) {
-                state.selectedCustomer = found;
-                state.selectedCustomerCategory = found.category || 'REGULER';
-            }
-            updatePosCustomerUI();
-
-            // Jika ganti pelanggan: list order dan fitur delivery dihilangkan agar kasir menginput ulang
-            if (prevCustId !== cId || (state.cart && state.cart.length > 0)) {
-                state.cart = [];
-                resetPosDelivery(true);
-                renderCart();
-            }
-
-            renderProducts();
+            selectPosCustomer(select.value);
         }
 
         function setPosCustomerCategory(cat) {
@@ -23336,19 +23524,25 @@ Manager / Supervisor: __________________
             const prevCat = state.selectedCustomerCategory;
 
             state.selectedCustomerCategory = cat;
-            // Pilih pelanggan pertama yang sesuai dengan kategori tier ini
-            const matchingCust = (state.customers || []).find(c => (c.category || 'REGULER') === cat && c.is_active == 1);
-            if (matchingCust) {
-                state.selectedCustomer = matchingCust;
-            } else {
-                state.selectedCustomer = null;
+
+            // Jika pelanggan aktif saat ini bukan dari kategori yang dipilih, sesuaikan pelanggan aktif
+            if (!state.selectedCustomer || (state.selectedCustomer.category || 'REGULER') !== cat) {
+                if (cat === 'REGULER') {
+                    const walkIn = (state.customers || []).find(c => c.id == 1 || (c.name || '').toLowerCase().includes('umum')) || { id: 1, name: 'Pelanggan Umum (Walk-in)', category: 'REGULER' };
+                    state.selectedCustomer = walkIn;
+                } else {
+                    const matchingCust = (state.customers || []).find(c => (c.category || 'REGULER') === cat && c.is_active == 1);
+                    if (matchingCust) {
+                        state.selectedCustomer = matchingCust;
+                    }
+                }
             }
-            // Re-render isi dropdown pelanggan agar HANYA memunculkan pelanggan dari tier yang dipilih
+
             renderPosTierButtons();
             renderPosCustomerSelect();
 
             // Jika ganti pelanggan/kategori: list order dan fitur delivery dihilangkan agar kasir menginput ulang
-            const isCustChanged = (matchingCust && matchingCust.id !== prevCustId) || (prevCat !== cat);
+            const isCustChanged = (state.selectedCustomer && state.selectedCustomer.id !== prevCustId) || (prevCat !== cat);
             if (isCustChanged || (state.cart && state.cart.length > 0)) {
                 state.cart = [];
                 resetPosDelivery(true);
@@ -24295,13 +24489,7 @@ Manager / Supervisor: __________________
                 await initApp();
                 // Otomatis pilih pelanggan baru jika didaftarkan saat di POS Kasir
                 if (!id && data.customer_id) {
-                    const newCust = (state.customers || []).find(c => c.id == data.customer_id);
-                    if (newCust) {
-                        state.selectedCustomer = newCust;
-                        const selEl = document.getElementById('pos-customer-select');
-                        if (selEl) selEl.value = newCust.id;
-                        onPosCustomerChange();
-                    }
+                    selectPosCustomer(data.customer_id);
                 }
             }
         }
@@ -30446,6 +30634,18 @@ Manager / Supervisor: __________________
                 const payModal = document.getElementById('pos-payment-modal');
                 if (payModal && !payModal.classList.contains('hidden')) {
                     closePaymentModal();
+                }
+            }
+        });
+
+        // Tutup floating search results pelanggan jika pengguna mengklik di luar kontainer pencarian
+        document.addEventListener('click', (e) => {
+            const container = document.getElementById('pos-customer-search-container');
+            if (container && !container.contains(e.target)) {
+                closePosCustomerSearch();
+                const input = document.getElementById('pos-customer-search-input');
+                if (input && state.selectedCustomer && input.value !== state.selectedCustomer.name && document.activeElement !== input) {
+                    input.value = state.selectedCustomer.name;
                 }
             }
         });

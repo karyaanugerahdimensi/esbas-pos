@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.2.99",
-    "build": "20261027-54",
+    "version": "1.3.0",
+    "build": "20261027-55",
     "release_date": "2026-10-27",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.3.0",
+            "commit": "HEAD",
+            "date": "2026-10-27",
+            "title": "Model Pencarian Pelanggan POS Berbasis Kata Kunci (Keyword Search) (FR-POS-40)",
+            "description": "Mengganti elemen dropdown list native pelanggan (#pos-customer-select) yang menampilkan daftar panjang seluruh pelanggan menjadi model input pencarian interaktif berbasis kata kunci (keyword search) yang bersih, cepat, dan modern: (1) Input Pencarian Kata Kunci (#pos-customer-search-input): Menghadirkan kotak pencarian responsif dengan ikon search, placeholder pencarian nama/no. HP/kode, dan tombol reset cepat (✕) ke Pelanggan Umum. (2) Floating Results Panel (#pos-customer-search-results): Hasil pencarian hanya muncul secara dinamis saat kasir mengetik kata kunci (nama, no. HP, kode, alamat), dilengkapi lencana kategori tier (Mitra, Member, Reseller, Reguler) dan info kontak, serta tersembunyi secara default tanpa membuka dropdown raksasa. (3) Opsi Cepat Pelanggan Walk-in & Pelanggan Baru: Jika kata kunci tidak ditemukan, sistem menyediakan pintasan instan 'Pilih Pelanggan Umum' dan '+ Pelanggan Baru'. (4) Navigasi Keyboard & Auto-Sync: Mendukung tombol navigasi Enter untuk memilih hasil teratas, Escape untuk membatalkan, click-outside listener untuk menutup popup, serta auto-sinkronisasi tier tombol POS dan penghitungan ulang keranjang.",
+            "rollback_command": "git checkout v1.2.99"
+        },
         {
             "version": "1.2.99",
             "commit": "HEAD",
