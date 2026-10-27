@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.2.96",
-    "build": "20261026-51",
-    "release_date": "2026-10-26",
+    "version": "1.2.97",
+    "build": "20261027-52",
+    "release_date": "2026-10-27",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.2.97",
+            "commit": "HEAD",
+            "date": "2026-10-27",
+            "title": "Default Harga Tier Pelanggan Mengikuti Harga Ritel Standar Tanpa Persentase (FR-CRM-14)",
+            "description": "Menyempurnakan konfigurasi harga tier pelanggan multi-tier (Mitra Umum, Reseller / Grosir, Member VIP) agar secara default mengikuti 100% harga ritel standar (selling_price) tanpa kalkulasi potongan persentase otomatis: (1) Penyesuaian Modal Cepat Harga Tier (#quick-tier-price-modal): Mengeliminasi lencana persentase (~72%, ~80%, ~90%), mengubah tombol '⚡ Hitung Otomatis' menjadi '⚡ Samakan dengan Ritel' yang mengisi semua field tier sesuai harga ritel standar, dan pengguna cukup menginput nominal harga jika ingin memberikan harga berbeda untuk kategori pelanggan tertentu. (2) Penyesuaian Modal Master Produk (#product-modal): Menghapus persentase dari lencana tingkat harga (Tier Mitra, Tier Reseller, Tier Member), menyelaraskan fungsi default calcDefaultTierPrices(force) agar menyetel nilai setara harga jual ritel standar. (3) Logika POS Kasir & Mitra Pricing (index.php): Menghilangkan potongan persentase otomatis fallback pada getEffectiveProductPrice() dan tabel loadMitraPricing() sehingga jika harga tier khusus tidak ditentukan, sistem secara konsisten menggunakan harga ritel standar dengan label yang bersih. (4) Penyelarasan Backend API (api.php & db.php): Menyelaraskan aksi save_product, import_products, validasi checkout POS, dan skema bootstrap database agar nilai default harga tier pelanggan jatuh pada harga ritel standar (selling_price).",
+            "rollback_command": "git checkout v1.2.96"
+        },
         {
             "version": "1.2.96",
             "commit": "HEAD",

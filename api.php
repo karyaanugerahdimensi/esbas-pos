@@ -2134,9 +2134,9 @@ try {
             $unit = trim($input['unit'] ?? 'pcs');
             $cogs = (float)($input['cogs'] ?? 0);
             $sellingPrice = (float)($input['selling_price'] ?? 0);
-            $memberPrice = (isset($input['member_price']) && is_numeric($input['member_price']) && (float)$input['member_price'] > 0) ? (float)$input['member_price'] : round($sellingPrice * 0.9, -2);
-            $resellerPrice = (isset($input['reseller_price']) && is_numeric($input['reseller_price']) && (float)$input['reseller_price'] > 0) ? (float)$input['reseller_price'] : round($sellingPrice * 0.8, -2);
-            $mitraPrice = (isset($input['mitra_price']) && is_numeric($input['mitra_price']) && (float)$input['mitra_price'] > 0) ? (float)$input['mitra_price'] : round($sellingPrice * 0.72, -2);
+            $memberPrice = (isset($input['member_price']) && is_numeric($input['member_price']) && (float)$input['member_price'] > 0) ? (float)$input['member_price'] : $sellingPrice;
+            $resellerPrice = (isset($input['reseller_price']) && is_numeric($input['reseller_price']) && (float)$input['reseller_price'] > 0) ? (float)$input['reseller_price'] : $sellingPrice;
+            $mitraPrice = (isset($input['mitra_price']) && is_numeric($input['mitra_price']) && (float)$input['mitra_price'] > 0) ? (float)$input['mitra_price'] : $sellingPrice;
             $visibleCategories = trim($input['visible_categories'] ?? 'ALL');
             $imageEmoji = trim($input['image_emoji'] ?? '📦');
             $hasBom = !empty($input['has_bom']) ? 1 : 0;
@@ -2619,9 +2619,9 @@ try {
                 $unit = trim($r['unit'] ?? $r['satuan'] ?? 'pcs');
                 $cogs = (float)($r['cogs'] ?? $r['hpp'] ?? 0);
                 $sellingPrice = (float)($r['selling_price'] ?? $r['harga_jual'] ?? 0);
-                $memberPrice = !empty($r['member_price']) ? (float)$r['member_price'] : round($sellingPrice * 0.9, -2);
-                $resellerPrice = !empty($r['reseller_price']) ? (float)$r['reseller_price'] : round($sellingPrice * 0.8, -2);
-                $mitraPrice = !empty($r['mitra_price']) ? (float)$r['mitra_price'] : round($sellingPrice * 0.72, -2);
+                $memberPrice = !empty($r['member_price']) ? (float)$r['member_price'] : $sellingPrice;
+                $resellerPrice = !empty($r['reseller_price']) ? (float)$r['reseller_price'] : $sellingPrice;
+                $mitraPrice = !empty($r['mitra_price']) ? (float)$r['mitra_price'] : $sellingPrice;
                 $hasBom = !empty($r['has_bom']) ? (int)$r['has_bom'] : 0;
                 $reorder = !empty($r['reorder_point']) ? (int)$r['reorder_point'] : 10;
                 $isTax = isset($r['is_taxable']) ? (int)$r['is_taxable'] : 1;
@@ -6567,26 +6567,22 @@ try {
 
                     if ($customMitraPrice !== false && (float)$customMitraPrice > 0) {
                         $unitPrice = (float)$customMitraPrice;
+                    } elseif ((float)$stockRow['mitra_price'] > 0) {
+                        $unitPrice = (float)$stockRow['mitra_price'];
                     } else {
-                        // Tolak transaksi jika produk belum diset harga kontrak khusus untuk mitra ini
-                        $pdo->rollBack();
-                        echo json_encode([
-                            'success' => false,
-                            'message' => "Produk '{$stockRow['name']}' belum memiliki kesepakatan harga kontrak khusus untuk mitra ini. Transaksi ditolak."
-                        ]);
-                        exit;
+                        $unitPrice = (float)$stockRow['local_price'];
                     }
                 } elseif ($customerCategory === 'RESELLER') {
                     if ((float)$stockRow['reseller_price'] > 0) {
                         $unitPrice = (float)$stockRow['reseller_price'];
                     } else {
-                        $unitPrice = round($stockRow['local_price'] * 0.8, -2);
+                        $unitPrice = (float)$stockRow['local_price'];
                     }
                 } elseif ($customerCategory === 'MEMBER') {
                     if ((float)$stockRow['member_price'] > 0) {
                         $unitPrice = (float)$stockRow['member_price'];
                     } else {
-                        $unitPrice = round($stockRow['local_price'] * 0.9, -2);
+                        $unitPrice = (float)$stockRow['local_price'];
                     }
                 }
 

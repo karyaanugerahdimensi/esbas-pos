@@ -7886,36 +7886,36 @@ try {
                             <label class="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
                                 <span>🏷️ Konfigurasi Tingkat Harga Tier Pelanggan (CRM Multi-Tier)</span>
                             </label>
-                            <p class="text-[11px] text-slate-500 mt-0.5">Atur harga khusus per tier pelanggan atau gunakan hitung otomatis dari harga ritel standar.</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Atur harga khusus per tier pelanggan (secara default mengikuti harga ritel standar).</p>
                         </div>
                         <button type="button" onclick="calcDefaultTierPrices(true)" class="text-[11px] text-emerald-700 hover:text-emerald-900 font-bold bg-white px-2.5 py-1 rounded-xl border border-emerald-300 shadow-xs flex items-center gap-1.5 hover:bg-emerald-50 transition-all">
-                            <span>⚡ Hitung Otomatis (72%, 80%, 90%)</span>
+                            <span>⚡ Samakan dengan Ritel</span>
                         </button>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                         <div class="bg-white/80 p-2.5 rounded-xl border border-emerald-200/60 shadow-xs">
                             <div class="flex items-center justify-between mb-1">
                                 <label class="font-bold text-slate-700">Mitra Umum (Rp):</label>
-                                <span class="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-1.5 py-0.2 rounded">Tier Mitra (~72%)</span>
+                                <span class="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-1.5 py-0.2 rounded">Tier Mitra</span>
                             </div>
-                            <input type="number" id="prod-mitra-price" placeholder="Contoh: 18000" class="w-full p-2 bg-white border border-emerald-300 rounded-lg font-mono font-bold text-emerald-900 focus:ring-2 focus:ring-emerald-500 text-sm">
-                            <p class="text-[10px] text-slate-500 mt-1">Diterapkan jika pelanggan berada pada kategori tier MITRA tanpa kontrak individu.</p>
+                            <input type="number" id="prod-mitra-price" placeholder="Contoh: 25000" class="w-full p-2 bg-white border border-emerald-300 rounded-lg font-mono font-bold text-emerald-900 focus:ring-2 focus:ring-emerald-500 text-sm">
+                            <p class="text-[10px] text-slate-500 mt-1">Diterapkan jika pelanggan berada pada kategori tier MITRA tanpa kontrak individu (Default: harga ritel).</p>
                         </div>
                         <div class="bg-white/80 p-2.5 rounded-xl border border-blue-200/60 shadow-xs">
                             <div class="flex items-center justify-between mb-1">
                                 <label class="font-bold text-slate-700">Reseller / Grosir (Rp):</label>
-                                <span class="text-[10px] text-blue-700 font-bold bg-blue-100 px-1.5 py-0.2 rounded">Tier Reseller (~80%)</span>
+                                <span class="text-[10px] text-blue-700 font-bold bg-blue-100 px-1.5 py-0.2 rounded">Tier Reseller</span>
                             </div>
-                            <input type="number" id="prod-reseller-price" placeholder="Contoh: 20000" class="w-full p-2 bg-white border border-blue-300 rounded-lg font-mono font-bold text-blue-900 focus:ring-2 focus:ring-blue-500 text-sm">
-                            <p class="text-[10px] text-slate-500 mt-1">Diterapkan untuk pelanggan pada kategori tier RESELLER / Grosir.</p>
+                            <input type="number" id="prod-reseller-price" placeholder="Contoh: 25000" class="w-full p-2 bg-white border border-blue-300 rounded-lg font-mono font-bold text-blue-900 focus:ring-2 focus:ring-blue-500 text-sm">
+                            <p class="text-[10px] text-slate-500 mt-1">Diterapkan untuk pelanggan pada kategori tier RESELLER / Grosir (Default: harga ritel).</p>
                         </div>
                         <div class="bg-white/80 p-2.5 rounded-xl border border-purple-200/60 shadow-xs">
                             <div class="flex items-center justify-between mb-1">
                                 <label class="font-bold text-slate-700">Member VIP (Rp):</label>
-                                <span class="text-[10px] text-purple-700 font-bold bg-purple-100 px-1.5 py-0.2 rounded">Tier Member (~90%)</span>
+                                <span class="text-[10px] text-purple-700 font-bold bg-purple-100 px-1.5 py-0.2 rounded">Tier Member</span>
                             </div>
-                            <input type="number" id="prod-member-price" placeholder="Contoh: 22500" class="w-full p-2 bg-white border border-purple-300 rounded-lg font-mono font-bold text-purple-900 focus:ring-2 focus:ring-purple-500 text-sm">
-                            <p class="text-[10px] text-slate-500 mt-1">Diterapkan untuk pelanggan pada kategori tier MEMBER.</p>
+                            <input type="number" id="prod-member-price" placeholder="Contoh: 25000" class="w-full p-2 bg-white border border-purple-300 rounded-lg font-mono font-bold text-purple-900 focus:ring-2 focus:ring-purple-500 text-sm">
+                            <p class="text-[10px] text-slate-500 mt-1">Diterapkan untuk pelanggan pada kategori tier MEMBER (Default: harga ritel).</p>
                         </div>
                     </div>
                 </div>
@@ -8584,7 +8584,7 @@ try {
                         <span id="qtp-retail-price" class="font-mono font-bold text-slate-800 text-sm">Rp 0</span>
                     </div>
                     <button type="button" onclick="calcQuickTierPrices(true)" class="px-2.5 py-1 bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl font-bold shadow-xs transition-all text-[11px] flex items-center gap-1">
-                        <span>⚡ Hitung Otomatis</span>
+                        <span>⚡ Samakan dengan Ritel</span>
                     </button>
                 </div>
 
@@ -8592,28 +8592,28 @@ try {
                     <div class="bg-emerald-50/60 p-3 rounded-2xl border border-emerald-200/80">
                         <div class="flex items-center justify-between mb-1">
                             <label class="block font-bold text-emerald-950">Harga Tier Mitra Umum (Rp):</label>
-                            <span class="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-1.5 py-0.5 rounded">~72%</span>
+                            <span class="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-1.5 py-0.5 rounded">Tier Mitra</span>
                         </div>
-                        <input type="number" id="qtp-mitra-price" placeholder="Contoh: 18000" class="w-full p-2 bg-white border border-emerald-300 rounded-xl font-mono font-black text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" required>
-                        <p class="text-[10px] text-slate-500 mt-1">Harga acuan untuk semua pelanggan berkategori Mitra B2B tanpa kontrak perorangan.</p>
+                        <input type="number" id="qtp-mitra-price" placeholder="Contoh: 25000" class="w-full p-2 bg-white border border-emerald-300 rounded-xl font-mono font-black text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" required>
+                        <p class="text-[10px] text-slate-500 mt-1">Harga acuan untuk semua pelanggan berkategori Mitra B2B tanpa kontrak perorangan (Default mengikuti harga ritel standar).</p>
                     </div>
 
                     <div class="bg-blue-50/60 p-3 rounded-2xl border border-blue-200/80">
                         <div class="flex items-center justify-between mb-1">
                             <label class="block font-bold text-blue-950">Harga Tier Reseller / Grosir (Rp):</label>
-                            <span class="text-[10px] text-blue-700 font-bold bg-blue-100 px-1.5 py-0.5 rounded">~80%</span>
+                            <span class="text-[10px] text-blue-700 font-bold bg-blue-100 px-1.5 py-0.5 rounded">Tier Reseller</span>
                         </div>
-                        <input type="number" id="qtp-reseller-price" placeholder="Contoh: 20000" class="w-full p-2 bg-white border border-blue-300 rounded-xl font-mono font-bold text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                        <p class="text-[10px] text-slate-500 mt-1">Diterapkan untuk pelanggan berkategori Reseller / Grosir.</p>
+                        <input type="number" id="qtp-reseller-price" placeholder="Contoh: 25000" class="w-full p-2 bg-white border border-blue-300 rounded-xl font-mono font-bold text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <p class="text-[10px] text-slate-500 mt-1">Diterapkan untuk pelanggan berkategori Reseller / Grosir (Default mengikuti harga ritel standar).</p>
                     </div>
 
                     <div class="bg-purple-50/60 p-3 rounded-2xl border border-purple-200/80">
                         <div class="flex items-center justify-between mb-1">
                             <label class="block font-bold text-purple-950">Harga Tier Member VIP (Rp):</label>
-                            <span class="text-[10px] text-purple-700 font-bold bg-purple-100 px-1.5 py-0.5 rounded">~90%</span>
+                            <span class="text-[10px] text-purple-700 font-bold bg-purple-100 px-1.5 py-0.5 rounded">Tier Member</span>
                         </div>
-                        <input type="number" id="qtp-member-price" placeholder="Contoh: 22500" class="w-full p-2 bg-white border border-purple-300 rounded-xl font-mono font-bold text-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm">
-                        <p class="text-[10px] text-slate-500 mt-1">Diterapkan untuk pelanggan berkategori Member.</p>
+                        <input type="number" id="qtp-member-price" placeholder="Contoh: 25000" class="w-full p-2 bg-white border border-purple-300 rounded-xl font-mono font-bold text-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm">
+                        <p class="text-[10px] text-slate-500 mt-1">Diterapkan untuk pelanggan berkategori Member (Default mengikuti harga ritel standar).</p>
                     </div>
                 </div>
 
@@ -19318,7 +19318,7 @@ Manager / Supervisor: __________________
                         <td class="py-2.5 px-3 text-right font-mono">
                             ${p.product_type === 'RAW_MATERIAL' ? '-' : `
                                 <span class="font-bold text-indigo-900">${formatRupiah(p.selling_price)}</span>
-                                <div class="text-[9px] text-emerald-700 font-semibold tracking-tight" title="Harga Tier Mitra Umum">Mitra: ${formatRupiah(p.mitra_price > 0 ? p.mitra_price : Math.round(p.selling_price * 0.72))}</div>
+                                <div class="text-[9px] text-emerald-700 font-semibold tracking-tight" title="Harga Tier Mitra Umum">Mitra: ${formatRupiah(p.mitra_price > 0 ? p.mitra_price : p.selling_price)}</div>
                             `}
                         </td>
                         <td class="py-2.5 px-3 text-center">
@@ -19511,13 +19511,13 @@ Manager / Supervisor: __________________
             if (!elMitra || !elReseller || !elMember) return;
 
             if (force || !elMitra.value || elMitra.value == 0) {
-                elMitra.value = Math.round(retail * 0.72);
+                elMitra.value = retail;
             }
             if (force || !elReseller.value || elReseller.value == 0) {
-                elReseller.value = Math.round(retail * 0.80);
+                elReseller.value = retail;
             }
             if (force || !elMember.value || elMember.value == 0) {
-                elMember.value = Math.round(retail * 0.90);
+                elMember.value = retail;
             }
         }
 
@@ -19539,9 +19539,9 @@ Manager / Supervisor: __________________
             document.getElementById('prod-name').value = '';
             document.getElementById('prod-cogs').value = '10000';
             document.getElementById('prod-price').value = '25000';
-            document.getElementById('prod-mitra-price').value = Math.round(25000 * 0.72);
-            document.getElementById('prod-reseller-price').value = Math.round(25000 * 0.80);
-            document.getElementById('prod-member-price').value = Math.round(25000 * 0.90);
+            document.getElementById('prod-mitra-price').value = 25000;
+            document.getElementById('prod-reseller-price').value = 25000;
+            document.getElementById('prod-member-price').value = 25000;
             document.getElementById('prod-emoji').value = '📦';
             document.getElementById('prod-has-bom').checked = false;
             document.getElementById('prod-reorder').value = '10';
@@ -19590,9 +19590,9 @@ Manager / Supervisor: __________________
             document.getElementById('prod-cogs').value = p.cogs;
             document.getElementById('prod-price').value = p.selling_price;
             const retPrice = Number(p.selling_price || 0);
-            document.getElementById('prod-mitra-price').value = (p.mitra_price !== undefined && p.mitra_price !== null && Number(p.mitra_price) > 0) ? Number(p.mitra_price) : Math.round(retPrice * 0.72);
-            document.getElementById('prod-reseller-price').value = (p.reseller_price !== undefined && p.reseller_price !== null && Number(p.reseller_price) > 0) ? Number(p.reseller_price) : Math.round(retPrice * 0.80);
-            document.getElementById('prod-member-price').value = (p.member_price !== undefined && p.member_price !== null && Number(p.member_price) > 0) ? Number(p.member_price) : Math.round(retPrice * 0.90);
+            document.getElementById('prod-mitra-price').value = (p.mitra_price !== undefined && p.mitra_price !== null && Number(p.mitra_price) > 0) ? Number(p.mitra_price) : retPrice;
+            document.getElementById('prod-reseller-price').value = (p.reseller_price !== undefined && p.reseller_price !== null && Number(p.reseller_price) > 0) ? Number(p.reseller_price) : retPrice;
+            document.getElementById('prod-member-price').value = (p.member_price !== undefined && p.member_price !== null && Number(p.member_price) > 0) ? Number(p.member_price) : retPrice;
             document.getElementById('prod-emoji').value = p.image_emoji || '📦';
             document.getElementById('prod-has-bom').checked = !!p.has_bom;
             document.getElementById('prod-reorder').value = p.reorder_point || 10;
@@ -23168,22 +23168,22 @@ Manager / Supervisor: __________________
                 if (Number(product.mitra_price) > 0) {
                     return { price: Number(product.mitra_price), tag: '🤝 Tier Mitra', isContract: false };
                 }
-                // Fallback otomatis 72% dari ritel
-                return { price: Math.round(baseBranchPrice * 0.72), tag: '🤝 Tier Mitra (~72%)', isContract: false };
+                // Fallback default mengikuti ritel standar
+                return { price: baseBranchPrice, tag: '🤝 Tier Mitra', isContract: false };
             }
 
             if (tier === 'RESELLER') {
                 if (Number(product.reseller_price) > 0) {
                     return { price: Number(product.reseller_price), tag: '📦 Reseller', isContract: false };
                 }
-                return { price: Math.round(baseBranchPrice * 0.8), tag: '📦 Reseller (-20%)', isContract: false };
+                return { price: baseBranchPrice, tag: '📦 Reseller', isContract: false };
             }
 
             if (tier === 'MEMBER') {
                 if (Number(product.member_price) > 0) {
                     return { price: Number(product.member_price), tag: '⭐ Member VIP', isContract: false };
                 }
-                return { price: Math.round(baseBranchPrice * 0.9), tag: '⭐ Member VIP (-10%)', isContract: false };
+                return { price: baseBranchPrice, tag: '⭐ Member VIP', isContract: false };
             }
 
             // REGULER
@@ -24889,7 +24889,7 @@ Manager / Supervisor: __________________
                 tbody.innerHTML = products.map(p => {
                     const custom = contractPrices.find(cp => cp.product_id === p.id);
                     const defaultRetail = Number(p.selling_price);
-                    const defaultMitra = Number(p.mitra_price > 0 ? p.mitra_price : Math.round(defaultRetail * 0.72));
+                    const defaultMitra = Number(p.mitra_price > 0 ? p.mitra_price : defaultRetail);
                     const isContractSet = custom && Number(custom.custom_price) > 0;
                     const contractPrice = isContractSet ? Number(custom.custom_price) : defaultMitra;
 
@@ -25002,7 +25002,7 @@ Manager / Supervisor: __________________
             if (!p) return;
 
             const defaultRetail = Number(p.selling_price);
-            const defaultMitra = Number(p.mitra_price > 0 ? p.mitra_price : Math.round(defaultRetail * 0.72));
+            const defaultMitra = Number(p.mitra_price > 0 ? p.mitra_price : defaultRetail);
 
             document.getElementById('mp-info-retail').innerText = formatRupiah(defaultRetail);
             document.getElementById('mp-info-mitra-default').innerText = formatRupiah(defaultMitra);
@@ -25075,9 +25075,9 @@ Manager / Supervisor: __________________
             const retail = Number(p.selling_price || 0);
             document.getElementById('qtp-retail-price').innerText = formatRupiah(retail);
 
-            const mPrice = Number(p.mitra_price > 0 ? p.mitra_price : Math.round(retail * 0.72));
-            const rPrice = Number(p.reseller_price > 0 ? p.reseller_price : Math.round(retail * 0.80));
-            const vPrice = Number(p.member_price > 0 ? p.member_price : Math.round(retail * 0.90));
+            const mPrice = Number(p.mitra_price > 0 ? p.mitra_price : retail);
+            const rPrice = Number(p.reseller_price > 0 ? p.reseller_price : retail);
+            const vPrice = Number(p.member_price > 0 ? p.member_price : retail);
 
             document.getElementById('qtp-mitra-price').value = mPrice;
             document.getElementById('qtp-reseller-price').value = rPrice;
@@ -25096,9 +25096,9 @@ Manager / Supervisor: __________________
             const p = (state.products || []).find(pr => pr.id === pId) || (state.allProducts || []).find(pr => pr.id === pId);
             if (!p) return;
             const retail = Number(p.selling_price || 0);
-            document.getElementById('qtp-mitra-price').value = Math.round(retail * 0.72);
-            document.getElementById('qtp-reseller-price').value = Math.round(retail * 0.80);
-            document.getElementById('qtp-member-price').value = Math.round(retail * 0.90);
+            document.getElementById('qtp-mitra-price').value = retail;
+            document.getElementById('qtp-reseller-price').value = retail;
+            document.getElementById('qtp-member-price').value = retail;
         }
 
         async function saveQuickTierPriceForm(e) {

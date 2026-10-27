@@ -1018,12 +1018,12 @@ function autoMigrateAndSync($pdo) {
         $pdo->exec("ALTER TABLE products ADD COLUMN visible_categories TEXT DEFAULT 'ALL'");
     }
 
-    // Populate default tier prices if 0
+    // Populate default tier prices if 0 (default mengikuti harga ritel standar)
     $pdo->exec("
         UPDATE products 
-        SET member_price = CASE WHEN member_price = 0 THEN ROUND(selling_price * 0.9, -2) ELSE member_price END,
-            reseller_price = CASE WHEN reseller_price = 0 THEN ROUND(selling_price * 0.8, -2) ELSE reseller_price END,
-            mitra_price = CASE WHEN mitra_price = 0 THEN ROUND(selling_price * 0.72, -2) ELSE mitra_price END
+        SET member_price = CASE WHEN member_price = 0 THEN selling_price ELSE member_price END,
+            reseller_price = CASE WHEN reseller_price = 0 THEN selling_price ELSE reseller_price END,
+            mitra_price = CASE WHEN mitra_price = 0 THEN selling_price ELSE mitra_price END
         WHERE product_type = 'FINISHED_GOODS'
     ");
 
