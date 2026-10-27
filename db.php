@@ -1965,7 +1965,7 @@ function autoMigrateAndSync($pdo) {
         'SUPER_ADMIN'    => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'],
         'BRANCH_MANAGER' => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
         'MANAGER'        => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
-        'CASHIER'        => ['pos', 'reports', 'ess'],
+        'CASHIER'        => ['pos', 'reports', 'ess', 'customers'],
         'STAFF'          => ['ess', 'stocks', 'logistics']
     ];
 
@@ -1977,12 +1977,16 @@ function autoMigrateAndSync($pdo) {
             $mKey = $menu[0];
             $mTitle = $menu[1];
             $can = in_array($mKey, $allowedMenus) ? 1 : 0;
-            $canCreate = ($can && ($isSuper || $isMgr || in_array($mKey, ['pos', 'ess']))) ? 1 : 0;
+            $canCreate = ($can && ($isSuper || $isMgr || in_array($mKey, ['pos', 'ess', 'customers']))) ? 1 : 0;
             $canUpdate = ($can && ($isSuper || $isMgr || in_array($mKey, ['pos', 'ess']))) ? 1 : 0;
             $canDelete = ($can && ($isSuper || ($isMgr && !in_array($mKey, ['sale-cancellations', 'settings'])))) ? 1 : 0;
             $stmtRolePerm->execute([$role, $mKey, $mTitle, $can, $can, $canCreate, $canUpdate, $canDelete]);
         }
     }
+
+    // Ensure CASHIER & MANAGER can create customers in role_menu_permissions
+    $pdo->exec("UPDATE role_menu_permissions SET can_access = 1, can_view = 1, can_create = 1 WHERE role = 'CASHIER' AND menu_key IN ('customers', 'customers:list')");
+    $pdo->exec("UPDATE role_menu_permissions SET can_access = 1, can_view = 1, can_create = 1, can_update = 1 WHERE role IN ('BRANCH_MANAGER', 'MANAGER', 'BRANCHMANAGER') AND menu_key IN ('customers', 'customers:list')");
 
     // 44. Ensure branch_settings table exists for per-branch configuration overrides
     $pdo->exec("CREATE TABLE IF NOT EXISTS branch_settings (

@@ -10528,6 +10528,55 @@ try {
         }
 
         // ==========================================
+        // UNIVERSAL FLOATING TOAST NOTIFICATION
+        // ==========================================
+        function showToast(message, type = 'info') {
+            let container = document.getElementById('app-toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'app-toast-container';
+                container.className = 'fixed top-5 right-5 z-[9999] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0';
+                document.body.appendChild(container);
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'pointer-events-auto transform transition-all duration-300 ease-out translate-y-[-10px] opacity-0 flex items-start space-x-2.5 p-3.5 rounded-2xl shadow-xl text-xs font-bold border backdrop-blur-md';
+            
+            let bgClass = 'bg-slate-900/90 dark:bg-slate-800/90 text-white border-slate-700';
+            let icon = 'ℹ️';
+            if (type === 'error' || type === 'danger') {
+                bgClass = 'bg-rose-950/90 text-rose-100 border-rose-800 shadow-rose-950/30';
+                icon = '⚠️';
+            } else if (type === 'success') {
+                bgClass = 'bg-emerald-950/90 text-emerald-100 border-emerald-800 shadow-emerald-950/30';
+                icon = '✅';
+            } else if (type === 'warning') {
+                bgClass = 'bg-amber-950/90 text-amber-100 border-amber-800 shadow-amber-950/30';
+                icon = '🔔';
+            }
+
+            toast.className += ` ${bgClass}`;
+            toast.innerHTML = `
+                <span class="text-base leading-none select-none">${icon}</span>
+                <div class="flex-1 leading-snug">${escapeHtml(message)}</div>
+                <button type="button" class="text-white/60 hover:text-white ml-1 text-sm font-black leading-none cursor-pointer" onclick="this.parentElement.remove()">&times;</button>
+            `;
+
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-[-10px]', 'opacity-0');
+                toast.classList.add('translate-y-0', 'opacity-100');
+            });
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-[-10px]', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // ==========================================
         // VERSION & ROLLBACK MODAL CONTROLS
         // ==========================================
         function openVersionModal() {
@@ -23664,7 +23713,9 @@ Manager / Supervisor: __________________
 
         function openCustomerModal(cust = null) {
             const reqMode = cust ? 'update' : 'create';
-            if (!hasUserPerm('customers', reqMode) && !hasUserPerm('customers:list', reqMode)) {
+            // Izinkan pendaftaran pelanggan baru bagi staf/kasir yang memiliki akses POS atau izin create pelanggan
+            const canCreateCustomer = (!cust && (hasUserPerm('customers', 'create') || hasUserPerm('customers:list', 'create') || hasUserPerm('pos', 'view') || hasUserPerm('pos', 'create')));
+            if (!canCreateCustomer && !hasUserPerm('customers', reqMode) && !hasUserPerm('customers:list', reqMode)) {
                 showToast(`Akses Ditolak: Peran Anda tidak memiliki izin untuk ${cust ? 'mengedit' : 'menambah'} data pelanggan!`, 'error');
                 return;
             }
@@ -23743,7 +23794,7 @@ Manager / Supervisor: __________________
                 document.getElementById('cust-phone').value = '';
                 document.getElementById('cust-email').value = '';
                 document.getElementById('cust-discount').value = '0';
-                document.getElementById('cust-branch').value = state.currentBranch ? state.currentBranch.id : '';
+                document.getElementById('cust-branch').value = userBranch?.id || (state.currentBranch ? state.currentBranch.id : '');
                 document.getElementById('cust-address').value = '';
                 const defLat = state.currentBranch?.latitude || -6.879400;
                 const defLon = state.currentBranch?.longitude || 107.530000;
@@ -24240,8 +24291,18 @@ Manager / Supervisor: __________________
             alert(data.message || data.error);
             if (data.success) {
                 closeCustomerModal();
-                loadCustomers();
-                initApp();
+                await loadCustomers();
+                await initApp();
+                // Otomatis pilih pelanggan baru jika didaftarkan saat di POS Kasir
+                if (!id && data.customer_id) {
+                    const newCust = (state.customers || []).find(c => c.id == data.customer_id);
+                    if (newCust) {
+                        state.selectedCustomer = newCust;
+                        const selEl = document.getElementById('pos-customer-select');
+                        if (selEl) selEl.value = newCust.id;
+                        onPosCustomerChange();
+                    }
+                }
             }
         }
 
@@ -29350,6 +29411,11 @@ Manager / Supervisor: __________________
             const role = (curUser.role || 'CASHIER').toUpperCase().trim().replace(/_/g, '');
             if (role === 'SUPERADMIN' || role === 'SUPER ADMIN') return true;
 
+            // Kasir & Manager selalu diizinkan mendaftarkan pelanggan baru
+            if ((mode === 'create' || mode === 'tambah') && (key === 'customers' || key === 'customers:list' || key === 'pos')) {
+                return true;
+            }
+
             const userPerms = state.userPermissions || {};
             let item = userPerms[key];
             if (!item && key.includes(':')) {
@@ -29360,12 +29426,19 @@ Manager / Supervisor: __________________
                 if (role === 'BRANCHMANAGER' || role === 'MANAGER') {
                     return (key !== 'sale-cancellations');
                 }
+                if (role === 'CASHIER' || role === 'KASIR') {
+                    if (key === 'pos' || key.startsWith('pos:')) return true;
+                    if (key === 'customers' || key.startsWith('customers:')) return (mode === 'view' || mode === 'create');
+                }
                 return false;
             }
 
             if (typeof item === 'object' && item !== null) {
                 if (mode === 'view' || mode === 'access') return (item.view == 1 || item.access == 1);
-                if (mode === 'create' || mode === 'tambah') return (item.create == 1);
+                if (mode === 'create' || mode === 'tambah') {
+                    if ((key === 'customers' || key === 'customers:list' || key === 'pos') && (role === 'CASHIER' || role === 'KASIR')) return true;
+                    return (item.create == 1);
+                }
                 if (mode === 'update' || mode === 'edit') return (item.update == 1);
                 if (mode === 'delete' || mode === 'hapus') return (item.delete == 1);
                 return false;

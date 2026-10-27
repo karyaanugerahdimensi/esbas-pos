@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.2.98",
-    "build": "20261027-53",
+    "version": "1.2.99",
+    "build": "20261027-54",
     "release_date": "2026-10-27",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.2.99",
+            "commit": "HEAD",
+            "date": "2026-10-27",
+            "title": "Perbaikan Tombol Tambah Pelanggan POS, Akses Pendaftaran Kasir & Implementasi Universal Toast (FR-POS-39)",
+            "description": "Memperbaiki kendala tombol tambah pelanggan '+ Baru' pada menu POS Kasir dan '+ Tambah Pelanggan / Mitra' di CRM agar berfungsi seketika bagi seluruh peran pengguna: (1) Akar Masalah & Bug ReferenceError: Tombol sebelumnya terhenti (freeze) pada akun non-superadmin (seperti Kasir Bima) karena fungsi showToast tidak terdefinisi pada kode JavaScript global, yang memicu Uncaught ReferenceError saat pengecekan perizinan gagal. (2) Implementasi Universal Floating Toast: Menghadirkan fungsi showToast(message, type) bawaan mandiri dengan desain modern adaptif dark/light mode, ikon informatif, animasi transisi halus, dan auto-dismiss 3.5 detik untuk menangani seluruh notifikasi toast aplikasi. (3) Hak Pendaftaran Pelanggan bagi Kasir: Menyesuaikan aturan openCustomerModal() dan hasUserPerm() agar Kasir (CASHIER/KASIR) dan Branch Manager secara resmi berhak mendaftarkan pelanggan baru (can_create = 1), serta memperbarui tabel perizinan role_menu_permissions dan skema seeder db.php. (4) Otomatisasi Pemilihan Pelanggan Baru di POS: Pasca pendaftaran pelanggan baru via modal kasir, sistem secara otomatis memilih pelanggan baru tersebut pada dropdown pelanggan kasir aktif (pos-customer-select) dan menyinkronkan profil transaksi secara instan.",
+            "rollback_command": "git checkout v1.2.98"
+        },
         {
             "version": "1.2.98",
             "commit": "HEAD",
