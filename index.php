@@ -8946,6 +8946,98 @@ try {
         </div>
     </div>
 
+    <!-- Modal 12B: Pemilih Pelanggan POS Sebelum Input Produk (Wajib Pilih Pelanggan untuk Jarak & Tier) -->
+    <div id="pos-select-customer-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4 border border-slate-100 dark:border-slate-800">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+                        <i data-lucide="user-check" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-slate-800 dark:text-white text-base">Pilih Pelanggan Transaksi</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Pilih pelanggan untuk menentukan tier harga & kalkulasi jarak kirim</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeSelectCustomerModal()" class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Tier Selector Buttons inside Modal -->
+            <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                    <label class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Kategori / Tier Pelanggan:</label>
+                    <span id="pos-modal-active-tier-label" class="text-[11px] font-black text-indigo-600 dark:text-indigo-400">Ritel</span>
+                </div>
+                <div id="pos-modal-tier-buttons" class="flex items-center space-x-1.5 flex-wrap">
+                    <!-- Diisi dinamis via renderPosModalTierButtons() -->
+                </div>
+            </div>
+
+            <!-- Search Input Box inside Modal -->
+            <div class="relative">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none"></i>
+                <input type="text"
+                       id="pos-modal-cust-search-input"
+                       oninput="onPosModalCustSearchInput(this.value)"
+                       placeholder="Cari nama, no HP, atau alamat pelanggan..."
+                       autocomplete="off"
+                       class="w-full pl-10 pr-9 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <button type="button"
+                        id="pos-modal-cust-search-clear"
+                        onclick="clearPosModalCustSearch()"
+                        class="absolute right-3 top-3 text-slate-400 hover:text-slate-600 text-xs hidden">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Quick Walk-in Button (Hanya jika di Tier REGULER / Ritel) -->
+            <div id="pos-modal-walkin-card" class="block">
+                <div onclick="selectCustomerFromModal(1)"
+                     class="p-3 bg-indigo-50/70 hover:bg-indigo-100/80 dark:bg-indigo-950/40 dark:hover:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800/60 rounded-2xl cursor-pointer transition-all flex items-center justify-between group">
+                    <div class="flex items-center space-x-2.5">
+                        <span class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shrink-0">🚶</span>
+                        <div>
+                            <h4 class="font-black text-xs text-indigo-950 dark:text-indigo-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Pelanggan Umum (Walk-in)</h4>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400">Transaksi langsung di toko • Harga Ritel Standar</p>
+                        </div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-xl text-[10px] font-black bg-indigo-600 text-white shadow-xs">
+                        Pilih Cepat
+                    </span>
+                </div>
+            </div>
+
+            <!-- Customer Search / Filter Results List -->
+            <div class="space-y-1">
+                <div class="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">
+                    <span id="pos-modal-list-title">Daftar Pelanggan Sesuai Tier</span>
+                    <span id="pos-modal-list-count">0 Pelanggan</span>
+                </div>
+                <div id="pos-modal-customers-list" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-56 overflow-y-auto border border-slate-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+
+            <!-- Modal Footer Action -->
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                <button type="button"
+                        onclick="closeSelectCustomerModal(); openCustomerModal();"
+                        class="px-3 py-2 bg-slate-100 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-bold transition-colors flex items-center space-x-1.5 cursor-pointer">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    <span>+ Daftarkan Pelanggan Baru</span>
+                </button>
+                <button type="button"
+                        onclick="closeSelectCustomerModal()"
+                        class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl font-bold text-slate-700 dark:text-slate-300 text-xs cursor-pointer">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal 14: Tambah Bahan Baku ke Varian (Variant Recipe BOM) -->
     <div id="variant-recipe-add-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
@@ -11296,9 +11388,8 @@ try {
                     state.selectedCustomerCategory = activeCodes.includes('REGULER') ? 'REGULER' : (activeCodes[0] || 'REGULER');
                 }
 
-                if (!state.selectedCustomer && state.customers.length > 0) {
-                    state.selectedCustomer = state.customers.find(c => (c.category || 'REGULER') === state.selectedCustomerCategory && c.is_active == 1) || state.customers[0];
-                }
+                // Default pencarian pelanggan dibuat kosong (tidak ada pelanggan default terpilih)
+                state.selectedCustomer = null;
 
                 // Simpan App Settings & Role Permissions
                 state.appSettings = data.app_settings || {};
@@ -11634,6 +11725,12 @@ try {
             const product = state.products.find(p => p.id === productId);
             if (!product) return;
 
+            // Validasi: Wajib pilih pelanggan terlebih dahulu untuk menentukan tier harga & jarak kirim
+            if (!state.selectedCustomer) {
+                openSelectCustomerModal(productId, null);
+                return;
+            }
+
             const isProductStrictStock = (Number(product.is_stockable ?? 1) === 1 && Number(product.cat_is_stockable ?? 1) === 1 && product.requires_stock !== 0);
             if (isProductStrictStock && product.stock <= 0) {
                 alert(`Stok '${product.name}' habis di cabang ini!`);
@@ -11701,6 +11798,12 @@ try {
         }
 
         function addToCart(productId, variantId = null) {
+            // Validasi: Wajib pilih pelanggan terlebih dahulu untuk menentukan tier harga & jarak kirim
+            if (!state.selectedCustomer) {
+                openSelectCustomerModal(productId, variantId);
+                return;
+            }
+
             const product = state.products.find(p => p.id === productId);
             if (!product) return;
 
@@ -12436,6 +12539,13 @@ try {
         }
 
         function openPaymentModal() {
+            // Validasi: Wajib pilih pelanggan terlebih dahulu
+            if (!state.selectedCustomer) {
+                alert('Silakan pilih pelanggan terlebih dahulu sebelum melanjutkan pembayaran!');
+                openSelectCustomerModal();
+                return;
+            }
+
             if (!state.cart || state.cart.length === 0) {
                 alert('Keranjang belanja masih kosong! Silakan pilih produk di katalog terlebih dahulu.');
                 return;
@@ -23263,9 +23373,17 @@ Manager / Supervisor: __________________
                 return;
             }
 
-            // Filter pelanggan berdasarkan kata kunci (nama, nomor HP, kode, atau alamat)
+            // Ambil kategori tier aktif saat ini
+            const activeCat = state.selectedCustomerCategory || 'REGULER';
+            const catObj = (state.customerCategories || []).find(c => c.code === activeCat || c.name === activeCat);
+            const activeCatName = catObj ? catObj.name : (activeCat === 'REGULER' ? 'Ritel' : activeCat);
+
+            // Filter pelanggan: Aktif + HANYA SESUAI DENGAN TIER YANG SEDANG AKTIF + Cocok Keyword
             const matches = (state.customers || []).filter(c => {
                 if (c.is_active != 1 && c.is_active !== undefined) return false;
+                const custCat = c.category || 'REGULER';
+                if (custCat !== activeCat) return false; // WAJIB SESUAI DENGAN TIER AKTIF!
+
                 const name = (c.name || '').toLowerCase();
                 const phone = (c.phone || '').toLowerCase();
                 const code = (c.code || '').toLowerCase();
@@ -23275,15 +23393,16 @@ Manager / Supervisor: __________________
 
             if (matches.length === 0) {
                 resultsContainer.innerHTML = `
-                    <div class="p-3 text-center text-xs text-slate-500 dark:text-slate-400">
-                        <i data-lucide="search-x" class="w-5 h-5 mx-auto mb-1 text-slate-400"></i>
-                        <p>Tidak ada pelanggan dengan kata kunci "<span class="font-bold text-slate-700 dark:text-slate-200">${escapeHtml(query)}</span>"</p>
+                    <div class="p-3.5 text-center text-xs text-slate-500 dark:text-slate-400">
+                        <i data-lucide="search-x" class="w-5 h-5 mx-auto mb-1.5 text-slate-400"></i>
+                        <p>Tidak ada pelanggan tier <span class="font-black text-indigo-600 dark:text-indigo-400">${escapeHtml(activeCatName)}</span> dengan kata kunci "<span class="font-bold text-slate-700 dark:text-slate-200">${escapeHtml(query)}</span>"</p>
                         <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center space-x-2">
+                            ${activeCat === 'REGULER' ? `
                             <button type="button" onclick="selectPosWalkInCustomer()" class="px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
                                 Pilih Pelanggan Umum
-                            </button>
+                            </button>` : ''}
                             <button type="button" onclick="closePosCustomerSearch(); openCustomerModal();" class="px-2.5 py-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-lg">
-                                + Pelanggan Baru
+                                + Pelanggan Baru (${escapeHtml(activeCatName)})
                             </button>
                         </div>
                     </div>
@@ -23293,10 +23412,10 @@ Manager / Supervisor: __________________
                 return;
             }
 
-            // Render daftar kartu hasil pencarian kata kunci
+            // Render daftar kartu hasil pencarian kata kunci sesuai tier aktif
             let html = `
                 <div class="p-2 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3">
-                    <span>Hasil Pencarian (${matches.length})</span>
+                    <span>Hasil Pencarian Tier ${escapeHtml(activeCatName)} (${matches.length})</span>
                     <span>Klik / Tekan Enter</span>
                 </div>
                 <div class="divide-y divide-slate-100 dark:divide-slate-800/60 overflow-y-auto max-h-60">
@@ -23391,9 +23510,7 @@ Manager / Supervisor: __________________
 
             const clearBtn = document.getElementById('pos-customer-search-clear');
             if (clearBtn) {
-                const isWalkIn = cust.id == 1 || (cust.name || '').toLowerCase().includes('umum');
-                if (isWalkIn) clearBtn.classList.add('hidden');
-                else clearBtn.classList.remove('hidden');
+                clearBtn.classList.remove('hidden');
             }
 
             closePosCustomerSearch();
@@ -23418,14 +23535,26 @@ Manager / Supervisor: __________________
         }
 
         function clearPosCustomerSearch() {
-            selectPosWalkInCustomer();
+            state.selectedCustomer = null;
+            const hiddenSelect = document.getElementById('pos-customer-select');
+            if (hiddenSelect) hiddenSelect.value = '';
             const input = document.getElementById('pos-customer-search-input');
             if (input) {
-                input.value = state.selectedCustomer ? state.selectedCustomer.name : 'Pelanggan Umum (Walk-in)';
+                input.value = '';
                 input.focus();
-                input.select();
             }
+            const clearBtn = document.getElementById('pos-customer-search-clear');
+            if (clearBtn) clearBtn.classList.add('hidden');
             closePosCustomerSearch();
+            updatePosCustomerUI();
+
+            // Reset keranjang & ongkir karena pelanggan dikosongkan
+            if (state.cart && state.cart.length > 0) {
+                state.cart = [];
+                resetPosDelivery(true);
+                renderCart();
+            }
+            renderProducts();
         }
 
         function renderPosCustomerSelect() {
@@ -23442,30 +23571,19 @@ Manager / Supervisor: __________________
                 state.selectedCustomerCategory = activeCodes.includes('REGULER') ? 'REGULER' : activeCodes[0];
             }
 
-            // Pastikan ada selectedCustomer
+            // DEFAULT KOSONG: Jangan otomatis pilih pelanggan jika belum dipilih pengguna
             if (!state.selectedCustomer) {
-                let defaultCust = (state.customers || []).find(c => c.id == 1);
-                if (!defaultCust && state.customers && state.customers.length > 0) {
-                    defaultCust = state.customers.find(c => (c.category || 'REGULER') === (state.selectedCustomerCategory || 'REGULER') && c.is_active == 1) || state.customers[0];
+                if (hiddenSelect) hiddenSelect.value = '';
+                if (searchInput && document.activeElement !== searchInput) {
+                    searchInput.value = '';
                 }
-                state.selectedCustomer = defaultCust || { id: 1, name: 'Pelanggan Umum (Walk-in)', category: 'REGULER' };
-            }
-
-            if (hiddenSelect) {
-                hiddenSelect.value = state.selectedCustomer ? state.selectedCustomer.id : 1;
-            }
-
-            if (searchInput && document.activeElement !== searchInput) {
-                searchInput.value = state.selectedCustomer ? state.selectedCustomer.name : 'Pelanggan Umum (Walk-in)';
-            }
-
-            if (clearBtn) {
-                const isWalkIn = !state.selectedCustomer || state.selectedCustomer.id == 1 || (state.selectedCustomer.name || '').toLowerCase().includes('umum');
-                if (isWalkIn) {
-                    clearBtn.classList.add('hidden');
-                } else {
-                    clearBtn.classList.remove('hidden');
+                if (clearBtn) clearBtn.classList.add('hidden');
+            } else {
+                if (hiddenSelect) hiddenSelect.value = state.selectedCustomer.id;
+                if (searchInput && document.activeElement !== searchInput) {
+                    searchInput.value = state.selectedCustomer.name;
                 }
+                if (clearBtn) clearBtn.classList.remove('hidden');
             }
 
             updatePosCustomerUI();
@@ -23476,28 +23594,34 @@ Manager / Supervisor: __________________
 
         function updatePosCustomerUI() {
             const cust = state.selectedCustomer;
-            const cat = state.selectedCustomerCategory || (cust ? cust.category : 'REGULER');
+            const cat = state.selectedCustomerCategory || 'REGULER';
             const catObj = (state.customerCategories || []).find(c => c.code === cat || c.name === cat);
             const tier = (catObj && catObj.default_tier) ? catObj.default_tier : cat;
-            const catDisplayName = catObj ? catObj.name : cat;
+            const catDisplayName = catObj ? catObj.name : (cat === 'REGULER' ? 'Ritel' : cat);
 
             const badge = document.getElementById('pos-customer-category-badge');
             const desc = document.getElementById('pos-customer-tier-desc');
 
             if (badge) {
-                badge.innerText = catDisplayName;
-                if (tier === 'MITRA') {
-                    badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300';
-                    if (desc) desc.innerText = `• Mitra Rekanan: ${cust ? cust.name : 'B2B'} (Tier Mitra / Kontrak)`;
-                } else if (tier === 'MEMBER') {
-                    badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800 border border-purple-300';
-                    if (desc) desc.innerText = `• Diskon Member VIP (${catDisplayName})`;
-                } else if (tier === 'RESELLER') {
-                    badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300';
-                    if (desc) desc.innerText = `• Harga Reseller / Grosir (${catDisplayName})`;
+                if (!cust) {
+                    badge.innerText = `(Belum Dipilih - Tier ${catDisplayName})`;
+                    badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-950/60 dark:text-amber-300';
+                    if (desc) desc.innerText = `• Silakan pilih pelanggan terlebih dahulu untuk transaksi`;
                 } else {
-                    badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-200 text-slate-700';
-                    if (desc) desc.innerText = `• Harga Ritel Standar (${catDisplayName})`;
+                    badge.innerText = catDisplayName;
+                    if (tier === 'MITRA') {
+                        badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300';
+                        if (desc) desc.innerText = `• Mitra Rekanan: ${cust.name} (Tier Mitra / Kontrak)`;
+                    } else if (tier === 'MEMBER') {
+                        badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800 border border-purple-300';
+                        if (desc) desc.innerText = `• Diskon Member VIP (${catDisplayName})`;
+                    } else if (tier === 'RESELLER') {
+                        badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300';
+                        if (desc) desc.innerText = `• Harga Reseller / Grosir (${catDisplayName})`;
+                    } else {
+                        badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-200 text-slate-700';
+                        if (desc) desc.innerText = `• Harga Ritel Standar (${catDisplayName})`;
+                    }
                 }
             }
 
@@ -23507,7 +23631,7 @@ Manager / Supervisor: __________________
 
         function onPosCustomerChange() {
             const select = document.getElementById('pos-customer-select');
-            if (!select) return;
+            if (!select || !select.value) return;
             selectPosCustomer(select.value);
         }
 
@@ -23525,31 +23649,230 @@ Manager / Supervisor: __________________
 
             state.selectedCustomerCategory = cat;
 
-            // Jika pelanggan aktif saat ini bukan dari kategori yang dipilih, sesuaikan pelanggan aktif
-            if (!state.selectedCustomer || (state.selectedCustomer.category || 'REGULER') !== cat) {
-                if (cat === 'REGULER') {
-                    const walkIn = (state.customers || []).find(c => c.id == 1 || (c.name || '').toLowerCase().includes('umum')) || { id: 1, name: 'Pelanggan Umum (Walk-in)', category: 'REGULER' };
-                    state.selectedCustomer = walkIn;
-                } else {
-                    const matchingCust = (state.customers || []).find(c => (c.category || 'REGULER') === cat && c.is_active == 1);
-                    if (matchingCust) {
-                        state.selectedCustomer = matchingCust;
-                    }
-                }
+            // Jika pelanggan aktif saat ini bukan dari kategori yang dipilih, kosongkan pelanggan (default kosong)
+            if (state.selectedCustomer && (state.selectedCustomer.category || 'REGULER') !== cat) {
+                state.selectedCustomer = null;
+                const searchInput = document.getElementById('pos-customer-search-input');
+                if (searchInput) searchInput.value = '';
+                const clearBtn = document.getElementById('pos-customer-search-clear');
+                if (clearBtn) clearBtn.classList.add('hidden');
             }
 
             renderPosTierButtons();
             renderPosCustomerSelect();
 
-            // Jika ganti pelanggan/kategori: list order dan fitur delivery dihilangkan agar kasir menginput ulang
-            const isCustChanged = (state.selectedCustomer && state.selectedCustomer.id !== prevCustId) || (prevCat !== cat);
-            if (isCustChanged || (state.cart && state.cart.length > 0)) {
+            // Jika ganti kategori/pelanggan: list order dan fitur delivery dihilangkan agar kasir menginput ulang
+            const isCustChanged = (prevCustId !== (state.selectedCustomer ? state.selectedCustomer.id : null)) || (prevCat !== cat);
+            if (isCustChanged && state.cart && state.cart.length > 0) {
                 state.cart = [];
                 resetPosDelivery(true);
                 renderCart();
             }
 
             renderProducts();
+        }
+
+        // ========================================================
+        // MODAL PEMILIH PELANGGAN POS (PROMPT SEBELUM INPUT PRODUK)
+        // ========================================================
+
+        function openSelectCustomerModal(pendingProductId = null, pendingVariantId = null) {
+            state.pendingCartProduct = pendingProductId ? { productId: pendingProductId, variantId: pendingVariantId } : null;
+
+            const modal = document.getElementById('pos-select-customer-modal');
+            if (!modal) return;
+
+            // Reset input pencarian modal
+            const searchInput = document.getElementById('pos-modal-cust-search-input');
+            if (searchInput) searchInput.value = '';
+            const clearBtn = document.getElementById('pos-modal-cust-search-clear');
+            if (clearBtn) clearBtn.classList.add('hidden');
+
+            // Render tombol tier di modal
+            renderPosModalTierButtons();
+
+            // Render daftar pelanggan sesuai tier aktif
+            renderPosModalCustomerList('');
+
+            modal.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+            setTimeout(() => {
+                if (searchInput) searchInput.focus();
+            }, 100);
+        }
+
+        function closeSelectCustomerModal() {
+            const modal = document.getElementById('pos-select-customer-modal');
+            if (modal) modal.classList.add('hidden');
+            state.pendingCartProduct = null;
+        }
+
+        function renderPosModalTierButtons() {
+            const container = document.getElementById('pos-modal-tier-buttons');
+            const labelEl = document.getElementById('pos-modal-active-tier-label');
+            if (!container) return;
+
+            const activeCats = (state.customerCategories || []).filter(c => c.is_active == 1);
+            const currentCat = state.selectedCustomerCategory || 'REGULER';
+            const currentCatObj = activeCats.find(c => c.code === currentCat);
+            if (labelEl) labelEl.innerText = currentCatObj ? currentCatObj.name : currentCat;
+
+            container.innerHTML = activeCats.map(c => {
+                const isSelected = (c.code === currentCat);
+                const btnClass = isSelected
+                    ? 'px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs transition-all'
+                    : 'px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer';
+
+                let label = c.name;
+                if (c.code === 'REGULER') label = 'Ritel';
+                else if (c.code === 'MEMBER') label = 'Member / Premium';
+                else if (c.code === 'RESELLER') label = 'Reseller';
+                else if (c.code === 'MITRA') label = 'Mitra B2B';
+
+                const emoji = c.icon_emoji ? c.icon_emoji + ' ' : '';
+                return `
+                    <button type="button" onclick="setPosModalTier('${c.code}')" class="${btnClass}">
+                        ${emoji}${label}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function setPosModalTier(cat) {
+            state.selectedCustomerCategory = cat;
+            renderPosTierButtons();
+            renderPosModalTierButtons();
+            renderPosCustomerSelect();
+            const query = document.getElementById('pos-modal-cust-search-input')?.value || '';
+            renderPosModalCustomerList(query);
+            renderProducts();
+        }
+
+        function onPosModalCustSearchInput(val) {
+            const clearBtn = document.getElementById('pos-modal-cust-search-clear');
+            if (clearBtn) {
+                if (val && val.trim().length > 0) clearBtn.classList.remove('hidden');
+                else clearBtn.classList.add('hidden');
+            }
+            renderPosModalCustomerList(val);
+        }
+
+        function clearPosModalCustSearch() {
+            const input = document.getElementById('pos-modal-cust-search-input');
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+            const clearBtn = document.getElementById('pos-modal-cust-search-clear');
+            if (clearBtn) clearBtn.classList.add('hidden');
+            renderPosModalCustomerList('');
+        }
+
+        function renderPosModalCustomerList(query = '') {
+            const listEl = document.getElementById('pos-modal-customers-list');
+            const countEl = document.getElementById('pos-modal-list-count');
+            const walkInCard = document.getElementById('pos-modal-walkin-card');
+            if (!listEl) return;
+
+            const activeCat = state.selectedCustomerCategory || 'REGULER';
+            if (walkInCard) {
+                if (activeCat === 'REGULER' && !query.trim()) {
+                    walkInCard.classList.remove('hidden');
+                } else {
+                    walkInCard.classList.add('hidden');
+                }
+            }
+
+            const q = (query || '').trim().toLowerCase();
+            const branch = state.currentBranch;
+            const branchLat = branch ? parseFloat(branch.latitude) : null;
+            const branchLon = branch ? parseFloat(branch.longitude) : null;
+
+            // Filter pelanggan: aktif + tier sesuai + keyword
+            const filtered = (state.customers || []).filter(c => {
+                if (c.is_active != 1 && c.is_active !== undefined) return false;
+                const custCat = c.category || 'REGULER';
+                if (custCat !== activeCat) return false;
+
+                // Jangan tampilkan ID 1 (Walk-in) di daftar bawah jika sudah ada kartu walk-in di atas
+                if (c.id == 1 && activeCat === 'REGULER') return false;
+
+                if (!q) return true;
+                const name = (c.name || '').toLowerCase();
+                const phone = (c.phone || '').toLowerCase();
+                const code = (c.code || '').toLowerCase();
+                const address = (c.address || '').toLowerCase();
+                return name.includes(q) || phone.includes(q) || code.includes(q) || address.includes(q);
+            });
+
+            if (countEl) {
+                countEl.innerText = `${filtered.length} Pelanggan`;
+            }
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `
+                    <div class="p-6 text-center text-xs text-slate-400">
+                        <i data-lucide="user-x" class="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-600"></i>
+                        <p class="font-bold text-slate-600 dark:text-slate-300">Tidak ada pelanggan tier ${escapeHtml(activeCat)}</p>
+                        <p class="text-[11px] mt-1 text-slate-400">${q ? `Tidak cocok dengan kata kunci "${escapeHtml(query)}"` : 'Belum ada data pelanggan di kategori tier ini.'}</p>
+                    </div>
+                `;
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(c => {
+                // Hitung estimasi jarak jika ada koordinat
+                let distText = '';
+                const cLat = parseFloat(c.latitude);
+                const cLon = parseFloat(c.longitude);
+                if (branchLat && branchLon && cLat && cLon && !isNaN(cLat) && !isNaN(cLon) && !(cLat === 0 && cLon === 0)) {
+                    const dist = getHaversineDistanceKm(branchLat, branchLon, cLat, cLon);
+                    distText = `<span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80"><i data-lucide="map-pin" class="w-3 h-3"></i><span>${formatDecimal(dist)} km</span></span>`;
+                }
+
+                const phoneText = c.phone && c.phone !== '-' ? `<span class="flex items-center space-x-1 text-slate-400"><i data-lucide="phone" class="w-3 h-3"></i><span>${escapeHtml(c.phone)}</span></span>` : '';
+                const addrText = c.address ? `<span class="truncate max-w-[200px] text-slate-400"><i data-lucide="home" class="w-3 h-3 inline mr-1"></i>${escapeHtml(c.address)}</span>` : '';
+
+                return `
+                    <div onclick="selectCustomerFromModal(${c.id})"
+                         class="p-3 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/40 cursor-pointer transition-all flex items-center justify-between gap-3 group">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center space-x-2">
+                                <h4 class="font-bold text-xs text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 truncate">${escapeHtml(c.name)}</h4>
+                                ${distText}
+                            </div>
+                            <div class="flex items-center space-x-3 text-[10px] mt-1 text-slate-500">
+                                ${phoneText}
+                                ${addrText}
+                            </div>
+                        </div>
+                        <button type="button" class="px-2.5 py-1 rounded-xl text-[10px] font-bold bg-slate-100 dark:bg-slate-800 group-hover:bg-indigo-600 group-hover:text-white text-slate-700 dark:text-slate-200 transition-colors shrink-0">
+                            Pilih
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function selectCustomerFromModal(customerId) {
+            closeSelectCustomerModal();
+            selectPosCustomer(customerId);
+
+            // Jika ada produk yang sebelumnya diklik saat pelanggan belum dipilih, lanjutkan transaksi!
+            if (state.pendingCartProduct) {
+                const pending = state.pendingCartProduct;
+                state.pendingCartProduct = null;
+                if (pending.productId) {
+                    if (pending.variantId) {
+                        addToCart(pending.productId, pending.variantId);
+                    } else {
+                        onProductClick(pending.productId);
+                    }
+                }
+            }
         }
 
         function recalculateCartPrices() {
@@ -30634,6 +30957,10 @@ Manager / Supervisor: __________________
                 const payModal = document.getElementById('pos-payment-modal');
                 if (payModal && !payModal.classList.contains('hidden')) {
                     closePaymentModal();
+                }
+                const custPromptModal = document.getElementById('pos-select-customer-modal');
+                if (custPromptModal && !custPromptModal.classList.contains('hidden')) {
+                    closeSelectCustomerModal();
                 }
             }
         });
