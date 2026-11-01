@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.3.2",
-    "build": "20261101-57",
+    "version": "1.3.3",
+    "build": "20261101-58",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.3.3",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Penyelarasan Penuh Isian Nota Elektronik WhatsApp dengan Pengaturan Layout Nota Struk (FR-POS-43)",
+            "description": "Menyelaraskan seluruh isian dan tata letak nota elektronik WhatsApp agar 100% identik dengan hasil nota cetak termal yang dikonfigurasi pada menu Pengaturan Layout Nota Struk (Header, Body, Footer): (1) Penyelarasan Penuh 5 Bagian Layout Nota: Merefleksikan seluruh pengaturan Layout Nota Struk ke teks nota elektronik (Emoji/Logo toko aktif/nonaktif, Judul Utama Header Toko, Subjudul Header, Identitas Cabang & Alamat, Teks Legal/NPWP, Metadata Faktur/Waktu/Kasir/Pelanggan/Jenis Transaksi, opsi Tampilkan SKU barang belanjaan, rincian kuantitas & harga satuan, status pengantaran kurir & ongkir, subtotal, diskon faktur, pajak PPN, grand total, bayar tunai/non-tunai, kembalian, serta ketiga baris catatan penutup footer). (2) Mesin Pembuat Format Mandiri (buildReceiptTextFromLayout): Mengembangkan fungsi terpusat untuk mengonstruksi teks nota secara konsisten di sisi klien dan sisi server (formatReceiptTextFromLayoutSettings). (3) Tombol Pintas Penyelarasan Gateway (syncWaTemplateWithReceiptLayout): Menyediakan tombol '⚡ Samakan dengan Layout Nota Struk' pada konfigurasi gateway WhatsApp untuk memudahkan sinkronisasi template dengan satu klik. (4) Penyertaan Kode SKU pada Payload Checkout: Menambahkan kolom SKU produk pada rincian item transaksi penjualan (checkout_sale) untuk menjamin akurasi identifikasi produk cetak dan digital.",
+            "rollback_command": "git checkout v1.3.2"
+        },
         {
             "version": "1.3.2",
             "commit": "HEAD",

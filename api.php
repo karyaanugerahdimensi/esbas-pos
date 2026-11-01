@@ -6758,6 +6758,7 @@ try {
 
                 $processedItems[] = [
                     'product_id' => $pId,
+                    'sku' => $stockRow['sku'] ?? '',
                     'variant_id' => $variantId,
                     'variant_name' => $variantName,
                     'product_name' => $dispItemName,
@@ -14283,44 +14284,143 @@ try {
             $targetBranchId = isset($input['branch_id']) ? (int)$input['branch_id'] : ($sale['branch_id'] ?? ($currentBranch['id'] ?? 0));
             $sMap = getResolvedAppSettings($pdo, $targetBranchId);
 
-            $storeName = $sMap['app_name'] ?? 'ESBAS RETAIL';
-            $branchName = $sale['branch_name'] ?? ($sMap['company_name'] ?? 'Pusat Jakarta');
-            $custName = $sale['customer_name'] ?? 'Pelanggan Uji Coba';
-            $phone = $destination ?: ($sale['customer_phone'] ?? '081234567890');
-            $grandTotal = $sale ? 'Rp ' . number_format($sale['grand_total'], 0, ',', '.') : 'Rp 75.000';
-            $payMethod = $sale['payment_method'] ?? 'TUNAI (CASH)';
-            $dateStr = $sale ? $sale['created_at'] : date('d/m/Y H:i');
+            // Susun teks nota lengkap yang 100% selaras dengan Pengaturan Layout Nota Struk
+            $layoutReceiptMsg = '';
+            if (!empty($customMessage)) {
+                $layoutReceiptMsg = $customMessage;
+            } else {
+                // 1. Header Struk
+                $showLogo = ($sMap['receipt_show_logo'] ?? '1') !== '0';
+                $logoEmoji = $sMap['app_logo_emoji'] ?? '🛍️';
+                $storeTitle = $sMap['receipt_header_title'] ?? ($sMap['app_name'] ?? 'ESBAS RETAIL TOKO');
+                $storeSubtitle = $sMap['receipt_header_subtitle'] ?? ($sMap['app_subtitle'] ?? 'Pusat Belanja & Grosir Terpadu');
+                $branchName = $sale['branch_name'] ?? ($sMap['company_name'] ?? 'Cabang Utama');
+                $branchAddress = $sale['branch_address'] ?? ($sMap['company_address'] ?? '');
+                $customLegal = $sMap['receipt_header_custom_text'] ?? '';
 
-            // Rincian items riil jika ada data penjualan
-            $itemsSummary = '';
-            if ($sale && !empty($sale['id'])) {
-                $stmtItems = $pdo->prepare("SELECT product_name, variant_name, qty, unit_price, subtotal_price FROM sale_items WHERE sale_id = ? ORDER BY id ASC");
-                $stmtItems->execute([$sale['id']]);
-                $itemsList = $stmtItems->fetchAll();
-                $itemLines = [];
-                foreach ($itemsList as $it) {
-                    $v = (!empty($it['variant_name']) && stripos($it['product_name'], $it['variant_name']) === false) ? " [{$it['variant_name']}]" : "";
-                    $itemLines[] = "• {$it['qty']}x {$it['product_name']}{$v} @ Rp " . number_format($it['unit_price'], 0, ',', '.') . " = Rp " . number_format($it['subtotal_price'], 0, ',', '.');
+                $headerParts = [];
+                if ($showLogo) {
+                    $headerParts[] = $logoEmoji;
                 }
-                if (!empty($sale['delivery_fee']) && (float)$sale['delivery_fee'] > 0) {
-                    $dist = !empty($sale['delivery_distance_km']) ? " (" . $sale['delivery_distance_km'] . " km)" : "";
-                    $itemLines[] = "• Biaya Antar Kurir{$dist}: Rp " . number_format($sale['delivery_fee'], 0, ',', '.');
+                $headerParts[] = "*{$storeTitle}*";
+                if (!empty(trim($storeSubtitle))) {
+                    $headerParts[] = trim($storeSubtitle);
                 }
-                $itemsSummary = implode("\n", $itemLines);
+                $branchLine = $branchName;
+                if (!empty(trim($branchAddress))) {
+                    $branchLine .= " • " . trim($branchAddress);
+                }
+                $headerParts[] = $branchLine;
+                if (!empty(trim($customLegal))) {
+                    $headerParts[] = trim($customLegal);
+                }
+
+                // 2. Metadata Transaksi
+                $invoiceNo = $sale['invoice_number'] ?? $invoiceNumber;
+                $dateStr = $sale ? $sale['created_at'] : date('d/m/Y H:i');
+                $cashierName = $sale['cashier_name'] ?? 'Kasir';
+                $custName = $sale['customer_name'] ?? 'Pelanggan Umum';
+                $salesType = $sale['customer_category'] ?? ($sale['sales_type'] ?? 'REGULER');
+
+                $metaParts = [
+                    "No. Faktur      : *{$invoiceNo}*",
+                    "Waktu           : {$dateStr}",
+                    "Kasir           : {$cashierName}",
+                    "Pelanggan       : {$custName}",
+                    "Jenis Transaksi : {$salesType}"
+                ];
+
+                // 3. Body Item & Kurir
+                $showSku = ($sMap['receipt_body_show_sku'] ?? '0') === '1';
+                $itemParts = [];
+                if ($sale && !empty($sale['id'])) {
+                    $stmtItems = $pdo->prepare("SELECT si.*, p.sku FROM sale_items si LEFT JOIN products p ON p.id = si.product_id WHERE si.sale_id = ? ORDER BY si.id ASC");
+                    $stmtItems->execute([$sale['id']]);
+                    $itemsList = $stmtItems->fetchAll();
+                    foreach ($itemsList as $it) {
+                        $pName = $it['product_name'] ?? 'Produk';
+                        $skuTxt = ($showSku && !empty($it['sku'])) ? " ({$it['sku']})" : "";
+                        $vName = (!empty($it['variant_name']) && stripos($pName, $it['variant_name']) === false) ? " [{$it['variant_name']}]" : "";
+                        $qty = (float)($it['qty'] ?? 1);
+                        $uPrice = (float)($it['unit_price'] ?? 0);
+                        $sub = (float)($it['subtotal_price'] ?? ($qty * $uPrice));
+                        $itemParts[] = "{$pName}{$skuTxt}{$vName}\n  {$qty}x @ Rp " . number_format($uPrice, 0, ',', '.') . " = *Rp " . number_format($sub, 0, ',', '.') . "*";
+                    }
+                    // Kurir
+                    $driver = $sale['driver_name'] ?? '';
+                    $delFee = (float)($sale['delivery_fee'] ?? 0);
+                    $delDist = (float)($sale['delivery_distance_km'] ?? 0);
+                    $delStatus = $sale['delivery_status'] ?? 'NONE';
+                    if ($delFee > 0) {
+                        $distTxt = $delDist > 0 ? " ({$delDist} km)" : "";
+                        $drvTxt = !empty($driver) && $driver !== '-' ? " • Kurir: {$driver}" : "";
+                        $itemParts[] = "🛵 Biaya Kirim Kurir{$distTxt}{$drvTxt}\n  *Rp " . number_format($delFee, 0, ',', '.') . "*";
+                    } elseif ($delStatus !== 'NONE') {
+                        $distTxt = $delDist > 0 ? " ({$delDist} km)" : "";
+                        $drvTxt = !empty($driver) && $driver !== '-' ? " • Kurir: {$driver}" : "";
+                        $itemParts[] = "🛵 Layanan Antar{$distTxt}: Termasuk Biaya Kirim{$drvTxt}\n  *Rp 0*";
+                    }
+                } else {
+                    $sku1 = $showSku ? " (PRD-001)" : "";
+                    $sku2 = $showSku ? " (PRD-002)" : "";
+                    $itemParts[] = "Air Galon RO 19L{$sku1}\n  2x @ Rp 19.000 = *Rp 38.000*";
+                    $itemParts[] = "Kopi Arabika 250g{$sku2}\n  1x @ Rp 35.000 = *Rp 35.000*";
+                }
+
+                // 4. Totals
+                $subtotal = $sale ? (float)$sale['subtotal'] : 73000;
+                $discount = $sale ? (float)$sale['discount'] : 0;
+                $tax = $sale ? (float)$sale['tax'] : 0;
+                $grandTotalVal = $sale ? (float)$sale['grand_total'] : 73000;
+                $payMethod = $sale['payment_method'] ?? 'TUNAI (CASH)';
+                $cashReceived = $sale ? (float)$sale['cash_received'] : 100000;
+                $cashChange = $sale ? (float)$sale['cash_change'] : 27000;
+
+                $totalParts = [];
+                $totalParts[] = "Subtotal        : Rp " . number_format($subtotal, 0, ',', '.');
+                if ($discount > 0) {
+                    $totalParts[] = "Diskon          : - Rp " . number_format($discount, 0, ',', '.');
+                }
+                if ($tax > 0) {
+                    $totalParts[] = "Pajak (Tax)     : Rp " . number_format($tax, 0, ',', '.');
+                }
+                $totalParts[] = "*TOTAL           : Rp " . number_format($grandTotalVal, 0, ',', '.') . "*";
+                if ($cashReceived > 0) {
+                    $totalParts[] = "Bayar ({$payMethod}) : Rp " . number_format($cashReceived, 0, ',', '.');
+                    $totalParts[] = "Kembalian       : Rp " . number_format($cashChange, 0, ',', '.');
+                } else {
+                    $totalParts[] = "Bayar ({$payMethod}) : Rp " . number_format($grandTotalVal, 0, ',', '.');
+                }
+
+                // 5. Footers
+                $footerParts = [];
+                $f1 = $sMap['receipt_footer_line1'] ?? 'Terima Kasih Atas Kunjungan Anda!';
+                $f2 = $sMap['receipt_footer_line2'] ?? 'Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.';
+                $f3 = $sMap['receipt_footer_line3'] ?? 'Simpan struk ini sebagai bukti pembayaran yang sah.';
+                if (!empty(trim($f1))) $footerParts[] = "*" . trim($f1) . "*";
+                if (!empty(trim($f2))) $footerParts[] = trim($f2);
+                if (!empty(trim($f3))) $footerParts[] = "_" . trim($f3) . "_";
+
+                $sepDouble = "========================================";
+                $sepSingle = "----------------------------------------";
+
+                $layoutReceiptMsg = implode("\n", [
+                    implode("\n", $headerParts),
+                    $sepDouble,
+                    implode("\n", $metaParts),
+                    $sepSingle,
+                    implode("\n", $itemParts),
+                    $sepSingle,
+                    implode("\n", $totalParts),
+                    $sepDouble,
+                    implode("\n", $footerParts)
+                ]);
             }
-            if (empty($itemsSummary)) {
-                $itemsSummary = "- 2x Galon RO @ Rp 19.000\n- 1x Kopi Gayo @ Rp 37.000";
-            }
+
+            $phone = $destination ?: ($sale['customer_phone'] ?? '081234567890');
+            $msg = $layoutReceiptMsg;
 
             if ($channel === 'WA') {
-                $template = $sMap['wa_template_message'] ?? "Halo {customer_name},\nTerima kasih belanja di {store_name}!";
-                $msg = $customMessage ?: $template;
-                $msg = str_replace(
-                    ['{customer_name}', '{store_name}', '{branch_name}', '{invoice_number}', '{date}', '{grand_total}', '{payment_method}', '{items_summary}', '{footer_note}'],
-                    [$custName, $storeName, $branchName, $invoiceNumber, $dateStr, $grandTotal, $payMethod, $itemsSummary, $sMap['receipt_footer_line1'] ?? 'Terima Kasih!'],
-                    $msg
-                );
-
                 $cleanPhone = preg_replace('/[^\d]/', '', $phone);
                 if (strpos($cleanPhone, '0') === 0) {
                     $cleanPhone = '62' . substr($cleanPhone, 1);

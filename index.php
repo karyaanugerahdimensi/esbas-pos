@@ -5536,9 +5536,14 @@ try {
                                 </div>
 
                                 <div>
-                                    <label class="block font-bold text-slate-700 mb-1">Template Pesan WhatsApp</label>
-                                    <textarea id="set-wa-template" rows="5" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-mono text-[11px]" placeholder="Halo {customer_name}..."></textarea>
-                                    <p class="text-[10px] text-slate-400 mt-1">Variabel tersedia: {customer_name}, {store_name}, {branch_name}, {invoice_number}, {date}, {grand_total}, {payment_method}, {items_summary}, {footer_note}</p>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label class="block font-bold text-slate-700">Template Pesan WhatsApp</label>
+                                        <button type="button" onclick="syncWaTemplateWithReceiptLayout()" class="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center space-x-1 cursor-pointer">
+                                            <span>⚡ Samakan dengan Layout Nota Struk</span>
+                                        </button>
+                                    </div>
+                                    <textarea id="set-wa-template" rows="5" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-mono text-[11px]" placeholder="Biarkan kosong atau isi {receipt_layout} agar 100% mengikuti Pengaturan Layout Nota Struk..."></textarea>
+                                    <p class="text-[10px] text-slate-400 mt-1">Variabel tersedia: <span class="font-bold text-indigo-600">{receipt_layout}</span> (Format Layout Nota Lengkap), {customer_name}, {store_title}, {store_subtitle}, {branch_name}, {branch_address}, {custom_legal}, {invoice_number}, {date}, {sales_type}, {grand_total}, {payment_method}, {items_summary}, {footer_1}, {footer_2}, {footer_3}</p>
                                 </div>
 
                                 <div class="pt-2 flex items-center justify-between">
@@ -30405,12 +30410,42 @@ Manager / Supervisor: __________________
             }
         }
 
+        function syncWaTemplateWithReceiptLayout() {
+            const el = document.getElementById('set-wa-template');
+            if (el) {
+                el.value = '{receipt_layout}';
+                showToast('Template WhatsApp diselaraskan dengan Layout Nota Struk!', 'success');
+            }
+        }
+
         async function testSendReceipt(channel) {
             const dest = (channel === 'WA') 
                 ? (prompt('Masukkan Nomor WhatsApp Tujuan untuk Tes Simulasi (misal: 081234567890):', '081234567890'))
                 : (prompt('Masukkan Chat ID Telegram untuk Tes Simulasi (misal: -1001234567890):', document.getElementById('set-tg-chat-id')?.value || '-1001234567890'));
 
             if (!dest) return;
+
+            const sampleSale = {
+                invoice_number: 'INV/20261012/001',
+                created_at: '12/10/2026 14:30',
+                cashier_name: state.currentUser?.name || 'Siti Rahmawati',
+                customer_name: 'Pelanggan Umum',
+                customer_category: 'REGULER',
+                branch_name: state.currentBranch?.name || 'Cabang Pusat Cimahi',
+                branch_address: state.currentBranch?.address || 'Jl. Raya No. 1',
+                subtotal: 73000,
+                discount: 0,
+                tax: 0,
+                grand_total: 73000,
+                payment_method: 'TUNAI (CASH)',
+                cash_received: 100000,
+                cash_change: 27000,
+                items: [
+                    { product_name: 'Air Galon RO 19L', sku: 'PRD-001', qty: 2, unit_price: 19000, subtotal_price: 38000 },
+                    { product_name: 'Kopi Arabika 250g', sku: 'PRD-002', qty: 1, unit_price: 35000, subtotal_price: 35000 }
+                ]
+            };
+            const renderedMsg = buildWhatsAppReceiptText(sampleSale);
 
             try {
                 const res = await fetch('api.php?action=test_send_electronic_receipt', {
@@ -30419,12 +30454,13 @@ Manager / Supervisor: __________________
                     body: JSON.stringify({
                         channel: channel,
                         destination: dest,
-                        invoice_number: 'INV/20261012/001'
+                        invoice_number: 'INV/20261012/001',
+                        message: renderedMsg
                     })
                 });
                 const data = await res.json();
                 if (channel === 'WA') {
-                    if (confirm(`HASIL TES NOTA WHATSAPP:\n\n${data.message}\n\nPesan:\n${data.message_rendered}\n\nApakah Anda ingin langsung memanggil aplikasi WhatsApp yang terpasang sekarang?`)) {
+                    if (confirm(`HASIL TES NOTA WHATSAPP (Sesuai Layout Nota Struk):\n\n${data.message}\n\nPesan:\n${data.message_rendered}\n\nApakah Anda ingin langsung memanggil aplikasi WhatsApp yang terpasang sekarang?`)) {
                         launchWhatsAppDirect(cleanWhatsAppNumber(dest), data.message_rendered);
                     }
                 } else {
@@ -30446,16 +30482,159 @@ Manager / Supervisor: __________________
             return clean;
         }
 
+        /**
+         * Membangun teks nota belanja lengkap yang 100% selaras dengan Pengaturan Layout Nota Struk
+         * Mencakup: Header (Logo, Judul, Subjudul, Cabang, Alamat, Teks Legal/NPWP), Metadata, Body Item (+ opsi SKU & kurir),
+         * Rincian Total (Subtotal, Diskon, Pajak, Grand Total, Bayar, Kembalian), dan 3 Baris Footer.
+         */
+        function buildReceiptTextFromLayout(sale) {
+            if (!sale) return '';
+            const s = state.appSettings || {};
+
+            // 1. BAGIAN HEADER (BAGIAN ATAS NOTA)
+            const showLogo = s.receipt_show_logo !== '0';
+            const logoEmoji = s.app_logo_emoji || '🛍️';
+            const storeTitle = s.receipt_header_title || (s.app_name || 'ESBAS RETAIL TOKO');
+            const storeSubtitle = s.receipt_header_subtitle || (s.app_subtitle || 'Pusat Belanja & Grosir Terpadu');
+            const branchName = sale.branch_name || state.currentBranch?.name || s.company_name || 'Cabang Utama';
+            const branchAddress = sale.branch_address || state.currentBranch?.address || '';
+            const customLegalText = s.receipt_header_custom_text || '';
+
+            let headerParts = [];
+            if (showLogo) {
+                headerParts.push(logoEmoji);
+            }
+            headerParts.push(`*${storeTitle}*`);
+            if (storeSubtitle && storeSubtitle.trim()) {
+                headerParts.push(storeSubtitle.trim());
+            }
+            let branchLine = branchName;
+            if (branchAddress && branchAddress.trim()) {
+                branchLine += ` • ${branchAddress.trim()}`;
+            }
+            headerParts.push(branchLine);
+            if (customLegalText && customLegalText.trim()) {
+                headerParts.push(customLegalText.trim());
+            }
+
+            // 2. METADATA TRANSAKSI
+            const invoiceNo = sale.invoice_number || '-';
+            const dateStr = sale.created_at || (new Date().toLocaleString('id-ID'));
+            const cashierName = sale.cashier_name || state.currentUser?.name || 'Kasir';
+            const custName = sale.customer_name || 'Pelanggan Umum';
+            const salesType = sale.customer_category || sale.sales_type || (state.selectedCustomerCategory ? state.selectedCustomerCategory.toUpperCase() : 'REGULER');
+
+            let metaParts = [
+                `No. Faktur      : *${invoiceNo}*`,
+                `Waktu           : ${dateStr}`,
+                `Kasir           : ${cashierName}`,
+                `Pelanggan       : ${custName}`,
+                `Jenis Transaksi : ${salesType}`
+            ];
+
+            // 3. BAGIAN BODY (DAFTAR ITEM & RINCIAN)
+            const showSku = s.receipt_body_show_sku === '1';
+            const items = sale.items || [];
+            let itemParts = items.map(it => {
+                const prodName = it.product_name || it.name || 'Produk';
+                const skuText = (showSku && it.sku) ? ` (${it.sku})` : '';
+                const vName = (it.variant_name && !prodName.includes(it.variant_name)) ? ` [${it.variant_name}]` : '';
+                const qty = it.qty || it.quantity || 1;
+                const unitPrice = it.unit_price || (it.subtotal_price ? Math.round(it.subtotal_price / qty) : 0);
+                const sub = it.subtotal_price || (unitPrice * qty);
+                return `${prodName}${skuText}${vName}\n  ${qty}x @ ${formatRupiah(unitPrice)} = *${formatRupiah(sub)}*`;
+            });
+
+            // Biaya Kirim Kurir / Layanan Antar
+            const effectiveDriver = sale.driver_name || (sale.effective_driver_name ? sale.effective_driver_name : '');
+            if (sale.delivery_fee && Number(sale.delivery_fee) > 0) {
+                const dist = (sale.delivery_distance_km && Number(sale.delivery_distance_km) > 0) ? ` (${formatDecimal(sale.delivery_distance_km)} km)` : '';
+                const driverInfo = effectiveDriver ? ` • Kurir: ${effectiveDriver}` : '';
+                itemParts.push(`🛵 Biaya Kirim Kurir${dist}${driverInfo}\n  *${formatRupiah(sale.delivery_fee)}*`);
+            } else if (sale.delivery_status && sale.delivery_status !== 'NONE') {
+                const dist = (sale.delivery_distance_km && Number(sale.delivery_distance_km) > 0) ? ` (${formatDecimal(sale.delivery_distance_km)} km)` : '';
+                const driverInfo = effectiveDriver ? ` • Kurir: ${effectiveDriver}` : '';
+                itemParts.push(`🛵 Layanan Antar${dist}: Termasuk Biaya Kirim${driverInfo}\n  *Rp 0*`);
+            }
+
+            // 4. RINGKASAN TOTAL
+            let totalParts = [];
+            totalParts.push(`Subtotal        : ${formatRupiah(sale.subtotal || 0)}`);
+            if (Number(sale.discount) > 0) {
+                totalParts.push(`Diskon          : - ${formatRupiah(sale.discount)}`);
+            }
+            if (sale.tax && Number(sale.tax) > 0) {
+                totalParts.push(`Pajak (Tax)     : ${formatRupiah(sale.tax)}`);
+            }
+            totalParts.push(`*TOTAL           : ${formatRupiah(sale.grand_total || 0)}*`);
+
+            const payMethod = sale.payment_method || 'TUNAI';
+            if (Number(sale.cash_received) > 0) {
+                totalParts.push(`Bayar (${payMethod}) : ${formatRupiah(sale.cash_received)}`);
+                totalParts.push(`Kembalian       : ${formatRupiah(sale.cash_change || 0)}`);
+            } else {
+                totalParts.push(`Bayar (${payMethod}) : ${formatRupiah(sale.grand_total || 0)}`);
+            }
+
+            // 5. BAGIAN FOOTER (CATATAN BAWAH NOTA)
+            let footerParts = [];
+            const f1 = s.receipt_footer_line1 || 'Terima Kasih Atas Kunjungan Anda!';
+            const f2 = s.receipt_footer_line2 || 'Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.';
+            const f3 = s.receipt_footer_line3 || 'Simpan struk ini sebagai bukti pembayaran yang sah.';
+            if (f1 && f1.trim()) footerParts.push(`*${f1.trim()}*`);
+            if (f2 && f2.trim()) footerParts.push(f2.trim());
+            if (f3 && f3.trim()) footerParts.push(`_${f3.trim()}_`);
+
+            const sepDouble = '========================================';
+            const sepSingle = '----------------------------------------';
+
+            return [
+                headerParts.join('\n'),
+                sepDouble,
+                metaParts.join('\n'),
+                sepSingle,
+                itemParts.join('\n'),
+                sepSingle,
+                totalParts.join('\n'),
+                sepDouble,
+                footerParts.join('\n')
+            ].join('\n');
+        }
+
         function buildWhatsAppReceiptText(sale) {
             if (!sale) return '';
             const s = state.appSettings || {};
-            const storeName = s.receipt_header_title || s.app_name || 'ESBAS RETAIL';
-            const branchName = sale.branch_name || state.currentBranch?.name || s.company_name || 'Pusat';
+            const layoutReceipt = buildReceiptTextFromLayout(sale);
+
+            const tpl = s.wa_template_message ? s.wa_template_message.trim() : '';
+            // Jika template kosong atau placeholder khusus layout
+            if (!tpl || tpl === '{receipt_layout}') {
+                return layoutReceipt;
+            }
+
+            if (tpl.includes('{receipt_layout}')) {
+                return tpl
+                    .replace(/{receipt_layout}/g, layoutReceipt)
+                    .replace(/{customer_name}/g, sale.customer_name || 'Pelanggan Umum')
+                    .replace(/{invoice_number}/g, sale.invoice_number || '-');
+            }
+
+            // Jika template di database berupa legacy default greeting lama yang tidak memiliki rincian layout nota struk
+            if (tpl.startsWith('Halo {customer_name},\nTerima kasih telah berbelanja di {store_name}')) {
+                return layoutReceipt;
+            }
+
+            // Jika user membuat template kustom sendiri yang bukan legacy seeder:
+            const storeTitle = s.receipt_header_title || (s.app_name || 'ESBAS RETAIL TOKO');
+            const storeSubtitle = s.receipt_header_subtitle || (s.app_subtitle || 'Pusat Belanja & Grosir Terpadu');
+            const branchName = sale.branch_name || state.currentBranch?.name || s.company_name || 'Cabang Utama';
             const branchAddress = sale.branch_address || state.currentBranch?.address || '';
+            const customLegal = s.receipt_header_custom_text || '';
             const custName = sale.customer_name || 'Pelanggan Umum';
             const cashierName = sale.cashier_name || state.currentUser?.name || 'Kasir';
             const invoiceNo = sale.invoice_number || '-';
             const dateStr = sale.created_at || (new Date().toLocaleString('id-ID'));
+            const salesType = sale.customer_category || sale.sales_type || (state.selectedCustomerCategory ? state.selectedCustomerCategory.toUpperCase() : 'REGULER');
             const grandTotalStr = formatRupiah(sale.grand_total || 0);
             const subtotalStr = formatRupiah(sale.subtotal || 0);
             const discountStr = (Number(sale.discount) > 0) ? `- ${formatRupiah(sale.discount)}` : 'Rp 0';
@@ -30463,54 +30642,47 @@ Manager / Supervisor: __________________
             const payMethod = sale.payment_method || 'TUNAI';
             const cashReceivedStr = formatRupiah(sale.cash_received || 0);
             const cashChangeStr = formatRupiah(sale.cash_change || 0);
-            const footerNote = s.receipt_footer_line1 || 'Terima kasih atas kunjungan Anda!';
 
-            // Format rincian produk belanja
+            const showSku = s.receipt_body_show_sku === '1';
             const items = sale.items || [];
-            let itemsLines = items.map(it => {
+            let itemLines = items.map(it => {
                 const prodName = it.product_name || it.name || 'Produk';
+                const skuText = (showSku && it.sku) ? ` (${it.sku})` : '';
                 const vName = (it.variant_name && !prodName.includes(it.variant_name)) ? ` [${it.variant_name}]` : '';
                 const qty = it.qty || it.quantity || 1;
                 const unitPrice = it.unit_price || (it.subtotal_price ? Math.round(it.subtotal_price / qty) : 0);
                 const sub = it.subtotal_price || (unitPrice * qty);
-                return `• ${prodName}${vName}\n  ${qty}x @ ${formatRupiah(unitPrice)} = *${formatRupiah(sub)}*`;
+                return `${prodName}${skuText}${vName}\n  ${qty}x @ ${formatRupiah(unitPrice)} = *${formatRupiah(sub)}*`;
             });
-
-            if (Number(sale.delivery_fee) > 0) {
-                const dist = sale.delivery_distance_km ? ` (${formatDecimal(sale.delivery_distance_km)} km)` : '';
-                itemsLines.push(`• Biaya Antar Kurir${dist}: *${formatRupiah(sale.delivery_fee)}*`);
+            const effectiveDriver = sale.driver_name || (sale.effective_driver_name ? sale.effective_driver_name : '');
+            if (sale.delivery_fee && Number(sale.delivery_fee) > 0) {
+                const dist = (sale.delivery_distance_km && Number(sale.delivery_distance_km) > 0) ? ` (${formatDecimal(sale.delivery_distance_km)} km)` : '';
+                const driverInfo = effectiveDriver ? ` • Kurir: ${effectiveDriver}` : '';
+                itemLines.push(`🛵 Biaya Kirim Kurir${dist}${driverInfo}\n  *${formatRupiah(sale.delivery_fee)}*`);
+            } else if (sale.delivery_status && sale.delivery_status !== 'NONE') {
+                const dist = (sale.delivery_distance_km && Number(sale.delivery_distance_km) > 0) ? ` (${formatDecimal(sale.delivery_distance_km)} km)` : '';
+                const driverInfo = effectiveDriver ? ` • Kurir: ${effectiveDriver}` : '';
+                itemLines.push(`🛵 Layanan Antar${dist}: Termasuk Biaya Kirim${driverInfo}\n  *Rp 0*`);
             }
 
-            const itemsSummary = itemsLines.join('\n');
+            const f1 = s.receipt_footer_line1 || 'Terima Kasih Atas Kunjungan Anda!';
+            const f2 = s.receipt_footer_line2 || '';
+            const f3 = s.receipt_footer_line3 || '';
 
-            let template = s.wa_template_message;
-            if (!template || template.trim() === '') {
-                template = `🧾 *NOTA PENJUALAN ELEKTRONIK*
-*{store_name}*
-📍 {branch_name}
-${branchAddress ? `${branchAddress}\n` : ''}----------------------------------------
-No. Faktur : *{invoice_number}*
-Tanggal    : {date}
-Kasir      : {cashier_name}
-Pelanggan  : {customer_name}
-----------------------------------------
-*DETAIL BELANJA:*
-{items_summary}
-----------------------------------------
-Subtotal     : {subtotal}
-${Number(sale.discount) > 0 ? `Diskon       : {discount}\n` : ''}${Number(sale.tax) > 0 ? `Pajak (PPN)  : {tax}\n` : ''}*TOTAL BAYAR : {grand_total}*
-Metode Bayar : {payment_method}
-${(payMethod === 'CASH' || payMethod === 'TUNAI') && Number(sale.cash_received) > 0 ? `Bayar Tunai  : {cash_received}\nKembalian    : {cash_change}\n` : ''}----------------------------------------
-_{footer_note}_`;
-            }
-
-            return template
+            return tpl
+                .replace(/{receipt_layout}/g, layoutReceipt)
                 .replace(/{customer_name}/g, custName)
-                .replace(/{store_name}/g, storeName)
+                .replace(/{store_name}/g, storeTitle)
+                .replace(/{store_title}/g, storeTitle)
+                .replace(/{store_subtitle}/g, storeSubtitle)
                 .replace(/{branch_name}/g, branchName)
+                .replace(/{branch_address}/g, branchAddress)
+                .replace(/{custom_legal}/g, customLegal)
                 .replace(/{cashier_name}/g, cashierName)
                 .replace(/{invoice_number}/g, invoiceNo)
                 .replace(/{date}/g, dateStr)
+                .replace(/{sales_type}/g, salesType)
+                .replace(/{customer_category}/g, salesType)
                 .replace(/{grand_total}/g, grandTotalStr)
                 .replace(/{subtotal}/g, subtotalStr)
                 .replace(/{discount}/g, discountStr)
@@ -30519,8 +30691,11 @@ _{footer_note}_`;
                 .replace(/{payment_method}/g, payMethod)
                 .replace(/{cash_received}/g, cashReceivedStr)
                 .replace(/{cash_change}/g, cashChangeStr)
-                .replace(/{items_summary}/g, itemsSummary)
-                .replace(/{footer_note}/g, footerNote);
+                .replace(/{items_summary}/g, itemLines.join('\n'))
+                .replace(/{footer_note}/g, f1)
+                .replace(/{footer_1}/g, f1)
+                .replace(/{footer_2}/g, f2)
+                .replace(/{footer_3}/g, f3);
         }
 
         function launchWhatsAppDirect(cleanPhone, message) {
