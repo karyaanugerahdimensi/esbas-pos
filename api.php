@@ -8563,10 +8563,16 @@ try {
             $stmtExpCats = $pdo->query("SELECT id, code, name, group_type FROM expense_categories WHERE is_active = 1 ORDER BY name ASC");
             $expenseCategories = $stmtExpCats ? $stmtExpCats->fetchAll(PDO::FETCH_ASSOC) : [];
 
+            // Muat data cabang aktif untuk Geofencing Presensi GPS
+            $stmtBranch = $pdo->prepare("SELECT id, code, name, address, latitude, longitude, radius_meters FROM branches WHERE id = ?");
+            $stmtBranch->execute([$branchId]);
+            $branchData = $stmtBranch->fetch(PDO::FETCH_ASSOC);
+
             echo json_encode([
                 'success' => true,
                 'is_manager' => $isManager,
                 'user' => $user,
+                'branch' => $branchData,
                 'commission' => [
                     'rate_percent' => (float)($user['commission_rate'] ?? 0) * 100,
                     'total_tx' => (int)$commData['total_tx'],
@@ -8581,25 +8587,86 @@ try {
             ]);
             break;
 
+        case 'update_attendance_radius':
+            $branchId = (int)($input['branch_id'] ?? 0);
+            $radiusMeters = (int)($input['radius_meters'] ?? 100);
+            $userId = (int)($input['user_id'] ?? ($_SESSION['user_id'] ?? 0));
+
+            if ($branchId <= 0) {
+                echo json_encode(['success' => false, 'error' => 'ID Cabang tidak valid.']);
+                exit;
+            }
+            if ($radiusMeters < 5 || $radiusMeters > 50000) {
+                echo json_encode(['success' => false, 'error' => 'Jarak radius presensi harus antara 5 sampai 50.000 meter.']);
+                exit;
+            }
+
+            if ($userId > 0) {
+                $stmtU = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                $stmtU->execute([$userId]);
+                $uRole = strtoupper($stmtU->fetchColumn() ?: '');
+                if (!in_array($uRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER', 'ADMINISTRATOR', 'ADMIN'])) {
+                    echo json_encode(['success' => false, 'error' => 'Akses ditolak: Hanya Administrator atau Manager yang berhak mengubah radius presensi.']);
+                    exit;
+                }
+            }
+
+            $stmtUpd = $pdo->prepare("UPDATE branches SET radius_meters = ? WHERE id = ?");
+            $stmtUpd->execute([$radiusMeters, $branchId]);
+
+            echo json_encode([
+                'success' => true,
+                'branch_id' => $branchId,
+                'radius_meters' => $radiusMeters,
+                'message' => "Jarak radius presensi cabang berhasil diatur menjadi {$radiusMeters} meter."
+            ]);
+            break;
+
         case 'ess_clock_in':
             $userId = (int)($input['user_id'] ?? 3);
             $branchId = (int)($input['branch_id'] ?? 1);
             $userLat = (float)($input['latitude'] ?? 0);
             $userLng = (float)($input['longitude'] ?? 0);
 
+            // Validasi Sensor GPS Riil HP / Tablet (Harus posisi ON dan koordinat tidak 0)
+            if (empty($userLat) || empty($userLng) || (abs($userLat) < 0.000001 && abs($userLng) < 0.000001)) {
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Sinyal GPS HP/Tablet tidak terdeteksi! Pastikan GPS / Layanan Lokasi di perangkat dalam posisi ON dan izin akses lokasi peramban telah diberikan.'
+                ]);
+                exit;
+            }
+
             $stmtB = $pdo->prepare("SELECT * FROM branches WHERE id = ?");
             $stmtB->execute([$branchId]);
-            $branch = $stmtB->fetch();
+            $branch = $stmtB->fetch(PDO::FETCH_ASSOC);
 
-            $distance = haversineDistanceMeters($userLat, $userLng, $branch['latitude'], $branch['longitude']);
-            $maxRadius = $branch['radius_meters'] ?? 100;
+            if (!$branch) {
+                echo json_encode(['success' => false, 'error' => 'Data cabang toko tidak ditemukan.']);
+                exit;
+            }
+
+            $branchLat = (float)($branch['latitude'] ?? 0);
+            $branchLng = (float)($branch['longitude'] ?? 0);
+            $maxRadius = (int)($branch['radius_meters'] ?? 100);
+            if ($maxRadius <= 0) $maxRadius = 100;
+
+            if (abs($branchLat) < 0.000001 && abs($branchLng) < 0.000001) {
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Titik koordinat cabang ' . ($branch['name'] ?? '') . ' belum diatur oleh Administrator. Mohon hubungi Administrator untuk melengkapi titik GPS toko cabang.'
+                ]);
+                exit;
+            }
+
+            $distance = haversineDistanceMeters($userLat, $userLng, $branchLat, $branchLng);
 
             if ($distance > $maxRadius) {
                 echo json_encode([
                     'success' => false,
                     'distance_meters' => round($distance, 1),
                     'max_radius' => $maxRadius,
-                    'message' => "Presensi DITOLAK! Anda berada di luar radius toko cabang (" . round($distance, 1) . "m / toleransi {$maxRadius}m)."
+                    'message' => "Presensi DITOLAK! Posisi GPS HP/Tablet Anda terdeteksi berjarak " . round($distance, 1) . "m dari toko (Batas toleransi radius: {$maxRadius}m). Silakan mendekat ke area toko."
                 ]);
                 exit;
             }
@@ -8607,15 +8674,16 @@ try {
             $status = (date('H:i') > '08:15') ? 'LATE' : 'ON_TIME';
             $stmtInsert = $pdo->prepare("
                 INSERT INTO attendance_logs (user_id, branch_id, clock_in, latitude, longitude, distance_meters, status, note)
-                VALUES (?, ?, datetime('now', 'localtime'), ?, ?, ?, ?, 'Presensi Geofencing GPS')
+                VALUES (?, ?, datetime('now', 'localtime'), ?, ?, ?, ?, 'Presensi Geofencing GPS HP/Tablet')
             ");
             $stmtInsert->execute([$userId, $branchId, $userLat, $userLng, $distance, $status]);
 
             echo json_encode([
                 'success' => true,
                 'distance_meters' => round($distance, 1),
+                'max_radius' => $maxRadius,
                 'status' => $status,
-                'message' => "Clock-In BERHASIL! Terverifikasi berjarak " . round($distance, 1) . "m di area toko."
+                'message' => "Clock-In BERHASIL! Terverifikasi berada di area toko (Jarak GPS: " . round($distance, 1) . "m / Radius Maks: {$maxRadius}m)."
             ]);
             break;
 

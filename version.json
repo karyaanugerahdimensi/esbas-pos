@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.5.0",
-    "build": "20261101-76",
+    "version": "1.5.1",
+    "build": "20261101-77",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.5.1",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Perbaikan Sensor GPS Riil HP/Tablet & Pengaturan Dinamis Radius Presensi oleh Administrator (FR-ESS-13)",
+            "description": "Menyempurnakan modul Employee Self Service (ESS) Presensi Digital Geofencing: (1) Sensor GPS Riil HP/Tablet: Mengintegrasikan navigator.geolocation.getCurrentPosition dengan opsi high accuracy dan penanganan kondisi error secara edukatif (GPS HP belum aktif / Location Services OFF, izin peramban ditolak, timeout sinyal); (2) Validasi GPS Wajib Aktif (GPS ON): Menolak Clock-In jika sensor GPS belum terkunci atau koordinat kosong dengan panduan ramah untuk menyalakan tombol Lokasi di HP/Tablet; (3) Pengaturan Jarak Radius Absen Dinamis oleh Administrator: Menyediakan tombol dan modal pintas 'Atur Radius Presensi' khusus role Admin/Superadmin/Branch Manager dengan opsi cepat (25m s/d 500m atau custom) yang langsung tersimpan permanen di database branches.radius_meters; (4) Tampilan Realtime & Akurasi Sensor: Menampilkan koordinat aktual pengguna, akurasi sensor (±X meter), jarak langsung ke cabang (Haversine formula), dan badge validitas radius secara realtime; (5) Kompatibilitas Penuh Android 8.1: 100% sintaks JavaScript aman tanpa operator ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.5.0"
+        },
         {
             "version": "1.5.0",
             "commit": "HEAD",

@@ -1698,32 +1698,84 @@ try {
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                         <!-- Left: Presensi GPS (5 Cols) -->
                         <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                            <h3 class="font-bold text-slate-800 text-sm flex items-center space-x-2 border-b pb-3">
-                                <i data-lucide="map-pin" class="w-4 h-4 text-emerald-600"></i>
-                                <span>Presensi Digital (Geofencing GPS)</span>
-                            </h3>
+                            <div class="flex items-center justify-between border-b pb-3">
+                                <h3 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                                    <i data-lucide="map-pin" class="w-4 h-4 text-emerald-600"></i>
+                                    <span>Presensi Digital (GPS HP/Tablet)</span>
+                                </h3>
+                                <span id="ess-gps-status-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                                    🟡 Menunggu Sinyal GPS
+                                </span>
+                            </div>
+
                             <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3">
+                                <!-- Info Cabang Toko -->
                                 <div class="flex items-center justify-between text-xs">
-                                    <span class="text-slate-500">Lokasi Toko:</span>
-                                    <span id="ess-branch-target" class="font-bold text-slate-700">Cabang Jakarta</span>
+                                    <span class="text-slate-500 font-medium">Lokasi Toko:</span>
+                                    <span id="ess-branch-target" class="font-bold text-slate-800">Cabang Memuat...</span>
                                 </div>
+
+                                <!-- Radius Diizinkan & Tombol Set Radius Admin -->
                                 <div class="flex items-center justify-between text-xs">
-                                    <span class="text-slate-500">Jarak Terdeteksi:</span>
-                                    <span id="ess-geo-distance" class="font-bold text-emerald-600 font-mono text-sm">12.5 Meter (Valid)</span>
+                                    <div class="flex items-center space-x-1.5">
+                                        <span class="text-slate-500 font-medium">Batas Radius Absen:</span>
+                                        <button type="button" id="btn-edit-attendance-radius" onclick="openEditAttendanceRadiusModal()" class="hidden px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-md text-[10px] font-bold transition-colors" title="Ubah batas jarak radius presensi cabang ini">
+                                            ⚙️ Atur Radius
+                                        </button>
+                                    </div>
+                                    <span id="ess-branch-radius-display" class="font-bold text-indigo-700 font-mono">100 Meter</span>
                                 </div>
-                                <div class="pt-2 border-t border-slate-200">
-                                    <label class="block text-[11px] text-slate-400 font-semibold mb-1">Simulasi GPS Karyawan (Untuk Uji Coba):</label>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <button onclick="setSimulatedGps(true)" class="py-1.5 px-2 bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold border border-emerald-300">📍 Di Dalam Toko (12m)</button>
-                                        <button onclick="setSimulatedGps(false)" class="py-1.5 px-2 bg-rose-100 text-rose-800 rounded-xl text-xs font-bold border border-rose-300">🚫 Di Luar Toko (250m)</button>
+
+                                <div class="border-t border-slate-200 pt-2.5 space-y-2">
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-slate-500 font-medium">Koordinat GPS HP:</span>
+                                        <span id="ess-device-coords" class="font-mono text-slate-700 text-[11px] font-bold">Mendeteksi...</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-slate-500 font-medium">Akurasi Sensor:</span>
+                                        <span id="ess-device-accuracy" class="text-slate-500 text-[11px]">-</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-slate-500 font-medium">Jarak Terdeteksi:</span>
+                                        <span id="ess-geo-distance" class="font-bold text-slate-600 font-mono text-xs">Menunggu sinyal GPS...</span>
                                     </div>
                                 </div>
+
+                                <!-- Box Peringatan / Status GPS -->
+                                <div id="ess-gps-alert-box" class="p-2.5 rounded-xl text-xs bg-amber-50 border border-amber-200 text-amber-800 flex items-start space-x-2">
+                                    <i data-lucide="info" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+                                    <div>
+                                        <strong>Pastikan GPS HP/Tablet Aktif!</strong>
+                                        <p class="text-[11px] text-amber-700 mt-0.5 leading-snug">
+                                            Aktifkan sakelar Lokasi/GPS di HP/Tablet Anda (posisi ON) dan izinkan peramban mengakses lokasi agar presensi dapat tervalidasi.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Tombol Refresh GPS -->
+                                <button type="button" id="btn-refresh-gps" onclick="refreshDeviceGps(true)" class="w-full py-2 px-3 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold shadow-2xs flex items-center justify-center space-x-2 transition-all">
+                                    <i data-lucide="crosshair" class="w-3.5 h-3.5 text-indigo-600"></i>
+                                    <span>📡 Ambil / Segarkan Sinyal GPS HP</span>
+                                </button>
+
+                                <!-- Opsi Simulasi GPS (Khusus Pengujian Admin) -->
+                                <div id="ess-simulation-panel" class="pt-2 border-t border-slate-200">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Simulasi GPS (Pengujian Admin):</span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button type="button" onclick="setSimulatedGps(true)" class="py-1 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg text-[10px] font-semibold border border-emerald-200">📍 Di Dalam Toko (12m)</button>
+                                        <button type="button" onclick="setSimulatedGps(false)" class="py-1 px-2 bg-rose-50 hover:bg-rose-100 text-rose-800 rounded-lg text-[10px] font-semibold border border-rose-200">🚫 Di Luar Toko (250m)</button>
+                                    </div>
+                                </div>
+
+                                <!-- Tombol Aksi Clock-In & Clock-Out -->
                                 <div class="grid grid-cols-2 gap-2 pt-2">
-                                    <button onclick="submitClockIn()" class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center space-x-1.5">
+                                    <button type="button" onclick="submitClockIn()" class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center space-x-1.5 transition-all">
                                         <i data-lucide="log-in" class="w-4 h-4"></i>
                                         <span>Clock-In</span>
                                     </button>
-                                    <button onclick="submitClockOut()" class="py-2.5 px-3 bg-slate-700 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center space-x-1.5">
+                                    <button type="button" onclick="submitClockOut()" class="py-2.5 px-3 bg-slate-700 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center space-x-1.5 transition-all">
                                         <i data-lucide="log-out" class="w-4 h-4"></i>
                                         <span>Clock-Out</span>
                                     </button>
@@ -1812,6 +1864,65 @@ try {
                                         <tbody id="ess-reimburse-table-body" class="divide-y divide-slate-100"></tbody>
                                     </table>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MODAL ATUR RADIUS PRESENSI TOKO (ADMIN / MANAGER) -->
+                    <div id="ess-attendance-radius-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto hidden">
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/50">
+                                <div class="flex items-center space-x-2.5">
+                                    <span class="p-2 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-xl">
+                                        <i data-lucide="map-pin" class="w-4 h-4"></i>
+                                    </span>
+                                    <div>
+                                        <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Atur Radius Presensi Toko</h3>
+                                        <p id="ess-radius-branch-name" class="text-[11px] text-slate-500 dark:text-slate-400">Cabang Utama</p>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="closeEditAttendanceRadiusModal()" class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            <div class="p-5 space-y-4 text-xs">
+                                <p class="text-slate-600 dark:text-slate-300">
+                                    Tentukan batas jarak maksimal (dalam meter) antara titik koordinat cabang toko dengan posisi GPS smartphone/tablet kasir atau karyawan saat melakukan Clock-In presensi.
+                                </p>
+
+                                <div>
+                                    <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Jarak Radius Maksimal (Meter):</label>
+                                    <div class="relative">
+                                        <input type="number" id="ess-radius-input" min="5" max="50000" step="5" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold font-mono text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Contoh: 100">
+                                        <span class="absolute right-3.5 top-2.5 font-bold text-slate-400">Meter</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Preset Cepat Pilihan Radius:</label>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        <button type="button" onclick="setRadiusPreset(25)" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg font-bold text-[11px] border border-slate-200 dark:border-slate-700 transition-colors">25m</button>
+                                        <button type="button" onclick="setRadiusPreset(50)" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg font-bold text-[11px] border border-slate-200 dark:border-slate-700 transition-colors">50m</button>
+                                        <button type="button" onclick="setRadiusPreset(100)" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg font-bold text-[11px] border border-slate-200 dark:border-slate-700 transition-colors">100m (Standar)</button>
+                                        <button type="button" onclick="setRadiusPreset(150)" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg font-bold text-[11px] border border-slate-200 dark:border-slate-700 transition-colors">150m</button>
+                                        <button type="button" onclick="setRadiusPreset(200)" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg font-bold text-[11px] border border-slate-200 dark:border-slate-700 transition-colors">200m</button>
+                                        <button type="button" onclick="setRadiusPreset(300)" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg font-bold text-[11px] border border-slate-200 dark:border-slate-700 transition-colors">300m</button>
+                                        <button type="button" onclick="setRadiusPreset(500)" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg font-bold text-[11px] border border-slate-200 dark:border-slate-700 transition-colors">500m</button>
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl text-[11px] text-amber-800 dark:text-amber-300">
+                                    💡 <strong>Tips Akurasi GPS HP:</strong> Sensor GPS smartphone/tablet umumnya memiliki toleransi akurasi 10–30 meter tergantung cuaca dan posisi satelit. Radius 50–150 meter sangat disarankan untuk area pertokoan / ruko.
+                                </div>
+                            </div>
+                            <div class="px-5 py-3.5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end space-x-2">
+                                <button type="button" onclick="closeEditAttendanceRadiusModal()" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs transition-colors">
+                                    Batal
+                                </button>
+                                <button type="button" onclick="saveAttendanceRadius()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-md transition-colors flex items-center space-x-1.5">
+                                    <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                                    <span>Simpan Radius</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -17511,9 +17622,9 @@ Manager / Supervisor: __________________
             const res = await fetch(`api.php?action=ess_get_data&user_id=${uId}&branch_id=${bId}`);
             const data = await res.json();
             if (!data.success) {
-                    console.error('Bootstrap failed:', data.error || 'Unknown error');
-                    return;
-                }
+                console.error('Bootstrap failed:', data.error || 'Unknown error');
+                return;
+            }
 
             if (data.expense_categories && data.expense_categories.length > 0) {
                 state.expenseCategories = data.expense_categories;
@@ -17522,8 +17633,38 @@ Manager / Supervisor: __________________
             initRosterControls();
             populateSwapPeerDropdown();
 
+            // Simpan data geofence cabang dari backend
+            if (data.branch) {
+                state.currentBranchGeofence = data.branch;
+                if (state.currentBranch) {
+                    state.currentBranch.radius_meters = data.branch.radius_meters;
+                    state.currentBranch.latitude = data.branch.latitude;
+                    state.currentBranch.longitude = data.branch.longitude;
+                }
+            }
+
+            const branchObj = data.branch || state.currentBranch || {};
+            const branchName = branchObj.name || (state.currentBranch ? state.currentBranch.name : 'Cabang Utama');
+            const branchRadius = (branchObj.radius_meters !== undefined && branchObj.radius_meters !== null) ? branchObj.radius_meters : 100;
+
+            const branchTargetEl = document.getElementById('ess-branch-target');
+            if (branchTargetEl) branchTargetEl.innerText = branchName;
+
+            const radiusDisplayEl = document.getElementById('ess-branch-radius-display');
+            if (radiusDisplayEl) radiusDisplayEl.innerText = branchRadius + ' Meter';
+
+            // Tombol Atur Radius Presensi khusus Admin / Superadmin / Branch Manager
+            const btnEditRadius = document.getElementById('btn-edit-attendance-radius');
+            if (btnEditRadius) {
+                if (isManager) {
+                    btnEditRadius.classList.remove('hidden');
+                } else {
+                    btnEditRadius.classList.add('hidden');
+                }
+            }
+
             document.getElementById('ess-emp-name').innerText = data.user.name;
-            document.getElementById('ess-emp-role').innerText = `${data.user.role} • NIK: ${data.user.nik} • ${state.currentBranch.name}`;
+            document.getElementById('ess-emp-role').innerText = `${data.user.role} • NIK: ${data.user.nik} • ${branchName}`;
             document.getElementById('ess-commission-amount').innerText = formatRupiah(data.commission.commission_earned);
             document.getElementById('ess-commission-details').innerText = `Rate: ${data.commission.rate_percent}% • Total Omzet: ${formatRupiah(data.commission.total_omzet)}`;
 
@@ -17536,7 +17677,7 @@ Manager / Supervisor: __________________
             } else {
                 todayStatusEl.innerText = 'BELUM CLOCK-IN';
                 todayStatusEl.className = 'px-2 py-0.5 bg-rose-200 text-rose-900 rounded-md font-bold';
-                todayTimeEl.innerText = 'Silakan tekan tombol Clock-In di atas.';
+                todayTimeEl.innerText = 'Silakan periksa GPS dan tekan tombol Clock-In di atas.';
             }
 
             document.getElementById('ess-attendance-history').innerHTML = data.attendance_history.map(ah => `
@@ -17586,45 +17727,350 @@ Manager / Supervisor: __________________
                 </tr>
             `).join('') || `<tr><td colspan="5" class="text-center py-4 text-slate-400">Belum ada klaim reimbursement</td></tr>`;
             lucide.createIcons();
+
+            // Otomatis deteksi GPS perangkat saat modul presensi dibuka
+            refreshDeviceGps(false);
+        }
+
+        // ==========================================
+        // SENSOR GPS RIIL & GEOFENCING PRESENSI TOKO
+        // ==========================================
+        function getDeviceGpsPosition(options) {
+            return new Promise(function(resolve, reject) {
+                if (!navigator || !navigator.geolocation) {
+                    reject({
+                        code: 0,
+                        message: 'Peramban ini tidak mendukung sensor GPS Geolocation.'
+                    });
+                    return;
+                }
+
+                var geoOptions = options || {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                };
+
+                navigator.geolocation.getCurrentPosition(
+                    function(pos) {
+                        resolve({
+                            latitude: pos.coords.latitude,
+                            longitude: pos.coords.longitude,
+                            accuracy: pos.coords.accuracy,
+                            timestamp: pos.timestamp
+                        });
+                    },
+                    function(err) {
+                        var userMessage = 'Gagal membaca sensor GPS.';
+                        if (err.code === 1) { // PERMISSION_DENIED
+                            userMessage = 'Izin Akses Lokasi Ditolak di peramban! Mohon izinkan akses lokasi (Location Permission) di setelan browser untuk presensi.';
+                        } else if (err.code === 2) { // POSITION_UNAVAILABLE
+                            userMessage = 'GPS HP / Tablet Belum Aktif (Location Services OFF)! Mohon aktifkan sakelar GPS/Lokasi di panel notifikasi atau setelan HP/Tablet Anda.';
+                        } else if (err.code === 3) { // TIMEOUT
+                            userMessage = 'Waktu pencarian sinyal GPS habis (Timeout). Pastikan Anda berada di area terbuka agar sinyal satelit GPS HP terkunci.';
+                        } else if (err.message) {
+                            userMessage = err.message;
+                        }
+                        reject({
+                            code: err.code,
+                            message: userMessage,
+                            original: err
+                        });
+                    },
+                    geoOptions
+                );
+            });
+        }
+
+        function calculateHaversineMeters(lat1, lon1, lat2, lon2) {
+            var R = 6371000; // Radius Bumi dalam meter
+            var dLat = (lat2 - lat1) * Math.PI / 180;
+            var dLon = (lon2 - lon1) * Math.PI / 180;
+            var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        async function refreshDeviceGps(showAlert) {
+            var statusBadge = document.getElementById('ess-gps-status-badge');
+            var coordsEl = document.getElementById('ess-device-coords');
+            var accEl = document.getElementById('ess-device-accuracy');
+            var distEl = document.getElementById('ess-geo-distance');
+            var alertBox = document.getElementById('ess-gps-alert-box');
+
+            if (statusBadge) {
+                statusBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 animate-pulse';
+                statusBadge.innerHTML = '🟡 Mencari Sinyal GPS...';
+            }
+            if (distEl) {
+                distEl.innerHTML = '<span class="text-amber-600 animate-pulse font-sans text-xs">📡 Mengunci satelit GPS HP/Tablet...</span>';
+            }
+
+            try {
+                var pos = await getDeviceGpsPosition({ enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+                state.lastDeviceGps = pos;
+
+                if (statusBadge) {
+                    statusBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800';
+                    statusBadge.innerHTML = '🟢 GPS HP Terhubung';
+                }
+                if (coordsEl) {
+                    coordsEl.innerText = pos.latitude.toFixed(6) + ', ' + pos.longitude.toFixed(6);
+                }
+                if (accEl) {
+                    accEl.innerText = 'Akurasi: ±' + Math.round(pos.accuracy) + 'm';
+                }
+
+                var branch = state.currentBranchGeofence || state.currentBranch || {};
+                var bLat = parseFloat(branch.latitude) || 0;
+                var bLng = parseFloat(branch.longitude) || 0;
+                var maxRadius = parseInt(branch.radius_meters) || 100;
+
+                if (Math.abs(bLat) < 0.000001 && Math.abs(bLng) < 0.000001) {
+                    if (distEl) {
+                        distEl.className = 'font-bold text-amber-600 font-mono text-xs';
+                        distEl.innerText = 'Koordinat toko belum diatur Admin';
+                    }
+                    if (alertBox) {
+                        alertBox.className = 'p-2.5 rounded-xl text-xs bg-amber-50 border border-amber-200 text-amber-800 flex items-start space-x-2';
+                        alertBox.innerHTML = '<i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i><span>Titik koordinat cabang toko belum diset oleh Administrator. Presensi belum dapat divalidasi.</span>';
+                        if (window.lucide) lucide.createIcons();
+                    }
+                    return;
+                }
+
+                var distance = calculateHaversineMeters(pos.latitude, pos.longitude, bLat, bLng);
+                var distMetersRounded = Math.round(distance * 10) / 10;
+                state.lastGpsDistance = distMetersRounded;
+
+                if (distance <= maxRadius) {
+                    if (distEl) {
+                        distEl.className = 'font-bold text-emerald-600 font-mono text-sm';
+                        distEl.innerText = distMetersRounded + 'm (Valid di Toko - Batas: ' + maxRadius + 'm)';
+                    }
+                    if (alertBox) {
+                        alertBox.className = 'p-2.5 rounded-xl text-xs bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-start space-x-2';
+                        alertBox.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i><span><strong>Posisi Valid!</strong> Anda berada di area toko (Jarak: ' + distMetersRounded + 'm dari batas toleransi ' + maxRadius + 'm).</span>';
+                        if (window.lucide) lucide.createIcons();
+                    }
+                } else {
+                    if (distEl) {
+                        distEl.className = 'font-bold text-rose-600 font-mono text-sm';
+                        distEl.innerText = distMetersRounded + 'm (Di Luar Radius! Batas: ' + maxRadius + 'm)';
+                    }
+                    if (alertBox) {
+                        alertBox.className = 'p-2.5 rounded-xl text-xs bg-rose-50 border border-rose-200 text-rose-800 flex items-start space-x-2';
+                        alertBox.innerHTML = '<i data-lucide="map-pin-off" class="w-4 h-4 text-rose-600 shrink-0 mt-0.5"></i><span><strong>Di Luar Radius!</strong> Posisi Anda ' + distMetersRounded + 'm melampaui batas radius ' + maxRadius + 'm. Mohon mendekat ke toko untuk presensi.</span>';
+                        if (window.lucide) lucide.createIcons();
+                    }
+                }
+
+                if (showAlert) {
+                    alert('Sinyal GPS Berhasil Diperbarui!\n\nKoordinat: ' + pos.latitude.toFixed(6) + ', ' + pos.longitude.toFixed(6) + '\nAkurasi: ±' + Math.round(pos.accuracy) + ' meter\nJarak ke Toko: ' + distMetersRounded + ' meter (Batas: ' + maxRadius + ' meter)\nStatus: ' + (distance <= maxRadius ? 'VALID (Di dalam area toko)' : 'DI LUAR RADIUS TOKO'));
+                }
+            } catch (err) {
+                state.lastDeviceGps = null;
+                if (statusBadge) {
+                    statusBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800';
+                    statusBadge.innerHTML = '🔴 GPS Tidak Aktif';
+                }
+                if (coordsEl) {
+                    coordsEl.innerText = 'GPS OFF / Ditolak';
+                }
+                if (accEl) {
+                    accEl.innerText = 'Periksa setelan lokasi HP';
+                }
+                if (distEl) {
+                    distEl.className = 'font-bold text-rose-600 font-mono text-xs';
+                    distEl.innerText = 'GPS belum terhubung';
+                }
+                if (alertBox) {
+                    alertBox.className = 'p-2.5 rounded-xl text-xs bg-rose-50 border border-rose-200 text-rose-800 flex items-start space-x-2';
+                    alertBox.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0 mt-0.5"></i><span><strong>GPS Belum Aktif!</strong> ' + (err.message || 'Pastikan GPS HP/Tablet dalam posisi ON dan izin lokasi browser diaktifkan.') + '</span>';
+                    if (window.lucide) lucide.createIcons();
+                }
+
+                if (showAlert) {
+                    alert('⚠️ GAGAL MENGAKSES GPS HP / TABLET!\n\n' + err.message + '\n\nPetunjuk Solusi:\n1. Buka pengaturan HP/Tablet atau geser layar notifikasi atas, hidupkan tombol "Lokasi" (Location ON).\n2. Jika peramban menanyakan izin akses lokasi, pilih "Izinkan" (Allow).\n3. Tekan tombol "Ambil / Segarkan Sinyal GPS HP" sekali lagi.');
+                }
+            }
         }
 
         function setSimulatedGps(isInside) {
-            state.simulatedInsideShop = isInside;
-            const distEl = document.getElementById('ess-geo-distance');
-            if (isInside) {
-                distEl.innerText = '12.5 Meter (Valid di Toko)';
-                distEl.className = 'font-bold text-emerald-600 font-mono text-sm';
-            } else {
-                distEl.innerText = '250.0 Meter (Di Luar Radius!)';
-                distEl.className = 'font-bold text-rose-600 font-mono text-sm';
+            var b = state.currentBranchGeofence || state.currentBranch || {};
+            var bLat = parseFloat(b.latitude) || -6.2088;
+            var bLng = parseFloat(b.longitude) || 106.8456;
+            var maxRadius = parseInt(b.radius_meters) || 100;
+
+            var simulatedLat = isInside ? (bLat + 0.00008) : (bLat + 0.0035);
+            var simulatedLng = isInside ? (bLng + 0.00008) : (bLng + 0.0035);
+
+            state.lastDeviceGps = {
+                latitude: simulatedLat,
+                longitude: simulatedLng,
+                accuracy: 10,
+                isSimulated: true
+            };
+
+            var statusBadge = document.getElementById('ess-gps-status-badge');
+            var coordsEl = document.getElementById('ess-device-coords');
+            var accEl = document.getElementById('ess-device-accuracy');
+            var distEl = document.getElementById('ess-geo-distance');
+            var alertBox = document.getElementById('ess-gps-alert-box');
+
+            if (statusBadge) {
+                statusBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800';
+                statusBadge.innerHTML = '🧪 Mode Uji Coba Admin';
+            }
+            if (coordsEl) coordsEl.innerText = simulatedLat.toFixed(6) + ', ' + simulatedLng.toFixed(6);
+            if (accEl) accEl.innerText = 'Mode: Uji Coba (±10m)';
+
+            var distance = calculateHaversineMeters(simulatedLat, simulatedLng, bLat, bLng);
+            var distMetersRounded = Math.round(distance * 10) / 10;
+
+            if (distEl) {
+                distEl.className = 'font-bold ' + (distance <= maxRadius ? 'text-emerald-600' : 'text-rose-600') + ' font-mono text-sm';
+                distEl.innerText = distMetersRounded + 'm (' + (distance <= maxRadius ? 'Valid di Toko' : 'Di Luar Radius!') + ' - Batas: ' + maxRadius + 'm)';
+            }
+            if (alertBox) {
+                alertBox.className = 'p-2.5 rounded-xl text-xs ' + (distance <= maxRadius ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800') + ' border flex items-start space-x-2';
+                alertBox.innerHTML = '<i data-lucide="info" class="w-4 h-4 shrink-0 mt-0.5"></i><span>[Mode Pengujian Admin] Posisi disimulasikan ' + (isInside ? 'DI DALAM' : 'DI LUAR') + ' radius toko (' + distMetersRounded + 'm dari batas toleransi ' + maxRadius + 'm).</span>';
+                if (window.lucide) lucide.createIcons();
             }
         }
 
         async function submitClockIn() {
-            const b = state.currentBranch;
-            const u = state.currentUser;
-            const lat = state.simulatedInsideShop ? b.latitude + 0.00008 : b.latitude + 0.003;
-            const lng = state.simulatedInsideShop ? b.longitude + 0.00008 : b.longitude + 0.003;
-            const res = await fetch('api.php?action=ess_clock_in', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: u.id, branch_id: b.id, latitude: lat, longitude: lng })
-            });
-            const data = await res.json();
-            alert(data.message || data.error);
-            if (data.success) loadEssData();
+            var b = state.currentBranchGeofence || state.currentBranch || {};
+            var u = state.currentUser || state.loggedInUser || {};
+
+            // Mengambil koordinat GPS nyata dari sensor perangkat HP / Tablet
+            var pos = null;
+            if (state.lastDeviceGps && state.lastDeviceGps.isSimulated) {
+                pos = state.lastDeviceGps;
+            } else {
+                try {
+                    pos = await getDeviceGpsPosition({ enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+                    state.lastDeviceGps = pos;
+                } catch (err) {
+                    alert('⚠️ TIDAK DAPAT CLOCK-IN KARENA GPS BELUM AKTIF!\n\n' + err.message + '\n\nLangkah-langkah Penanganan:\n1. Pastikan sakelar LOKASI / GPS di HP/Tablet dalam posisi ON (Aktif).\n2. Berikan izin akses lokasi untuk peramban web ini.\n3. Tekan tombol "Ambil Sinyal GPS HP", lalu coba Clock-In kembali.');
+                    return;
+                }
+            }
+
+            if (!pos || !pos.latitude || !pos.longitude) {
+                alert('Sinyal GPS tidak terdeteksi. Pastikan GPS HP/Tablet dalam posisi ON.');
+                return;
+            }
+
+            try {
+                var res = await fetch('api.php?action=ess_clock_in', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: u.id,
+                        branch_id: b.id,
+                        latitude: pos.latitude,
+                        longitude: pos.longitude
+                    })
+                });
+                var data = await res.json();
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    loadEssData();
+                } else {
+                    alert('❌ ' + (data.message || data.error || 'Clock-in gagal'));
+                }
+            } catch (netErr) {
+                alert('Gagal menghubungi server: ' + netErr.message);
+            }
         }
 
         async function submitClockOut() {
-            const u = state.currentUser;
-            const res = await fetch('api.php?action=ess_clock_out', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: u.id })
-            });
-            const data = await res.json();
-            alert(data.message || data.error);
-            if (data.success) loadEssData();
+            var u = state.currentUser || state.loggedInUser || {};
+            try {
+                var res = await fetch('api.php?action=ess_clock_out', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: u.id })
+                });
+                var data = await res.json();
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    loadEssData();
+                } else {
+                    alert('❌ ' + (data.message || data.error || 'Clock-out gagal'));
+                }
+            } catch (netErr) {
+                alert('Gagal menghubungi server: ' + netErr.message);
+            }
+        }
+
+        // ==========================================
+        // PENGATURAN RADIUS PRESENSI OLEH ADMIN
+        // ==========================================
+        function openEditAttendanceRadiusModal() {
+            var branch = state.currentBranchGeofence || state.currentBranch || {};
+            var modal = document.getElementById('ess-attendance-radius-modal');
+            if (!modal) return;
+
+            var nameEl = document.getElementById('ess-radius-branch-name');
+            var inputEl = document.getElementById('ess-radius-input');
+            if (nameEl) nameEl.innerText = branch.name || 'Cabang Aktif';
+            if (inputEl) inputEl.value = (branch.radius_meters !== undefined && branch.radius_meters !== null) ? branch.radius_meters : 100;
+
+            modal.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function closeEditAttendanceRadiusModal() {
+            var modal = document.getElementById('ess-attendance-radius-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function setRadiusPreset(val) {
+            var inputEl = document.getElementById('ess-radius-input');
+            if (inputEl) inputEl.value = val;
+        }
+
+        async function saveAttendanceRadius() {
+            var branch = state.currentBranchGeofence || state.currentBranch || {};
+            var inputEl = document.getElementById('ess-radius-input');
+            var radiusVal = parseInt(inputEl ? inputEl.value : 100) || 100;
+
+            if (radiusVal < 5 || radiusVal > 50000) {
+                alert('Jarak radius harus di antara 5 meter sampai 50.000 meter.');
+                return;
+            }
+
+            var u = state.currentUser || state.loggedInUser || {};
+
+            try {
+                var res = await fetch('api.php?action=update_attendance_radius', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        branch_id: branch.id,
+                        radius_meters: radiusVal,
+                        user_id: u.id
+                    })
+                });
+                var data = await res.json();
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    closeEditAttendanceRadiusModal();
+                    if (state.currentBranchGeofence) state.currentBranchGeofence.radius_meters = radiusVal;
+                    if (state.currentBranch) state.currentBranch.radius_meters = radiusVal;
+                    var displayEl = document.getElementById('ess-branch-radius-display');
+                    if (displayEl) displayEl.innerText = radiusVal + ' Meter';
+                    refreshDeviceGps(false);
+                } else {
+                    alert('❌ ' + (data.error || data.message || 'Gagal menyimpan radius presensi.'));
+                }
+            } catch (err) {
+                alert('Gagal menghubungi server: ' + err.message);
+            }
         }
 
         async function submitReimbursement() {
