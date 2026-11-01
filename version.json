@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.3.6",
-    "build": "20261101-61",
+    "version": "1.3.7",
+    "build": "20261101-62",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.3.7",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Perbaikan SyntaxError Layar Login & Proteksi Integritas JavaScript Otomatis (FR-CORE-02)",
+            "description": "Menyelesaikan tuntas error login dan ReferenceError selectQuickAccount akibat SyntaxError pada pemetaan cabang peta serta mengintegrasikan sistem uji regresi sintaks otomatis: (1) Koreksi Token Sintaks Cabang: Memperbaiki ekspresi pemetaan cabang curBId pada fungsi populateBranchMapSelections yang sebelumnya terformat state.(branches[0]... menjadi ekspresi aman ((state.branches && state.branches[0]) ? state.branches[0].id : 1), mengeliminasi Uncaught SyntaxError Unexpected token '('; (2) Pemulihan Penuh Fungsi selectQuickAccount & Login Kasir: Menjamin skrip utama dievaluasi sukses 100% sehingga kartu Pilih Cepat Akun dan tombol submit login langsung berfungsi normal; (3) Skrip Proteksi Integritas Otomatis (test_js_syntax_integrity.php): Mengembangkan modul verifikasi mandiri yang memindai seluruh 21.000+ baris JavaScript untuk mendeteksi token ilegal atau sintaks ES2020 sebelum rilis rilis.",
+            "rollback_command": "git checkout v1.3.6"
+        },
         {
             "version": "1.3.6",
             "commit": "HEAD",

@@ -28272,7 +28272,7 @@ Manager / Supervisor: __________________
             const bSelect = document.getElementById('branch-map-select');
             if (!bSelect) return;
 
-            const curBId = state.currentBranch ? state.currentBranch.id : (state.(branches[0] ? branches[0].id : 1) || 1);
+            const curBId = state.currentBranch ? state.currentBranch.id : ((state.branches && state.branches[0]) ? state.branches[0].id : 1);
             bSelect.innerHTML = state.branches.map(b => `
                 <option value="${b.id}" ${b.id === curBId ? 'selected' : ''}>🏢 ${b.name} (${b.code})</option>
             `).join('');
@@ -31269,7 +31269,6 @@ Manager / Supervisor: __________________
 
             // Jika ada template kustom lain tanpa {receipt_layout}, gabungkan dengan layout nota utuh di bawahnya
             return tpl + '\n\n' + layoutReceipt;
-        }
         }
 
         function launchWhatsAppDirect(cleanPhone, message) {
