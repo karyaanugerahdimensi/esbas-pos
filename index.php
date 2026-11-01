@@ -73,7 +73,7 @@ try {
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="ESBAS POS">
     <meta name="application-name" content="ESBAS POS Retail">
-    <link rel="manifest" href="manifest.json?v=1.3.9">
+    <link rel="manifest" href="manifest.json?v=1.4.0">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
     <title>ESBAS Retail - POS Multi-Cabang v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</title>
@@ -11209,6 +11209,23 @@ try {
         }
 
         // ==========================================
+        // DEVICE LOCAL TIME HELPER (ANDROID & PWA COMPATIBLE)
+        // Mencegah pergeseran waktu UTC (misal selisih 7 jam WIB)
+        // ==========================================
+        function getDeviceLocalDateTimeString(dateObj) {
+            var d = dateObj || new Date();
+            var pad = function(n) { return (n < 10 ? '0' : '') + n; };
+            return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' +
+                   pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+        }
+
+        function getDeviceLocalDateString(dateObj) {
+            var d = dateObj || new Date();
+            var pad = function(n) { return (n < 10 ? '0' : '') + n; };
+            return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+        }
+
+        // ==========================================
         // UNIVERSAL FLOATING TOAST NOTIFICATION
         // ==========================================
         function showToast(message, type = 'info') {
@@ -13585,7 +13602,7 @@ try {
                     payment_status: (state.paymentMethod === 'PIUTANG') ? 'UNPAID' : 'PAID',
                     cash_received: (state.paymentMethod === 'PIUTANG') ? 0 : state.cashReceived,
                     cash_change: (state.paymentMethod === 'CASH') ? Math.max(0, state.cashReceived - grandTotal) : 0,
-                    created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),
+                    created_at: getDeviceLocalDateTimeString(),
                     is_offline: 1,
                     synced: 0,
                     items: state.cart.map(c => ({
@@ -15359,7 +15376,7 @@ try {
                         initial_cash: initCash,
                         status: 'OPEN',
                         cashier_name: (state.currentUser ? state.currentUser.name : 'Kasir') || 'Kasir',
-                        start_time: new Date().toISOString()
+                        start_time: getDeviceLocalDateTimeString()
                     };
                     await OfflineDB.setItem('offline_shifts', offShift);
                     data = {

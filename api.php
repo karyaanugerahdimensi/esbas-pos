@@ -519,12 +519,16 @@ try {
                     $paymentStatus = ($paymentMethod === 'PIUTANG') ? 'UNPAID' : 'PAID';
                     $cashReceived = (float)($saleItem['cash_received'] ?? ($paymentMethod === 'CASH' ? $grandTotal : 0));
                     $cashChange = (float)($saleItem['cash_change'] ?? 0);
-                    $rawCreated = $saleItem['created_at'] ?? '';
+                    $rawCreated = trim((string)($saleItem['created_at'] ?? ''));
                     $createdAt = date('Y-m-d H:i:s');
                     if (!empty($rawCreated)) {
-                        $ts = strtotime($rawCreated);
-                        if ($ts && $ts > 0) {
-                            $createdAt = date('Y-m-d H:i:s', $ts);
+                        if (preg_match('/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}/', $rawCreated)) {
+                            $createdAt = substr(str_replace('T', ' ', $rawCreated), 0, 19);
+                        } else {
+                            $ts = strtotime($rawCreated);
+                            if ($ts && $ts > 0) {
+                                $createdAt = date('Y-m-d H:i:s', $ts);
+                            }
                         }
                     }
 
@@ -643,7 +647,18 @@ try {
             $shiftData = $input['shift_data'] ?? $input;
             $branchId = (int)($shiftData['branch_id'] ?? ($currentBranch['id'] ?? 1));
             $userId = (int)($shiftData['user_id'] ?? ($_SESSION['user_id'] ?? 1));
-            $startTime = !empty($shiftData['start_time']) ? $shiftData['start_time'] : date('Y-m-d H:i:s');
+            $rawStartTime = trim((string)($shiftData['start_time'] ?? ''));
+            $startTime = date('Y-m-d H:i:s');
+            if (!empty($rawStartTime)) {
+                if (preg_match('/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}/', $rawStartTime)) {
+                    $startTime = substr(str_replace('T', ' ', $rawStartTime), 0, 19);
+                } else {
+                    $ts = strtotime($rawStartTime);
+                    if ($ts && $ts > 0) {
+                        $startTime = date('Y-m-d H:i:s', $ts);
+                    }
+                }
+            }
             $startCash = (float)($shiftData['starting_cash'] ?? 0);
             $shiftCode = $shiftData['shift_code'] ?? 'SHIFT_1';
 

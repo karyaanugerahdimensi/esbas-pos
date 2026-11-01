@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.3.9",
-    "build": "20261101-64",
+    "version": "1.4.0",
+    "build": "20261101-65",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.4.0",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Sinkronisasi Waktu Transaksi Offline Mengikuti Jam Nyata Lokal Perangkat (FR-POS-47)",
+            "description": "Menyelesaikan tuntas ketidaksesuaian jam transaksi saat sinkronisasi offline-online di perangkat Android di mana transaksi offline sebelumnya tercatat 7 jam lebih lambat (UTC 07:34 vs WIB 14:34): (1) Eliminasi Date.prototype.toISOString() pada Perekaman Transaksi Offline: Menghentikan pemakaian toISOString() yang secara bawaan mengonversi waktu lokal ke UTC/GMT+0 pada index.php; (2) Standardisasi Fungsi Waktu Lokal Perangkat (getDeviceLocalDateTimeString): Membangun modul pembantu waktu lokal berbasis komponen peramban perangkat (tahun, bulan, tanggal, jam, menit, detik) berformat standar YYYY-MM-DD HH:mm:ss yang mempertahankan 100% jam nyata lokal perangkat kasir dan kompatibel penuh dengan Android 8; (3) Penyelarasan Transaksi & Shift Offline: Menerapkan waktu lokal perangkat pada pembuatan transaksi offline (created_at) dan pembukaan shift kasir offline (start_time) sehingga struk fisik kasir seketika mencetak jam lokal yang tepat; (4) Proteksi Sanitasi Waktu Backend Tanpa Distorsi Timezone: Memperbarui endpoint sync_offline_sales dan sync_offline_shift di api.php dengan regex presisi agar langsung menyimpan waktu lokal perangkat tanpa distorsi konversi zona waktu server.",
+            "rollback_command": "git checkout v1.3.9"
+        },
         {
             "version": "1.3.9",
             "commit": "HEAD",
