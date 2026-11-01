@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.6.0",
-    "build": "20261101-86",
+    "version": "1.6.1",
+    "build": "20261101-87",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.6.1",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Sinkronisasi & Rekonsiliasi Otomatis Stok Awal pada Opening/Closing Shift serta Eliminasi Default Value Form Shift (FR-POS-59, FR-STK-12)",
+            "description": "Memperbaiki pembacaan Stok Awal pada alur Buka Toko (Opening Day) & Tutup Toko (Closing Day) serta membersihkan seluruh nilai default pada kotak input stok shift: (1) Preservasi Stok Awal Tanpa Input Tambahan di Opening Shift: Memperbaiki get_opening_shift_data dan open_shift di api.php agar produk yang sudah memiliki Stok Awal sah di cabang (contoh: Aqua Refill 19 Liter / PRD-00006 dengan Stok Awal 12 galon) tetap mewarisi dan menampilkan Stok Awal 12 galon meskipun kasir tidak mengisi penambahan stok pagi maupun ketika tabel riwayat shift kosong pasca-reset pengecualian stok awal; (2) Rekonsiliasi Otomatis Shift Aktif & Sinkronisasi Setel Stok Awal: Menambahkan mekanisme auto-heal pada get_closing_shift_data dan get_shift_reports untuk memulihkan opening_qty produk non-tutup-galon yang terlanjur tercatat 0 pada shift OPEN berdasarkan saldo aktual cabang + penjualan shift berjalan, serta menyinkronkan langsung opening_items_json ketika Administrator menyetel INITIAL_STOCK baru saat toko sedang buka; (3) Eliminasi Default Value pada Form Opening & Closing Day: Menghapus nilai awal maupun angka placeholder default ('0' pada input tambah stok Opening Day serta '10' / '0' pada input sisa fisik Closing Day) sehingga seluruh kolom input stok tampil bersih kosong siap diisi sesuai perhitungan fisik nyata (tetap mempertahankan default Modal Kasir Rp 50.000); (4) Kompatibilitas Penuh Android 8.1: 100% sintaks JavaScript standar ES5/ES6 bebas operator ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.6.0"
+        },
         {
             "version": "1.6.0",
             "commit": "HEAD",

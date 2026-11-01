@@ -15671,13 +15671,10 @@ try {
                             const isCapRaw = (item.sku === 'RAW-089' || item.sku === 'RAW-020' || (item.name || '').toLowerCase().includes('tutup galon'));
 
                             let sopBadge = '';
-                            let placeholderText = '0';
                             if (isGalonFg) {
                                 sopBadge = `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">🎯 Standar Closing: 10 Galon (Wajib Standby)</span>`;
-                                placeholderText = '10';
                             } else if (isCapRaw) {
                                 sopBadge = `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300">🔄 Sisa Fisik Diretur ke Gudang</span>`;
-                                placeholderText = 'Sisa retur...';
                             }
 
                             return `
@@ -15699,7 +15696,7 @@ try {
                                     </div>
                                     <div class="sm:col-span-4">
                                         <div class="relative">
-                                            <input type="number" ${legacyId} data-product-id="${item.product_id}" data-product-name="${itemName}" data-unit="${itemUnit}" data-opening-qty="${item.opening_qty}" min="0" value="" placeholder="${placeholderText}" class="shift-closing-item-input w-full text-center py-2 px-3 bg-white border border-rose-200 rounded-xl font-black text-slate-900 text-sm focus:ring-2 focus:ring-rose-500 shadow-inner">
+                                            <input type="number" ${legacyId} data-product-id="${item.product_id}" data-product-name="${itemName}" data-unit="${itemUnit}" data-opening-qty="${item.opening_qty}" min="0" value="" placeholder="" class="shift-closing-item-input w-full text-center py-2 px-3 bg-white border border-rose-200 rounded-xl font-black text-slate-900 text-sm focus:ring-2 focus:ring-rose-500 shadow-inner">
                                         </div>
                                     </div>
                                 </div>
@@ -16108,7 +16105,7 @@ try {
                                         </div>
                                         <div class="flex items-center space-x-1.5 shrink-0">
                                             <span class="text-xs font-black text-emerald-600">+</span>
-                                            <input type="number" ${legacyId} data-product-id="${item.product_id}" data-sku="${item.sku}" data-product-name="${itemName}" data-unit="${itemUnit}" data-night-stock="${item.night_stock}" oninput="calculateOpeningShiftVariance()" value="0" min="0" placeholder="0" class="shift-added-item-input w-20 sm:w-24 text-center py-1.5 px-2 bg-emerald-50/50 border-2 border-emerald-300 rounded-xl font-black text-emerald-950 text-sm focus:ring-2 focus:ring-emerald-500 shadow-inner">
+                                            <input type="number" ${legacyId} data-product-id="${item.product_id}" data-sku="${item.sku}" data-product-name="${itemName}" data-unit="${itemUnit}" data-night-stock="${item.night_stock}" oninput="calculateOpeningShiftVariance()" value="" min="0" placeholder="" class="shift-added-item-input w-20 sm:w-24 text-center py-1.5 px-2 bg-emerald-50/50 border-2 border-emerald-300 rounded-xl font-black text-emerald-950 text-sm focus:ring-2 focus:ring-emerald-500 shadow-inner">
                                         </div>
                                     </div>
                                     <div id="item-calc-badge-${item.product_id}" class="text-[11px] pt-1.5 border-t border-slate-100 flex items-center justify-between text-slate-600 transition-all">
@@ -16128,6 +16125,7 @@ try {
 
                             const itemName = escapeHtml(item.name || item.sku);
                             const itemUnit = escapeHtml(item.unit || 'pcs');
+                            const nightSourceLabel = prevInfo ? 'Sisa Closing Kemarin' : 'Stok Awal Tercatat';
 
                             return `
                                 <div class="bg-white/90 p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col space-y-2">
@@ -16137,7 +16135,7 @@ try {
                                                 <span class="text-xs font-black text-slate-700 uppercase leading-snug break-words">${itemName}</span>
                                                 <span class="text-[9px] px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded font-bold">${itemUnit}</span>
                                             </div>
-                                            <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${item.sku} • Sisa Closing Kemarin</span>
+                                            <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${item.sku} • ${nightSourceLabel}</span>
                                         </div>
                                         <div class="w-20 sm:w-24 text-center py-1.5 px-2 bg-slate-100 border border-slate-300 rounded-xl font-black text-slate-700 text-sm shadow-inner relative">
                                             <input type="hidden" ${legacyIdNight} data-product-id="${item.product_id}" value="${item.night_stock}" class="shift-night-item-input">
@@ -16183,7 +16181,7 @@ try {
                                             <span class="text-[10px] sm:text-[11px] text-emerald-700 font-bold">Input Tambahan Saja</span>
                                         </div>
                                         <p class="text-[10px] text-slate-500 italic mt-1 leading-snug">
-                                            Diisi hanya jika ada penambahan stok baru masuk pagi ini (default: 0). Rumus: <b>Stok Awal = Input Tambahan + Stok Malam</b>.
+                                            Kosongkan jika tidak ada penambahan stok baru masuk pagi ini. Rumus: <b>Stok Awal = Input Tambahan + Stok Acuan</b>.
                                         </p>
                                     </div>
                                     <div class="space-y-2.5">
@@ -16451,7 +16449,7 @@ try {
                 </div>
                 <div class="sm:col-span-3">
                     <label class="block text-[9px] font-bold text-slate-500 uppercase">Nominal (Rp)</label>
-                    <input type="number" min="0" placeholder="0" oninput="updateClosingCashSummary()" class="expense-amount-input w-full p-1.5 bg-white border border-rose-200 rounded-lg text-xs font-black text-rose-900 text-right focus:ring-1 focus:ring-rose-500">
+                    <input type="number" min="0" placeholder="" oninput="updateClosingCashSummary()" class="expense-amount-input w-full p-1.5 bg-white border border-rose-200 rounded-lg text-xs font-black text-rose-900 text-right focus:ring-1 focus:ring-rose-500">
                 </div>
                 <div class="sm:col-span-4">
                     <label class="block text-[9px] font-bold text-slate-500 uppercase">Keterangan / Keperluan</label>
@@ -16487,7 +16485,7 @@ try {
                 </div>
                 <div class="sm:col-span-3">
                     <label class="block text-[9px] font-bold text-slate-500 uppercase">Nominal Kasbon (Rp)</label>
-                    <input type="number" min="0" placeholder="0" oninput="updateClosingCashSummary()" class="loan-amount-input w-full p-1.5 bg-white border border-amber-200 rounded-lg text-xs font-black text-amber-900 text-right focus:ring-1 focus:ring-amber-500">
+                    <input type="number" min="0" placeholder="" oninput="updateClosingCashSummary()" class="loan-amount-input w-full p-1.5 bg-white border border-amber-200 rounded-lg text-xs font-black text-amber-900 text-right focus:ring-1 focus:ring-amber-500">
                 </div>
                 <div class="sm:col-span-4">
                     <label class="block text-[9px] font-bold text-slate-500 uppercase">Alasan Kasbon</label>
@@ -16523,7 +16521,7 @@ try {
                 </div>
                 <div class="sm:col-span-3">
                     <label class="block text-[9px] font-bold text-slate-500 uppercase">Uang Makan (Rp)</label>
-                    <input type="number" min="0" placeholder="25000" oninput="updateClosingCashSummary()" class="meal-amount-input w-full p-1.5 bg-white border border-emerald-200 rounded-lg text-xs font-black text-emerald-900 text-right focus:ring-1 focus:ring-emerald-500">
+                    <input type="number" min="0" placeholder="" oninput="updateClosingCashSummary()" class="meal-amount-input w-full p-1.5 bg-white border border-emerald-200 rounded-lg text-xs font-black text-emerald-900 text-right focus:ring-1 focus:ring-emerald-500">
                 </div>
                 <div class="sm:col-span-4">
                     <label class="block text-[9px] font-bold text-slate-500 uppercase">Keterangan Shift</label>
@@ -16844,9 +16842,12 @@ try {
             const isShiftOpen = state.activeShift && state.activeShift.status === 'OPEN';
             if (isShiftOpen) {
                 const actual = parseFloat(document.getElementById('shift-input-actual-cash').value) || 0;
-                const closeMin = document.getElementById('closing-raw-mineral') ? parseInt(document.getElementById('closing-raw-mineral').value) : null;
-                const closeRo = document.getElementById('closing-raw-ro') ? parseInt(document.getElementById('closing-raw-ro').value) : null;
-                const closePl = document.getElementById('closing-raw-plastik') ? parseInt(document.getElementById('closing-raw-plastik').value) : null;
+                const elCloseMin = document.getElementById('closing-raw-mineral');
+                const elCloseRo = document.getElementById('closing-raw-ro');
+                const elClosePl = document.getElementById('closing-raw-plastik');
+                const closeMin = (elCloseMin && elCloseMin.value.trim() !== '') ? parseInt(elCloseMin.value) : null;
+                const closeRo = (elCloseRo && elCloseRo.value.trim() !== '') ? parseInt(elCloseRo.value) : null;
+                const closePl = (elClosePl && elClosePl.value.trim() !== '') ? parseInt(elClosePl.value) : null;
                 const notes = _val('shift-input-notes') || '';
                 const isFinal = _chk('check-is-final-shift') ? 1 : 0;
 
@@ -17016,7 +17017,7 @@ try {
                         if (isCap && nextNum === 1) {
                             nightStock = 0;
                         }
-                        const hasVal = (input.value !== '' && input.value !== null);
+                        const hasVal = (input.value !== '' && input.value !== null && input.value.trim() !== '');
                         const rawVal = hasVal ? parseInt(input.value) : null;
                         const addedQty = (rawVal !== null && !isNaN(rawVal) && rawVal > 0) ? rawVal : null;
                         const openingQty = (addedQty !== null) ? (nightStock + addedQty) : nightStock;

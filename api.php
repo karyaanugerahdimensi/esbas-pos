@@ -4692,10 +4692,41 @@ try {
             $refPrefix = ($adjType === 'INITIAL_STOCK') ? 'INIT-' : 'ADJ-';
             $refNo = $refPrefix . date('Ymd-His');
             $stmtLog = $pdo->prepare("
-                INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
-            $stmtLog->execute([$branchId, $productId, $adjType, $qtyChange, $currentStock, $newStock, $refNo, $notes, $userId]);
+            $stmtLog->execute([$branchId, $productId, $adjType, $qtyChange, $currentStock, $newStock, $refNo, $notes, $userId, $now]);
+
+            // Jika penyetelan adalah Stok Awal (INITIAL_STOCK) dan di cabang ini sedang ada shift berstatus OPEN,
+            // sinkronkan langsung nilai Stok Awal pada opening_items_json shift aktif tersebut (kecuali bahan baku tutup galon)
+            if ($adjType === 'INITIAL_STOCK') {
+                try {
+                    $stmtChkCap = $pdo->prepare("SELECT sku, name FROM products WHERE id = ?");
+                    $stmtChkCap->execute([$productId]);
+                    $pMetaInit = $stmtChkCap->fetch(PDO::FETCH_ASSOC);
+                    $isCapInit = $pMetaInit && ($pMetaInit['sku'] === 'RAW-089' || $pMetaInit['sku'] === 'RAW-020' || stripos($pMetaInit['name'] ?? '', 'Tutup Galon') !== false);
+                    if (!$isCapInit) {
+                        $stmtOpenSh = $pdo->prepare("SELECT id, opening_items_json FROM cashier_shifts WHERE branch_id = ? AND status = 'OPEN' ORDER BY id DESC LIMIT 1");
+                        $stmtOpenSh->execute([$branchId]);
+                        $openShRow = $stmtOpenSh->fetch(PDO::FETCH_ASSOC);
+                        if ($openShRow) {
+                            $openShId = (int)$openShRow['id'];
+                            $openMapCur = !empty($openShRow['opening_items_json']) ? (json_decode($openShRow['opening_items_json'], true) ?: []) : [];
+                            $stmtSoldActive = $pdo->prepare("
+                                SELECT COALESCE(SUM(si.qty), 0)
+                                FROM sale_items si
+                                JOIN sales s ON s.id = si.sale_id
+                                WHERE s.shift_id = ? AND si.product_id = ? AND (s.status IS NULL OR s.status != 'CANCELLED')
+                            ");
+                            $stmtSoldActive->execute([$openShId, $productId]);
+                            $soldActiveQty = (float)$stmtSoldActive->fetchColumn();
+                            $openMapCur[$productId] = max(0, $newStock + $soldActiveQty);
+                            $pdo->prepare("UPDATE cashier_shifts SET opening_items_json = ? WHERE id = ?")
+                                ->execute([json_encode($openMapCur), $openShId]);
+                        }
+                    }
+                } catch (Exception $eSyncOpenInit) {}
+            }
 
             $pdo->commit();
 
@@ -5635,6 +5666,13 @@ try {
                 } catch (Exception $eFb) {}
             }
 
+            $stmtBsMap = $pdo->prepare("SELECT product_id, stock FROM branch_stocks WHERE branch_id = ?");
+            $stmtBsMap->execute([$branchId]);
+            $branchStockExistsMap = [];
+            while ($bsRowCheck = $stmtBsMap->fetch(PDO::FETCH_ASSOC)) {
+                $branchStockExistsMap[(int)$bsRowCheck['product_id']] = (float)$bsRowCheck['stock'];
+            }
+
             $dynamicItems = [];
             $rawBySku = [];
             $nightStockLegacy = ['mineral' => 0, 'ro' => 0, 'plastik' => 0];
@@ -5643,10 +5681,17 @@ try {
             foreach ($trackedRows as $r) {
                 $pId = (int)$r['product_id'];
                 $sku = $r['sku'];
-                $bStock = (int)$r['branch_stock'];
+                $hasBsRow = array_key_exists($pId, $branchStockExistsMap);
+                $bStock = $hasBsRow ? $branchStockExistsMap[$pId] : (float)$r['branch_stock'];
 
-                // Resolusi Stok Acuan Shift sebelumnya (Stok malam kemarin atau sisa serah terima shift 1)
-                $refQty = 0; // Default bersih 0 jika tidak ada shift sebelumnya atau pasca reset
+                // Resolusi Stok Acuan Pembukaan Shift:
+                // 1. Tutup Galon pada awal hari baru (Shift 1) mulai dari 0 di meja kasir (sisa semalam diretur ke gudang).
+                // 2. Untuk produk lain (misal Aqua Refill 19 Liter, Gas 3 KG, Air Mineral, Es Kristal):
+                //    - Jika belum ada riwayat shift yang ditutup (misal DB baru atau pasca Reset dengan Pertahankan Stok Awal),
+                //      gunakan saldo stok cabang saat ini ($bStock): bernilai 0 jika di-reset total, atau bernilai Stok Awal (misal 12) jika tercatat!
+                //    - Jika sudah ada shift tertutup sebelumnya, utamakan saldo aktual cabang ($bStock) bila baris branch_stocks tersedia,
+                //      agar penyetelan Stok Awal / Penambahan Stok Manual / Reset Stok di luar shift selalu sinkron dengan Opening Shift.
+                $refQty = 0;
                 $isPrevFinal = $lastShift && !empty($lastShift['is_final_shift']);
                 $isCapSku = ($sku === 'RAW-089' || $sku === 'RAW-020' || stripos($r['name'] ?? '', 'Tutup Galon') !== false);
                 $isNewDayOrShift1 = (!$isContinuation || $nextShiftNumber == 1);
@@ -5655,17 +5700,24 @@ try {
                     // Sisa tutup semalam telah diretur ke gudang saat tutup toko, sehingga stok fisik semalam di toko bersih 0
                     $refQty = 0;
                 } elseif ($lastShift && $lastShift['status'] === 'CLOSED') {
-                    // Mengacu pada sisa fisik yang tercatat saat shift ditutup (closing_items_json)
+                    $closedVal = null;
                     if (!empty($lastClosingItems) && isset($lastClosingItems[$pId]) && $lastClosingItems[$pId] !== '' && $lastClosingItems[$pId] !== null) {
-                        $refQty = (float)$lastClosingItems[$pId];
+                        $closedVal = (float)$lastClosingItems[$pId];
                     } elseif (!empty($lastClosingItems) && isset($lastClosingItems[$sku]) && $lastClosingItems[$sku] !== '' && $lastClosingItems[$sku] !== null) {
-                        $refQty = (float)$lastClosingItems[$sku];
+                        $closedVal = (float)$lastClosingItems[$sku];
+                    }
+
+                    if ($hasBsRow) {
+                        $refQty = max(0, $bStock);
+                    } elseif ($closedVal !== null) {
+                        $refQty = max(0, $closedVal);
                     } else {
-                        $refQty = 0;
+                        $refQty = max(0, $bStock);
                     }
                 } else {
-                    // Belum ada riwayat shift yang ditutup (misal database baru atau riwayat shift baru saja di-reset)
-                    $refQty = 0;
+                    // Belum ada riwayat shift yang ditutup:
+                    // Mengikuti saldo Stok Awal cabang ($bStock == 0 jika habis reset total, atau misal 12 jika memiliki Stok Awal)
+                    $refQty = max(0, $bStock);
                 }
 
                 $dynamicItems[] = [
@@ -5840,25 +5892,34 @@ try {
                             $isCap = $prodMeta && ($prodMeta['sku'] === 'RAW-089' || $prodMeta['sku'] === 'RAW-020' || stripos($prodMeta['name'], 'Tutup Galon') !== false);
 
                             // Aturan Bisnis SOP:
-                            // Pada Shift 1 (Pagi / Awal Hari Baru) setelah penutupan hari sebelumnya, sisa tutup galon malam kemarin selalu dianggap sudah diretur ke gudang (stok malam = 0)!
+                            // Pada Shift 1 (Pagi / Awal Hari Baru), sisa tutup galon malam kemarin selalu dianggap sudah diretur ke gudang (stok malam = 0)!
                             // Sehingga jika ada pasokan tutup baru pagi (misal 50), Stok Awal Pagi MURNI 50 (bukan penjumlahan sisa kemarin yang diretur + 50).
-                            if ($isCap && $hasPrevClosedShift && ($shiftNumber == 1 || $lastWasFinal == 1)) {
+                            if ($isCap && ($shiftNumber == 1 || $lastWasFinal == 1)) {
                                 $nightVal = 0;
                             }
 
                             // Aturan Bisnis SOP:
                             // Jika kasir TIDAK menginput penambahan stok baru (added_qty kosong atau <= 0),
-                            // maka stok TIDAK BOLEH dinolkan, melainkan DIABAIKAN dan mengikuti stok yang sudah ada sebelumnya!
-                            if ($hasAddedInput && $addedVal > 0) {
-                                // Jika belum ada riwayat shift sebelumnya (misal database baru atau baru direset dengan pertahankan Stok Awal),
-                                // gunakan saldo stok awal cabang saat ini sebagai dasar penjumlahan barang masuk pagi
-                                $baseBeforeAdd = (!$hasPrevClosedShift) ? max($nightVal, $curExistingStock) : $nightVal;
-                                $openVal = $baseBeforeAdd + $addedVal;
-                                $explicitlyUpdated[$pId] = true;
+                            // maka stok TIDAK BOLEH dinolkan, melainkan DIABAIKAN dan mengikuti stok yang sudah ada sebelumnya di cabang!
+                            if ($isCap && ($shiftNumber == 1 || $lastWasFinal == 1)) {
+                                if ($hasAddedInput && $addedVal > 0) {
+                                    $openVal = $addedVal;
+                                    $explicitlyUpdated[$pId] = true;
+                                } else {
+                                    $openVal = 0;
+                                    $explicitlyUpdated[$pId] = false;
+                                }
                             } else {
-                                // Diabaikan mengikuti stok yang sudah ada sebelumnya di cabang
-                                $openVal = $curExistingStock;
-                                $explicitlyUpdated[$pId] = false;
+                                $effectiveExisting = array_key_exists($pId, $currentBranchStocks) ? max(0, (float)$currentBranchStocks[$pId]) : max(0, $nightVal);
+                                if ($hasAddedInput && $addedVal > 0) {
+                                    $baseBeforeAdd = max($effectiveExisting, $nightVal);
+                                    $openVal = $baseBeforeAdd + $addedVal;
+                                    $explicitlyUpdated[$pId] = true;
+                                } else {
+                                    // Diabaikan mengikuti stok awal / saldo aktual yang sudah ada sebelumnya di cabang
+                                    $openVal = $effectiveExisting;
+                                    $explicitlyUpdated[$pId] = false;
+                                }
                             }
 
                             $openingMap[$pId] = $openVal;
@@ -5873,12 +5934,34 @@ try {
                             $openingMap[$pId] = $openVal;
                             $explicitlyUpdated[$pId] = true;
                         } else {
-                            $openingMap[$pId] = $curExistingStock;
+                            $openingMap[$pId] = max(0, $curExistingStock);
                             $explicitlyUpdated[$pId] = false;
                         }
                     }
                 }
             }
+
+            // Pastikan seluruh produk aktif di opening_shift_products tetap tercatat stok awalnya pada openingMap
+            // meskipun tidak ada inputan dari form Opening Shift
+            try {
+                $stmtEnsureOsp = $pdo->prepare("
+                    SELECT osp.product_id, p.sku, p.name
+                    FROM opening_shift_products osp
+                    JOIN products p ON p.id = osp.product_id
+                    WHERE osp.is_active = 1 AND p.is_active = 1
+                ");
+                $stmtEnsureOsp->execute();
+                foreach ($stmtEnsureOsp->fetchAll(PDO::FETCH_ASSOC) as $ospEnsure) {
+                    $ensPid = (int)$ospEnsure['product_id'];
+                    if ($ensPid > 0 && !array_key_exists($ensPid, $openingMap)) {
+                        $ensIsCap = ($ospEnsure['sku'] === 'RAW-089' || $ospEnsure['sku'] === 'RAW-020' || stripos($ospEnsure['name'] ?? '', 'Tutup Galon') !== false);
+                        $openingMap[$ensPid] = ($ensIsCap && ($shiftNumber == 1 || $lastWasFinal == 1))
+                            ? 0
+                            : max(0, (float)($currentBranchStocks[$ensPid] ?? 0));
+                        $explicitlyUpdated[$ensPid] = false;
+                    }
+                }
+            } catch (Exception $eEnsOsp) {}
 
             // Jika kasir berikutnya (shift_number > 1) dan openingMap belum terisi, otomatis warisi sisa stok shift sebelumnya hari ini
             if ($shiftNumber > 1 && empty($openingMap)) {
@@ -6127,11 +6210,51 @@ try {
                 } catch (Exception $eFb) {}
             }
 
+            // Hitung penjualan per produk pada shift ini & mutasi penambahan non-Stok-Awal selama shift
+            // untuk memulihkan Stok Awal produk yang tidak diinput saat Opening Shift namun memiliki Stok Awal cabang (misal 12 galon)
+            $soldInShiftByPid = [];
+            try {
+                $stmtSoldAll = $pdo->prepare("
+                    SELECT si.product_id, COALESCE(SUM(si.qty), 0) as qty_sold
+                    FROM sale_items si
+                    JOIN sales s ON s.id = si.sale_id
+                    WHERE s.shift_id = ? AND (s.status IS NULL OR s.status != 'CANCELLED')
+                    GROUP BY si.product_id
+                ");
+                $stmtSoldAll->execute([$shiftId]);
+                foreach ($stmtSoldAll->fetchAll(PDO::FETCH_ASSOC) as $sr) {
+                    $soldInShiftByPid[(int)$sr['product_id']] = (float)$sr['qty_sold'];
+                }
+            } catch (Exception $eSoldAll) {}
+
+            $midShiftAddedByPid = [];
+            if (!empty($shift['start_time'])) {
+                try {
+                    $stmtMidAdd = $pdo->prepare("
+                        SELECT product_id, COALESCE(SUM(qty_change), 0) as qty_added
+                        FROM stock_movements
+                        WHERE branch_id = ?
+                          AND created_at >= ?
+                          AND movement_type IN ('PURCHASE', 'TRANSFER_IN', 'STOCK_IN_RESTOCK')
+                          AND (reference_no IS NULL OR reference_no != ?)
+                        GROUP BY product_id
+                    ");
+                    $stmtMidAdd->execute([$shift['branch_id'], $shift['start_time'], "OPENING-SHIFT-{$shiftId}"]);
+                    foreach ($stmtMidAdd->fetchAll(PDO::FETCH_ASSOC) as $mr) {
+                        $midShiftAddedByPid[(int)$mr['product_id']] = max(0, (float)$mr['qty_added']);
+                    }
+                } catch (Exception $eMidAdd) {}
+            }
+
             $closingItems = [];
+            $healedOpeningItems = $openingItems;
+            $openingItemsWasHealed = false;
+
             foreach ($trackedRows as $r) {
                 $pId = (int)$r['product_id'];
                 $sku = $r['sku'];
                 $bStock = (int)$r['branch_stock'];
+                $isCapRow = ($sku === 'RAW-089' || $sku === 'RAW-020' || stripos($r['name'] ?? '', 'Tutup Galon') !== false);
 
                 $openingQty = $bStock;
                 if (isset($openingItems[$pId])) {
@@ -6142,6 +6265,19 @@ try {
                     $openingQty = (int)$shift['opening_raw_ro'];
                 } elseif ($sku === 'RAW-00092' && $shift['opening_raw_plastik'] !== null) {
                     $openingQty = (int)$shift['opening_raw_plastik'];
+                }
+
+                // Jika produk (bukan tutup galon) memiliki opening_qty == 0 karena tidak ada inputan di Opening Shift
+                // padahal saldo Stok Awal cabang tercatat (> 0), rekonsiliasi otomatis nilai Stok Awal Pagi
+                if (!$isCapRow && $openingQty <= 0 && ($shift['status'] ?? '') === 'OPEN') {
+                    $soldQtyCur = (float)($soldInShiftByPid[$pId] ?? 0);
+                    $midAddedCur = (float)($midShiftAddedByPid[$pId] ?? 0);
+                    $inferredOpening = (int)round(max(0, (float)$r['branch_stock'] + $soldQtyCur - $midAddedCur));
+                    if ($inferredOpening > 0) {
+                        $openingQty = $inferredOpening;
+                        $healedOpeningItems[$pId] = $openingQty;
+                        $openingItemsWasHealed = true;
+                    }
                 }
 
                 $closingItems[] = [
@@ -6156,6 +6292,14 @@ try {
                     'current_branch_stock' => $bStock,
                     'closing_qty' => $bStock
                 ];
+            }
+
+            if ($openingItemsWasHealed && ($shift['status'] ?? '') === 'OPEN') {
+                try {
+                    $pdo->prepare("UPDATE cashier_shifts SET opening_items_json = ? WHERE id = ?")
+                        ->execute([json_encode($healedOpeningItems), $shiftId]);
+                    $shift['opening_items_json'] = json_encode($healedOpeningItems);
+                } catch (Exception $eHealOpen) {}
             }
 
             // Ambil master kategori pengeluaran/beban operasional master
@@ -6945,7 +7089,7 @@ try {
 
             // Produk-produk yang dilacak
             $stmtTracked = $pdo->prepare("
-                SELECT osp.product_id, p.sku, p.name, p.unit, p.category, p.image_emoji
+                SELECT osp.product_id, p.sku, p.name, p.unit, p.category, p.image_emoji, p.product_type
                 FROM opening_shift_products osp
                 JOIN products p ON p.id = osp.product_id
                 WHERE osp.is_active = 1
@@ -6955,11 +7099,18 @@ try {
             $trackedMaster = $stmtTracked->fetchAll();
             if (empty($trackedMaster)) {
                 $trackedMaster = $pdo->query("
-                    SELECT id as product_id, sku, name, unit, category, image_emoji
+                    SELECT id as product_id, sku, name, unit, category, image_emoji, product_type
                     FROM products
                     WHERE sku IN ('RAW-089', 'RAW-020', 'RAW-00092')
                     ORDER BY id ASC
                 ")->fetchAll();
+            }
+
+            $stmtReportBs = $pdo->prepare("SELECT product_id, stock FROM branch_stocks WHERE branch_id = ?");
+            $stmtReportBs->execute([$branchId]);
+            $reportBranchStocks = [];
+            while ($rbs = $stmtReportBs->fetch(PDO::FETCH_ASSOC)) {
+                $reportBranchStocks[(int)$rbs['product_id']] = (float)$rbs['stock'];
             }
 
             $shiftSummaries = [];
@@ -7062,6 +7213,25 @@ try {
                 }
 
                 // 2. Dekomposisi Finished Goods: Stok Awal vs On-Demand vs Standby Refill
+                $midAddedReportMap = [];
+                if (($s['status'] ?? '') === 'OPEN' && !empty($s['start_time'])) {
+                    try {
+                        $stmtMidRep = $pdo->prepare("
+                            SELECT product_id, COALESCE(SUM(qty_change), 0) as qty_added
+                            FROM stock_movements
+                            WHERE branch_id = ?
+                              AND created_at >= ?
+                              AND movement_type IN ('PURCHASE', 'TRANSFER_IN', 'STOCK_IN_RESTOCK')
+                              AND (reference_no IS NULL OR reference_no != ?)
+                            GROUP BY product_id
+                        ");
+                        $stmtMidRep->execute([$branchId, $s['start_time'], "OPENING-SHIFT-{$sId}"]);
+                        foreach ($stmtMidRep->fetchAll(PDO::FETCH_ASSOC) as $mrRow) {
+                            $midAddedReportMap[(int)$mrRow['product_id']] = max(0, (float)$mrRow['qty_added']);
+                        }
+                    } catch (Exception $eMidRep) {}
+                }
+
                 $fgBreakdown = [];
                 foreach ($trackedMaster as $tm) {
                     $pId = (int)$tm['product_id'];
@@ -7080,6 +7250,15 @@ try {
                     }
 
                     $totSold = (float)($fgSalesTotals[$pId] ?? 0);
+                    $isCapTm = ($tm['sku'] === 'RAW-089' || $tm['sku'] === 'RAW-020' || stripos($tm['name'] ?? '', 'Tutup Galon') !== false);
+                    if (!$isCapTm && $oQty <= 0 && ($s['status'] ?? '') === 'OPEN') {
+                        $curBsVal = (float)($reportBranchStocks[$pId] ?? 0);
+                        $midAddVal = (float)($midAddedReportMap[$pId] ?? 0);
+                        $inferredRepOpen = max(0, $curBsVal + $totSold - $midAddVal);
+                        if ($inferredRepOpen > 0) {
+                            $oQty = $inferredRepOpen;
+                        }
+                    }
                     $fromStock = min($oQty, $totSold);
                     $onDemand = max(0, $totSold - $oQty);
                     $remOpening = max(0, $oQty - $totSold);
@@ -7222,7 +7401,7 @@ try {
                     $fgb = $fgBreakdown[$pId] ?? null;
                     $oQty = $fgb ? $fgb['opening_qty'] : 0;
                     $cQty = $fgb ? $fgb['closing_qty'] : 0;
-                    $isFG = ($fgb && ($fgb['total_sold'] > 0 || in_array($tm['sku'], ['PRD-00001', 'PRD-00002'])));
+                    $isFG = ($fgb && (($tm['product_type'] ?? '') === 'FINISHED_GOODS' || $fgb['total_sold'] > 0 || in_array($tm['sku'], ['PRD-00001', 'PRD-00002'])));
 
                     if ($isFG) {
                         // Produk Jadi (Galon Air Olahan)
