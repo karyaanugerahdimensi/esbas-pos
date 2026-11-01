@@ -73,7 +73,7 @@ try {
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="KAD Tech">
     <meta name="application-name" content="KAD Tech Retail">
-    <link rel="manifest" href="manifest.json?v=1.4.9">
+    <link rel="manifest" href="manifest.json?v=1.5.0">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
     <title>KAD Tech Retail - POS Multi-Cabang v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</title>
@@ -1210,6 +1210,10 @@ try {
                             <button onclick="exportSalesDetailExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-2">
                                 <i data-lucide="download" class="w-4 h-4"></i>
                                 <span>Export Excel Detail</span>
+                            </button>
+                            <button id="btn-sales-import" onclick="openSaleImportModal()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-2 transition-colors" title="Tool Transaksi Administrator: Import Penjualan Excel & Potong Stok Langsung">
+                                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                                <span>Import Penjualan (Potong Stok)</span>
                             </button>
                             <button id="btn-sales-report-reset" onclick="openMasterResetModal({ sales: true })" style="display: none;" class="hidden px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-1.5" title="Reset atau bersihkan data penjualan, stok, pemakaian, atau shift toko (Superadmin Only)">
                                 <i data-lucide="refresh-ccw" class="w-4 h-4"></i>
@@ -8666,6 +8670,158 @@ try {
                     <button type="submit" id="btn-submit-import-customers" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md shadow-emerald-100 flex items-center justify-center space-x-1.5 transition-colors">
                         <i data-lucide="upload" class="w-4 h-4"></i>
                         <span>Proses Import Pelanggan</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal FR-ADM-01 / FR-POS-56: Tool Transaksi Pengujian (Import Excel Penjualan & Potong Stok) -->
+    <div id="sale-import-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto hidden">
+        <div class="bg-white rounded-3xl max-w-4xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-3">
+                    <span class="p-2.5 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center">
+                        <i data-lucide="file-spreadsheet" class="w-5 h-5 text-amber-600"></i>
+                    </span>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">Tool Transaksi Pengujian: Import Penjualan & Potong Stok</h3>
+                        <p class="text-[11px] text-slate-400">Unggah berkas Excel / CSV penjualan massal untuk simulasi transaksi dan pemotongan stok langsung</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeSaleImportModal()" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Download Template Banner -->
+            <div class="p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs text-amber-950">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-1.5 font-bold text-amber-900">
+                        <i data-lucide="download" class="w-4 h-4 text-amber-700"></i>
+                        <span>Template Format Excel Penjualan Pengujian:</span>
+                    </div>
+                    <p class="text-[11px] text-amber-800">
+                        13 Kolom: <code class="bg-amber-100/90 px-1 py-0.5 rounded text-amber-900 font-mono font-semibold">No Faktur, Tanggal, SKU Produk, Nama Produk, Varian, Qty, Harga Satuan, Diskon, Nama Pelanggan, Kategori Pelanggan, Metode Bayar, Status Bayar, Catatan</code>
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="downloadSaleImportTemplate('xlsx')" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold shadow-2xs flex items-center space-x-1.5 shrink-0 transition-colors">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                        <span>Unduh Template Excel (.xlsx)</span>
+                    </button>
+                    <button type="button" onclick="downloadSaleImportTemplate('csv')" class="px-3 py-2 bg-white hover:bg-slate-50 border border-amber-300 text-amber-900 rounded-xl font-bold text-xs flex items-center space-x-1 shrink-0 transition-colors">
+                        <span>CSV</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Rules & Info Box -->
+            <div class="p-3.5 bg-slate-50 border border-slate-200/90 rounded-2xl text-[11px] text-slate-600 space-y-1.5">
+                <p class="font-bold text-slate-800 flex items-center space-x-1.5">
+                    <i data-lucide="info" class="w-3.5 h-3.5 text-indigo-600"></i>
+                    <span>Ketentuan & Perilaku Pemotongan Stok Transaksi:</span>
+                </p>
+                <ul class="space-y-1 list-disc list-inside text-slate-600 pl-1">
+                    <li><strong class="text-rose-600 font-bold">*Wajib Diisi:</strong> <strong>SKU Produk</strong> (atau Nama Produk) dan <strong>Qty</strong> (kuantitas penjualan &gt; 0).</li>
+                    <li><strong class="text-slate-700 font-semibold">No Faktur (Opsional):</strong> Baris dengan Nomor Faktur yang sama akan otomatis digabung ke dalam 1 transaksi penjualan multi-item. Jika dikosongkan, nomor faktur otomatis digenerate (<code class="font-mono text-[10px] bg-slate-200/60 px-1 py-0.5 rounded">INV/YYYYMMDD/IMP-...</code>).</li>
+                    <li><strong class="text-slate-700 font-semibold">Harga Satuan (Opsional):</strong> Jika dikosongkan atau bernilai 0, sistem otomatis mengambil harga jual aktif cabang sesuai tier kategori pelanggan (<span class="font-semibold text-slate-800">REGULER, MEMBER, RESELLER</span>).</li>
+                    <li><strong class="text-emerald-700 font-semibold">⚡ Pemotongan Stok Langsung:</strong> Setiap item yang diimport akan langsung mengurangi saldo stok produk jadi di cabang (<code class="font-mono text-[10px] bg-slate-200/60 px-1 py-0.5 rounded">branch_stocks</code>) dan mencatat mutasi <span class="font-semibold text-slate-800">STOCK_OUT_SALE</span>.</li>
+                    <li><strong class="text-indigo-700 font-semibold">🧪 Pemotongan Bahan Baku BOM:</strong> Jika produk memiliki formula resep BOM (Base BOM atau Varian BOM), bahan baku terkait (seperti air baku, galon, tutup, tisu) akan otomatis dipotong dan dicatat sebagai mutasi <span class="font-semibold text-slate-800">BOM_DEDUCTION</span>.</li>
+                </ul>
+            </div>
+
+            <form onsubmit="submitSaleImport(event)" class="space-y-4 text-xs">
+                <!-- Dropdown Cabang Tujuan Import -->
+                <div id="sale-import-branch-container" class="space-y-1">
+                    <label class="block font-bold text-slate-700">Cabang Tujuan Pengujian Transaksi: <span class="text-rose-500">*</span></label>
+                    <select id="sale-import-branch-select" onchange="handleSaleImportBranchChange()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800">
+                        <!-- Populated by JS -->
+                    </select>
+                    <p class="text-[10px] text-slate-400">Pilih cabang toko tempat transaksi penjualan dan pengurangan stok fisik akan dieksekusi.</p>
+                </div>
+
+                <!-- Input File Excel / CSV -->
+                <div class="space-y-1.5">
+                    <label class="block font-bold text-slate-700">Pilih Berkas Spreadsheet Penjualan (.xlsx / .xls / .csv):</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="file" id="sale-import-file-input" accept=".xlsx, .xls, .csv, text/csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" onchange="handleSaleImportFileSelect(event)" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 border border-slate-200 rounded-2xl p-1 bg-slate-50">
+                        <button type="button" onclick="clearSaleImportFile()" class="px-3 py-2 text-slate-400 hover:text-slate-600 rounded-xl border border-slate-200 text-xs font-semibold">Reset</button>
+                    </div>
+                </div>
+
+                <!-- Alternatif Paste Teks CSV -->
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between">
+                        <label class="block font-bold text-slate-700">Atau Tempel Teks CSV Penjualan:</label>
+                        <button type="button" onclick="toggleSaleImportTextarea()" id="btn-toggle-sale-csv-text" class="text-[10px] text-indigo-600 hover:underline font-semibold">Tampilkan Kolom Tempel Teks CSV</button>
+                    </div>
+                    <textarea id="sale-import-text-input" rows="4" placeholder="No Faktur, Tanggal, SKU Produk, Nama Produk, Varian, Qty, Harga Satuan, Diskon, Nama Pelanggan, Kategori Pelanggan, Metode Bayar, Status Bayar, Catatan&#10;TEST-001, 2026-11-01 10:00:00, PRD-00001, Air Mineral Galon 19 Liter, , 5, 18000, 0, Budi Santoso, REGULER, CASH, PAID, Pengujian" oninput="handleSaleImportTextChange()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-[11px] text-slate-700 hidden"></textarea>
+                </div>
+
+                <!-- Live Preview Data Box -->
+                <div id="sale-import-preview-box" class="space-y-3 pt-2 border-t border-slate-100 hidden">
+                    <!-- KPI Preview Card -->
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                        <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-center">
+                            <span class="text-[10px] text-slate-400 font-bold block">TOTAL BARIS</span>
+                            <span id="sale-preview-total-rows" class="text-base font-black text-slate-800">0</span>
+                        </div>
+                        <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-center">
+                            <span class="text-[10px] text-emerald-700 font-bold block">BARIS VALID</span>
+                            <span id="sale-preview-valid-rows" class="text-base font-black text-emerald-800">0</span>
+                        </div>
+                        <div class="p-3 bg-blue-50 border border-blue-200 rounded-2xl text-center">
+                            <span class="text-[10px] text-blue-700 font-bold block">ESTIMASI FAKTUR</span>
+                            <span id="sale-preview-unique-invoices" class="text-base font-black text-blue-800">0</span>
+                        </div>
+                        <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-center">
+                            <span class="text-[10px] text-amber-700 font-bold block">TOTAL ITEM (QTY)</span>
+                            <span id="sale-preview-total-qty" class="text-base font-black text-amber-800">0</span>
+                        </div>
+                        <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-2xl text-center col-span-2 sm:col-span-1">
+                            <span class="text-[10px] text-indigo-700 font-bold block">ESTIMASI OMZET</span>
+                            <span id="sale-preview-total-omzet" class="text-sm font-black text-indigo-900">Rp 0</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="font-bold text-slate-700" id="sale-import-preview-count">Pratinjau Data Penjualan &amp; Pemotongan Stok:</span>
+                        <span id="sale-import-valid-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">0 Baris</span>
+                    </div>
+
+                    <div class="border border-slate-200 rounded-2xl overflow-hidden max-h-60 overflow-y-auto">
+                        <table class="w-full text-left border-collapse text-[11px]">
+                            <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 sticky top-0 z-10">
+                                <tr>
+                                    <th class="p-2 w-8">#</th>
+                                    <th class="p-2">Status</th>
+                                    <th class="p-2">No Faktur</th>
+                                    <th class="p-2">SKU &amp; Produk</th>
+                                    <th class="p-2 text-center">Qty</th>
+                                    <th class="p-2 text-right">Harga (Rp)</th>
+                                    <th class="p-2 text-right">Subtotal (Rp)</th>
+                                    <th class="p-2 text-center">Stok (Sblm &rarr; Ssdh)</th>
+                                    <th class="p-2">Resep BOM</th>
+                                    <th class="p-2">Pelanggan</th>
+                                    <th class="p-2">Metode Bayar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sale-import-preview-tbody" class="divide-y divide-slate-100">
+                                <tr>
+                                    <td colspan="11" class="p-4 text-center text-slate-400">Pilih berkas Excel untuk menampilkan pratinjau data transaksi.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" onclick="closeSaleImportModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700 transition-colors">Batal</button>
+                    <button type="submit" id="btn-submit-sale-import" class="py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold shadow-md shadow-amber-100 flex items-center justify-center space-x-1.5 transition-colors">
+                        <i data-lucide="zap" class="w-4 h-4"></i>
+                        <span>Eksekusi Import &amp; Potong Stok Sekarang</span>
                     </button>
                 </div>
             </form>
@@ -26619,6 +26775,392 @@ Manager / Supervisor: __________________
                 btnSubmit.innerHTML = `<i data-lucide="upload" class="w-4 h-4"></i><span>Proses Import Pelanggan</span>`;
                 if (window.lucide) lucide.createIcons();
                 alert('Terjadi kesalahan jaringan saat import data pelanggan: ' + err.message);
+            }
+        }
+
+        // ==========================================
+        // TOOL TRANSAKSI PENGUJIAN: IMPORT PENJUALAN & POTONG STOK
+        // ==========================================
+        function openSaleImportModal() {
+            const modal = document.getElementById('sale-import-modal');
+            if (!modal) return;
+
+            // Populate branch dropdown
+            const branchSelect = document.getElementById('sale-import-branch-select');
+            const branchContainer = document.getElementById('sale-import-branch-container');
+            if (branchSelect) {
+                branchSelect.innerHTML = '';
+                const branches = (state && state.branches) ? state.branches : [];
+                const currentBranchId = (state && state.currentBranch && state.currentBranch.id) ? parseInt(state.currentBranch.id) : 1;
+                const isSuperAdmin = (state && state.currentUser && (state.currentUser.role === 'SUPERADMIN' || state.currentUser.role === 'SUPER_ADMIN'));
+
+                if (branches && branches.length > 0) {
+                    branches.forEach(function(b) {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        opt.textContent = b.name + (b.code ? ' (' + b.code + ')' : '');
+                        if (parseInt(b.id) === currentBranchId) {
+                            opt.selected = true;
+                        }
+                        branchSelect.appendChild(opt);
+                    });
+                } else {
+                    const opt = document.createElement('option');
+                    opt.value = currentBranchId;
+                    opt.textContent = (state && state.currentBranch && state.currentBranch.name) ? state.currentBranch.name : 'Cabang Utama';
+                    opt.selected = true;
+                    branchSelect.appendChild(opt);
+                }
+
+                if (!isSuperAdmin && branchContainer) {
+                    branchSelect.value = currentBranchId;
+                    branchSelect.disabled = true;
+                } else if (branchSelect) {
+                    branchSelect.disabled = false;
+                }
+            }
+
+            // Reset file and preview
+            clearSaleImportFile();
+
+            modal.classList.remove('hidden');
+            modal.style.setProperty('display', 'flex', 'important');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function closeSaleImportModal() {
+            const modal = document.getElementById('sale-import-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.style.setProperty('display', 'none', 'important');
+            }
+        }
+
+        function downloadSaleImportTemplate(format) {
+            const fmt = format || 'xlsx';
+            window.open('api.php?action=download_sale_import_template&format=' + encodeURIComponent(fmt), '_blank');
+        }
+
+        function clearSaleImportFile() {
+            const fileInput = document.getElementById('sale-import-file-input');
+            const textInput = document.getElementById('sale-import-text-input');
+            const previewBox = document.getElementById('sale-import-preview-box');
+            const tbody = document.getElementById('sale-import-preview-tbody');
+
+            if (fileInput) fileInput.value = '';
+            if (textInput) textInput.value = '';
+            if (previewBox) previewBox.classList.add('hidden');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="11" class="p-4 text-center text-slate-400">Pilih berkas Excel untuk menampilkan pratinjau data transaksi.</td></tr>';
+            }
+            window.saleImportPreviewRows = [];
+        }
+
+        function toggleSaleImportTextarea() {
+            const textInput = document.getElementById('sale-import-text-input');
+            const btn = document.getElementById('btn-toggle-sale-csv-text');
+            if (!textInput) return;
+            if (textInput.classList.contains('hidden')) {
+                textInput.classList.remove('hidden');
+                if (btn) btn.innerText = 'Sembunyikan Kolom Tempel Teks CSV';
+            } else {
+                textInput.classList.add('hidden');
+                if (btn) btn.innerText = 'Tampilkan Kolom Tempel Teks CSV';
+            }
+        }
+
+        function handleSaleImportBranchChange() {
+            const fileInput = document.getElementById('sale-import-file-input');
+            const textInput = document.getElementById('sale-import-text-input');
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                handleSaleImportFileSelect({ target: fileInput });
+            } else if (textInput && textInput.value.trim().length > 0) {
+                handleSaleImportTextChange();
+            }
+        }
+
+        async function handleSaleImportFileSelect(e) {
+            const file = (e.target && e.target.files) ? e.target.files[0] : null;
+            if (!file) return;
+
+            const previewBox = document.getElementById('sale-import-preview-box');
+            const tbody = document.getElementById('sale-import-preview-tbody');
+            const badgeEl = document.getElementById('sale-import-valid-badge');
+            const countEl = document.getElementById('sale-import-preview-count');
+            const branchSelect = document.getElementById('sale-import-branch-select');
+            const targetBranchId = branchSelect ? parseInt(branchSelect.value) : ((state && state.currentBranch && state.currentBranch.id) ? state.currentBranch.id : 1);
+
+            const fileName = file.name.toLowerCase();
+
+            if (previewBox && tbody) {
+                previewBox.classList.remove('hidden');
+                if (countEl) countEl.innerText = 'Membaca berkas: ' + file.name + '...';
+                if (badgeEl) {
+                    badgeEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800';
+                    badgeEl.innerText = 'Memvalidasi Produk & Stok Cabang...';
+                }
+                tbody.innerHTML = '<tr><td colspan="11" class="p-4 text-center text-slate-500 font-semibold"><span class="inline-block animate-spin mr-1.5">⏳</span> Membaca data transaksi Excel & menghitung simulasi stok cabang...</td></tr>';
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('branch_id', targetBranchId);
+
+                const res = await fetch('api.php?action=preview_sale_import', {
+                    method: 'POST',
+                    body: formData
+                });
+                const rawText = await res.text();
+                let result;
+                try {
+                    result = JSON.parse(rawText);
+                } catch (eParse) {
+                    throw new Error('Respon server bukan JSON: ' + (rawText ? rawText.substring(0, 150) : 'Kosong (HTTP ' + res.status + ')'));
+                }
+
+                if (result.success && Array.isArray(result.rows) && result.rows.length > 0) {
+                    renderSaleImportPreview(result);
+                } else {
+                    if (tbody) {
+                        tbody.innerHTML = '<tr><td colspan="11" class="p-4 text-center text-rose-600 font-semibold">⚠️ ' + escapeHtml(result.message || 'Tidak ada baris data penjualan yang dapat dibaca.') + '</td></tr>';
+                    }
+                    if (badgeEl) {
+                        badgeEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800';
+                        badgeEl.innerText = 'Format Kosong / Tidak Sesuai';
+                    }
+                }
+            } catch (err) {
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="11" class="p-4 text-center text-rose-600">Gagal memproses pratinjau penjualan: ' + escapeHtml(err.message) + '</td></tr>';
+                }
+            }
+        }
+
+        async function handleSaleImportTextChange() {
+            const textInput = document.getElementById('sale-import-text-input');
+            if (!textInput) return;
+            const text = textInput.value.trim();
+            const previewBox = document.getElementById('sale-import-preview-box');
+            const tbody = document.getElementById('sale-import-preview-tbody');
+            const branchSelect = document.getElementById('sale-import-branch-select');
+            const targetBranchId = branchSelect ? parseInt(branchSelect.value) : ((state && state.currentBranch && state.currentBranch.id) ? state.currentBranch.id : 1);
+
+            if (!text) {
+                if (previewBox) previewBox.classList.add('hidden');
+                return;
+            }
+
+            if (previewBox && tbody) {
+                previewBox.classList.remove('hidden');
+                tbody.innerHTML = '<tr><td colspan="11" class="p-4 text-center text-slate-500 font-semibold"><span class="inline-block animate-spin mr-1.5">⏳</span> Memvalidasi teks CSV...</td></tr>';
+            }
+
+            try {
+                const res = await fetch('api.php?action=preview_sale_import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        csv_content: text,
+                        branch_id: targetBranchId
+                    })
+                });
+                const rawText = await res.text();
+                let result;
+                try {
+                    result = JSON.parse(rawText);
+                } catch (eParse) {
+                    throw new Error('Respon server bukan JSON: ' + (rawText ? rawText.substring(0, 150) : 'Kosong'));
+                }
+                if (result.success && Array.isArray(result.rows) && result.rows.length > 0) {
+                    renderSaleImportPreview(result);
+                } else if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="11" class="p-4 text-center text-rose-600 font-semibold">⚠️ ' + escapeHtml(result.message || 'Tidak ada baris data valid.') + '</td></tr>';
+                }
+            } catch (err) {
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="11" class="p-4 text-center text-rose-600">Gagal membaca teks CSV: ' + escapeHtml(err.message) + '</td></tr>';
+                }
+            }
+        }
+
+        function renderSaleImportPreview(data) {
+            const rows = data.rows || [];
+            const previewBox = document.getElementById('sale-import-preview-box');
+            const tbody = document.getElementById('sale-import-preview-tbody');
+            const badgeEl = document.getElementById('sale-import-valid-badge');
+            const countEl = document.getElementById('sale-import-preview-count');
+
+            if (!previewBox || !tbody) return;
+            window.saleImportPreviewRows = rows;
+
+            // KPI
+            const elTotalRows = document.getElementById('sale-preview-total-rows');
+            const elValidRows = document.getElementById('sale-preview-valid-rows');
+            const elUniqueInv = document.getElementById('sale-preview-unique-invoices');
+            const elTotalQty = document.getElementById('sale-preview-total-qty');
+            const elTotalOmzet = document.getElementById('sale-preview-total-omzet');
+
+            if (elTotalRows) elTotalRows.innerText = data.total_rows || rows.length;
+            if (elValidRows) elValidRows.innerText = data.valid_count || 0;
+            if (elUniqueInv) elUniqueInv.innerText = data.unique_invoices_count || (rows.length > 0 ? 1 : 0);
+            if (elTotalQty) elTotalQty.innerText = formatNumber(data.total_qty || 0);
+            if (elTotalOmzet) elTotalOmzet.innerText = 'Rp ' + formatNumber(data.total_estimated_sales || 0);
+
+            if (countEl) {
+                countEl.innerText = 'Pratinjau Data Penjualan di ' + (data.target_branch_name || 'Cabang Terpilih') + ':';
+            }
+            if (badgeEl) {
+                if ((data.invalid_count || 0) === 0) {
+                    badgeEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800';
+                    badgeEl.innerText = (data.valid_count || 0) + ' Baris Valid (Siap Eksekusi)';
+                } else {
+                    badgeEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900';
+                    badgeEl.innerText = (data.valid_count || 0) + ' Valid, ' + (data.invalid_count || 0) + ' Error';
+                }
+            }
+
+            const rowsHtml = rows.slice(0, 30).map(function(r, idx) {
+                const isValid = r.is_valid;
+                const statusBadge = isValid 
+                    ? '<span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-bold text-[9px]">Valid</span>'
+                    : '<span class="px-1.5 py-0.5 bg-rose-100 text-rose-800 rounded-full font-bold text-[9px]" title="' + escapeHtml(r.error_message || 'Data error') + '">Error</span>';
+
+                let bomBadge = '<span class="text-slate-300">-</span>';
+                if (r.has_bom && r.bom_list && r.bom_list.length > 0) {
+                    const bomDetails = r.bom_list.map(function(b) {
+                        return b.ing_name + ' (-' + formatNumber(b.qty_needed) + ' ' + (b.unit || '') + ')';
+                    }).join(', ');
+                    bomBadge = '<span class="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 font-semibold text-[9px] rounded" title="' + escapeHtml(bomDetails) + '">🧪 ' + r.bom_list.length + ' Bahan Baku</span>';
+                }
+
+                const stockBefore = typeof r.stock_before !== 'undefined' ? formatNumber(r.stock_before) : '-';
+                const stockAfter = typeof r.stock_after !== 'undefined' ? formatNumber(r.stock_after) : '-';
+                const stockDisplay = isValid 
+                    ? '<span class="font-mono text-[10px] text-slate-600">' + stockBefore + ' &rarr; <strong class="text-indigo-900">' + stockAfter + '</strong></span>'
+                    : '<span class="text-slate-300">-</span>';
+
+                const prodTitle = r.product_name + (r.variant_name ? ' [' + r.variant_name + ']' : '');
+
+                return '<tr class="' + (!isValid ? 'bg-rose-50/50' : 'hover:bg-slate-50') + '">' +
+                    '<td class="p-2 text-slate-400 font-mono">' + (idx + 1) + '</td>' +
+                    '<td class="p-2">' + statusBadge + '</td>' +
+                    '<td class="p-2 font-mono text-slate-700 font-semibold">' + escapeHtml(r.invoice_number || 'AUTO') + '</td>' +
+                    '<td class="p-2">' +
+                        '<div class="font-bold ' + (isValid ? 'text-slate-800' : 'text-rose-600') + '">' + escapeHtml(prodTitle) + '</div>' +
+                        '<div class="font-mono text-[9px] text-slate-400">' + escapeHtml(r.sku || '-') + '</div>' +
+                        (!isValid && r.error_message ? '<div class="text-[10px] text-rose-600 italic mt-0.5">⚠️ ' + escapeHtml(r.error_message) + '</div>' : '') +
+                    '</td>' +
+                    '<td class="p-2 text-center font-bold font-mono text-slate-800">' + formatNumber(r.qty) + '</td>' +
+                    '<td class="p-2 text-right font-mono text-slate-700">' + formatNumber(r.unit_price) + '</td>' +
+                    '<td class="p-2 text-right font-mono font-bold text-slate-900">' + formatNumber(r.subtotal) + '</td>' +
+                    '<td class="p-2 text-center">' + stockDisplay + '</td>' +
+                    '<td class="p-2">' + bomBadge + '</td>' +
+                    '<td class="p-2"><span class="font-medium text-slate-700">' + escapeHtml(r.customer_name || 'Umum') + '</span> <span class="text-[9px] font-bold text-indigo-700">(' + escapeHtml(r.customer_category || 'REGULER') + ')</span></td>' +
+                    '<td class="p-2 font-semibold text-slate-700 text-[10px]">' + escapeHtml(r.payment_method || 'CASH') + '</td>' +
+                '</tr>';
+            }).join('');
+
+            tbody.innerHTML = rowsHtml;
+            if (rows.length > 30) {
+                tbody.innerHTML += '<tr><td colspan="11" class="p-2 text-center text-slate-400 italic">Menampilkan 30 baris pertama dari total ' + rows.length + ' baris transaksi.</td></tr>';
+            }
+        }
+
+        async function submitSaleImport(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('sale-import-file-input');
+            const textInput = document.getElementById('sale-import-text-input');
+            const branchSelect = document.getElementById('sale-import-branch-select');
+            const btnSubmit = document.getElementById('btn-submit-sale-import');
+
+            const targetBranchId = branchSelect ? parseInt(branchSelect.value) : ((state && state.currentBranch && state.currentBranch.id) ? state.currentBranch.id : 1);
+            const targetBranchName = (branchSelect && branchSelect.selectedOptions && branchSelect.selectedOptions[0]) ? branchSelect.selectedOptions[0].text : 'Cabang Terpilih';
+
+            const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+            const hasText = textInput && textInput.value.trim().length > 0;
+            const previewRows = window.saleImportPreviewRows || [];
+
+            if (!hasFile && !hasText && previewRows.length === 0) {
+                alert('Silakan pilih berkas Excel/CSV atau tempel data penjualan terlebih dahulu.');
+                return;
+            }
+
+            const validCount = previewRows.filter(function(r) { return r.is_valid; }).length;
+            const confirmMsg = '⚡ KONFIRMASI IMPORT PENJUALAN & POTONG STOK:\n\n' +
+                'Cabang Tujuan: ' + targetBranchName + '\n' +
+                'Jumlah Transaksi/Baris Valid: ' + (validCount || 'Sesuai berkas') + '\n\n' +
+                'Sistem akan langsung membuat faktur penjualan dan MEMOTONG SALDO STOK PRODUK & BAHAN BAKU BOM secara realtime.\n\n' +
+                'Apakah Anda yakin ingin mengeksekusi import transaksi sekarang?';
+
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span><span>Mengeksekusi Transaksi & Memotong Stok...</span>';
+
+            try {
+                let res;
+                if (hasFile) {
+                    const formData = new FormData();
+                    formData.append('file', fileInput.files[0]);
+                    formData.append('branch_id', targetBranchId);
+                    res = await fetch('api.php?action=execute_sale_import', {
+                        method: 'POST',
+                        body: formData
+                    });
+                } else if (hasText) {
+                    res = await fetch('api.php?action=execute_sale_import', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            csv_content: textInput.value.trim(),
+                            branch_id: targetBranchId
+                        })
+                    });
+                } else if (previewRows.length > 0) {
+                    res = await fetch('api.php?action=execute_sale_import', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            rows: previewRows,
+                            branch_id: targetBranchId
+                        })
+                    });
+                }
+
+                const rawRes = await res.text();
+                let data;
+                try {
+                    data = JSON.parse(rawRes);
+                } catch (eParse) {
+                    throw new Error('Respon server bukan JSON: ' + (rawRes ? rawRes.substring(0, 150) : 'Kosong (HTTP ' + res.status + ')'));
+                }
+
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<i data-lucide="zap" class="w-4 h-4"></i><span>Eksekusi Import &amp; Potong Stok Sekarang</span>';
+                if (window.lucide) lucide.createIcons();
+
+                alert(data.message || (data.success ? 'Eksekusi transaksi berhasil diproses!' : 'Gagal mengeksekusi import penjualan'));
+
+                if (data.success) {
+                    closeSaleImportModal();
+                    if (typeof loadSalesReports === 'function') {
+                        loadSalesReports();
+                    }
+                    if (typeof loadStockData === 'function') {
+                        loadStockData();
+                    }
+                    if (typeof initApp === 'function') {
+                        await initApp();
+                    }
+                }
+            } catch (err) {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<i data-lucide="zap" class="w-4 h-4"></i><span>Eksekusi Import &amp; Potong Stok Sekarang</span>';
+                if (window.lucide) lucide.createIcons();
+                alert('Terjadi kesalahan jaringan saat mengeksekusi import penjualan: ' + err.message);
             }
         }
 

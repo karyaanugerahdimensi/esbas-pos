@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.4.9",
-    "build": "20261101-75",
+    "version": "1.5.0",
+    "build": "20261101-76",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.5.0",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Tool Transaksi Pengujian: Import Excel Penjualan Cepat & Potong Stok Langsung (FR-ADM-01 / FR-POS-56)",
+            "description": "Menghadirkan fitur transaksi khusus Administrator / Super Admin berupa sistem Import Excel Penjualan Cepat untuk pengujian sistem penjualan dan persediaan: (1) Generator Template Excel Asli (.xlsx & .csv): Dibuat secara mandiri via ZipArchive OpenXML dengan 13 kolom transaksi terstruktur (No Faktur, Tanggal, SKU, Nama Produk, Varian, Qty, Harga Satuan, Diskon, Nama & Kategori Pelanggan, Metode Bayar, Status Bayar, Catatan) dan contoh transaksi pengujian multi-item; (2) Live Modal Pratinjau (#sale-import-modal): Memvalidasi SKU/Nama Produk, status aktif cabang, perhitungan subtotal, simulasi stok fisik sebelum & sesudah terpotong, serta dekomposisi bahan baku BOM; (3) Realtime Direct Stock Deduction: Secara transaksional membuat faktur di tabel sales dan sale_items, langsung memotong saldo produk jadi di branch_stocks (STOCK_OUT_SALE), dan otomatis memotong bahan baku resep BOM (Base BOM dan Varian BOM) (BOM_DEDUCTION); (4) Manajemen Piutang Otomatis: Mendukung metode bayar PIUTANG yang langsung mencatat ke customer_receivables; (5) Kompatibilitas Penuh Android 8.1: 100% sintaks JavaScript bebas token ES2020 blocker.",
+            "rollback_command": "git checkout v1.4.9"
+        },
         {
             "version": "1.4.9",
             "commit": "HEAD",

@@ -421,6 +421,120 @@ if (!function_exists('parseCustomerGoogleCoords')) {
     }
 }
 
+if (!function_exists('parseSaleSpreadsheetFileToRowsUnified')) {
+    function parseSaleSpreadsheetFileToRowsUnified($filePath, $rawString = '') {
+        $rawRows = [];
+        if (!empty($filePath) && file_exists($filePath)) {
+            $fp = fopen($filePath, 'rb');
+            $magic = fread($fp, 4);
+            fclose($fp);
+
+            if ($magic === "PK\x03\x04") {
+                $rawRows = parseCustomerXlsxRaw($filePath);
+            } else {
+                $content = file_get_contents($filePath);
+                if (stripos($content, '<table') !== false && stripos($content, '<tr') !== false) {
+                    if (preg_match_all('/<tr[^>]*>(.*?)<\/tr>/is', $content, $trMatches)) {
+                        foreach ($trMatches[1] as $tr) {
+                            if (preg_match_all('/<t[hd][^>]*>(.*?)<\/t[hd]>/is', $tr, $tdMatches)) {
+                                $row = [];
+                                foreach ($tdMatches[1] as $td) {
+                                    $row[] = trim(html_entity_decode(strip_tags($td), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                                }
+                                $rawRows[] = $row;
+                            }
+                        }
+                    }
+                } else {
+                    $rawString = $content;
+                }
+            }
+        }
+
+        if (empty($rawRows) && !empty($rawString)) {
+            $lines = preg_split("/\r\n|\n|\r/", trim($rawString));
+            if (!empty($lines)) {
+                $firstLine = $lines[0];
+                $tabCount = substr_count($firstLine, "\t");
+                $semiCount = substr_count($firstLine, ";");
+                $commaCount = substr_count($firstLine, ",");
+                $delimiter = ',';
+                if ($tabCount > $commaCount && $tabCount > $semiCount) {
+                    $delimiter = "\t";
+                } elseif ($semiCount > $commaCount) {
+                    $delimiter = ';';
+                }
+
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if (empty($line)) continue;
+                    $rawRows[] = str_getcsv($line, $delimiter);
+                }
+            }
+        }
+
+        if (empty($rawRows)) return [];
+
+        $headerMap = [
+            'no' => 'row_num', 'nomor' => 'row_num', '#' => 'row_num',
+            'no faktur' => 'invoice_number', 'nomor faktur' => 'invoice_number', 'invoice' => 'invoice_number', 'invoice_number' => 'invoice_number', 'no invoice' => 'invoice_number', 'faktur' => 'invoice_number', 'no_faktur' => 'invoice_number', 'transaksi' => 'invoice_number', 'no transaksi' => 'invoice_number',
+            'tanggal' => 'sale_date', 'tgl' => 'sale_date', 'date' => 'sale_date', 'sale_date' => 'sale_date', 'tanggal transaksi' => 'sale_date', 'tgl transaksi' => 'sale_date', 'waktu' => 'sale_date', 'waktu transaksi' => 'sale_date',
+            'sku' => 'sku', 'sku produk' => 'sku', 'product_sku' => 'sku', 'kode produk' => 'sku', 'kode barang' => 'sku', 'item code' => 'sku', 'kode' => 'sku', 'product code' => 'sku',
+            'nama' => 'product_name', 'nama produk' => 'product_name', 'nama barang' => 'product_name', 'product_name' => 'product_name', 'produk' => 'product_name', 'item name' => 'product_name',
+            'varian' => 'variant_name', 'variant' => 'variant_name', 'variant_name' => 'variant_name', 'nama varian' => 'variant_name',
+            'qty' => 'qty', 'jumlah' => 'qty', 'kuantitas' => 'qty', 'quantity' => 'qty', 'banyak' => 'qty', 'pcs' => 'qty',
+            'harga' => 'unit_price', 'harga satuan' => 'unit_price', 'unit price' => 'unit_price', 'unit_price' => 'unit_price', 'price' => 'unit_price', 'harga jual' => 'unit_price',
+            'diskon' => 'discount', 'discount' => 'discount', 'potongan' => 'discount', 'disc' => 'discount',
+            'pelanggan' => 'customer_name', 'customer' => 'customer_name', 'nama pelanggan' => 'customer_name', 'customer_name' => 'customer_name', 'nama customer' => 'customer_name', 'konsumen' => 'customer_name',
+            'kategori' => 'customer_category', 'kategori pelanggan' => 'customer_category', 'category' => 'customer_category', 'customer category' => 'customer_category', 'tier' => 'customer_category', 'jenis pelanggan' => 'customer_category',
+            'metode bayar' => 'payment_method', 'cara bayar' => 'payment_method', 'payment_method' => 'payment_method', 'metode pembayaran' => 'payment_method', 'payment' => 'payment_method', 'tipe bayar' => 'payment_method',
+            'status bayar' => 'payment_status', 'payment_status' => 'payment_status', 'status' => 'payment_status', 'lunas/belum' => 'payment_status', 'status pembayaran' => 'payment_status',
+            'catatan' => 'notes', 'notes' => 'notes', 'keterangan' => 'notes', 'note' => 'notes', 'memo' => 'notes'
+        ];
+
+        $firstRow = $rawRows[0];
+        $canonicalHeaders = [];
+        $isHeader = false;
+        foreach ($firstRow as $rh) {
+            $cleaned = strtolower(trim(preg_replace('/\s*\(.*?\)/', '', str_replace(["\xEF\xBB\xBF", '"', "'"], '', $rh))));
+            if (isset($headerMap[$cleaned])) {
+                $isHeader = true;
+                $canonicalHeaders[] = $headerMap[$cleaned];
+            } else {
+                $canonicalHeaders[] = $cleaned;
+            }
+        }
+
+        $startIndex = $isHeader ? 1 : 0;
+        if (!$isHeader) {
+            $canonicalHeaders = [
+                'invoice_number', 'sale_date', 'sku', 'product_name', 'variant_name',
+                'qty', 'unit_price', 'discount', 'customer_name', 'customer_category',
+                'payment_method', 'payment_status', 'notes'
+            ];
+        }
+
+        $parsedRows = [];
+        for ($i = $startIndex; $i < count($rawRows); $i++) {
+            $data = $rawRows[$i];
+            if (empty($data) || (count($data) === 1 && empty($data[0]))) continue;
+
+            $row = [];
+            foreach ($canonicalHeaders as $cIdx => $colKey) {
+                if ($colKey === 'row_num') continue;
+                $row[$colKey] = isset($data[$cIdx]) ? trim($data[$cIdx]) : '';
+            }
+
+            $hasIdentifier = !empty($row['sku']) || !empty($row['product_name']);
+            if ($hasIdentifier) {
+                $parsedRows[] = $row;
+            }
+        }
+
+        return $parsedRows;
+    }
+}
+
 try {
     switch ($action) {
 
@@ -12659,6 +12773,781 @@ try {
                 'cross_branch_count' => count($crossBranchNotices),
                 'cross_branch_notices' => $crossBranchNotices
             ]);
+            break;
+
+        // ==========================================
+        // TOOL TRANSAKSI & PENGUJIAN STOK (IMPORT EXCEL PENJUALAN)
+        // ==========================================
+        case 'download_sale_import_template':
+            $format = strtolower(trim($_GET['format'] ?? 'xlsx'));
+
+            // Format CSV jika secara eksplisit diminta (?format=csv)
+            if ($format === 'csv') {
+                header('Content-Type: text/csv; charset=utf-8');
+                header('Content-Disposition: attachment; filename="template_import_penjualan.csv"');
+                $out = fopen('php://output', 'w');
+                fputs($out, "\xEF\xBB\xBF");
+                fputcsv($out, ['No Faktur', 'Tanggal', 'SKU Produk', 'Nama Produk', 'Varian', 'Qty', 'Harga Satuan', 'Diskon', 'Nama Pelanggan', 'Kategori Pelanggan', 'Metode Bayar', 'Status Bayar', 'Catatan']);
+                fputcsv($out, ['TEST-INV-001', '2026-11-01 09:15:00', 'FG-001', 'Air Mineral Galon RO 19L', '', '5', '18000', '0', 'Budi Santoso', 'REGULER', 'CASH', 'PAID', 'Uji transaksi faktur 1 item 1']);
+                fputcsv($out, ['TEST-INV-001', '2026-11-01 09:15:00', 'ACC-002', 'Kran Dispenser Anti Bocor', '', '2', '15000', '0', 'Budi Santoso', 'REGULER', 'CASH', 'PAID', 'Uji multi-item faktur 1 item 2']);
+                fputcsv($out, ['TEST-INV-002', '2026-11-01 10:00:00', 'FG-002', 'Air Mineral Gelas 220ml Dus', '', '10', '25000', '5000', 'Toko Berkah Grosir', 'RESELLER', 'TRANSFER', 'PAID', 'Uji reseller & transfer']);
+                fputcsv($out, ['', '', 'FG-001', 'Air Mineral Galon RO 19L', 'Tutup Standar', '3', '', '0', 'Pelanggan Umum', 'REGULER', 'QRIS', 'PAID', 'Uji auto-invoice & harga cabang']);
+                fputcsv($out, ['TEST-INV-003', '2026-11-01 11:30:00', 'FG-001', 'Air Mineral Galon RO 19L', '', '20', '16000', '0', 'Mitra Usaha Jaya', 'MITRA', 'PIUTANG', 'UNPAID', 'Uji piutang tempo mitra']);
+                fclose($out);
+                exit;
+            }
+
+            // Default: Format Asli Microsoft Excel (.xlsx) dengan ZipArchive OpenXML
+            if (class_exists('ZipArchive')) {
+                $tempFile = tempnam(sys_get_temp_dir(), 'tpl_sale_') . '.xlsx';
+                $zip = new ZipArchive();
+                if ($zip->open($tempFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+                    $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' . "\n" .
+                        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' .
+                        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' .
+                        '<Default Extension="xml" ContentType="application/xml"/>' .
+                        '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' .
+                        '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' .
+                        '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' .
+                        '</Types>');
+
+                    $zip->addFromString('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' . "\n" .
+                        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' .
+                        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' .
+                        '</Relationships>');
+
+                    $zip->addFromString('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' . "\n" .
+                        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' .
+                        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' .
+                        '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' .
+                        '</Relationships>');
+
+                    $zip->addFromString('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' . "\n" .
+                        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' .
+                        '<sheets><sheet name="Data Penjualan" sheetId="1" r:id="rId1"/></sheets>' .
+                        '</workbook>');
+
+                    // Stylesheet: Header bernuansa Dark Slate / Indigo, data cells format text
+                    $zip->addFromString('xl/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' . "\n" .
+                        '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' .
+                        '<fonts count="2"><font><name val="Calibri"/><sz val="11"/></font><font><b/><color rgb="FFFFFFFF"/><name val="Calibri"/><sz val="11"/></font></fonts>' .
+                        '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1E293B"/></patternFill></fill></fills>' .
+                        '<borders count="2"><border><left/><right/><top/><bottom/></border><border><left style="thin"><color rgb="FFCBD5E1"/></left><right style="thin"><color rgb="FFCBD5E1"/></right><top style="thin"><color rgb="FFCBD5E1"/></top><bottom style="thin"><color rgb="FFCBD5E1"/></bottom></border></borders>' .
+                        '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' .
+                        '<cellXfs count="3">' .
+                        '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' .
+                        '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' .
+                        '<xf numFmtId="49" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>' .
+                        '</cellXfs>' .
+                        '</styleSheet>');
+
+                    $headers = [
+                        'No Faktur (Opsional - Samakan utk Multi-Item)',
+                        'Tanggal Transaksi (YYYY-MM-DD HH:mm:ss)',
+                        'SKU Produk (Wajib)',
+                        'Nama Produk (Opsional / Fallback)',
+                        'Varian (Opsional)',
+                        'Qty (Wajib)',
+                        'Harga Satuan (Opsional - Kosong=Otomatis)',
+                        'Diskon (Opsional)',
+                        'Nama Pelanggan (Opsional)',
+                        'Kategori Pelanggan (REGULER/MEMBER/RESELLER/MITRA)',
+                        'Metode Bayar (CASH/QRIS/TRANSFER/DEBIT/PIUTANG)',
+                        'Status Bayar (PAID/UNPAID)',
+                        'Catatan Pengujian (Opsional)'
+                    ];
+
+                    $sampleRows = [
+                        ['TEST-INV-001', '2026-11-01 09:15:00', 'FG-001', 'Air Mineral Galon RO 19L', '', '5', '18000', '0', 'Budi Santoso', 'REGULER', 'CASH', 'PAID', 'Uji transaksi faktur 1 item 1'],
+                        ['TEST-INV-001', '2026-11-01 09:15:00', 'ACC-002', 'Kran Dispenser Anti Bocor', '', '2', '15000', '0', 'Budi Santoso', 'REGULER', 'CASH', 'PAID', 'Uji multi-item faktur 1 item 2'],
+                        ['TEST-INV-002', '2026-11-01 10:00:00', 'FG-002', 'Air Mineral Gelas 220ml Dus', '', '10', '25000', '5000', 'Toko Berkah Grosir', 'RESELLER', 'TRANSFER', 'PAID', 'Uji reseller & transfer'],
+                        ['', '', 'FG-001', 'Air Mineral Galon RO 19L', 'Tutup Standar', '3', '', '0', 'Pelanggan Umum', 'REGULER', 'QRIS', 'PAID', 'Uji auto-invoice & harga cabang'],
+                        ['TEST-INV-003', '2026-11-01 11:30:00', 'FG-001', 'Air Mineral Galon RO 19L', '', '20', '16000', '0', 'Mitra Usaha Jaya', 'MITRA', 'PIUTANG', 'UNPAID', 'Uji piutang tempo mitra']
+                    ];
+
+                    $colWidths = [30, 24, 20, 32, 18, 12, 22, 16, 25, 22, 20, 16, 35];
+                    $sheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' . "\n" .
+                        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' .
+                        '<cols>';
+                    foreach ($colWidths as $ci => $w) {
+                        $cidx = $ci + 1;
+                        $sheetXml .= '<col min="' . $cidx . '" max="' . $cidx . '" width="' . $w . '" customWidth="1"/>';
+                    }
+                    $sheetXml .= '</cols><sheetData>' .
+                        '<row r="1" ht="26" customHeight="1">';
+
+                    $cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
+                    foreach ($headers as $i => $h) {
+                        $cRef = $cols[$i] . '1';
+                        $sheetXml .= '<c r="' . $cRef . '" t="inlineStr" s="1"><is><t>' . htmlspecialchars($h, ENT_XML1, 'UTF-8') . '</t></is></c>';
+                    }
+                    $sheetXml .= '</row>';
+
+                    $rowNum = 2;
+                    foreach ($sampleRows as $row) {
+                        $sheetXml .= '<row r="' . $rowNum . '" ht="20" customHeight="1">';
+                        foreach ($row as $i => $val) {
+                            $cRef = $cols[$i] . $rowNum;
+                            $sheetXml .= '<c r="' . $cRef . '" t="inlineStr" s="2"><is><t>' . htmlspecialchars((string)$val, ENT_XML1, 'UTF-8') . '</t></is></c>';
+                        }
+                        $sheetXml .= '</row>';
+                        $rowNum++;
+                    }
+                    $sheetXml .= '</sheetData></worksheet>';
+
+                    $zip->addFromString('xl/worksheets/sheet1.xml', $sheetXml);
+                    $zip->close();
+
+                    if (file_exists($tempFile)) {
+                        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                        header('Content-Disposition: attachment; filename="template_import_penjualan.xlsx"');
+                        header('Content-Length: ' . filesize($tempFile));
+                        header('Cache-Control: max-age=0');
+                        header('Pragma: public');
+                        readfile($tempFile);
+                        @unlink($tempFile);
+                        exit;
+                    }
+                }
+            }
+
+            // Fallback CSV jika zip tidak tersedia
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename="template_import_penjualan.csv"');
+            $out = fopen('php://output', 'w');
+            fputs($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['No Faktur', 'Tanggal', 'SKU Produk', 'Nama Produk', 'Varian', 'Qty', 'Harga Satuan', 'Diskon', 'Nama Pelanggan', 'Kategori Pelanggan', 'Metode Bayar', 'Status Bayar', 'Catatan']);
+            fputcsv($out, ['TEST-INV-001', '2026-11-01 09:15:00', 'FG-001', 'Air Mineral Galon RO 19L', '', '5', '18000', '0', 'Budi Santoso', 'REGULER', 'CASH', 'PAID', 'Uji faktur 1 item 1']);
+            fclose($out);
+            exit;
+
+        case 'preview_sale_import':
+            $filePath = !empty($_FILES['file']['tmp_name']) && is_uploaded_file($_FILES['file']['tmp_name']) ? $_FILES['file']['tmp_name'] : '';
+            $rawContent = $input['csv_content'] ?? ($_POST['csv_content'] ?? '');
+            $fileName = $_FILES['file']['name'] ?? 'Data Penjualan';
+            $targetBranchId = !empty($_POST['branch_id']) ? (int)$_POST['branch_id'] : (!empty($input['branch_id']) ? (int)$input['branch_id'] : (!empty($_SESSION['branch_id']) ? (int)$_SESSION['branch_id'] : 1));
+
+            // Jika user dibatasi cabang, kunci ke cabang miliknya
+            if ($sessionUserId > 0 && !$sessionUserCanAccessAll && $sessionBranchId > 0) {
+                $targetBranchId = $sessionBranchId;
+            }
+
+            $stmtBranch = $pdo->prepare("SELECT name FROM branches WHERE id = ?");
+            $stmtBranch->execute([$targetBranchId]);
+            $targetBranchName = $stmtBranch->fetchColumn() ?: 'Cabang #' . $targetBranchId;
+
+            if (empty($filePath) && empty($rawContent) && empty($input['rows'])) {
+                echo json_encode(['success' => false, 'message' => 'Tidak ada berkas Excel atau data penjualan yang diunggah.']);
+                exit;
+            }
+
+            $rows = [];
+            if (!empty($input['rows']) && is_array($input['rows'])) {
+                $rows = $input['rows'];
+            } else {
+                $rows = parseSaleSpreadsheetFileToRowsUnified($filePath, $rawContent);
+            }
+
+            if (empty($rows)) {
+                echo json_encode(['success' => false, 'message' => 'Berkas tidak berisi baris penjualan yang valid atau format header tidak dikenali.']);
+                exit;
+            }
+
+            // Preload master produk di cabang target
+            $stmtProds = $pdo->prepare("
+                SELECT p.id, p.sku, p.name, p.is_stockable, p.has_bom, p.cogs,
+                       bs.stock, bs.local_price, bs.local_cogs, bs.member_price, bs.reseller_price, bs.is_active as branch_is_active
+                FROM products p
+                JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
+            ");
+            $stmtProds->execute([$targetBranchId]);
+            $prods = $stmtProds->fetchAll(PDO::FETCH_ASSOC);
+
+            $skuMap = [];
+            $nameMap = [];
+            foreach ($prods as $p) {
+                if (!empty($p['sku'])) {
+                    $skuMap[strtoupper(trim($p['sku']))] = $p;
+                }
+                $nameMap[strtolower(trim($p['name']))] = $p;
+            }
+
+            // Preload variant master
+            $stmtVariants = $pdo->query("SELECT id, product_id, variant_name, additional_price, additional_cogs FROM product_variants");
+            $variantMap = [];
+            while ($v = $stmtVariants->fetch(PDO::FETCH_ASSOC)) {
+                $pId = (int)$v['product_id'];
+                $vNameKey = strtolower(trim($v['variant_name']));
+                $variantMap[$pId][$vNameKey] = $v;
+            }
+
+            // Preload BOM Recipes
+            $stmtRecipes = $pdo->prepare("
+                SELECT pr.finished_product_id, pr.ingredient_product_id, pr.qty_needed, pr.unit,
+                       p.name as ing_name, p.sku as ing_sku, bs.stock as ing_stock
+                FROM product_recipes pr
+                JOIN products p ON p.id = pr.ingredient_product_id
+                JOIN branch_stocks bs ON bs.product_id = pr.ingredient_product_id AND bs.branch_id = ?
+            ");
+            $stmtRecipes->execute([$targetBranchId]);
+            $recipeMap = [];
+            while ($rc = $stmtRecipes->fetch(PDO::FETCH_ASSOC)) {
+                $fId = (int)$rc['finished_product_id'];
+                $recipeMap[$fId][] = $rc;
+            }
+
+            $previewRows = [];
+            $validCount = 0;
+            $invalidCount = 0;
+            $totalQty = 0;
+            $totalEstimatedSales = 0;
+            $invoicesSet = [];
+
+            // Tracking simulasi pengurangan stok fisik per produk dalam batch ini
+            $simulatedStock = [];
+            foreach ($prods as $p) {
+                $simulatedStock[(int)$p['id']] = (float)$p['stock'];
+            }
+
+            foreach ($rows as $idx => $r) {
+                $rawSku = trim($r['sku'] ?? '');
+                $rawName = trim($r['product_name'] ?? '');
+                $rawVar = trim($r['variant_name'] ?? '');
+                $qty = (float)($r['qty'] ?? 0);
+                $custCat = strtoupper(trim($r['customer_category'] ?? 'REGULER'));
+                if (empty($custCat)) $custCat = 'REGULER';
+                $custName = trim($r['customer_name'] ?? 'Pelanggan Umum');
+                if (empty($custName)) $custName = 'Pelanggan Umum';
+                $inv = trim($r['invoice_number'] ?? '');
+                if (empty($inv)) {
+                    $inv = 'AUTO-GENERATE';
+                } else {
+                    $invoicesSet[$inv] = true;
+                }
+                $payMethod = strtoupper(trim($r['payment_method'] ?? 'CASH'));
+                if (empty($payMethod)) $payMethod = 'CASH';
+                $payStatus = strtoupper(trim($r['payment_status'] ?? ($payMethod === 'PIUTANG' ? 'UNPAID' : 'PAID')));
+
+                $matchedProd = null;
+                if (!empty($rawSku) && isset($skuMap[strtoupper($rawSku)])) {
+                    $matchedProd = $skuMap[strtoupper($rawSku)];
+                } elseif (!empty($rawName) && isset($nameMap[strtolower($rawName)])) {
+                    $matchedProd = $nameMap[strtolower($rawName)];
+                }
+
+                $isValid = true;
+                $errorMsg = '';
+                $unitPrice = 0;
+                $unitCogs = 0;
+                $curStock = 0;
+                $newStock = 0;
+                $matchedVariant = null;
+                $bomList = [];
+
+                if (!$matchedProd) {
+                    $isValid = false;
+                    $errorMsg = "Produk '" . (!empty($rawSku) ? $rawSku : $rawName) . "' tidak ditemukan di cabang ini.";
+                } elseif ($qty <= 0) {
+                    $isValid = false;
+                    $errorMsg = "Kuantitas (Qty) harus berupa angka positif lebih dari 0.";
+                } else {
+                    $pId = (int)$matchedProd['id'];
+
+                    // Cek variant jika ada
+                    if (!empty($rawVar) && isset($variantMap[$pId][strtolower($rawVar)])) {
+                        $matchedVariant = $variantMap[$pId][strtolower($rawVar)];
+                    }
+
+                    // Tentukan harga satuan: jika file ada nilai > 0 gunakan file, jika tidak gunakan tier
+                    $varAddPrice = $matchedVariant ? (float)$matchedVariant['additional_price'] : 0;
+                    $varAddCogs = $matchedVariant ? (float)$matchedVariant['additional_cogs'] : 0;
+
+                    if (!empty($r['unit_price']) && (float)$r['unit_price'] > 0) {
+                        $unitPrice = (float)$r['unit_price'];
+                    } else {
+                        if ($custCat === 'RESELLER' && (float)$matchedProd['reseller_price'] > 0) {
+                            $unitPrice = (float)$matchedProd['reseller_price'];
+                        } elseif ($custCat === 'MEMBER' && (float)$matchedProd['member_price'] > 0) {
+                            $unitPrice = (float)$matchedProd['member_price'];
+                        } else {
+                            $unitPrice = (float)$matchedProd['local_price'];
+                        }
+                        $unitPrice += $varAddPrice;
+                    }
+
+                    $unitCogs = (float)$matchedProd['local_cogs'] + $varAddCogs;
+                    $itemDiscount = max(0, (float)($r['discount'] ?? 0));
+                    $itemSubtotal = ($unitPrice * $qty) - $itemDiscount;
+                    if ($itemSubtotal < 0) $itemSubtotal = 0;
+
+                    $curStock = $simulatedStock[$pId] ?? 0;
+                    $newStock = max(0, $curStock - $qty);
+                    $simulatedStock[$pId] = $newStock;
+
+                    // Hitung bahan baku BOM
+                    if (!empty($matchedProd['has_bom']) && isset($recipeMap[$pId])) {
+                        foreach ($recipeMap[$pId] as $rc) {
+                            $bomList[] = [
+                                'ing_name' => $rc['ing_name'],
+                                'ing_sku' => $rc['ing_sku'],
+                                'qty_needed' => (float)$rc['qty_needed'] * $qty,
+                                'unit' => $rc['unit']
+                            ];
+                        }
+                    }
+
+                    $validCount++;
+                    $totalQty += $qty;
+                    $totalEstimatedSales += $itemSubtotal;
+                }
+
+                if (!$isValid) {
+                    $invalidCount++;
+                }
+
+                $previewRows[] = [
+                    'row_idx' => $idx + 1,
+                    'invoice_number' => $inv,
+                    'sale_date' => $r['sale_date'] ?? date('Y-m-d H:i:s'),
+                    'sku' => $matchedProd ? $matchedProd['sku'] : $rawSku,
+                    'product_name' => $matchedProd ? $matchedProd['name'] : $rawName,
+                    'product_id' => $matchedProd ? (int)$matchedProd['id'] : null,
+                    'variant_name' => $matchedVariant ? $matchedVariant['variant_name'] : $rawVar,
+                    'variant_id' => $matchedVariant ? (int)$matchedVariant['id'] : null,
+                    'qty' => $qty,
+                    'unit_price' => $unitPrice,
+                    'unit_cogs' => $unitCogs,
+                    'discount' => (float)($r['discount'] ?? 0),
+                    'subtotal' => $isValid ? $itemSubtotal : 0,
+                    'customer_name' => $custName,
+                    'customer_category' => $custCat,
+                    'payment_method' => $payMethod,
+                    'payment_status' => $payStatus,
+                    'notes' => $r['notes'] ?? '',
+                    'stock_before' => $curStock,
+                    'stock_after' => $newStock,
+                    'has_bom' => $matchedProd ? (int)$matchedProd['has_bom'] : 0,
+                    'bom_list' => $bomList,
+                    'is_valid' => $isValid,
+                    'error_message' => $errorMsg
+                ];
+            }
+
+            echo json_encode([
+                'success' => true,
+                'filename' => $fileName,
+                'target_branch_id' => $targetBranchId,
+                'target_branch_name' => $targetBranchName,
+                'total_rows' => count($previewRows),
+                'valid_count' => $validCount,
+                'invalid_count' => $invalidCount,
+                'total_qty' => $totalQty,
+                'total_estimated_sales' => $totalEstimatedSales,
+                'unique_invoices_count' => count($invoicesSet),
+                'rows' => $previewRows
+            ]);
+            exit;
+
+        case 'execute_sale_import':
+            // Pastikan otorisasi Administrator / Pengelola Cabang
+            $userRoleCode = str_replace('_', '', strtoupper($_SESSION['user_role'] ?? ''));
+            $allowedRoles = ['SUPERADMIN', 'ADMINISTRATOR', 'ADMIN', 'OWNER', 'BRANCHMANAGER', 'MANAGER'];
+            if ($sessionUserId > 0 && !empty($userRoleCode) && !in_array($userRoleCode, $allowedRoles)) {
+                echo json_encode(['success' => false, 'message' => 'Hanya Administrator atau Pengelola Cabang yang diizinkan melakukan eksekusi import transaksi pengujian.']);
+                exit;
+            }
+
+            $targetBranchId = !empty($_POST['branch_id']) ? (int)$_POST['branch_id'] : (!empty($input['branch_id']) ? (int)$input['branch_id'] : (!empty($_SESSION['branch_id']) ? (int)$_SESSION['branch_id'] : 1));
+            if ($sessionUserId > 0 && !$sessionUserCanAccessAll && $sessionBranchId > 0) {
+                $targetBranchId = $sessionBranchId;
+            }
+
+            $filePath = !empty($_FILES['file']['tmp_name']) && is_uploaded_file($_FILES['file']['tmp_name']) ? $_FILES['file']['tmp_name'] : '';
+            $rawContent = $input['csv_content'] ?? ($_POST['csv_content'] ?? '');
+
+            $rows = [];
+            if (!empty($input['rows']) && is_array($input['rows'])) {
+                $rows = $input['rows'];
+            } else {
+                $rows = parseSaleSpreadsheetFileToRowsUnified($filePath, $rawContent);
+            }
+
+            if (empty($rows)) {
+                echo json_encode(['success' => false, 'message' => 'Tidak ada baris data penjualan yang dapat diproses.']);
+                exit;
+            }
+
+            // Preload master produk cabang
+            $stmtProds = $pdo->prepare("
+                SELECT p.id, p.sku, p.name, p.is_stockable, p.has_bom, p.cogs,
+                       bs.stock, bs.local_price, bs.local_cogs, bs.member_price, bs.reseller_price, bs.is_active as branch_is_active
+                FROM products p
+                JOIN branch_stocks bs ON bs.product_id = p.id AND bs.branch_id = ?
+            ");
+            $stmtProds->execute([$targetBranchId]);
+            $prods = $stmtProds->fetchAll(PDO::FETCH_ASSOC);
+
+            $skuMap = [];
+            $nameMap = [];
+            foreach ($prods as $p) {
+                if (!empty($p['sku'])) {
+                    $skuMap[strtoupper(trim($p['sku']))] = $p;
+                }
+                $nameMap[strtolower(trim($p['name']))] = $p;
+            }
+
+            // Preload variant master
+            $stmtVariants = $pdo->query("SELECT id, product_id, variant_name, additional_price, additional_cogs FROM product_variants");
+            $variantMap = [];
+            while ($v = $stmtVariants->fetch(PDO::FETCH_ASSOC)) {
+                $pId = (int)$v['product_id'];
+                $vNameKey = strtolower(trim($v['variant_name']));
+                $variantMap[$pId][$vNameKey] = $v;
+            }
+
+            // Preload variant recipes
+            $stmtVarRecipes = $pdo->prepare("
+                SELECT vr.variant_id, vr.ingredient_product_id, vr.qty_needed, vr.unit,
+                       p.name as ing_name, p.sku as ing_sku, bs.stock as ing_stock
+                FROM variant_recipes vr
+                JOIN products p ON p.id = vr.ingredient_product_id
+                JOIN branch_stocks bs ON bs.product_id = vr.ingredient_product_id AND bs.branch_id = ?
+            ");
+            $stmtVarRecipes->execute([$targetBranchId]);
+            $varRecipeRows = $stmtVarRecipes->fetchAll(PDO::FETCH_ASSOC);
+            $mapVarRecipes = [];
+            foreach ($varRecipeRows as $vrr) {
+                $mapVarRecipes[(int)$vrr['variant_id']][] = $vrr;
+            }
+
+            // Preload Base BOM recipes
+            $stmtRecipes = $pdo->prepare("
+                SELECT pr.finished_product_id, pr.ingredient_product_id, pr.qty_needed, pr.unit,
+                       p.name as ing_name, p.sku as ing_sku, bs.stock as ing_stock
+                FROM product_recipes pr
+                JOIN products p ON p.id = pr.ingredient_product_id
+                JOIN branch_stocks bs ON bs.product_id = pr.ingredient_product_id AND bs.branch_id = ?
+            ");
+            $stmtRecipes->execute([$targetBranchId]);
+            $recipeRows = $stmtRecipes->fetchAll(PDO::FETCH_ASSOC);
+            $recipeMap = [];
+            foreach ($recipeRows as $rc) {
+                $recipeMap[(int)$rc['finished_product_id']][] = $rc;
+            }
+
+            // Cari active shift cabang
+            $stmtShift = $pdo->prepare("SELECT id FROM cashier_shifts WHERE branch_id = ? AND status = 'OPEN' ORDER BY id DESC LIMIT 1");
+            $stmtShift->execute([$targetBranchId]);
+            $activeShiftId = $stmtShift->fetchColumn() ?: null;
+
+            // Kelompokkan baris berdasarkan nomor faktur
+            $invoiceGroups = [];
+            $autoInvSeq = 1;
+
+            foreach ($rows as $idx => $r) {
+                $rawSku = trim($r['sku'] ?? '');
+                $rawName = trim($r['product_name'] ?? '');
+                $qty = (float)($r['qty'] ?? 0);
+                if ($qty <= 0) continue;
+
+                $matchedProd = null;
+                if (!empty($rawSku) && isset($skuMap[strtoupper($rawSku)])) {
+                    $matchedProd = $skuMap[strtoupper($rawSku)];
+                } elseif (!empty($rawName) && isset($nameMap[strtolower($rawName)])) {
+                    $matchedProd = $nameMap[strtolower($rawName)];
+                }
+                if (!$matchedProd) continue;
+
+                $invKey = trim($r['invoice_number'] ?? '');
+                if (empty($invKey) || strtoupper($invKey) === 'AUTO-GENERATE') {
+                    $invKey = '__AUTO_' . $autoInvSeq . '__';
+                    $autoInvSeq++;
+                }
+
+                $invoiceGroups[$invKey][] = [
+                    'row' => $r,
+                    'prod' => $matchedProd
+                ];
+            }
+
+            if (empty($invoiceGroups)) {
+                echo json_encode(['success' => false, 'message' => 'Tidak ada baris data valid yang cocok dengan produk aktif di cabang ini.']);
+                exit;
+            }
+
+            $pdo->beginTransaction();
+
+            $createdSalesCount = 0;
+            $createdItemsCount = 0;
+            $totalSalesAmount = 0;
+            $affectedStockMovements = 0;
+
+            try {
+                foreach ($invoiceGroups as $invKey => $itemsInGroup) {
+                    $firstItemRow = $itemsInGroup[0]['row'];
+
+                    // Penentuan invoice number yang unik
+                    $isAuto = strpos($invKey, '__AUTO_') === 0;
+                    $finalInvoiceNumber = '';
+
+                    if ($isAuto) {
+                        $todayStr = date('Ymd');
+                        $uniqPart = strtoupper(substr(bin2hex(random_bytes(3)), 0, 5));
+                        $finalInvoiceNumber = "INV/{$todayStr}/IMP-{$uniqPart}";
+                    } else {
+                        // Pastikan No Faktur tidak tabrakan di DB
+                        $stmtCheckInv = $pdo->prepare("SELECT COUNT(*) FROM sales WHERE invoice_number = ?");
+                        $stmtCheckInv->execute([$invKey]);
+                        if ($stmtCheckInv->fetchColumn() > 0) {
+                            $finalInvoiceNumber = $invKey . '-' . strtoupper(substr(bin2hex(random_bytes(2)), 0, 4));
+                        } else {
+                            $finalInvoiceNumber = $invKey;
+                        }
+                    }
+
+                    // Penentuan Tanggal Transaksi
+                    $saleDate = trim($firstItemRow['sale_date'] ?? '');
+                    $txCreatedAt = date('Y-m-d H:i:s');
+                    if (!empty($saleDate) && strtotime($saleDate) !== false) {
+                        $txCreatedAt = date('Y-m-d H:i:s', strtotime($saleDate));
+                    }
+
+                    // Pelanggan & Kategori
+                    $custName = trim($firstItemRow['customer_name'] ?? 'Pelanggan Umum');
+                    if (empty($custName)) $custName = 'Pelanggan Umum';
+                    $custCat = strtoupper(trim($firstItemRow['customer_category'] ?? 'REGULER'));
+                    if (empty($custCat)) $custCat = 'REGULER';
+
+                    $stmtCust = $pdo->prepare("SELECT id, name, phone FROM customers WHERE branch_id = ? AND LOWER(name) = LOWER(?) LIMIT 1");
+                    $stmtCust->execute([$targetBranchId, $custName]);
+                    $custData = $stmtCust->fetch();
+                    $customerId = $custData ? (int)$custData['id'] : null;
+
+                    // Metode Bayar
+                    $payMethod = strtoupper(trim($firstItemRow['payment_method'] ?? 'CASH'));
+                    if (empty($payMethod)) $payMethod = 'CASH';
+                    $payStatus = strtoupper(trim($firstItemRow['payment_status'] ?? ($payMethod === 'PIUTANG' ? 'UNPAID' : 'PAID')));
+
+                    // Hitung total nilai grup
+                    $invSubtotal = 0;
+                    $invTotalCogs = 0;
+                    $invDiscount = 0;
+                    $processedGroupItems = [];
+
+                    foreach ($itemsInGroup as $ig) {
+                        $r = $ig['row'];
+                        $p = $ig['prod'];
+                        $pId = (int)$p['id'];
+                        $qty = (float)$r['qty'];
+
+                        // Resolusi variant
+                        $rawVar = trim($r['variant_name'] ?? '');
+                        $variantId = null;
+                        $variantName = '';
+                        $varAddPrice = 0;
+                        $varAddCogs = 0;
+
+                        if (!empty($rawVar) && isset($variantMap[$pId][strtolower($rawVar)])) {
+                            $vMatch = $variantMap[$pId][strtolower($rawVar)];
+                            $variantId = (int)$vMatch['id'];
+                            $variantName = $vMatch['variant_name'];
+                            $varAddPrice = (float)$vMatch['additional_price'];
+                            $varAddCogs = (float)$vMatch['additional_cogs'];
+                        }
+
+                        // Resolusi Harga
+                        if (!empty($r['unit_price']) && (float)$r['unit_price'] > 0) {
+                            $unitPrice = (float)$r['unit_price'];
+                        } else {
+                            if ($custCat === 'RESELLER' && (float)$p['reseller_price'] > 0) {
+                                $unitPrice = (float)$p['reseller_price'];
+                            } elseif ($custCat === 'MEMBER' && (float)$p['member_price'] > 0) {
+                                $unitPrice = (float)$p['member_price'];
+                            } else {
+                                $unitPrice = (float)$p['local_price'];
+                            }
+                            $unitPrice += $varAddPrice;
+                        }
+
+                        $unitCogs = (float)$p['local_cogs'] + $varAddCogs;
+                        $itemDiscount = max(0, (float)($r['discount'] ?? 0));
+                        $itemSubtotal = ($unitPrice * $qty) - $itemDiscount;
+                        if ($itemSubtotal < 0) $itemSubtotal = 0;
+                        $itemCogs = $unitCogs * $qty;
+
+                        $invSubtotal += ($unitPrice * $qty);
+                        $invDiscount += $itemDiscount;
+                        $invTotalCogs += $itemCogs;
+
+                        $processedGroupItems[] = [
+                            'product_id' => $pId,
+                            'product_name' => $p['name'],
+                            'variant_id' => $variantId,
+                            'variant_name' => $variantName,
+                            'qty' => $qty,
+                            'unit_price' => $unitPrice,
+                            'unit_cogs' => $unitCogs,
+                            'subtotal_price' => $itemSubtotal,
+                            'subtotal_cogs' => $itemCogs,
+                            'has_bom' => (int)$p['has_bom']
+                        ];
+                    }
+
+                    $invGrandTotal = max(0, $invSubtotal - $invDiscount);
+                    $cashReceived = ($payMethod === 'CASH') ? $invGrandTotal : ($payMethod === 'PIUTANG' ? 0 : $invGrandTotal);
+                    $cashChange = 0;
+
+                    // Insert ke tabel sales
+                    $stmtSale = $pdo->prepare("
+                        INSERT INTO sales (
+                            invoice_number, branch_id, user_id, shift_id, customer_id, customer_name, customer_category,
+                            sales_type, subtotal, discount, tax, delivery_fee, delivery_distance_km, courier_vehicle_id,
+                            driver_user_id, driver_name, is_delivery_included, delivery_status, grand_total, total_cogs,
+                            payment_method, payment_status, cash_received, cash_change, created_at
+                        ) VALUES (
+                            ?, ?, ?, ?, ?, ?, ?,
+                            'DIRECT_STORE', ?, ?, 0, 0, 0, NULL,
+                            NULL, NULL, 0, 'COMPLETED', ?, ?,
+                            ?, ?, ?, ?, ?
+                        )
+                    ");
+                    $stmtSale->execute([
+                        $finalInvoiceNumber, $targetBranchId, $sessionUserId ?: 1, $activeShiftId,
+                        $customerId, $custName, $custCat,
+                        $invSubtotal, $invDiscount, $invGrandTotal, $invTotalCogs,
+                        $payMethod, $payStatus, $cashReceived, $cashChange, $txCreatedAt
+                    ]);
+                    $saleId = (int)$pdo->lastInsertId();
+                    $createdSalesCount++;
+                    $totalSalesAmount += $invGrandTotal;
+
+                    // Insert item & potong stok
+                    $stmtItem = $pdo->prepare("
+                        INSERT INTO sale_items (sale_id, product_id, variant_id, variant_name, product_name, qty, unit_price, unit_cogs, subtotal_price, subtotal_cogs)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ");
+
+                    foreach ($processedGroupItems as $pitem) {
+                        $pId = $pitem['product_id'];
+                        $qty = $pitem['qty'];
+                        $vId = $pitem['variant_id'];
+                        $vName = $pitem['variant_name'];
+                        $dispName = $pitem['product_name'] . ($vName ? " [{$vName}]" : '');
+
+                        $stmtItem->execute([
+                            $saleId, $pId, $vId, $vName, $dispName, $qty,
+                            $pitem['unit_price'], $pitem['unit_cogs'], $pitem['subtotal_price'], $pitem['subtotal_cogs']
+                        ]);
+                        $createdItemsCount++;
+
+                        // 1. Ambil stok aktual produk jadi & potong langsung
+                        $stmtCurStock = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                        $stmtCurStock->execute([$targetBranchId, $pId]);
+                        $curStock = (float)($stmtCurStock->fetchColumn() ?: 0);
+                        $newStock = max(0, $curStock - $qty);
+
+                        $pdo->prepare("UPDATE branch_stocks SET stock = ? WHERE branch_id = ? AND product_id = ?")
+                            ->execute([$newStock, $targetBranchId, $pId]);
+
+                        // Catat ke kartu stok stock_movements
+                        $pdo->prepare("
+                            INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id, created_at)
+                            VALUES (?, ?, 'STOCK_OUT_SALE', ?, ?, ?, ?, ?, ?, ?)
+                        ")->execute([
+                            $targetBranchId, $pId, -$qty, $curStock, $newStock,
+                            $finalInvoiceNumber, "Import Penjualan Massal [{$custCat}] kpd {$custName}" . ($vName ? " ({$vName})" : ""),
+                            $sessionUserId ?: 1, $txCreatedAt
+                        ]);
+                        $affectedStockMovements++;
+
+                        // 2. Potong Resep Bahan Baku Base BOM jika produk ber-BOM
+                        if (!empty($pitem['has_bom']) && isset($recipeMap[$pId])) {
+                            foreach ($recipeMap[$pId] as $rc) {
+                                $ingId = (int)$rc['ingredient_product_id'];
+                                $ingNeeded = (float)$rc['qty_needed'] * $qty;
+
+                                $stmtIngStock = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                                $stmtIngStock->execute([$targetBranchId, $ingId]);
+                                $curIngStock = (float)($stmtIngStock->fetchColumn() ?: 0);
+                                $newIngStock = max(0, $curIngStock - $ingNeeded);
+
+                                $pdo->prepare("UPDATE branch_stocks SET stock = ? WHERE branch_id = ? AND product_id = ?")
+                                    ->execute([$newIngStock, $targetBranchId, $ingId]);
+
+                                $pdo->prepare("
+                                    INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id, created_at)
+                                    VALUES (?, ?, 'BOM_DEDUCTION', ?, ?, ?, ?, ?, ?, ?)
+                                ")->execute([
+                                    $targetBranchId, $ingId, -$ingNeeded, $curIngStock, $newIngStock,
+                                    $finalInvoiceNumber, "Konsumsi Base BOM ({$qty}x {$dispName})",
+                                    $sessionUserId ?: 1, $txCreatedAt
+                                ]);
+                                $affectedStockMovements++;
+                            }
+                        }
+
+                        // 3. Potong Resep BOM Varian jika varian ber-BOM
+                        if ($vId && isset($mapVarRecipes[$vId])) {
+                            foreach ($mapVarRecipes[$vId] as $vrc) {
+                                $vIngId = (int)$vrc['ingredient_product_id'];
+                                $vIngNeeded = (float)$vrc['qty_needed'] * $qty;
+
+                                $stmtVIngStock = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                                $stmtVIngStock->execute([$targetBranchId, $vIngId]);
+                                $curVIngStock = (float)($stmtVIngStock->fetchColumn() ?: 0);
+                                $newVIngStock = max(0, $curVIngStock - $vIngNeeded);
+
+                                $pdo->prepare("UPDATE branch_stocks SET stock = ? WHERE branch_id = ? AND product_id = ?")
+                                    ->execute([$newVIngStock, $targetBranchId, $vIngId]);
+
+                                $pdo->prepare("
+                                    INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id, created_at)
+                                    VALUES (?, ?, 'BOM_DEDUCTION', ?, ?, ?, ?, ?, ?, ?)
+                                ")->execute([
+                                    $targetBranchId, $vIngId, -$vIngNeeded, $curVIngStock, $newVIngStock,
+                                    $finalInvoiceNumber, "Konsumsi BOM Varian [{$vName}] ({$qty}x {$dispName})",
+                                    $sessionUserId ?: 1, $txCreatedAt
+                                ]);
+                                $affectedStockMovements++;
+                            }
+                        }
+                    }
+
+                    // 4. Catat ke Piutang Usaha jika metode pembayaran PIUTANG
+                    if ($payMethod === 'PIUTANG') {
+                        $dueDate = date('Y-m-d', strtotime('+30 days', strtotime($txCreatedAt)));
+                        $pdo->prepare("
+                            INSERT INTO customer_receivables (sale_id, invoice_number, customer_id, branch_id, total_amount, paid_amount, remaining_amount, due_date, status, notes, created_at, updated_at)
+                            VALUES (?, ?, ?, ?, ?, 0, ?, ?, 'BELUM_LUNAS', ?, ?, ?)
+                        ")->execute([
+                            $saleId, $finalInvoiceNumber, $customerId, $targetBranchId,
+                            $invGrandTotal, $invGrandTotal, $dueDate,
+                            "Piutang Pengujian Import Penjualan kpd {$custName} ({$custCat})",
+                            $txCreatedAt, $txCreatedAt
+                        ]);
+                    }
+                }
+
+                $pdo->commit();
+
+                echo json_encode([
+                    'success' => true,
+                    'message' => "Import data penjualan berhasil! {$createdSalesCount} transaksi dibuat ({$createdItemsCount} item), total omzet Rp " . number_format($totalSalesAmount, 0, ',', '.') . ", dan {$affectedStockMovements} mutasi pemotongan stok (produk & BOM) berhasil diproses langsung.",
+                    'created_sales_count' => $createdSalesCount,
+                    'created_items_count' => $createdItemsCount,
+                    'total_sales_amount' => $totalSalesAmount,
+                    'affected_stock_movements' => $affectedStockMovements,
+                    'target_branch_id' => $targetBranchId
+                ]);
+            } catch (Exception $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Gagal mengeksekusi import penjualan: ' . $e->getMessage()
+                ]);
+            }
             break;
 
         case 'save_customer':
