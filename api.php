@@ -4984,7 +4984,7 @@ try {
                 $bStock = (int)$r['branch_stock'];
 
                 // Resolusi Stok Acuan Shift sebelumnya (Stok malam kemarin atau sisa serah terima shift 1)
-                $refQty = $bStock;
+                $refQty = 0; // Default bersih 0 jika tidak ada shift sebelumnya atau pasca reset
                 $isPrevFinal = $lastShift && !empty($lastShift['is_final_shift']);
                 $isCapSku = ($sku === 'RAW-089' || $sku === 'RAW-020' || stripos($r['name'] ?? '', 'Tutup Galon') !== false);
                 $isNewDayOrShift1 = (!$isContinuation || $nextShiftNumber == 1);
@@ -4992,16 +4992,18 @@ try {
                 if ($isCapSku && $isNewDayOrShift1) {
                     // Sisa tutup semalam telah diretur ke gudang saat tutup toko, sehingga stok fisik semalam di toko bersih 0
                     $refQty = 0;
-                } elseif (!$isNewDayOrShift1 && !empty($lastClosingItems) && isset($lastClosingItems[$pId]) && $lastClosingItems[$pId] !== '' && $lastClosingItems[$pId] !== null) {
-                    // Serah terima antar shift di hari yang sama (Shift 1 -> Shift 2)
-                    $cQty = (float)$lastClosingItems[$pId];
-                    $refQty = ($cQty == 0 && $bStock > 0 && !$isCapSku) ? $bStock : $cQty;
-                } elseif (!$isNewDayOrShift1 && !empty($lastClosingItems) && isset($lastClosingItems[$sku]) && $lastClosingItems[$sku] !== '' && $lastClosingItems[$sku] !== null) {
-                    $cQty = (float)$lastClosingItems[$sku];
-                    $refQty = ($cQty == 0 && $bStock > 0 && !$isCapSku) ? $bStock : $cQty;
+                } elseif ($lastShift && $lastShift['status'] === 'CLOSED') {
+                    // Mengacu pada sisa fisik yang tercatat saat shift ditutup (closing_items_json)
+                    if (!empty($lastClosingItems) && isset($lastClosingItems[$pId]) && $lastClosingItems[$pId] !== '' && $lastClosingItems[$pId] !== null) {
+                        $refQty = (float)$lastClosingItems[$pId];
+                    } elseif (!empty($lastClosingItems) && isset($lastClosingItems[$sku]) && $lastClosingItems[$sku] !== '' && $lastClosingItems[$sku] !== null) {
+                        $refQty = (float)$lastClosingItems[$sku];
+                    } else {
+                        $refQty = 0;
+                    }
                 } else {
-                    // Mengacu murni pada saldo stok fisik aktual cabang di Menu Stok (branch_stocks)
-                    $refQty = $bStock;
+                    // Belum ada riwayat shift yang ditutup (misal database baru atau riwayat shift baru saja di-reset)
+                    $refQty = 0;
                 }
 
                 $dynamicItems[] = [
@@ -14956,7 +14958,18 @@ try {
                         $stmtSm = $pdo->prepare($sqlSm);
                         $stmtSm->execute($paramsSm);
                         $countSm = $stmtSm->rowCount();
-                        $summary[] = "Kartu Pergerakan Stok: $countSm mutasi dibersihkan (Rentang: $startDate s/d $endDate)";
+
+                        // Jika pengguna juga memilih opsi nolkan saldo stok fisik produk jadi & bahan baku
+                        if (!empty($input['reset_physical_stock_zero'])) {
+                            if ($targetBranchId > 0) {
+                                $pdo->prepare("UPDATE branch_stocks SET stock = 0 WHERE branch_id = ?")->execute([$targetBranchId]);
+                            } else {
+                                $pdo->exec("UPDATE branch_stocks SET stock = 0");
+                            }
+                            $summary[] = "Stok: Saldo fisik produk di-reset ke 0 & $countSm mutasi dibersihkan (Rentang: $startDate s/d $endDate)";
+                        } else {
+                            $summary[] = "Kartu Pergerakan Stok: $countSm mutasi dibersihkan (Rentang: $startDate s/d $endDate)";
+                        }
                     } else {
                         if ($targetBranchId > 0) {
                             $stmtStk = $pdo->prepare("UPDATE branch_stocks SET stock = 0 WHERE branch_id = ?");
@@ -15043,7 +15056,16 @@ try {
                         }
                         $pdo->prepare($sqlWm)->execute($paramsWm);
 
-                        $summary[] = "Shift: $countShifts riwayat shift & log meteran air dihapus (Rentang: $startDate s/d $endDate)";
+                        // Bersihkan juga snapshot sisa stok malam acuan opening shift pada cabang agar acuan kembali bersih ke 0
+                        try {
+                            if ($targetBranchId > 0) {
+                                $pdo->prepare("UPDATE cashier_shifts SET closing_items_json = NULL, closing_night_mineral = 0, closing_night_ro = 0, closing_night_plastik = 0 WHERE branch_id = ?")->execute([$targetBranchId]);
+                            } else {
+                                $pdo->exec("UPDATE cashier_shifts SET closing_items_json = NULL, closing_night_mineral = 0, closing_night_ro = 0, closing_night_plastik = 0");
+                            }
+                        } catch (Exception $eCleanNight) {}
+
+                        $summary[] = "Shift & Stok Malam: $countShifts riwayat shift, log meteran air & acuan stok malam dibersihkan (Rentang: $startDate s/d $endDate)";
                     } else {
                         if ($targetBranchId > 0) {
                             $stmtShiftIds = $pdo->prepare("SELECT id FROM cashier_shifts WHERE branch_id = ?");
@@ -15074,7 +15096,7 @@ try {
                             $stmtDelShift->execute();
                             $countShifts = $stmtDelShift->rowCount();
                         }
-                        $summary[] = "Shift: $countShifts riwayat shift & log meteran air dihapus (Seluruh Data)";
+                        $summary[] = "Shift & Stok Malam: $countShifts riwayat shift, log meteran air & acuan stok malam dihapus (Seluruh Data)";
                     }
                 }
 

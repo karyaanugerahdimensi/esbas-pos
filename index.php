@@ -7835,6 +7835,12 @@ try {
                             <input type="checkbox" id="reset-opt-restore-stock" checked class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500">
                             <span class="text-[11px] font-bold text-emerald-700">Pulihkan / Kembalikan Stok Fisik yang terpotong oleh transaksi penjualan pada tanggal tersebut</span>
                         </label>
+
+                        <!-- Checkbox Opsi Sekaligus Kosongkan Saldo Fisik Cabang (Stok = 0) -->
+                        <label id="container-zero-physical-stock" class="flex items-center space-x-2 pt-0.5 cursor-pointer">
+                            <input type="checkbox" id="reset-opt-zero-physical-stock" class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
+                            <span class="text-[11px] font-bold text-rose-700">Sekaligus nolkan / kosongkan saldo persediaan fisik produk cabang (Stok = 0)</span>
+                        </label>
                     </div>
 
                     <p id="reset-date-scope-desc" class="text-[11px] text-slate-500">Operasi akan mengeksekusi reset pada <b>seluruh data riwayat transaksi</b> dari awal sistem berjalan.</p>
@@ -7896,16 +7902,16 @@ try {
                         </div>
                     </label>
 
-                    <!-- Option 4: Hapus Laporan & Riwayat Shift -->
+                    <!-- Option 4: Hapus Laporan & Riwayat Shift, Meteran & Stok Malam -->
                     <label class="flex items-start space-x-3 p-3 rounded-2xl border border-slate-200 bg-white hover:bg-rose-50/40 transition-colors cursor-pointer group">
-                        <input type="checkbox" id="reset-opt-shifts" class="mt-1 w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
+                        <input type="checkbox" id="reset-opt-shifts" class="mt-1 w-4 h-4 rounded text-rose-600 focus:ring-rose-500" checked>
                         <div class="space-y-0.5">
                             <span class="font-bold text-slate-800 group-hover:text-rose-900 block flex items-center gap-1.5">
-                                <span>⏱️ 4. Hapus Laporan & Riwayat Shift</span>
-                                <span class="px-1.5 py-0.2 rounded text-[9px] bg-indigo-100 text-indigo-800 font-semibold">Shifts & Meteran</span>
+                                <span>⏱️ 4. Hapus Laporan Shift, Meteran & Stok Acuan Malam</span>
+                                <span class="px-1.5 py-0.2 rounded text-[9px] bg-indigo-100 text-indigo-800 font-semibold">Shifts & Stok Malam</span>
                             </span>
                             <span class="text-[11px] text-slate-500 block leading-snug">
-                                Menghapus riwayat shift harian kasir (cashier_shifts), rekaman log meteran air mesin RO/mineral, serta pengeluaran kas laci toko (beban & uang makan shift) pada cabang terpilih / semua cabang.
+                                Menghapus riwayat shift kasir (cashier_shifts), rekap sisa stok malam acuan opening toko (stok malam kembali ke 0), rekaman log meteran air, serta pengeluaran kas laci toko pada cabang terpilih / semua cabang.
                             </span>
                         </div>
                     </label>
@@ -31468,19 +31474,19 @@ Manager / Supervisor: __________________
                 if (optStocks) optStocks.checked = false;
                 if (optSales) optSales.checked = true;
                 if (optBom) optBom.checked = false;
-                if (optShifts) optShifts.checked = false;
+                if (optShifts) optShifts.checked = true;
                 if (optExpenses) optExpenses.checked = false;
             } else if (preselectOpts.source === 'stocks') {
                 if (optStocks) optStocks.checked = true;
                 if (optSales) optSales.checked = true;
                 if (optBom) optBom.checked = true;
-                if (optShifts) optShifts.checked = false;
+                if (optShifts) optShifts.checked = true;
                 if (optExpenses) optExpenses.checked = false;
             } else {
                 if (optStocks) optStocks.checked = !!preselectOpts.stocks;
                 if (optSales) optSales.checked = !!preselectOpts.sales;
                 if (optBom) optBom.checked = !!preselectOpts.bom;
-                if (optShifts) optShifts.checked = !!preselectOpts.shifts;
+                if (optShifts) optShifts.checked = (preselectOpts.shifts !== undefined ? !!preselectOpts.shifts : true);
                 if (optExpenses) optExpenses.checked = !!preselectOpts.expenses;
             }
 
@@ -31641,13 +31647,15 @@ Manager / Supervisor: __________________
                 restoreSalesStockVal = restoreCb ? restoreCb.checked : true;
             }
 
+            const zeroPhysicalStockVal = isDateCustom ? (document.getElementById('reset-opt-zero-physical-stock') ? document.getElementById('reset-opt-zero-physical-stock').checked : false) : true;
+
             const dateScopeText = isDateCustom ? `Rentang Tanggal: ${startDateVal} s/d ${endDateVal}` : 'Rentang Tanggal: SELURUH DATA SEKALIGUS (All-Time)';
 
             const selectedItems = [];
-            if (purgeStocks) selectedItems.push(isDateCustom ? '1. Bersihkan Kartu Pergerakan Stok pada Tanggal Terpilih' : '1. Stok Seluruh Produk (Set ke 0)');
+            if (purgeStocks) selectedItems.push(isDateCustom ? ('1. Bersihkan Kartu Pergerakan Stok pada Tanggal Terpilih' + (zeroPhysicalStockVal ? ' (Saldo fisik cabang dinolkan)' : '')) : '1. Stok Seluruh Produk (Set ke 0)');
             if (purgeSales) selectedItems.push('2. Riwayat Transaksi Penjualan & Piutang' + (isDateCustom && restoreSalesStockVal ? ' (Stok fisik dipulihkan)' : ''));
             if (purgeBom) selectedItems.push('3. Log Pemakaian Bahan Baku (BOM)');
-            if (purgeShifts) selectedItems.push('4. Riwayat Laporan Shift & Meteran Air');
+            if (purgeShifts) selectedItems.push('4. Riwayat Laporan Shift, Meteran Air & Stok Acuan Malam Kemarin (Reset ke 0)');
             if (purgeExpenses) selectedItems.push('5. Buku Catatan Beban Operasional Cabang');
 
             const finalConfirm = confirm(`⚠️ PERINGATAN TINGKAT TINGGI!\n\nAnda akan MENGHAPUS / MERESET:\n• ${selectedItems.join('\n• ')}\n\nLingkup Target: ${branchLabel}\nPeriode: ${dateScopeText}\n\nOperasi ini bersifat PERMANEN dan TIDAK DAPAT DIBATALKAN!\n\nApakah Anda benar-benar yakin ingin mengeksekusi reset?`);
@@ -31666,6 +31674,7 @@ Manager / Supervisor: __________________
                         start_date: startDateVal,
                         end_date: endDateVal,
                         restore_sales_stock: restoreSalesStockVal,
+                        reset_physical_stock_zero: zeroPhysicalStockVal,
                         purge_stocks: purgeStocks,
                         purge_sales: purgeSales,
                         purge_bom: purgeBom,
@@ -31682,6 +31691,17 @@ Manager / Supervisor: __________________
                 if (data.success) {
                     alert(`✅ ${data.message}`);
                     closeMasterResetModal();
+
+                    // Bersihkan cache status shift lokal agar opening toko hari ini langsung bersih dari awal
+                    if (purgeShifts) {
+                        state.activeShift = null;
+                        state.branchClosedToday = false;
+                        state.finalClosedShift = null;
+                        state.currentUserHasClosedShift = false;
+                        window.userHasClosedShift = false;
+                        if (typeof renderShiftBanner === 'function') renderShiftBanner();
+                        if (typeof updateShiftReportSubtabVisibility === 'function') updateShiftReportSubtabVisibility();
+                    }
 
                     // Refresh relevant tables and views
                     if (typeof loadSalesReports === 'function') loadSalesReports();

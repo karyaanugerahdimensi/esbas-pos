@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.5.4",
-    "build": "20261101-80",
+    "version": "1.5.5",
+    "build": "20261101-81",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.5.5",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Pembersihan Menyeluruh Stok Malam Kemarin & Penyelarasan Otomatis Reset Shift Kasir (FR-STK-09)",
+            "description": "Menyempurnakan integrasi reset data transaksi dan stok agar riwayat stok malam acuan pembukaan toko benar-benar terhapus bersih: (1) Eliminasi Fallback Saldo Cabang pada Stok Malam Kemarin: Memperbaiki api.php (get_opening_shift_data) agar jika riwayat shift kasir kosong / di-reset atau belum ada shift yang ditutup, nilai acuan 'STOK MALAM KEMARIN' (Sisa Closing Kemarin) secara mutlak bernilai 0 untuk seluruh produk (bukan mengambil saldo fisik berjalan dari branch_stocks); (2) Default Opsi Reset Shift Terpadu: Tombol 'Reset Transaksi & Stok' pada Menu Manajemen Stok kini secara otomatis mencentang Opsi 4 (Hapus Laporan Shift, Meteran & Stok Acuan Malam) sehingga eksekusi reset transaksi & stok langsung membersihkan riwayat shift dan acuan stok malam ke 0; (3) Opsi Kosongkan Saldo Fisik Cabang pada Mode Tanggal: Menambahkan kontrol checkbox eksplisit untuk mengosongkan / menolkan saldo stok fisik cabang (Stok = 0) saat mereset berdasarkan rentang tanggal; (4) Pembersihan Cache Sesi Shift Klien: Setelah reset berhasil, state shift lokal (activeShift, branchClosedToday, finalClosedShift) langsung dinolkan tanpa perlu refresh; (5) Kompatibilitas Penuh Android 8.1: 100% sintaks JavaScript bebas token ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.5.4"
+        },
         {
             "version": "1.5.4",
             "commit": "HEAD",
