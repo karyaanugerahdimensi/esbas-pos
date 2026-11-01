@@ -4763,11 +4763,10 @@ try {
             }
 
             // Penentuan Nomor Shift & Nama Shift:
-            // Aturan Bisnis SOP:
-            // 1. Jika shift sebelumnya yang closed adalah Final Shift (Tutup Toko), siklus harian selesai!
-            //    Maka shift berikutnya PASTI KEMBALI KE SHIFT 1 (PAGI)!
-            // 2. Jika shift sebelumnya BUKAN Final Shift (misal serah terima Shift 1 ke Shift 2 di hari yang sama),
-            //    maka barulah nomor shift bertambah (Shift 2: Siang/Malam).
+            // Aturan Bisnis Toko:
+            // Toko beroperasi dalam satu sesi harian yang dibuka di pagi hari (Opening Harian / Shift Pagi).
+            // Kasir lain yang login di hari tersebut langsung melanjutkan transaksi tanpa shift berikutnya / serah terima.
+            // Penutupan shift adalah Tutup Toko (End Day Closing) yang mengakhiri hari itu dan esok kembali ke Shift 1 (Pagi).
 
             // Cari shift terakhir yang ditutup (baik hari ini maupun hari sebelumnya)
             $stmtLastClosedAny = $pdo->prepare("
@@ -4780,34 +4779,12 @@ try {
             $stmtLastClosedAny->execute([$branchId]);
             $lastAnyClosed = $stmtLastClosedAny->fetch();
 
-            $isLastFinal = $lastAnyClosed ? (int)($lastAnyClosed['is_final_shift'] ?? 0) : 0;
-
-            if ($isLastFinal == 1 || $todayClosedCount == 0 || $forceOverride) {
-                // Siklus Baru / Hari Baru: KEMBALI KE SHIFT 1 (PAGI)
-                $nextShiftNumber = 1;
-                $nextShiftName = 'Shift 1 (Pagi)';
-                $nextShiftType = 'SHIFT_1';
-                $isContinuation = false;
-                $shiftReferenceTitle = "Stok Acuan Tutup Toko Kemarin (Malam 🔒)";
-                $lastShift = $lastAnyClosed;
-            } else {
-                // Serah terima antar kasir di hari yang sama (Shift 1 -> Shift 2)
-                $nextShiftNumber = $todayClosedCount + 1;
-                $nextShiftName = ($nextShiftNumber == 2) ? 'Shift 2 (Siang/Malam)' : ('Shift ' . $nextShiftNumber);
-                $nextShiftType = 'SHIFT_' . $nextShiftNumber;
-                $isContinuation = true;
-
-                // Ambil shift terakhir yang sudah ditutup hari ini
-                for ($i = count($todayShifts) - 1; $i >= 0; $i--) {
-                    if ($todayShifts[$i]['status'] === 'CLOSED') {
-                        $lastShift = $todayShifts[$i];
-                        break;
-                    }
-                }
-                if (!$lastShift) $lastShift = end($todayShifts);
-
-                $shiftReferenceTitle = "Serah Terima dari " . ($lastShift['cashier_name'] ?? 'Kasir') . " (" . ($lastShift['shift_name'] ?: 'Shift ' . ($nextShiftNumber - 1)) . ")";
-            }
+            $nextShiftNumber = 1;
+            $nextShiftName = 'Shift 1 (Pagi)';
+            $nextShiftType = 'SHIFT_1';
+            $isContinuation = false;
+            $shiftReferenceTitle = "Stok Acuan Tutup Toko Kemarin (Malam 🔒)";
+            $lastShift = $lastAnyClosed;
 
             if (!$lastShift) {
                 $stmtFallbackLast = $pdo->prepare("
@@ -5645,8 +5622,8 @@ try {
             $expectedCash = ($shift['initial_cash'] + $cashSales) - $totalDisbursements;
             $diff = $actualCash - $expectedCash;
 
-            // Closing Day (is_final_shift) HANYA berakhir selama opsi Closing Day dicentang aktif (1)
-            $isFinalShift = !empty($input['is_final_shift']) ? 1 : 0;
+            // Penutupan shift toko selalu merupakan End Day Closing (Tutup Toko Harian)
+            $isFinalShift = 1;
 
             $pdo->beginTransaction();
             try {

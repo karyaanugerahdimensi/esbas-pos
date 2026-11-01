@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.4.8",
-    "build": "20261101-74",
+    "version": "1.4.9",
+    "build": "20261101-75",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.4.9",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Sesi Toko Terpadu Harian: Kasir Belum Login Tetap Melanjutkan Transaksi Tanpa Konsep Shift Berikutnya Sebelum End Day Closing (FR-POS-55)",
+            "description": "Menyempurnakan model operasional kasir cabang menjadi Sesi Toko Terpadu Harian (Single Daily Store Session): (1) Kasir yang Belum Login Tetap Melanjutkan Transaksi: Menghilangkan konsep pergantian/serah terima shift kasir berikutnya. Setelah toko dibuka di awal hari oleh kasir pertama, seluruh kasir lain di cabang tersebut (seperti kasir Abdul yang belum login di hari itu) saat login langsung terhubung ke sesi operasional toko yang aktif dan dapat langsung melanjutkan transaksi penjualan di POS tanpa kewajiban opening stok atau popup serah terima; (2) Penutupan Operasional Terpusat pada End Day Closing: Seluruh penutupan shift harian cabang ditetapkan mutlak sebagai Tutup Toko (End Day Closing) yang merekap kas fisik laci kasir (blind audit), sisa fisik persediaan akhir malam, dan meteran air mesin; (3) Penyelarasan Antarmuka & Status Operasional: Status di topbar, banner, dan sidebar secara konsisten menampilkan 'Toko Buka' serta tombol aksi 'Tutup Toko (End Day)' tanpa istilah serah terima antar kasir yang membingungkan; (4) Kompatibilitas Android 8: Bebas dari token modern ES2020.",
+            "rollback_command": "git checkout v1.4.8"
+        },
         {
             "version": "1.4.8",
             "commit": "HEAD",
