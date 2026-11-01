@@ -9,8 +9,8 @@ if (!function_exists('getAppVersionData')) {
         $versionFile = __DIR__ . '/version.json';
         $data = [
             'app_name' => 'ESBAS POS Multicabang',
-            'version' => '1.3.3',
-            'build' => '20261101-58',
+            'version' => '1.3.4',
+            'build' => '20261101-59',
             'release_date' => '2026-11-01',
             'commit_hash' => 'HEAD',
             'branch' => 'main',

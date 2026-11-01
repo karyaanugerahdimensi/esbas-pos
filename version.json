@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.3.3",
-    "build": "20261101-58",
+    "version": "1.3.4",
+    "build": "20261101-59",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.3.4",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Transformasi Web App PWA Standalone, Offline Login & Background Auto-Sync Server (FR-PWA-01, FR-POS-44)",
+            "description": "Mentransformasikan sistem kasir menjadi Progressive Web App (PWA) mandiri yang dapat dipasang (install) di Android, tablet, iPad, dan desktop layaknya aplikasi native, serta mendukung operasi kasir offline-first 100%: (1) PWA Web App Architecture: Menyediakan Web App Manifest terstandarisasi (manifest.json) dengan display standalone, tema #4338ca, start URL ./index.php, set ikon resolusi tinggi (192px, 512px, maskable), serta Service Worker canggih (sw.js) untuk pre-caching app shell dan stale-while-revalidate seluruh aset UI. (2) Offline-First Authentication & Cashier Session: Mengimplementasikan basis data client-side IndexedDB (OfflineDB) dan algoritma hashing Web Crypto SHA-256 salted. Memungkinkan kasir dan staf cabang masuk (login) ke sistem kasir tanpa sambungan internet sama sekali, membuka shift kasir offline, dan mengakses seluruh katalog master data produk. (3) Pemrosesan Transaksi POS & Pencetakan Struk Offline: Transaksi kasir tetap berjalan normal saat internet padam; sistem membuat faktur referensi offline (INV-OFF-...), mendiskon stok lokal di memori, mencetak struk termal, menyiapkan nota elektronik WhatsApp, dan mengantrekan data penjualan ke IndexedDB. (4) Background Auto-Sync & Server Reconciliation: Sinkronisasi otomatis ke server pusat saat internet kembali aktif melalui online event listener, heartbeat probe 30 detik, serta tombol manual '⚡ Sinkronkan Sekarang' di topbar header, mengunggah antrean penjualan dan shift kasir ke endpoint idempotent sync_offline_sales secara transaksional tanpa duplikasi.",
+            "rollback_command": "git checkout v1.3.3"
+        },
         {
             "version": "1.3.3",
             "commit": "HEAD",

@@ -435,6 +435,217 @@ try {
             break;
 
         // ==========================================
+        // 0.01 HEALTH CHECK & PWA STATUS
+        // ==========================================
+        case 'ping':
+            echo json_encode([
+                'success' => true,
+                'status' => 'online',
+                'timestamp' => time(),
+                'server_time' => date('Y-m-d H:i:s'),
+                'app_name' => 'ESBAS POS Multicabang'
+            ]);
+            break;
+
+        // ==========================================
+        // 0.02 SINKRONISASI PENJUALAN OFFLINE (BACKGROUND SYNC)
+        // ==========================================
+        case 'sync_offline_sales':
+            $batch = $input['offline_sales'] ?? [];
+            if (!is_array($batch) || empty($batch)) {
+                echo json_encode(['success' => true, 'synced_count' => 0, 'message' => 'Tidak ada antrean transaksi offline untuk disinkronkan.']);
+                break;
+            }
+
+            $syncedCount = 0;
+            $skippedCount = 0;
+            $syncedResults = [];
+
+            foreach ($batch as $saleItem) {
+                $offlineRefId = trim($saleItem['offline_id'] ?? '');
+                $invoiceNumber = trim($saleItem['invoice_number'] ?? '');
+                if (empty($invoiceNumber) && !empty($offlineRefId)) {
+                    $invoiceNumber = $offlineRefId;
+                }
+
+                // Cek idempotensi: apakah faktur sudah pernah masuk sebelumnya?
+                $stmtExist = $pdo->prepare("SELECT id FROM sales WHERE invoice_number = ? LIMIT 1");
+                $stmtExist->execute([$invoiceNumber]);
+                $existingId = $stmtExist->fetchColumn();
+                if ($existingId) {
+                    $skippedCount++;
+                    $syncedResults[] = [
+                        'offline_id' => $offlineRefId,
+                        'invoice_number' => $invoiceNumber,
+                        'status' => 'ALREADY_EXISTS',
+                        'sale_id' => (int)$existingId
+                    ];
+                    continue;
+                }
+
+                $pdo->beginTransaction();
+                try {
+                    $branchId = (int)($saleItem['branch_id'] ?? ($currentBranch['id'] ?? 1));
+                    $userId = (int)($saleItem['user_id'] ?? ($_SESSION['user_id'] ?? 1));
+                    $shiftId = !empty($saleItem['shift_id']) ? (int)$saleItem['shift_id'] : null;
+                    $customerId = !empty($saleItem['customer_id']) ? (int)$saleItem['customer_id'] : null;
+                    $customerName = trim($saleItem['customer_name'] ?? 'Pelanggan Umum');
+                    $customerCategory = trim($saleItem['customer_category'] ?? 'REGULER');
+                    $salesType = trim($saleItem['sales_type'] ?? 'RETAIL');
+                    $subtotal = (float)($saleItem['subtotal'] ?? 0);
+                    $discount = (float)($saleItem['discount'] ?? 0);
+                    $tax = (float)($saleItem['tax'] ?? 0);
+                    $deliveryFee = (float)($saleItem['delivery_fee'] ?? 0);
+                    $deliveryDistanceKm = (float)($saleItem['delivery_distance_km'] ?? 0);
+                    $driverName = trim($saleItem['driver_name'] ?? '');
+                    $isDeliveryIncluded = (int)($saleItem['is_delivery_included'] ?? 0);
+                    $deliveryStatus = trim($saleItem['delivery_status'] ?? 'NONE');
+                    $grandTotal = (float)($saleItem['grand_total'] ?? ($subtotal - $discount + $tax + $deliveryFee));
+                    $paymentMethod = strtoupper(trim($saleItem['payment_method'] ?? 'CASH'));
+                    $paymentStatus = ($paymentMethod === 'PIUTANG') ? 'UNPAID' : 'PAID';
+                    $cashReceived = (float)($saleItem['cash_received'] ?? ($paymentMethod === 'CASH' ? $grandTotal : 0));
+                    $cashChange = (float)($saleItem['cash_change'] ?? 0);
+                    $createdAt = !empty($saleItem['created_at']) ? $saleItem['created_at'] : date('Y-m-d H:i:s');
+
+                    $totalCogs = 0;
+                    $items = $saleItem['items'] ?? [];
+
+                    // 1. Insert ke tabel sales
+                    $stmtSale = $pdo->prepare("
+                        INSERT INTO sales (invoice_number, branch_id, user_id, shift_id, customer_id, customer_name, customer_category, sales_type, subtotal, discount, tax, delivery_fee, delivery_distance_km, driver_name, is_delivery_included, delivery_status, grand_total, total_cogs, payment_method, payment_status, cash_received, cash_change, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ");
+                    $stmtSale->execute([
+                        $invoiceNumber, $branchId, $userId, $shiftId,
+                        $customerId, $customerName, $customerCategory, $salesType,
+                        $subtotal, $discount, $tax, $deliveryFee, $deliveryDistanceKm,
+                        $driverName, $isDeliveryIncluded, $deliveryStatus,
+                        $grandTotal, 0, $paymentMethod, $paymentStatus, $cashReceived, $cashChange, $createdAt
+                    ]);
+                    $saleId = $pdo->lastInsertId();
+
+                    // 2. Insert Sale Items & Deduct Branch Stocks
+                    $stmtItem = $pdo->prepare("
+                        INSERT INTO sale_items (sale_id, product_id, variant_id, variant_name, product_name, qty, unit_price, unit_cogs, subtotal_price, subtotal_cogs)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ");
+
+                    foreach ($items as $it) {
+                        $pId = (int)($it['product_id'] ?? 0);
+                        $vId = !empty($it['variant_id']) ? (int)$it['variant_id'] : null;
+                        $vName = $it['variant_name'] ?? '';
+                        $pName = $it['product_name'] ?? 'Produk';
+                        $qty = (float)($it['qty'] ?? 1);
+                        $uPrice = (float)($it['unit_price'] ?? 0);
+                        $subPrice = (float)($it['subtotal_price'] ?? ($qty * $uPrice));
+
+                        $cogsVal = 0;
+                        if ($pId > 0) {
+                            $stmtP = $pdo->prepare("SELECT cogs, is_stockable FROM products WHERE id = ?");
+                            $stmtP->execute([$pId]);
+                            $pRow = $stmtP->fetch();
+                            $cogsVal = (float)($pRow['cogs'] ?? 0);
+
+                            if (!empty($pRow['is_stockable'])) {
+                                $stmtCurStk = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                                $stmtCurStk->execute([$branchId, $pId]);
+                                $curStk = (float)($stmtCurStk->fetchColumn() ?: 0);
+                                $newStk = $curStk - $qty;
+
+                                $pdo->prepare("UPDATE branch_stocks SET stock = stock - ? WHERE branch_id = ? AND product_id = ?")
+                                    ->execute([$qty, $branchId, $pId]);
+
+                                $pdo->prepare("
+                                    INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id, created_at)
+                                    VALUES (?, ?, 'STOCK_OUT_SALE', ?, ?, ?, ?, ?, ?, ?)
+                                ")->execute([
+                                    $branchId, $pId, -$qty, $curStk, $newStk,
+                                    $invoiceNumber, "Penjualan Offline Sync [{$customerCategory}] kpd {$customerName}", $userId, $createdAt
+                                ]);
+                            }
+                        }
+
+                        $itemCogsTotal = $qty * $cogsVal;
+                        $totalCogs += $itemCogsTotal;
+
+                        $stmtItem->execute([
+                            $saleId, $pId, $vId, $vName, $pName, $qty, $uPrice, $cogsVal, $subPrice, $itemCogsTotal
+                        ]);
+                    }
+
+                    // Update total cogs pada sale
+                    $pdo->prepare("UPDATE sales SET total_cogs = ? WHERE id = ?")->execute([$totalCogs, $saleId]);
+
+                    // 3. Piutang Usaha jika metode pembayaran PIUTANG
+                    if ($paymentMethod === 'PIUTANG') {
+                        $dueDate = !empty($saleItem['due_date']) ? $saleItem['due_date'] : date('Y-m-d', strtotime('+30 days'));
+                        $recNotes = "Piutang penjualan POS (Offline Sync) kpd {$customerName} ({$customerCategory})";
+                        $stmtAR = $pdo->prepare("
+                            INSERT INTO customer_receivables (sale_id, invoice_number, customer_id, branch_id, total_amount, paid_amount, remaining_amount, due_date, status, notes, created_at, updated_at)
+                            VALUES (?, ?, ?, ?, ?, 0, ?, ?, 'BELUM_LUNAS', ?, ?, ?)
+                        ");
+                        $stmtAR->execute([$saleId, $invoiceNumber, $customerId, $branchId, $grandTotal, $grandTotal, $dueDate, $recNotes, $createdAt, $createdAt]);
+                    }
+
+                    $pdo->commit();
+                    $syncedCount++;
+                    $syncedResults[] = [
+                        'offline_id' => $offlineRefId,
+                        'invoice_number' => $invoiceNumber,
+                        'status' => 'SYNCED_SUCCESS',
+                        'sale_id' => (int)$saleId
+                    ];
+                } catch (Exception $e) {
+                    $pdo->rollBack();
+                    $syncedResults[] = [
+                        'offline_id' => $offlineRefId,
+                        'invoice_number' => $invoiceNumber,
+                        'status' => 'ERROR',
+                        'error' => $e->getMessage()
+                    ];
+                }
+            }
+
+            echo json_encode([
+                'success' => true,
+                'synced_count' => $syncedCount,
+                'skipped_count' => $skippedCount,
+                'results' => $syncedResults,
+                'message' => "Sinkronisasi selesai! {$syncedCount} transaksi offline berhasil diunggah ke server" . ($skippedCount > 0 ? " ({$skippedCount} transaksi telah tersimpan sebelumnya)" : "") . "."
+            ]);
+            break;
+
+        // ==========================================
+        // 0.03 SINKRONISASI SHIFT KASIR OFFLINE
+        // ==========================================
+        case 'sync_offline_shift':
+            $shiftData = $input['shift_data'] ?? [];
+            $branchId = (int)($shiftData['branch_id'] ?? ($currentBranch['id'] ?? 1));
+            $userId = (int)($shiftData['user_id'] ?? ($_SESSION['user_id'] ?? 1));
+            $startTime = !empty($shiftData['start_time']) ? $shiftData['start_time'] : date('Y-m-d H:i:s');
+            $startCash = (float)($shiftData['starting_cash'] ?? 0);
+            $shiftCode = $shiftData['shift_code'] ?? 'SHIFT_1';
+
+            $stmtAct = $pdo->prepare("SELECT id FROM cashier_shifts WHERE user_id = ? AND branch_id = ? AND status = 'OPEN' ORDER BY id DESC LIMIT 1");
+            $stmtAct->execute([$userId, $branchId]);
+            $existShiftId = $stmtAct->fetchColumn();
+
+            if ($existShiftId) {
+                echo json_encode(['success' => true, 'shift_id' => (int)$existShiftId, 'message' => 'Shift kasir sudah aktif.']);
+                break;
+            }
+
+            $stmtIns = $pdo->prepare("
+                INSERT INTO cashier_shifts (branch_id, user_id, shift_code, start_time, starting_cash, status, created_at)
+                VALUES (?, ?, ?, ?, ?, 'OPEN', ?)
+            ");
+            $stmtIns->execute([$branchId, $userId, $shiftCode, $startTime, $startCash, $startTime]);
+            $newShiftId = $pdo->lastInsertId();
+
+            echo json_encode(['success' => true, 'shift_id' => (int)$newShiftId, 'message' => 'Shift kasir offline berhasil disinkronkan ke server.']);
+            break;
+
+        // ==========================================
         // 0.05 MASTER DATA SYNC (HOSTING & LOCAL)
         // ==========================================
         case 'test_hosting_connection':
@@ -1019,10 +1230,23 @@ try {
             $hasClosedShiftToday = ((int)$stmtHasClosed->fetchColumn()) > 0;
 
             $verData = getAppVersionData();
+            $offlineUserPack = [
+                'id' => (int)$user['id'],
+                'name' => $user['name'],
+                'nik' => $user['nik'],
+                'email' => $user['email'],
+                'role' => $user['role'],
+                'branch_id' => (int)$user['branch_id'],
+                'branch_name' => $user['branch_name'] ?? '',
+                'pin_hash' => !empty($user['pin']) ? hash('sha256', $user['pin'] . ':esbas_salt_2026') : null,
+                'pass_hash' => hash('sha256', $password . ':esbas_salt_2026')
+            ];
+
             echo json_encode([
                 'success' => true,
                 'message' => 'Login berhasil! Selamat datang, ' . $user['name'],
                 'user' => $user,
+                'offline_user_pack' => $offlineUserPack,
                 'has_closed_shift' => $hasClosedShiftToday,
                 'session_info' => [
                     'login_time' => $loginTime,
@@ -1434,6 +1658,26 @@ try {
             $stmtInitExpCats = $pdo->query("SELECT id, code, name, group_type FROM expense_categories WHERE is_active = 1 ORDER BY name ASC");
             $initialExpCats = $stmtInitExpCats ? $stmtInitExpCats->fetchAll(PDO::FETCH_ASSOC) : [];
 
+            // Offline Auth Pack (Kredensial hash staf aktif untuk login & otentikasi saat offline)
+            $stmtStaff = $pdo->prepare("SELECT id, nik, name, email, phone, role, branch_id, pin, password FROM users WHERE is_active = 1 AND (branch_id = ? OR role IN ('SUPER_ADMIN', 'SUPERADMIN', 'OWNER', 'GENERAL_MANAGER'))");
+            $stmtStaff->execute([$currentBranch['id']]);
+            $staffList = $stmtStaff->fetchAll(PDO::FETCH_ASSOC);
+            $offlineAuthPack = [];
+            $salt = 'esbas_salt_2026';
+            foreach ($staffList as $stf) {
+                $offlineAuthPack[] = [
+                    'id' => (int)$stf['id'],
+                    'nik' => $stf['nik'],
+                    'name' => $stf['name'],
+                    'email' => $stf['email'],
+                    'phone' => $stf['phone'],
+                    'role' => $stf['role'],
+                    'branch_id' => (int)$stf['branch_id'],
+                    'pin_hash' => !empty($stf['pin']) ? hash('sha256', $stf['pin'] . ':' . $salt) : null,
+                    'pass_hash' => !empty($stf['password']) ? hash('sha256', $stf['password'] . ':' . $salt) : null
+                ];
+            }
+
             echo json_encode([
                 'success' => true,
                 'branches' => $branches,
@@ -1465,6 +1709,7 @@ try {
                 'raw_settings' => $rawSettings,
                 'role_permissions' => $rolePerms,
                 'user_permissions' => $userPerms,
+                'offline_auth_pack' => $offlineAuthPack,
                 'app_version' => getAppVersionData()
             ]);
             break;

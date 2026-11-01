@@ -66,7 +66,16 @@ try {
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#4338ca">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ESBAS POS">
+    <meta name="application-name" content="ESBAS POS Retail">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
     <title>ESBAS Retail - POS Multi-Cabang v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</title>
     <!-- Dark Mode Initializer (Prevents Theme Flickering) -->
     <script>
@@ -567,6 +576,18 @@ try {
 
             <!-- Right: Theme Toggle, Branch Selector & Shift Badge -->
             <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+                <!-- PWA Install Button (Standalone App Shortcut) -->
+                <button type="button" id="btn-pwa-install" onclick="promptPWAInstall()" class="hidden cursor-pointer items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] sm:text-xs px-2.5 py-1 sm:py-1.5 rounded-xl shadow-xs transition-colors shrink-0" title="Pasang ESBAS POS di Layar Utama (PWA)">
+                    <i data-lucide="download" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span class="hidden sm:inline">Install App</span>
+                </button>
+
+                <!-- Offline Sync Status Pill -->
+                <div id="topbar-offline-sync-pill" onclick="triggerManualSync()" class="hidden cursor-pointer items-center space-x-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] sm:text-xs px-2.5 py-1 sm:py-1.5 rounded-xl shadow-xs transition-colors shrink-0" title="Status Offline / Sinkronisasi: Klik untuk paksa sinkronisasi ke server">
+                    <span class="w-2 h-2 rounded-full bg-white animate-ping shrink-0"></span>
+                    <span id="topbar-offline-sync-text" class="truncate whitespace-nowrap">⚡ Offline (0)</span>
+                </div>
+
                 <!-- Theme Toggle Button (Dark / Light) -->
                 <button type="button" id="theme-toggle-btn" onclick="toggleTheme()" class="p-1.5 sm:p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shrink-0 flex items-center justify-center cursor-pointer" title="Ubah Tema (Gelap / Terang)">
                     <i data-lucide="sun" class="theme-icon-sun w-4 h-4 hidden"></i>
@@ -10587,8 +10608,340 @@ try {
             execAutoRefreshEnabled: true,
             execSoundEnabled: true,
             execAutoRefreshTimer: null,
-            execLastMaxSaleId: 0
+            execLastMaxSaleId: 0,
+            // PWA & Offline-First State Properties
+            isOfflineMode: !navigator.onLine,
+            offlineSalesPendingCount: 0
         };
+
+        // ========================================================
+        // PWA SERVICE WORKER REGISTRATION & INSTALL PROMPT
+        // ========================================================
+        let deferredPwaPrompt = null;
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => {
+                        console.log('ESBAS POS ServiceWorker terdaftar:', reg.scope);
+                    })
+                    .catch(err => {
+                        console.warn('Gagal mendaftarkan ServiceWorker:', err);
+                    });
+            });
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPwaPrompt = e;
+            const pwaBtn = document.getElementById('btn-pwa-install');
+            if (pwaBtn) {
+                pwaBtn.classList.remove('hidden');
+                pwaBtn.style.display = 'inline-flex';
+            }
+        });
+
+        window.promptPWAInstall = function() {
+            if (deferredPwaPrompt) {
+                deferredPwaPrompt.prompt();
+                deferredPwaPrompt.userChoice.then((choice) => {
+                    if (choice.outcome === 'accepted') {
+                        const pwaBtn = document.getElementById('btn-pwa-install');
+                        if (pwaBtn) pwaBtn.style.display = 'none';
+                    }
+                    deferredPwaPrompt = null;
+                });
+            } else {
+                alert("Petunjuk Pemasangan Web App di Layar Utama (Android / Tablet):\n\n1. Ketuk ikon menu titik tiga (⋮) di pojok kanan atas browser Chrome/Edge.\n2. Pilih 'Tambahkan ke Layar Utama' (Add to Home Screen) atau 'Instal Aplikasi'.\n3. Aplikasi ESBAS Retail POS akan terpasang di menu utama tablet Anda layaknya aplikasi asli (Native App).");
+            }
+        };
+
+        // ========================================================
+        // CLIENT-SIDE INDEXEDDB OFFLINE STORAGE ENGINE (OfflineDB)
+        // ========================================================
+        const OfflineDB = {
+            dbName: 'EsbasRetailPosOfflineDB',
+            dbVersion: 1,
+            dbInstance: null,
+
+            async init() {
+                if (this.dbInstance) return this.dbInstance;
+                return new Promise((resolve, reject) => {
+                    const req = indexedDB.open(this.dbName, this.dbVersion);
+                    req.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains('master_cache')) {
+                            db.createObjectStore('master_cache', { keyPath: 'key' });
+                        }
+                        if (!db.objectStoreNames.contains('offline_users')) {
+                            db.createObjectStore('offline_users', { keyPath: 'id' });
+                        }
+                        if (!db.objectStoreNames.contains('offline_sales')) {
+                            db.createObjectStore('offline_sales', { keyPath: 'offline_ref' });
+                        }
+                        if (!db.objectStoreNames.contains('offline_shifts')) {
+                            db.createObjectStore('offline_shifts', { keyPath: 'offline_ref' });
+                        }
+                    };
+                    req.onsuccess = (e) => {
+                        this.dbInstance = e.target.result;
+                        resolve(this.dbInstance);
+                    };
+                    req.onerror = (e) => {
+                        console.error('IndexedDB open error:', e);
+                        reject(e);
+                    };
+                });
+            },
+
+            async setItem(storeName, item) {
+                const db = await this.init();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction([storeName], 'readwrite');
+                    const store = tx.objectStore(storeName);
+                    const req = store.put(item);
+                    req.onsuccess = () => resolve(true);
+                    req.onerror = (err) => reject(err);
+                });
+            },
+
+            async getItem(storeName, key) {
+                const db = await this.init();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction([storeName], 'readonly');
+                    const store = tx.objectStore(storeName);
+                    const req = store.get(key);
+                    req.onsuccess = () => resolve(req.result || null);
+                    req.onerror = (err) => reject(err);
+                });
+            },
+
+            async getAll(storeName) {
+                const db = await this.init();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction([storeName], 'readonly');
+                    const store = tx.objectStore(storeName);
+                    const req = store.getAll();
+                    req.onsuccess = () => resolve(req.result || []);
+                    req.onerror = (err) => reject(err);
+                });
+            },
+
+            async removeItem(storeName, key) {
+                const db = await this.init();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction([storeName], 'readwrite');
+                    const store = tx.objectStore(storeName);
+                    const req = store.delete(key);
+                    req.onsuccess = () => resolve(true);
+                    req.onerror = (err) => reject(err);
+                });
+            },
+
+            async saveMasterBootstrap(data) {
+                if (!data) return;
+                try {
+                    await this.setItem('master_cache', { key: 'bootstrap_data', data: data, cached_at: Date.now() });
+                    if (data.offline_auth_pack && Array.isArray(data.offline_auth_pack)) {
+                        for (const u of data.offline_auth_pack) {
+                            await this.setItem('offline_users', u);
+                        }
+                    }
+                } catch(e) {
+                    console.warn('Gagal menyimpan master bootstrap ke IndexedDB:', e);
+                }
+            },
+
+            async getMasterBootstrap() {
+                const row = await this.getItem('master_cache', 'bootstrap_data');
+                return row ? row.data : null;
+            }
+        };
+
+        // SHA-256 Salted Hash Helper (Sesuai dengan esbas_salt_2026 di backend)
+        async function sha256Salted(input) {
+            const salt = 'esbas_salt_2026';
+            const text = (input || '') + ':' + salt;
+            const msgBuffer = new TextEncoder().encode(text);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Otentikasi Pengguna Offline Menggunakan Data Cache IndexedDB
+        async function authenticateOfflineUser(username, password) {
+            try {
+                const inputHash = await sha256Salted(password);
+                const users = await OfflineDB.getAll('offline_users');
+                const target = users.find(u => 
+                    (u.nik && u.nik.toLowerCase() === username.toLowerCase()) ||
+                    (u.email && u.email.toLowerCase() === username.toLowerCase()) ||
+                    (u.phone && u.phone === username) ||
+                    (u.name && u.name.toLowerCase() === username.toLowerCase())
+                );
+
+                if (!target) {
+                    return { success: false, error: 'Akun ' + username + ' belum tersimpan di cache offline perangkat ini. Silakan login online minimal satu kali terlebih dahulu.' };
+                }
+
+                const isPinMatch = target.pin_hash && (target.pin_hash === inputHash);
+                const isPassMatch = target.pass_hash && (target.pass_hash === inputHash);
+
+                if (isPinMatch || isPassMatch) {
+                    return { success: true, user: target };
+                } else {
+                    return { success: false, error: 'Kata sandi atau PIN offline tidak sesuai!' };
+                }
+            } catch (err) {
+                console.error('Error saat verifikasi login offline:', err);
+                return { success: false, error: 'Gagal memproses otentikasi offline: ' + err.message };
+            }
+        }
+
+        // ========================================================
+        // BACKGROUND AUTO-SYNC & STATUS UI CONTROLLER
+        // ========================================================
+        let isSyncingData = false;
+
+        async function updateOfflineSyncStatusUI() {
+            try {
+                const pendingSales = await OfflineDB.getAll('offline_sales');
+                const count = pendingSales.length;
+                state.offlineSalesPendingCount = count;
+                const pill = document.getElementById('topbar-offline-sync-pill');
+                const text = document.getElementById('topbar-offline-sync-text');
+                if (!pill || !text) return;
+
+                if (!navigator.onLine || state.isOfflineMode || count > 0) {
+                    pill.classList.remove('hidden');
+                    pill.style.display = 'inline-flex';
+                    if (count > 0) {
+                        text.innerText = `⚡ Offline (${count} Transaksi) • Sinkronkan`;
+                        pill.className = 'cursor-pointer inline-flex items-center space-x-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] sm:text-xs px-2.5 py-1 sm:py-1.5 rounded-xl shadow-xs transition-colors shrink-0 animate-pulse';
+                    } else {
+                        text.innerText = `⚡ Mode Offline`;
+                        pill.className = 'cursor-pointer inline-flex items-center space-x-1.5 bg-slate-700 hover:bg-slate-800 text-white font-bold text-[11px] sm:text-xs px-2.5 py-1 sm:py-1.5 rounded-xl shadow-xs transition-colors shrink-0';
+                    }
+                } else {
+                    pill.classList.add('hidden');
+                    pill.style.display = 'none';
+                }
+            } catch (e) {
+                console.error('Error update sync UI:', e);
+            }
+        }
+
+        async function triggerAutoSync(silent = true) {
+            if (isSyncingData) return;
+            if (!navigator.onLine) {
+                if (!silent) alert('Tidak ada sambungan internet. Pastikan perangkat Anda terhubung ke jaringan Wi-Fi atau seluler.');
+                return;
+            }
+
+            try {
+                isSyncingData = true;
+                const textEl = document.getElementById('topbar-offline-sync-text');
+                if (textEl) textEl.innerText = '⚡ Memeriksa Server...';
+
+                // 1. Ping Server Probe
+                const pingRes = await fetch('api.php?action=ping', { cache: 'no-store' });
+                const pingData = await pingRes.json();
+                if (!pingData || !pingData.online) {
+                    isSyncingData = false;
+                    await updateOfflineSyncStatusUI();
+                    return;
+                }
+
+                // Terhubung ke server!
+                state.isOfflineMode = false;
+
+                // 2. Sinkronkan Shift Offline terlebih dahulu (jika ada)
+                const pendingShifts = await OfflineDB.getAll('offline_shifts');
+                for (const shift of pendingShifts) {
+                    try {
+                        const sRes = await fetch('api.php?action=sync_offline_shift', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(shift)
+                        });
+                        const sData = await sRes.json();
+                        if (sData.success) {
+                            await OfflineDB.removeItem('offline_shifts', shift.offline_ref);
+                        }
+                    } catch(e) {
+                        console.warn('Gagal menyinkronkan shift offline:', e);
+                    }
+                }
+
+                // 3. Sinkronkan Antrean Transaksi Penjualan Offline
+                const pendingSales = await OfflineDB.getAll('offline_sales');
+                const unsyncedSales = pendingSales.filter(s => !s.synced);
+
+                if (unsyncedSales.length > 0) {
+                    if (textEl) textEl.innerText = `⚡ Menyinkronkan (${unsyncedSales.length})...`;
+
+                    const res = await fetch('api.php?action=sync_offline_sales', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sales: unsyncedSales })
+                    });
+                    const data = await res.json();
+
+                    if (data.success) {
+                        for (const s of unsyncedSales) {
+                            await OfflineDB.removeItem('offline_sales', s.offline_ref);
+                        }
+                        const count = unsyncedSales.length;
+                        if (!silent) {
+                            alert(`✅ Sinkronisasi Berhasil: ${count} transaksi penjualan offline telah sukses diunggah ke server pusat! Stok dan laporan telah diperbarui.`);
+                        }
+                        // Muat ulang data terbaru dari server
+                        try {
+                            await initApp();
+                            if (state.currentTab === 'reports') {
+                                loadSalesReports();
+                            }
+                        } catch(e){}
+                    } else {
+                        if (!silent) alert('Sinkronisasi sebagian atau gagal: ' + (data.message || data.error));
+                    }
+                } else {
+                    if (!silent) alert('Semua data sudah tersinkronkan dengan server (0 transaksi tertunda).');
+                }
+            } catch (err) {
+                console.warn('Gagal proses sinkronisasi:', err);
+                if (!silent) alert('Gagal menyinkronkan data: ' + err.message);
+            } finally {
+                isSyncingData = false;
+                await updateOfflineSyncStatusUI();
+            }
+        }
+
+        window.triggerManualSync = async function() {
+            await triggerAutoSync(false);
+        };
+
+        // Event listener deteksi online / offline browser
+        window.addEventListener('online', () => {
+            console.log('Jaringan online terdeteksi.');
+            triggerAutoSync(true);
+        });
+
+        window.addEventListener('offline', () => {
+            console.log('Jaringan offline terdeteksi.');
+            state.isOfflineMode = true;
+            updateOfflineSyncStatusUI();
+        });
+
+        // Background Heartbeat Checker setiap 30 detik
+        setInterval(() => {
+            if (navigator.onLine) {
+                OfflineDB.getAll('offline_sales').then(sales => {
+                    if (sales && sales.length > 0) {
+                        triggerAutoSync(true);
+                    }
+                }).catch(()=>{});
+            }
+        }, 30000);
 
         const tabTitles = {
             'dashboard': { title: 'Dashboard Eksekutif & Live Transaction Radar', sub: 'Monitoring transaksi realtime, performa seluruh cabang, & arus kas harian terpusat' },
@@ -11251,7 +11604,13 @@ try {
 
                 if (data.success) {
                     state.loggedInUser = data.user;
+                    state.isOfflineMode = false;
                     try { localStorage.setItem('esbas_logged_in_user', JSON.stringify(data.user)); } catch(e){}
+                    if (data.offline_user_pack) {
+                        try {
+                            await OfflineDB.setItem('offline_users', data.offline_user_pack);
+                        } catch(e){}
+                    }
                     if (data.has_closed_shift !== undefined) {
                         state.currentUserHasClosedShift = (data.has_closed_shift === true);
                         window.userHasClosedShift = (data.has_closed_shift === true);
@@ -11289,17 +11648,39 @@ try {
                     if (window.lucide) lucide.createIcons();
                 }
             } catch (err) {
+                // FALLBACK OFFLINE LOGIN: Otentikasi terhadap hash akun tersimpan di IndexedDB
+                console.warn('Jaringan server tidak terjangkau, menguji login offline...', err);
+                const offlineAuth = await authenticateOfflineUser(username, password);
+                if (offlineAuth.success) {
+                    if (btnSubmit) {
+                        btnSubmit.disabled = false;
+                        btnSubmit.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i><span>Masuk ke Sistem</span>`;
+                    }
+                    if (passwordInput) passwordInput.value = '';
+                    state.loggedInUser = offlineAuth.user;
+                    state.isOfflineMode = true;
+                    try { localStorage.setItem('esbas_logged_in_user', JSON.stringify(offlineAuth.user)); } catch(e){}
+                    hideLoginScreen();
+                    try {
+                        await initApp();
+                    } catch (initErr) {
+                        console.error('Error inisialisasi aplikasi offline:', initErr);
+                    }
+                    await updateOfflineSyncStatusUI();
+                    return;
+                }
+
                 if (btnSubmit) {
                     btnSubmit.disabled = false;
                     btnSubmit.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i><span>Masuk ke Sistem</span>`;
                 }
-                const errorMsg = 'Koneksi ke server gagal: ' + (err.message || 'Periksa server PHP');
+                const errorMsg = offlineAuth.error || ('Koneksi ke server gagal: ' + (err.message || 'Periksa koneksi jaringan'));
                 if (errAlert && errText) {
                     errText.innerText = errorMsg;
                     errAlert.className = 'p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center space-x-2';
                     errAlert.style.display = 'flex';
                 }
-                alert('Gagal Menghubungi Server: ' + errorMsg);
+                alert('Gagal Masuk (Mode Offline): ' + errorMsg);
                 if (window.lucide) lucide.createIcons();
             }
         }
@@ -11351,18 +11732,53 @@ try {
                             || 1;
                 const uId = (state.loggedInUser && state.loggedInUser.id) || 1;
 
-                const res = await fetch(`api.php?action=bootstrap&branch_id=${bId}&user_id=${uId}`);
-                const data = await res.json();
-                if (!data.success) {
-                    console.error('Bootstrap failed:', data.error || 'Unknown error');
-                    return;
+                let data = null;
+                let isOffline = state.isOfflineMode || !navigator.onLine;
+
+                if (!isOffline) {
+                    try {
+                        const res = await fetch(`api.php?action=bootstrap&branch_id=${bId}&user_id=${uId}`);
+                        data = await res.json();
+                        if (data && data.success) {
+                            state.isOfflineMode = false;
+                            await OfflineDB.saveMasterBootstrap(data);
+                        } else {
+                            data = null;
+                        }
+                    } catch (netErr) {
+                        console.warn('Gagal bootstrap dari server, beralih ke cache OfflineDB:', netErr);
+                        isOffline = true;
+                        state.isOfflineMode = true;
+                    }
                 }
 
-                state.branches = data.branches;
-                state.currentBranch = data.current_branch;
-                state.users = data.users;
-                state.currentUser = data.current_user;
-                state.activeShift = data.active_shift;
+                if (isOffline || !data) {
+                    state.isOfflineMode = true;
+                    data = await OfflineDB.getMasterBootstrap();
+                    if (!data) {
+                        alert('Aplikasi sedang dalam Mode Offline dan belum memiliki cache master data. Silakan hubungkan internet minimal 1 kali.');
+                        return;
+                    }
+                }
+
+                state.branches = data.branches || [];
+                state.currentBranch = data.current_branch || (state.branches[0] || { id: bId, name: 'Cabang Utama' });
+                state.users = data.users || [];
+                state.currentUser = state.loggedInUser || data.current_user || { id: uId, name: 'Kasir', role: 'CASHIER' };
+                state.activeShift = data.active_shift || state.activeShift;
+                if (!state.activeShift && state.isOfflineMode) {
+                    state.activeShift = {
+                        id: 'OFF-SHIFT-' + (state.currentUser.id || 1),
+                        branch_id: state.currentBranch.id,
+                        user_id: state.currentUser.id,
+                        cashier_name: state.currentUser.name || 'Kasir Offline',
+                        status: 'OPEN',
+                        shift_number: 1,
+                        shift_name: 'Shift Offline Kasir',
+                        initial_cash: 0,
+                        is_offline: true
+                    };
+                }
                 state.currentUserHasClosedShift = (data.has_closed_shift === true);
                 window.userHasClosedShift = (data.has_closed_shift === true);
                 state.branchClosedToday = (data.branch_closed_today === true);
@@ -11439,6 +11855,7 @@ try {
                 document.getElementById('report-start-date').value = firstDay;
                 document.getElementById('report-end-date').value = today;
 
+                await updateOfflineSyncStatusUI();
                 lucide.createIcons();
             } catch (err) {
                 console.error(err);
@@ -12894,6 +13311,10 @@ try {
             btn.innerHTML = `Memproses Transaksi & Pembukuan...`;
 
             try {
+                if (state.isOfflineMode || !navigator.onLine) {
+                    throw new Error('OFFLINE_MODE');
+                }
+
                 const res = await fetch('api.php?action=checkout_sale', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -12916,8 +13337,83 @@ try {
                     alert('Gagal Checkout: ' + (data.message || data.error));
                 }
             } catch (err) {
+                // OFFLINE CHECKOUT INTERCEPT
+                console.warn('Checkout offline fallback activated:', err);
                 btn.disabled = false;
-                alert('Terjadi kesalahan jaringan.');
+                setPaymentMethod(state.paymentMethod);
+
+                const nowTs = Date.now();
+                const offlineRef = 'INV-OFF-' + (state.currentBranch?.id || 1) + '-' + (state.currentUser?.id || 1) + '-' + nowTs.toString(36).toUpperCase();
+
+                const offlineSale = {
+                    id: offlineRef,
+                    offline_ref: offlineRef,
+                    invoice_number: offlineRef,
+                    branch_id: state.currentBranch?.id || 1,
+                    user_id: state.currentUser?.id || 1,
+                    shift_id: state.activeShift ? state.activeShift.id : null,
+                    customer_id: custId,
+                    customer_name: custName,
+                    customer_phone: (state.selectedCustomer ? state.selectedCustomer.phone : null) || '-',
+                    customer_category: custCategory,
+                    sales_type: salesType,
+                    subtotal: subtotal,
+                    discount: discount,
+                    tax: currentTaxTotal,
+                    delivery_fee: deliveryFee,
+                    delivery_distance_km: deliveryDistance,
+                    courier_vehicle_id: courierVehicleId,
+                    driver_user_id: driverUserId,
+                    driver_name: driverName,
+                    is_delivery_included: isEntirelyFreeDelivery ? 1 : 0,
+                    delivery_status: isDelivery ? 'ASSIGNED' : 'NONE',
+                    grand_total: grandTotal,
+                    payment_method: state.paymentMethod,
+                    payment_status: (state.paymentMethod === 'PIUTANG') ? 'UNPAID' : 'PAID',
+                    cash_received: (state.paymentMethod === 'PIUTANG') ? 0 : state.cashReceived,
+                    cash_change: (state.paymentMethod === 'CASH') ? Math.max(0, state.cashReceived - grandTotal) : 0,
+                    created_at: new Date().toLocaleString('id-ID'),
+                    is_offline: 1,
+                    synced: 0,
+                    items: state.cart.map(c => ({
+                        product_id: c.product_id,
+                        product_name: c.name || c.product_name,
+                        variant_id: c.variant_id || null,
+                        variant_name: c.variant_name || null,
+                        qty: c.qty,
+                        price: c.price,
+                        subtotal: c.price * c.qty
+                    }))
+                };
+
+                // 1. Kurangi stok lokal di memory state
+                (state.cart || []).forEach(cartItem => {
+                    const prod = (state.products || []).find(p => p.id == cartItem.product_id);
+                    if (prod) {
+                        prod.stock = Math.max(0, (Number(prod.stock) || 0) - Number(cartItem.qty));
+                    }
+                });
+
+                // 2. Simpan transaksi ke IndexedDB offline_sales
+                await OfflineDB.setItem('offline_sales', offlineSale);
+
+                // 3. Tampilkan struk nota & bersihkan keranjang
+                closePaymentModal();
+                showReceiptModal(offlineSale);
+                clearCart();
+                document.getElementById('input-cash-received').value = '';
+                const chk = document.getElementById('check-delivery-mode');
+                if (chk) { chk.checked = false; onDeliveryToggleChange(); }
+                renderProducts();
+
+                // 4. Update UI Status Pill
+                state.isOfflineMode = true;
+                await updateOfflineSyncStatusUI();
+
+                // 5. Coba sinkronkan di latar belakang jika koneksi pulih
+                if (navigator.onLine) {
+                    triggerAutoSync();
+                }
             }
         }
 
@@ -14610,27 +15106,55 @@ try {
                     });
                 }
 
-                const res = await fetch('api.php?action=open_shift', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+                let data = null;
+                try {
+                    if (state.isOfflineMode || !navigator.onLine) {
+                        throw new Error('OFFLINE_MODE');
+                    }
+                    const res = await fetch('api.php?action=open_shift', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            branch_id: state.currentBranch?.id || 1,
+                            user_id: state.currentUser?.id || 1,
+                            shift_number: nextNum,
+                            shift_name: nextName,
+                            initial_cash: initCash,
+                            force_override: window._forceShiftOverride ? 1 : 0,
+                            items: dynamicOpeningItems,
+                            opening_raw_mineral: openMin,
+                            opening_raw_ro: openRo,
+                            opening_raw_plastik: openPl,
+                            closing_night_mineral: nightMin,
+                            closing_night_ro: nightRo,
+                            closing_night_plastik: nightPl
+                        })
+                    });
+                    data = await res.json();
+                } catch (netErr) {
+                    console.warn('Gagal buka shift online, mengaktifkan shift offline:', netErr);
+                    const offShiftRef = 'OFF-SHIFT-' + Date.now();
+                    const offShift = {
+                        id: offShiftRef,
+                        offline_ref: offShiftRef,
                         branch_id: state.currentBranch?.id || 1,
                         user_id: state.currentUser?.id || 1,
                         shift_number: nextNum,
                         shift_name: nextName,
                         initial_cash: initCash,
-                        force_override: window._forceShiftOverride ? 1 : 0,
-                        items: dynamicOpeningItems,
-                        opening_raw_mineral: openMin,
-                        opening_raw_ro: openRo,
-                        opening_raw_plastik: openPl,
-                        closing_night_mineral: nightMin,
-                        closing_night_ro: nightRo,
-                        closing_night_plastik: nightPl
-                    })
-                });
-                const data = await res.json();
-                if (data.success) {
+                        status: 'OPEN',
+                        cashier_name: state.currentUser?.name || 'Kasir',
+                        start_time: new Date().toISOString()
+                    };
+                    await OfflineDB.setItem('offline_shifts', offShift);
+                    data = {
+                        success: true,
+                        message: 'Shift Kasir (Mode Offline) berhasil dibuka!',
+                        shift: offShift
+                    };
+                }
+
+                if (data && data.success) {
                     alert(data.message);
                     window._forceShiftOverride = false;
                     state.branchClosedToday = false;
@@ -14640,7 +15164,10 @@ try {
                     if (state.reportActiveSubtab === 'shifts') {
                         loadShiftReports();
                     }
-                } else alert(data.message || data.error);
+                    await updateOfflineSyncStatusUI();
+                } else {
+                    alert((data && (data.message || data.error)) || 'Gagal membuka shift kasir.');
+                }
             }
         }
 
