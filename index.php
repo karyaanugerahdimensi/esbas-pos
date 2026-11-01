@@ -73,7 +73,7 @@ try {
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="ESBAS POS">
     <meta name="application-name" content="ESBAS POS Retail">
-    <link rel="manifest" href="manifest.json?v=1.4.0">
+    <link rel="manifest" href="manifest.json?v=1.4.1">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
     <title>ESBAS Retail - POS Multi-Cabang v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</title>
@@ -12302,23 +12302,48 @@ try {
         // ==========================================
         // 1. POS LOGIC
         // ==========================================
+        function isRawMaterialCategory(cat) {
+            if (!cat) return false;
+            var code = String(cat.code || '').toUpperCase().trim();
+            var name = String(cat.name || '').toLowerCase().trim();
+            if (code === 'CAT-RAW' || code === 'RAW_MATERIAL' || code.indexOf('RAW') !== -1) {
+                return true;
+            }
+            if (name.indexOf('bahan baku') !== -1 || name.indexOf('raw material') !== -1) {
+                return true;
+            }
+            return false;
+        }
+
         function renderCategoryPills() {
             const container = document.getElementById('category-pills');
             if (!container) return;
-            const cats = Array.isArray(state.categories) ? state.categories : [];
-            const pillsHtml = cats.map(cat => 
-                `<button onclick="setCategoryFilter('${escapeHtml(cat.name)}')" class="cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors">${cat.icon_emoji || ''} ${cat.name}</button>`
-            ).join('');
-            container.innerHTML = `<button onclick="setCategoryFilter('ALL')" class="cat-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition-colors">Semua</button>` + pillsHtml;
+            const cats = (Array.isArray(state.categories) ? state.categories : []).filter(function(cat) {
+                return !isRawMaterialCategory(cat);
+            });
+            if (state.selectedCategory && state.selectedCategory !== 'ALL' && isRawMaterialCategory({ name: state.selectedCategory })) {
+                state.selectedCategory = 'ALL';
+            }
+            const pillsHtml = cats.map(function(cat) {
+                var isSelected = (state.selectedCategory === cat.name);
+                var activeCls = isSelected 
+                    ? 'cat-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition-colors'
+                    : 'cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors';
+                return `<button onclick="setCategoryFilter('${escapeHtml(cat.name)}')" class="${activeCls}">${cat.icon_emoji ? cat.icon_emoji + ' ' : ''}${cat.name}</button>`;
+            }).join('');
+            var allActiveCls = (state.selectedCategory === 'ALL' || !state.selectedCategory)
+                ? 'cat-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition-colors'
+                : 'cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors';
+            container.innerHTML = `<button onclick="setCategoryFilter('ALL')" class="${allActiveCls}">Semua</button>` + pillsHtml;
         }
 
         function setCategoryFilter(cat) {
             state.selectedCategory = cat;
-            document.querySelectorAll('.cat-pill').forEach(btn => {
-                if ((cat === 'ALL' && btn.innerText === 'Semua') || btn.innerText.includes(cat)) {
+            document.querySelectorAll('.cat-pill').forEach(function(btn) {
+                if ((cat === 'ALL' && btn.innerText.trim() === 'Semua') || (cat !== 'ALL' && btn.innerText.includes(cat))) {
                     btn.className = 'cat-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition-colors';
                 } else {
-                    btn.className = 'cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors';
+                    btn.className = 'cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors';
                 }
             });
             renderProducts();
@@ -12334,7 +12359,11 @@ try {
             const activeCust = state.selectedCustomer;
             const activeCat = state.selectedCustomerCategory || (activeCust ? activeCust.category : 'REGULER');
 
-            const filtered = state.products.filter(p => {
+            const filtered = state.products.filter(function(p) {
+                if (p.product_type === 'RAW_MATERIAL') return false;
+                var pCat = String(p.category || '').toLowerCase();
+                if (pCat.indexOf('bahan baku') !== -1 || pCat.indexOf('raw material') !== -1) return false;
+
                 const matchCat = (state.selectedCategory === 'ALL' || (p.category || '').toLowerCase() === (state.selectedCategory || '').toLowerCase());
                 const matchKeyword = (!state.searchKeyword || p.name.toLowerCase().includes(state.searchKeyword) || p.sku.toLowerCase().includes(state.searchKeyword));
                 return matchCat && matchKeyword;

@@ -1488,6 +1488,9 @@ try {
                 LEFT JOIN categories c ON c.id = p.category_id
                 WHERE (p.is_active IS NULL OR p.is_active = 1) 
                   AND (p.product_type IS NULL OR p.product_type = '' OR p.product_type = 'FINISHED_GOODS')
+                  AND (c.code IS NULL OR (c.code != 'CAT-RAW' AND c.code NOT LIKE '%RAW%'))
+                  AND (COALESCE(c.name, p.category, '') NOT LIKE '%Bahan Baku%')
+                  AND (COALESCE(c.name, p.category, '') NOT LIKE '%Raw Material%')
                   AND (bs.is_active IS NULL OR bs.is_active = 1)
                 ORDER BY category ASC, p.name ASC
             ");
