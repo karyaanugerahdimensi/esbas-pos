@@ -1173,6 +1173,10 @@ try {
                             <i data-lucide="boxes" class="w-4 h-4"></i>
                             <span>Pemakaian Bahan Baku (BOM)</span>
                         </button>
+                        <button onclick="setReportSubtab('deliveries')" id="report-subtab-btn-deliveries" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="truck" class="w-4 h-4"></i>
+                            <span>Laporan Kiriman & Kurir</span>
+                        </button>
                         <button onclick="switchTab('partner-sales')" id="report-subtab-btn-partner" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200" title="Buka Modul Laporan Penjualan Mitra B2B">
                             <i data-lucide="handshake" class="w-4 h-4 text-emerald-600"></i>
                             <span>Penjualan Mitra B2B</span>
@@ -1227,7 +1231,7 @@ try {
                     </div>
 
                     <!-- KPI Cards Penjualan -->
-                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3.5">
                         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                             <p class="text-xs text-slate-400 font-semibold">Penjualan Bersih</p>
                             <h3 id="kpi-net-sales" class="text-lg font-black text-indigo-900 mt-1">Rp 0</h3>
@@ -1244,6 +1248,11 @@ try {
                         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                             <p class="text-xs text-slate-400 font-semibold">Diskon Promo</p>
                             <h3 id="kpi-discount" class="text-lg font-black text-rose-600 mt-1">Rp 0</h3>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-sky-200 shadow-sm bg-gradient-to-br from-sky-50/70 to-white">
+                            <p class="text-xs text-sky-700 font-bold">Ongkos Kirim (Kiriman)</p>
+                            <h3 id="kpi-delivery-fee" class="text-lg font-black text-sky-700 mt-1">Rp 0</h3>
+                            <p id="kpi-delivery-orders-sub" class="text-[11px] text-sky-600 font-bold mt-0.5">0 Kiriman</p>
                         </div>
                         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                             <p class="text-xs text-slate-400 font-semibold">Total Transaksi</p>
@@ -1284,6 +1293,44 @@ try {
                             </div>
                             <button onclick="setReportSubtab('bom')" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition-all shadow-sm">
                                 <span>Lihat Laporan BOM Lengkap</span>
+                                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Delivery & Courier Report Summary Banner -->
+                    <div class="bg-gradient-to-r from-sky-500/10 via-sky-500/5 to-transparent border border-sky-200/80 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-sm">
+                                <i data-lucide="truck" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    <span>Ringkasan Laporan Kiriman & Ongkos Kirim Periode Ini</span>
+                                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 font-semibold">Layanan Antar POS</span>
+                                </h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Rekap pesanan pengiriman pelanggan, total pendapatan ongkos kirim, jarak tempuh, dan aktivitas kurir.</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
+                            <div class="bg-white px-3.5 py-2 rounded-xl border border-sky-200 shadow-2xs">
+                                <span class="text-slate-400 block text-[10px] font-semibold">Total Kiriman</span>
+                                <span id="quick-deliv-orders" class="font-black text-slate-800 text-sm">0 Nota</span>
+                            </div>
+                            <div class="bg-white px-3.5 py-2 rounded-xl border border-sky-200 shadow-2xs">
+                                <span class="text-slate-400 block text-[10px] font-semibold">Pendapatan Ongkir</span>
+                                <span id="quick-deliv-fee" class="font-black text-sky-700 text-sm">Rp 0</span>
+                            </div>
+                            <div class="bg-white px-3.5 py-2 rounded-xl border border-sky-200 shadow-2xs">
+                                <span class="text-slate-400 block text-[10px] font-semibold">Berbayar / Free</span>
+                                <span id="quick-deliv-split" class="font-black text-slate-800 text-sm">0 / 0 Nota</span>
+                            </div>
+                            <div class="bg-white px-3.5 py-2 rounded-xl border border-sky-200 shadow-2xs">
+                                <span class="text-slate-400 block text-[10px] font-semibold">Total Jarak</span>
+                                <span id="quick-deliv-distance" class="font-black text-slate-800 text-sm">0 km</span>
+                            </div>
+                            <button onclick="setReportSubtab('deliveries')" class="px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition-all shadow-sm">
+                                <span>Lihat Laporan Kiriman Lengkap</span>
                                 <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                             </button>
                         </div>
@@ -1331,12 +1378,24 @@ try {
                             </div>
                         </div>
 
-                        <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                            <h3 class="font-bold text-slate-800 text-sm mb-4 flex items-center space-x-2">
-                                <i data-lucide="credit-card" class="w-4 h-4 text-indigo-500"></i>
-                                <span>Komposisi Metode Pembayaran</span>
-                            </h3>
-                            <div id="payment-breakdown-list" class="space-y-3"></div>
+                        <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm mb-3 flex items-center space-x-2">
+                                    <i data-lucide="credit-card" class="w-4 h-4 text-indigo-500"></i>
+                                    <span>Komposisi Metode Pembayaran</span>
+                                </h3>
+                                <div id="payment-breakdown-list" class="space-y-2.5"></div>
+                            </div>
+                            <div class="pt-4 border-t border-slate-100">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                                        <i data-lucide="truck" class="w-4 h-4 text-sky-600"></i>
+                                        <span>Rekap Kiriman per Kurir</span>
+                                    </h3>
+                                    <button type="button" onclick="setReportSubtab('deliveries')" class="text-[11px] font-bold text-sky-600 hover:text-sky-800 hover:underline">Detail Kiriman →</button>
+                                </div>
+                                <div id="sales-courier-breakdown-list" class="space-y-2"></div>
+                            </div>
                         </div>
                     </div>
 
@@ -1355,6 +1414,7 @@ try {
                                         <th class="py-3 px-3">Cabang</th>
                                         <th class="py-3 px-3">Kasir</th>
                                         <th class="py-3 px-3">Metode</th>
+                                        <th class="py-3 px-3">Kiriman / Ongkir</th>
                                         <th class="py-3 px-3 text-right">Total Bayar</th>
                                         <th class="py-3 px-3 text-right">Laba Kotor</th>
                                         <th class="py-3 px-3 text-center">Aksi</th>
@@ -1633,6 +1693,167 @@ try {
                                         <td colspan="8" class="py-8 text-center text-slate-400">Memuat stok akhir penutupan toko...</td>
                                     </tr>
                                 </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ---------------------------------------------------- -->
+                <!-- SUBTAB 5: LAPORAN KIRIMAN & PERFORMA KURIR           -->
+                <!-- ---------------------------------------------------- -->
+                <div id="subtab-reports-deliveries" class="hidden space-y-6">
+                    <!-- Filter Bar Laporan Kiriman -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-3 items-center justify-between">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">Dari Tanggal:</label>
+                                <input type="date" id="deliv-report-start-date" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">Sampai Tanggal:</label>
+                                <input type="date" id="deliv-report-end-date" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">Jenis Ongkir:</label>
+                                <select id="deliv-report-type-filter" onchange="loadDeliveryReports()" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium">
+                                    <option value="ALL">Semua Kiriman</option>
+                                    <option value="PAID">🚚 Ongkir Berbayar</option>
+                                    <option value="FREE">🎁 Free / Termasuk Kirim</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">Kurir Pengantar:</label>
+                                <select id="deliv-report-driver-filter" onchange="loadDeliveryReports()" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium">
+                                    <option value="ALL">Semua Kurir</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">Metode Bayar:</label>
+                                <select id="deliv-report-payment-filter" onchange="loadDeliveryReports()" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium">
+                                    <option value="ALL">Semua Metode</option>
+                                    <option value="CASH">Tunai (Cash)</option>
+                                    <option value="QRIS">QRIS</option>
+                                    <option value="DEBIT">Debit EDC</option>
+                                    <option value="TRANSFER">Transfer Bank</option>
+                                    <option value="PIUTANG">Piutang Cust</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="loadDeliveryReports()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-2">
+                                <i data-lucide="filter" class="w-4 h-4"></i>
+                                <span>Terapkan Filter</span>
+                            </button>
+                            <button type="button" onclick="exportDeliveryReportExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-2">
+                                <i data-lucide="download" class="w-4 h-4"></i>
+                                <span>Export Excel Kiriman</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- KPI Cards Laporan Kiriman -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs text-slate-400 font-semibold">Total Pesanan Kiriman</p>
+                                <span class="p-1.5 bg-sky-50 text-sky-600 rounded-lg text-xs">🚚</span>
+                            </div>
+                            <h3 id="deliv-kpi-orders" class="text-lg font-black text-slate-800 mt-1">0 Kiriman</h3>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Total nota diantar kurir</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-sky-200 shadow-sm bg-gradient-to-br from-sky-50/70 to-white">
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs text-sky-700 font-bold">Total Pendapatan Ongkir</p>
+                                <span class="p-1.5 bg-sky-100 text-sky-700 rounded-lg text-xs">💰</span>
+                            </div>
+                            <h3 id="deliv-kpi-fee" class="text-lg font-black text-sky-700 mt-1">Rp 0</h3>
+                            <p class="text-[11px] text-sky-600 font-semibold mt-0.5">Akumulasi biaya kirim</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs text-slate-400 font-semibold">Berbayar vs Free Ongkir</p>
+                                <span class="p-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs">🎁</span>
+                            </div>
+                            <h3 id="deliv-kpi-split" class="text-lg font-black text-emerald-700 mt-1">0 / 0</h3>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Berbayar / Include Ongkir</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs text-slate-400 font-semibold">Total Jarak Pengiriman</p>
+                                <span class="p-1.5 bg-amber-50 text-amber-700 rounded-lg text-xs">📍</span>
+                            </div>
+                            <h3 id="deliv-kpi-distance" class="text-lg font-black text-amber-700 mt-1">0 km</h3>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Total estimasi jarak rute</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-indigo-200 shadow-sm bg-gradient-to-br from-indigo-50/60 to-white">
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs text-indigo-700 font-bold">Total Nilai Nota Kiriman</p>
+                                <span class="p-1.5 bg-indigo-100 text-indigo-700 rounded-lg text-xs">🧾</span>
+                            </div>
+                            <h3 id="deliv-kpi-grand-total" class="text-lg font-black text-indigo-900 mt-1">Rp 0</h3>
+                            <p id="deliv-kpi-goods-sub" class="text-[11px] text-indigo-600 font-semibold mt-0.5">Produk: Rp 0</p>
+                        </div>
+                    </div>
+
+                    <!-- Tabel 1: Rekapitulasi Pengiriman per Kurir & Armada -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                                    <i data-lucide="users" class="w-4 h-4 text-sky-600"></i>
+                                    <span>Rekapitulasi Performa Pengiriman per Kurir & Armada</span>
+                                </h3>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Ringkasan jumlah trip pengantaran, jarak tempuh, dan total ongkos kirim terkumpul per staf kurir.</p>
+                            </div>
+                            <span id="deliv-courier-count-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800">0 Kurir</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-600 font-bold border-b">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Nama Kurir / Pengantar</th>
+                                        <th class="py-2.5 px-3">No. Polisi / Armada</th>
+                                        <th class="py-2.5 px-3 text-center">Total Kiriman</th>
+                                        <th class="py-2.5 px-3 text-center">Berbayar / Free</th>
+                                        <th class="py-2.5 px-3 text-right">Total Jarak</th>
+                                        <th class="py-2.5 px-3 text-right">Total Ongkos Kirim</th>
+                                        <th class="py-2.5 px-3 text-right">Total Nilai Nota Diantar</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="deliv-courier-summary-tbody" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tabel 2: Daftar Rincian Faktur Kiriman -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                                    <i data-lucide="package-check" class="w-4 h-4 text-indigo-600"></i>
+                                    <span>Daftar Rincian Faktur Kiriman Pelanggan (Delivery Ledger)</span>
+                                </h3>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Klik nomor faktur untuk melihat rincian nota lengkap atau mencetak ulang struk pengiriman.</p>
+                            </div>
+                            <span id="deliv-orders-count-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800">0 Faktur</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-600 font-bold border-b">
+                                    <tr>
+                                        <th class="py-3 px-3">No. Faktur</th>
+                                        <th class="py-3 px-3">Waktu</th>
+                                        <th class="py-3 px-3">Pelanggan</th>
+                                        <th class="py-3 px-3">Item Produk Dikirim</th>
+                                        <th class="py-3 px-3">Kurir & Armada</th>
+                                        <th class="py-3 px-3 text-right">Jarak</th>
+                                        <th class="py-3 px-3 text-right">Biaya Ongkir</th>
+                                        <th class="py-3 px-3 text-right">Total Nota</th>
+                                        <th class="py-3 px-3 text-center">Metode</th>
+                                        <th class="py-3 px-3 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="deliv-orders-tbody" class="divide-y divide-slate-100"></tbody>
                             </table>
                         </div>
                     </div>
@@ -16532,6 +16753,10 @@ try {
             const end = document.getElementById('report-end-date').value;
             const method = document.getElementById('report-payment-filter').value;
             const branchId = state.currentBranch ? state.currentBranch.id : '';
+            const delivStartSync = document.getElementById('deliv-report-start-date');
+            const delivEndSync = document.getElementById('deliv-report-end-date');
+            if (delivStartSync && start) delivStartSync.value = start;
+            if (delivEndSync && end) delivEndSync.value = end;
 
             const res = await fetch(`api.php?action=sales_reports&branch_id=${branchId}&start_date=${start}&end_date=${end}&payment_method=${method}`);
             const data = await res.json();
@@ -16545,8 +16770,26 @@ try {
             document.getElementById('kpi-gross-profit').innerText = formatRupiah(data.kpi.gross_profit);
             document.getElementById('kpi-gross-margin').innerText = `Margin: ${data.kpi.gross_margin_percent}%`;
             document.getElementById('kpi-discount').innerText = formatRupiah(data.kpi.total_discount);
+            const elKpiDelivFee = document.getElementById('kpi-delivery-fee');
+            if (elKpiDelivFee) elKpiDelivFee.innerText = formatRupiah(data.kpi.total_delivery_fee || 0);
+            const elKpiDelivSub = document.getElementById('kpi-delivery-orders-sub');
+            if (elKpiDelivSub) {
+                const dCount = Number(data.kpi.delivery_orders_count) || 0;
+                const dDist = Number(data.kpi.total_delivery_distance_km) || 0;
+                elKpiDelivSub.innerText = dDist > 0 ? `${dCount} Kiriman • ${formatDecimal(dDist)} km` : `${dCount} Kiriman`;
+            }
             document.getElementById('kpi-tx-count').innerText = data.kpi.total_transactions;
             document.getElementById('kpi-aov').innerText = formatRupiah(data.kpi.aov);
+
+            // Populate Quick Delivery & Courier Summary Banner
+            const elQuickDelivOrders = document.getElementById('quick-deliv-orders');
+            if (elQuickDelivOrders) elQuickDelivOrders.innerText = `${Number(data.kpi.delivery_orders_count) || 0} Nota`;
+            const elQuickDelivFee = document.getElementById('quick-deliv-fee');
+            if (elQuickDelivFee) elQuickDelivFee.innerText = formatRupiah(data.kpi.total_delivery_fee || 0);
+            const elQuickDelivSplit = document.getElementById('quick-deliv-split');
+            if (elQuickDelivSplit) elQuickDelivSplit.innerText = `${Number(data.kpi.paid_delivery_count) || 0} / ${Number(data.kpi.free_delivery_count) || 0} Nota`;
+            const elQuickDelivDist = document.getElementById('quick-deliv-distance');
+            if (elQuickDelivDist) elQuickDelivDist.innerText = `${formatDecimal(Number(data.kpi.total_delivery_distance_km) || 0)} km`;
 
             // Populate Quick BOM Consumption Summary Banner
             if (data.bom_summary && Array.isArray(data.bom_summary)) {
@@ -16605,7 +16848,45 @@ try {
                 </div>
             `).join('') || `<p class="text-xs text-slate-400">Belum ada transaksi</p>`;
 
-            document.getElementById('report-transactions-body').innerHTML = data.recent_sales.map(s => `
+            const courierBreakEl = document.getElementById('sales-courier-breakdown-list');
+            if (courierBreakEl) {
+                const couriersArr = (data.delivery_summary && Array.isArray(data.delivery_summary.couriers)) ? data.delivery_summary.couriers : [];
+                if (couriersArr.length > 0) {
+                    courierBreakEl.innerHTML = couriersArr.map(function(c) {
+                        const cName = escapeHtml(c.courier_name || '-');
+                        const plate = (c.plate_number && c.plate_number !== '-') ? (' • ' + escapeHtml(c.plate_number)) : '';
+                        const distKm = Number(c.total_distance_km) || 0;
+                        const distTxt = distKm > 0 ? (' • ' + formatDecimal(distKm) + ' km') : '';
+                        return '<div class="p-2.5 bg-sky-50/70 border border-sky-100 rounded-xl flex items-center justify-between text-xs">' +
+                            '<div>' +
+                                '<p class="font-bold text-slate-800">🚚 ' + cName + '<span class="text-[10px] font-medium text-slate-500">' + plate + '</span></p>' +
+                                '<p class="text-[10px] text-slate-500 mt-0.5">' + (Number(c.delivery_count) || 0) + ' kiriman' + distTxt + '</p>' +
+                            '</div>' +
+                            '<div class="text-right">' +
+                                '<span class="font-extrabold text-sky-800">' + formatRupiah(c.total_fee || 0) + '</span>' +
+                                '<span class="block text-[10px] text-slate-400">Nota: ' + formatRupiah(c.total_order_value || 0) + '</span>' +
+                            '</div>' +
+                        '</div>';
+                    }).join('');
+                } else {
+                    courierBreakEl.innerHTML = '<p class="text-xs text-slate-400">Belum ada kiriman kurir pada periode ini.</p>';
+                }
+            }
+
+            document.getElementById('report-transactions-body').innerHTML = data.recent_sales.map(function(s) {
+                let delivCellHtml = '<span class="text-[11px] text-slate-400">Ambil di Toko</span>';
+                if (Number(s.is_delivery_order) === 1) {
+                    const feeVal = Number(s.delivery_fee) || 0;
+                    const badgeHtml = feeVal > 0
+                        ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800">🚚 ' + formatRupiah(feeVal) + '</span>'
+                        : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">🎁 Free Kirim</span>';
+                    const drvParts = [];
+                    if (s.effective_driver_name) drvParts.push(escapeHtml(s.effective_driver_name));
+                    if (Number(s.delivery_distance_km) > 0) drvParts.push(formatDecimal(s.delivery_distance_km) + ' km');
+                    const subDrvHtml = drvParts.length > 0 ? '<p class="text-[10px] text-slate-500 mt-0.5">' + drvParts.join(' • ') + '</p>' : '';
+                    delivCellHtml = badgeHtml + subDrvHtml;
+                }
+                return `
                 <tr class="hover:bg-slate-50 transition-colors">
                     <td class="py-2.5 px-3 font-mono font-bold">
                         <button onclick="openSaleDetailModal('${s.invoice_number}')" class="text-indigo-600 hover:text-indigo-800 hover:underline flex items-center space-x-1 font-bold text-left" title="Klik untuk lihat detail transaksi">
@@ -16617,6 +16898,7 @@ try {
                     <td class="py-2.5 px-3 text-slate-700 font-medium">${s.branch_name}</td>
                     <td class="py-2.5 px-3 text-slate-600">${s.cashier_name}</td>
                     <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">${s.payment_method}</span></td>
+                    <td class="py-2.5 px-3">${delivCellHtml}</td>
                     <td class="py-2.5 px-3 text-right font-bold text-slate-800">${formatRupiah(s.grand_total)}</td>
                     <td class="py-2.5 px-3 text-right font-bold text-emerald-700">${formatRupiah(s.gross_profit)}</td>
                     <td class="py-2.5 px-3 text-center">
@@ -16632,7 +16914,8 @@ try {
                         </div>
                     </td>
                 </tr>
-            `).join('') || `<tr><td colspan="8" class="text-center py-6 text-slate-400">Belum ada riwayat transaksi</td></tr>`;
+            `;
+            }).join('') || `<tr><td colspan="9" class="text-center py-6 text-slate-400">Belum ada riwayat transaksi</td></tr>`;
             lucide.createIcons();
         }
 
@@ -16907,6 +17190,162 @@ try {
             window.open(url, '_blank');
         }
 
+        async function loadDeliveryReports() {
+            const startInput = document.getElementById('deliv-report-start-date');
+            const endInput = document.getElementById('deliv-report-end-date');
+            const salesStart = document.getElementById('report-start-date');
+            const salesEnd = document.getElementById('report-end-date');
+            const today = new Date().toISOString().split('T')[0];
+
+            if (startInput && !startInput.value) {
+                startInput.value = (salesStart && salesStart.value) ? salesStart.value : today;
+            }
+            if (endInput && !endInput.value) {
+                endInput.value = (salesEnd && salesEnd.value) ? salesEnd.value : today;
+            }
+
+            const start = startInput ? startInput.value : today;
+            const end = endInput ? endInput.value : today;
+            const typeEl = document.getElementById('deliv-report-type-filter');
+            const driverEl = document.getElementById('deliv-report-driver-filter');
+            const payEl = document.getElementById('deliv-report-payment-filter');
+
+            const deliveryType = typeEl ? typeEl.value : 'ALL';
+            const prevDriver = driverEl ? driverEl.value : 'ALL';
+            const paymentMethod = payEl ? payEl.value : 'ALL';
+            const branchId = state.currentBranch ? state.currentBranch.id : '';
+
+            try {
+                const url = `api.php?action=delivery_reports&branch_id=${branchId}&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&delivery_type=${encodeURIComponent(deliveryType)}&driver_filter=${encodeURIComponent(prevDriver)}&payment_method=${encodeURIComponent(paymentMethod)}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (!data.success) {
+                    console.error('Gagal memuat laporan kiriman:', data.error || 'Unknown error');
+                    return;
+                }
+
+                // Populate dropdown Kurir Pengantar
+                if (driverEl) {
+                    const driversList = Array.isArray(data.drivers_list) ? data.drivers_list : [];
+                    let optsHtml = '<option value="ALL">Semua Kurir</option>';
+                    driversList.forEach(function(dName) {
+                        const safeVal = escapeHtml(dName);
+                        const selAttr = (dName === prevDriver) ? ' selected' : '';
+                        optsHtml += '<option value="' + safeVal + '"' + selAttr + '>' + safeVal + '</option>';
+                    });
+                    driverEl.innerHTML = optsHtml;
+                }
+
+                const kpi = data.kpi || {};
+                const elOrders = document.getElementById('deliv-kpi-orders');
+                if (elOrders) elOrders.innerText = (Number(kpi.total_delivery_orders) || 0) + ' Kiriman';
+                const elFee = document.getElementById('deliv-kpi-fee');
+                if (elFee) elFee.innerText = formatRupiah(kpi.total_delivery_fee || 0);
+                const elSplit = document.getElementById('deliv-kpi-split');
+                if (elSplit) elSplit.innerText = (Number(kpi.paid_delivery_orders) || 0) + ' / ' + (Number(kpi.free_delivery_orders) || 0);
+                const elDist = document.getElementById('deliv-kpi-distance');
+                if (elDist) elDist.innerText = formatDecimal(Number(kpi.total_distance_km) || 0) + ' km';
+                const elGrand = document.getElementById('deliv-kpi-grand-total');
+                if (elGrand) elGrand.innerText = formatRupiah(kpi.total_grand_amount || 0);
+                const elGoodsSub = document.getElementById('deliv-kpi-goods-sub');
+                if (elGoodsSub) elGoodsSub.innerText = 'Produk: ' + formatRupiah(kpi.total_goods_value || 0);
+
+                // Tabel 1: Rekap per Kurir & Armada
+                const couriers = Array.isArray(data.courier_summary) ? data.courier_summary : [];
+                const cBadge = document.getElementById('deliv-courier-count-badge');
+                if (cBadge) cBadge.innerText = couriers.length + ' Kurir';
+                const cTbody = document.getElementById('deliv-courier-summary-tbody');
+                if (cTbody) {
+                    if (couriers.length === 0) {
+                        cTbody.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-slate-400">Belum ada data pengiriman kurir pada filter ini.</td></tr>';
+                    } else {
+                        cTbody.innerHTML = couriers.map(function(c) {
+                            const cName = escapeHtml(c.courier_name || '-');
+                            const plate = escapeHtml(c.plate_number || '-');
+                            const veh = (c.vehicle_name && c.vehicle_name !== '-') ? (' <span class="text-[10px] text-slate-400">(' + escapeHtml(c.vehicle_name) + ')</span>') : '';
+                            return '<tr class="hover:bg-slate-50 transition-colors">' +
+                                '<td class="py-2.5 px-3 font-bold text-slate-800">🚚 ' + cName + '</td>' +
+                                '<td class="py-2.5 px-3 text-slate-600 font-medium">' + plate + veh + '</td>' +
+                                '<td class="py-2.5 px-3 text-center"><span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-sky-100 text-sky-800">' + (Number(c.total_trips) || 0) + ' Nota</span></td>' +
+                                '<td class="py-2.5 px-3 text-center font-semibold text-slate-600">' + (Number(c.paid_trips) || 0) + ' / ' + (Number(c.free_trips) || 0) + '</td>' +
+                                '<td class="py-2.5 px-3 text-right font-semibold text-amber-700">' + formatDecimal(Number(c.total_distance_km) || 0) + ' km</td>' +
+                                '<td class="py-2.5 px-3 text-right font-extrabold text-sky-700">' + formatRupiah(c.total_delivery_fee || 0) + '</td>' +
+                                '<td class="py-2.5 px-3 text-right font-bold text-slate-800">' + formatRupiah(c.total_grand_amount || 0) + '</td>' +
+                            '</tr>';
+                        }).join('');
+                    }
+                }
+
+                // Tabel 2: Daftar Rincian Faktur Kiriman
+                const deliveries = Array.isArray(data.deliveries) ? data.deliveries : [];
+                const oBadge = document.getElementById('deliv-orders-count-badge');
+                if (oBadge) oBadge.innerText = deliveries.length + ' Faktur';
+                const oTbody = document.getElementById('deliv-orders-tbody');
+                if (oTbody) {
+                    if (deliveries.length === 0) {
+                        oTbody.innerHTML = '<tr><td colspan="10" class="text-center py-6 text-slate-400">Belum ada faktur kiriman pelanggan pada rentang tanggal ini.</td></tr>';
+                    } else {
+                        oTbody.innerHTML = deliveries.map(function(dv) {
+                            const inv = escapeHtml(dv.invoice_number || '');
+                            const cust = escapeHtml(dv.customer_name || 'Pelanggan Umum');
+                            const addr = dv.customer_address ? ('<p class="text-[10px] text-slate-400 truncate max-w-[180px]" title="' + escapeHtml(dv.customer_address) + '">📍 ' + escapeHtml(dv.customer_address) + '</p>') : '';
+                            const itemsSum = escapeHtml(dv.items_summary || '-');
+                            const cName = escapeHtml(dv.courier_name || '-');
+                            const plateTxt = (dv.plate_number && dv.plate_number !== '-') ? ('<p class="text-[10px] text-slate-400">' + escapeHtml(dv.plate_number) + '</p>') : '';
+                            const feeNum = Number(dv.delivery_fee) || 0;
+                            const feeBadge = feeNum > 0
+                                ? '<span class="font-extrabold text-sky-700">' + formatRupiah(feeNum) + '</span>'
+                                : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">🎁 Free / Include</span>';
+                            const distNum = Number(dv.delivery_distance_km) || 0;
+                            const distCell = distNum > 0 ? (formatDecimal(distNum) + ' km') : '-';
+                            return '<tr class="hover:bg-slate-50 transition-colors">' +
+                                '<td class="py-2.5 px-3 font-mono font-bold">' +
+                                    '<button type="button" onclick="openSaleDetailModal(\'' + inv + '\')" class="text-indigo-600 hover:text-indigo-800 hover:underline flex items-center space-x-1 font-bold text-left">' +
+                                        '<span>' + inv + '</span>' +
+                                        '<i data-lucide="external-link" class="w-3 h-3 text-indigo-400"></i>' +
+                                    '</button>' +
+                                '</td>' +
+                                '<td class="py-2.5 px-3 text-slate-500 whitespace-nowrap">' + escapeHtml(dv.created_at || '') + '</td>' +
+                                '<td class="py-2.5 px-3"><span class="font-semibold text-slate-800">' + cust + '</span>' + addr + '</td>' +
+                                '<td class="py-2.5 px-3 text-slate-700 max-w-[240px]"><span class="line-clamp-2" title="' + itemsSum + '">' + itemsSum + '</span></td>' +
+                                '<td class="py-2.5 px-3"><span class="font-bold text-slate-700">🚚 ' + cName + '</span>' + plateTxt + '</td>' +
+                                '<td class="py-2.5 px-3 text-right text-slate-600 font-medium whitespace-nowrap">' + distCell + '</td>' +
+                                '<td class="py-2.5 px-3 text-right whitespace-nowrap">' + feeBadge + '</td>' +
+                                '<td class="py-2.5 px-3 text-right font-bold text-slate-800 whitespace-nowrap">' + formatRupiah(dv.grand_total || 0) + '</td>' +
+                                '<td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">' + escapeHtml(dv.payment_method || '-') + '</span></td>' +
+                                '<td class="py-2.5 px-3 text-center">' +
+                                    '<button type="button" onclick="openSaleDetailModal(\'' + inv + '\')" class="p-1 px-2 text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg font-bold inline-flex items-center space-x-1">' +
+                                        '<i data-lucide="eye" class="w-3 h-3"></i><span>Detail</span>' +
+                                    '</button>' +
+                                '</td>' +
+                            '</tr>';
+                        }).join('');
+                    }
+                }
+                lucide.createIcons();
+            } catch (err) {
+                console.error('Error loading delivery reports:', err);
+            }
+        }
+
+        function exportDeliveryReportExcel() {
+            const startInput = document.getElementById('deliv-report-start-date');
+            const endInput = document.getElementById('deliv-report-end-date');
+            const today = new Date().toISOString().split('T')[0];
+            const start = (startInput && startInput.value) ? startInput.value : today;
+            const end = (endInput && endInput.value) ? endInput.value : today;
+            const typeEl = document.getElementById('deliv-report-type-filter');
+            const driverEl = document.getElementById('deliv-report-driver-filter');
+            const payEl = document.getElementById('deliv-report-payment-filter');
+            const deliveryType = typeEl ? typeEl.value : 'ALL';
+            const driverFilter = driverEl ? driverEl.value : 'ALL';
+            const paymentMethod = payEl ? payEl.value : 'ALL';
+            const branchId = state.currentBranch ? state.currentBranch.id : '';
+
+            const url = `api.php?action=export_delivery_excel&branch_id=${branchId}&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&delivery_type=${encodeURIComponent(deliveryType)}&driver_filter=${encodeURIComponent(driverFilter)}&payment_method=${encodeURIComponent(paymentMethod)}`;
+            window.open(url, '_blank');
+        }
+
         function exportSingleSaleExcel(invoiceNumber) {
             if (!invoiceNumber) return;
             const url = `api.php?action=export_sales_excel&invoice_number=${encodeURIComponent(invoiceNumber)}`;
@@ -16977,11 +17416,13 @@ try {
 
             state.reportActiveSubtab = subtab;
             const btnSales = document.getElementById('report-subtab-btn-sales');
+            const btnDeliveries = document.getElementById('report-subtab-btn-deliveries');
             const btnAR = document.getElementById('report-subtab-btn-receivables');
             const btnShifts = document.getElementById('report-subtab-btn-shifts');
             const btnBom = document.getElementById('report-subtab-btn-bom');
 
             const viewSales = document.getElementById('subtab-reports-sales');
+            const viewDeliveries = document.getElementById('subtab-reports-deliveries');
             const viewAR = document.getElementById('subtab-reports-ar');
             const viewShifts = document.getElementById('subtab-reports-shifts');
             const viewBOM = document.getElementById('subtab-reports-bom');
@@ -16991,16 +17432,28 @@ try {
             const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
 
             if (btnSales) btnSales.className = inactiveClass;
+            if (btnDeliveries) btnDeliveries.className = inactiveClass;
             if (btnAR) btnAR.className = inactiveClass;
             if (btnShifts) btnShifts.className = inactiveClass;
             if (btnBom) btnBom.className = inactiveClass;
 
             if (viewSales) viewSales.classList.add('hidden');
+            if (viewDeliveries) viewDeliveries.classList.add('hidden');
             if (viewAR) viewAR.classList.add('hidden');
             if (viewShifts) viewShifts.classList.add('hidden');
             if (viewBOM) viewBOM.classList.add('hidden');
 
-            if (subtab === 'receivables') {
+            if (subtab === 'deliveries') {
+                if (viewDeliveries) viewDeliveries.classList.remove('hidden');
+                if (btnDeliveries) btnDeliveries.className = activeClass;
+                const dStart = document.getElementById('deliv-report-start-date');
+                const dEnd = document.getElementById('deliv-report-end-date');
+                const sStart = document.getElementById('report-start-date');
+                const sEnd = document.getElementById('report-end-date');
+                if (dStart && !dStart.value && sStart && sStart.value) dStart.value = sStart.value;
+                if (dEnd && !dEnd.value && sEnd && sEnd.value) dEnd.value = sEnd.value;
+                loadDeliveryReports();
+            } else if (subtab === 'receivables') {
                 if (viewAR) viewAR.classList.remove('hidden');
                 if (btnAR) btnAR.className = activeClass;
                 loadReceivablesReport();
@@ -33066,6 +33519,7 @@ Manager / Supervisor: __________________
             const subTabMapping = [
                 // Reports
                 { id: 'report-subtab-btn-sales', key: 'reports:sales' },
+                { id: 'report-subtab-btn-deliveries', key: 'reports:deliveries' },
                 { id: 'report-subtab-btn-receivables', key: 'reports:ar' },
                 { id: 'report-subtab-btn-shifts', key: 'reports:shifts' },
                 { id: 'report-subtab-btn-bom', key: 'reports:bom' },
@@ -33512,6 +33966,7 @@ Manager / Supervisor: __________________
                 icon: 'bar-chart-3',
                 subtabs: [
                     { key: 'reports:sales', title: 'Laporan Penjualan', desc: 'Rekap omzet, produk terlaris, filter kurun waktu, ekspor excel' },
+                    { key: 'reports:deliveries', title: 'Laporan Kiriman & Kurir', desc: 'Rekap pengiriman pesanan pelanggan, pendapatan ongkos kirim, jarak, dan performa kurir' },
                     { key: 'reports:ar', title: 'Piutang Usaha', desc: 'Monitoring piutang pelanggan & pelunasan faktur' },
                     { key: 'reports:shifts', title: 'Shift Kasir', desc: 'Audit shift kasir, saldo kas laci, dan selisih kas fisik' },
                     { key: 'reports:bom', title: 'Pemakaian Bahan (BOM)', desc: 'Audit pemakaian bahan baku & formula resep' }

@@ -8005,23 +8005,26 @@ try {
                 }
             }
 
-            // Otomatisasi penguncian kurir & armada untuk CASHIER & STAFF yang terhubung dengan armada kurir
-            $stmtRole = $pdo->prepare("SELECT role, assigned_vehicle_id FROM users WHERE id = ?");
-            $stmtRole->execute([$userId]);
-            $userRow = $stmtRole->fetch();
-            if ($userRow && in_array(strtoupper($userRow['role'] ?? ''), ['CASHIER', 'STAFF', 'OPERATOR'])) {
-                $stmtUserVeh = $pdo->prepare("
-                    SELECT id, driver_user_id, driver_name 
-                    FROM courier_vehicles 
-                    WHERE (id = ? OR driver_user_id = ?) AND branch_id = ? AND is_active = 1 
-                    LIMIT 1
-                ");
-                $stmtUserVeh->execute([(int)($userRow['assigned_vehicle_id'] ?? 0), $userId, $branchId]);
-                $matchedUserVeh = $stmtUserVeh->fetch();
-                if ($matchedUserVeh) {
-                    $courierVehicleId = (int)$matchedUserVeh['id'];
-                    $driverUserId = (int)($matchedUserVeh['driver_user_id'] ?: $userId);
-                    $driverName = $matchedUserVeh['driver_name'];
+            // Otomatisasi penguncian kurir & armada untuk CASHIER & STAFF yang terhubung dengan armada kurir (khusus saat mode pengiriman aktif)
+            $isDeliveryRequested = ((!empty($input['delivery_status']) && $input['delivery_status'] !== 'NONE') || $deliveryFee > 0 || $isDeliveryIncluded || $courierVehicleId || $driverUserId || !empty($driverName));
+            if ($isDeliveryRequested) {
+                $stmtRole = $pdo->prepare("SELECT role, assigned_vehicle_id FROM users WHERE id = ?");
+                $stmtRole->execute([$userId]);
+                $userRow = $stmtRole->fetch();
+                if ($userRow && in_array(strtoupper($userRow['role'] ?? ''), ['CASHIER', 'STAFF', 'OPERATOR'])) {
+                    $stmtUserVeh = $pdo->prepare("
+                        SELECT id, driver_user_id, driver_name 
+                        FROM courier_vehicles 
+                        WHERE (id = ? OR driver_user_id = ?) AND branch_id = ? AND is_active = 1 
+                        LIMIT 1
+                    ");
+                    $stmtUserVeh->execute([(int)($userRow['assigned_vehicle_id'] ?? 0), $userId, $branchId]);
+                    $matchedUserVeh = $stmtUserVeh->fetch();
+                    if ($matchedUserVeh) {
+                        $courierVehicleId = (int)$matchedUserVeh['id'];
+                        $driverUserId = (int)($matchedUserVeh['driver_user_id'] ?: $userId);
+                        $driverName = $matchedUserVeh['driver_name'];
+                    }
                 }
             }
 
@@ -8512,12 +8515,20 @@ try {
                 $params[] = $paymentMethod;
             }
 
+            $isDelivExpr = "(COALESCE(s.delivery_fee, 0) > 0 OR COALESCE(s.is_delivery_included, 0) = 1 OR (s.delivery_status IS NOT NULL AND s.delivery_status NOT IN ('NONE', '') AND (COALESCE(s.sales_type, '') <> 'DIRECT_STORE' OR COALESCE(s.courier_vehicle_id, 0) > 0 OR COALESCE(s.driver_user_id, 0) > 0 OR (s.driver_name IS NOT NULL AND TRIM(s.driver_name) <> ''))))";
+
             $summaryStmt = $pdo->prepare("
                 SELECT 
                     COUNT(s.id) as total_transactions,
                     COALESCE(SUM(s.subtotal), 0) as gross_sales,
                     COALESCE(SUM(s.discount), 0) as total_discount,
                     COALESCE(SUM(s.tax), 0) as total_tax,
+                    COALESCE(SUM(s.delivery_fee), 0) as total_delivery_fee,
+                    COALESCE(SUM(CASE WHEN {$isDelivExpr} THEN 1 ELSE 0 END), 0) as delivery_orders_count,
+                    COALESCE(SUM(CASE WHEN COALESCE(s.delivery_fee, 0) > 0 THEN 1 ELSE 0 END), 0) as paid_delivery_count,
+                    COALESCE(SUM(CASE WHEN ({$isDelivExpr}) AND COALESCE(s.delivery_fee, 0) = 0 THEN 1 ELSE 0 END), 0) as free_delivery_count,
+                    COALESCE(SUM(CASE WHEN {$isDelivExpr} THEN COALESCE(s.delivery_distance_km, 0) ELSE 0 END), 0) as total_delivery_distance_km,
+                    COALESCE(SUM(CASE WHEN {$isDelivExpr} THEN s.grand_total ELSE 0 END), 0) as delivery_sales_total,
                     COALESCE(SUM(s.grand_total), 0) as total_revenue,
                     COALESCE(SUM(s.total_cogs), 0) as total_cogs
                 FROM sales s
@@ -8539,6 +8550,38 @@ try {
             ");
             $stmtPayment->execute($params);
             $paymentBreakdown = $stmtPayment->fetchAll();
+
+            // Rekap ringkas pengiriman per kurir pada periode yang sama
+            $stmtCourierSnap = $pdo->prepare("
+                SELECT 
+                    CASE 
+                        WHEN s.driver_name IS NOT NULL AND TRIM(s.driver_name) <> '' THEN s.driver_name
+                        WHEN du.name IS NOT NULL AND TRIM(du.name) <> '' THEN du.name
+                        WHEN v.driver_name IS NOT NULL AND TRIM(v.driver_name) <> '' THEN v.driver_name
+                        ELSE u.name
+                    END as courier_name,
+                    COALESCE(v.plate_number, '-') as plate_number,
+                    COUNT(s.id) as delivery_count,
+                    COALESCE(SUM(s.delivery_fee), 0) as total_fee,
+                    COALESCE(SUM(COALESCE(s.delivery_distance_km, 0)), 0) as total_distance_km,
+                    COALESCE(SUM(s.grand_total), 0) as total_order_value
+                FROM sales s
+                JOIN users u ON u.id = s.user_id
+                LEFT JOIN courier_vehicles v ON v.id = s.courier_vehicle_id
+                LEFT JOIN users du ON du.id = COALESCE(s.driver_user_id, v.driver_user_id)
+                $whereSql AND ({$isDelivExpr})
+                GROUP BY 
+                    CASE 
+                        WHEN s.driver_name IS NOT NULL AND TRIM(s.driver_name) <> '' THEN s.driver_name
+                        WHEN du.name IS NOT NULL AND TRIM(du.name) <> '' THEN du.name
+                        WHEN v.driver_name IS NOT NULL AND TRIM(v.driver_name) <> '' THEN v.driver_name
+                        ELSE u.name
+                    END,
+                    COALESCE(v.plate_number, '-')
+                ORDER BY delivery_count DESC, total_fee DESC
+            ");
+            $stmtCourierSnap->execute($params);
+            $courierBreakdown = $stmtCourierSnap->fetchAll();
 
             $stmtTopProducts = $pdo->prepare("
                 SELECT si.product_name, SUM(si.qty) as total_qty, 
@@ -8568,12 +8611,26 @@ try {
 
             $stmtList = $pdo->prepare("
                 SELECT s.id, s.invoice_number, s.created_at, s.grand_total, s.total_cogs,
-                       (s.grand_total - s.tax - s.total_cogs) as gross_profit,
+                       (s.grand_total - COALESCE(s.tax, 0) - COALESCE(s.delivery_fee, 0) - s.total_cogs) as gross_profit,
                        s.payment_method, s.customer_name, s.customer_category, s.sales_type,
+                       COALESCE(s.delivery_fee, 0) as delivery_fee,
+                       COALESCE(s.delivery_distance_km, 0) as delivery_distance_km,
+                       COALESCE(s.is_delivery_included, 0) as is_delivery_included,
+                       COALESCE(s.delivery_status, 'NONE') as delivery_status,
+                       CASE WHEN {$isDelivExpr} THEN 1 ELSE 0 END as is_delivery_order,
+                       CASE 
+                           WHEN s.driver_name IS NOT NULL AND TRIM(s.driver_name) <> '' THEN s.driver_name
+                           WHEN du.name IS NOT NULL AND TRIM(du.name) <> '' THEN du.name
+                           WHEN v.driver_name IS NOT NULL AND TRIM(v.driver_name) <> '' THEN v.driver_name
+                           ELSE ''
+                       END as effective_driver_name,
+                       COALESCE(v.plate_number, '') as plate_number,
                        b.name as branch_name, u.name as cashier_name
                 FROM sales s
                 JOIN branches b ON b.id = s.branch_id
                 JOIN users u ON u.id = s.user_id
+                LEFT JOIN courier_vehicles v ON v.id = s.courier_vehicle_id
+                LEFT JOIN users du ON du.id = COALESCE(s.driver_user_id, v.driver_user_id)
                 $whereSql
                 ORDER BY s.id DESC
                 LIMIT 50
@@ -8611,14 +8668,314 @@ try {
                     'total_cogs' => (float)$summary['total_cogs'],
                     'gross_profit' => (float)$grossProfit,
                     'gross_margin_percent' => $grossMargin,
+                    'total_delivery_fee' => (float)$summary['total_delivery_fee'],
+                    'delivery_orders_count' => (int)$summary['delivery_orders_count'],
+                    'paid_delivery_count' => (int)$summary['paid_delivery_count'],
+                    'free_delivery_count' => (int)$summary['free_delivery_count'],
+                    'total_delivery_distance_km' => round((float)$summary['total_delivery_distance_km'], 2),
+                    'delivery_sales_total' => (float)$summary['delivery_sales_total'],
                     'total_revenue' => (float)$summary['total_revenue'],
                     'aov' => (float)$aov
                 ],
                 'payment_breakdown' => $paymentBreakdown,
+                'delivery_summary' => [
+                    'couriers' => $courierBreakdown
+                ],
                 'customer_category_breakdown' => $customerCategoryBreakdown,
                 'top_products' => $topProducts,
                 'bom_summary' => $bomSummary,
                 'recent_sales' => $recentSales
+            ]);
+            break;
+
+        case 'delivery_reports':
+        case 'export_delivery_excel':
+            $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : null;
+            $startDate = !empty($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
+            $endDate = !empty($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
+            $deliveryType = strtoupper(trim($_GET['delivery_type'] ?? 'ALL')); // ALL | PAID | FREE
+            $paymentMethod = strtoupper(trim($_GET['payment_method'] ?? 'ALL'));
+            $driverFilter = trim($_GET['driver_filter'] ?? 'ALL');
+
+            $isDelivExpr = "(COALESCE(s.delivery_fee, 0) > 0 OR COALESCE(s.is_delivery_included, 0) = 1 OR (s.delivery_status IS NOT NULL AND s.delivery_status NOT IN ('NONE', '') AND (COALESCE(s.sales_type, '') <> 'DIRECT_STORE' OR COALESCE(s.courier_vehicle_id, 0) > 0 OR COALESCE(s.driver_user_id, 0) > 0 OR (s.driver_name IS NOT NULL AND TRIM(s.driver_name) <> ''))))";
+            $driverResolvedExpr = "CASE WHEN s.driver_name IS NOT NULL AND TRIM(s.driver_name) <> '' THEN s.driver_name WHEN du.name IS NOT NULL AND TRIM(du.name) <> '' THEN du.name WHEN v.driver_name IS NOT NULL AND TRIM(v.driver_name) <> '' THEN v.driver_name ELSE u.name END";
+
+            $baseWhere = "WHERE date(s.created_at) BETWEEN ? AND ? AND (s.status IS NULL OR s.status != 'CANCELLED') AND ({$isDelivExpr})";
+            $baseParams = [$startDate, $endDate];
+            if ($branchId) {
+                $baseWhere .= " AND s.branch_id = ?";
+                $baseParams[] = $branchId;
+            }
+
+            // Ambil daftar nama kurir unik pada periode & cabang ini untuk dropdown filter
+            $stmtDrvList = $pdo->prepare("
+                SELECT DISTINCT {$driverResolvedExpr} as courier_name
+                FROM sales s
+                JOIN users u ON u.id = s.user_id
+                LEFT JOIN courier_vehicles v ON v.id = s.courier_vehicle_id
+                LEFT JOIN users du ON du.id = COALESCE(s.driver_user_id, v.driver_user_id)
+                {$baseWhere}
+                ORDER BY courier_name ASC
+            ");
+            $stmtDrvList->execute($baseParams);
+            $driversList = array_values(array_filter($stmtDrvList->fetchAll(PDO::FETCH_COLUMN)));
+
+            $filterWhere = $baseWhere;
+            $filterParams = $baseParams;
+            if ($deliveryType === 'PAID') {
+                $filterWhere .= " AND COALESCE(s.delivery_fee, 0) > 0";
+            } elseif ($deliveryType === 'FREE') {
+                $filterWhere .= " AND COALESCE(s.delivery_fee, 0) = 0";
+            }
+            if ($paymentMethod !== 'ALL' && $paymentMethod !== '') {
+                $filterWhere .= " AND s.payment_method = ?";
+                $filterParams[] = $paymentMethod;
+            }
+            if ($driverFilter !== 'ALL' && $driverFilter !== '') {
+                $filterWhere .= " AND ({$driverResolvedExpr}) = ?";
+                $filterParams[] = $driverFilter;
+            }
+
+            // 1. KPI Summary Kiriman
+            $stDelivKpi = $pdo->prepare("
+                SELECT 
+                    COUNT(s.id) as total_delivery_orders,
+                    COALESCE(SUM(CASE WHEN COALESCE(s.delivery_fee, 0) > 0 THEN 1 ELSE 0 END), 0) as paid_delivery_orders,
+                    COALESCE(SUM(CASE WHEN COALESCE(s.delivery_fee, 0) = 0 THEN 1 ELSE 0 END), 0) as free_delivery_orders,
+                    COALESCE(SUM(s.delivery_fee), 0) as total_delivery_fee,
+                    COALESCE(SUM(COALESCE(s.delivery_distance_km, 0)), 0) as total_distance_km,
+                    COALESCE(SUM(s.subtotal - COALESCE(s.discount, 0)), 0) as total_goods_value,
+                    COALESCE(SUM(s.grand_total), 0) as total_grand_amount
+                FROM sales s
+                JOIN users u ON u.id = s.user_id
+                LEFT JOIN courier_vehicles v ON v.id = s.courier_vehicle_id
+                LEFT JOIN users du ON du.id = COALESCE(s.driver_user_id, v.driver_user_id)
+                {$filterWhere}
+            ");
+            $stDelivKpi->execute($filterParams);
+            $dKpi = $stDelivKpi->fetch(PDO::FETCH_ASSOC);
+
+            // 2. Rekapitulasi Per Kurir & Armada
+            $stCourier = $pdo->prepare("
+                SELECT 
+                    {$driverResolvedExpr} as courier_name,
+                    COALESCE(v.plate_number, '-') as plate_number,
+                    COALESCE(v.vehicle_name, '-') as vehicle_name,
+                    COUNT(s.id) as total_trips,
+                    COALESCE(SUM(CASE WHEN COALESCE(s.delivery_fee, 0) > 0 THEN 1 ELSE 0 END), 0) as paid_trips,
+                    COALESCE(SUM(CASE WHEN COALESCE(s.delivery_fee, 0) = 0 THEN 1 ELSE 0 END), 0) as free_trips,
+                    COALESCE(SUM(COALESCE(s.delivery_distance_km, 0)), 0) as total_distance_km,
+                    COALESCE(SUM(s.delivery_fee), 0) as total_delivery_fee,
+                    COALESCE(SUM(s.grand_total), 0) as total_grand_amount
+                FROM sales s
+                JOIN users u ON u.id = s.user_id
+                LEFT JOIN courier_vehicles v ON v.id = s.courier_vehicle_id
+                LEFT JOIN users du ON du.id = COALESCE(s.driver_user_id, v.driver_user_id)
+                {$filterWhere}
+                GROUP BY {$driverResolvedExpr}, COALESCE(v.plate_number, '-'), COALESCE(v.vehicle_name, '-')
+                ORDER BY total_trips DESC, total_delivery_fee DESC
+            ");
+            $stCourier->execute($filterParams);
+            $courierSummary = $stCourier->fetchAll(PDO::FETCH_ASSOC);
+
+            // 3. Daftar Rincian Faktur Kiriman
+            $limitClause = ($action === 'export_delivery_excel') ? '' : 'LIMIT 200';
+            $stRows = $pdo->prepare("
+                SELECT 
+                    s.id, s.invoice_number, s.created_at,
+                    COALESCE(s.customer_name, 'Pelanggan Umum') as customer_name,
+                    COALESCE(s.customer_category, 'REGULER') as customer_category,
+                    COALESCE(c.address, '') as customer_address,
+                    COALESCE(c.phone, '') as customer_phone,
+                    s.subtotal, COALESCE(s.discount, 0) as discount, COALESCE(s.tax, 0) as tax,
+                    COALESCE(s.delivery_fee, 0) as delivery_fee,
+                    COALESCE(s.delivery_distance_km, 0) as delivery_distance_km,
+                    COALESCE(s.is_delivery_included, 0) as is_delivery_included,
+                    COALESCE(s.delivery_status, 'DELIVERED') as delivery_status,
+                    s.grand_total, s.payment_method, COALESCE(s.payment_status, 'PAID') as payment_status,
+                    b.name as branch_name,
+                    u.name as cashier_name,
+                    {$driverResolvedExpr} as courier_name,
+                    COALESCE(v.plate_number, '-') as plate_number,
+                    COALESCE(v.vehicle_name, '') as vehicle_name
+                FROM sales s
+                JOIN branches b ON b.id = s.branch_id
+                JOIN users u ON u.id = s.user_id
+                LEFT JOIN customers c ON c.id = s.customer_id
+                LEFT JOIN courier_vehicles v ON v.id = s.courier_vehicle_id
+                LEFT JOIN users du ON du.id = COALESCE(s.driver_user_id, v.driver_user_id)
+                {$filterWhere}
+                ORDER BY s.id DESC
+                {$limitClause}
+            ");
+            $stRows->execute($filterParams);
+            $deliveries = $stRows->fetchAll(PDO::FETCH_ASSOC);
+
+            if (!empty($deliveries)) {
+                $saleIds = array_map(function($r) { return (int)$r['id']; }, $deliveries);
+                $inIds = implode(',', array_fill(0, count($saleIds), '?'));
+                $stSi = $pdo->prepare("SELECT sale_id, product_name, variant_name, qty FROM sale_items WHERE sale_id IN ({$inIds}) ORDER BY id ASC");
+                $stSi->execute($saleIds);
+                $itemsMap = [];
+                $qtyMap = [];
+                foreach ($stSi->fetchAll(PDO::FETCH_ASSOC) as $si) {
+                    $sid = (int)$si['sale_id'];
+                    $lbl = $si['product_name'] . (!empty($si['variant_name']) ? ' [' . $si['variant_name'] . ']' : '') . ' (' . (float)$si['qty'] . 'x)';
+                    $itemsMap[$sid][] = $lbl;
+                    $qtyMap[$sid] = ($qtyMap[$sid] ?? 0) + (float)$si['qty'];
+                }
+                foreach ($deliveries as &$dRow) {
+                    $sid = (int)$dRow['id'];
+                    $dRow['items_summary'] = isset($itemsMap[$sid]) ? implode(', ', $itemsMap[$sid]) : '-';
+                    $dRow['total_items_qty'] = $qtyMap[$sid] ?? 0;
+                }
+                unset($dRow);
+            }
+
+            if ($action === 'export_delivery_excel') {
+                $filename = "Laporan_Kiriman_Kurir_{$startDate}_sd_{$endDate}.xls";
+                header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+                header('Content-Disposition: attachment; filename="' . $filename . '"');
+                header('Pragma: no-cache');
+                header('Expires: 0');
+                echo "\xEF\xBB\xBF";
+                ?>
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+                <head>
+                    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+                    <style>
+                        body { font-family: Arial, sans-serif; font-size: 10.5pt; }
+                        table { border-collapse: collapse; width: 100%; margin-bottom: 16px; }
+                        th { background-color: #0284c7; color: #ffffff; font-weight: bold; border: 1px solid #0369a1; padding: 6px 10px; text-align: center; }
+                        td { border: 1px solid #cbd5e1; padding: 5px 8px; vertical-align: middle; }
+                        .num { mso-number-format: "\#\,\#\#0"; text-align: right; }
+                        .dec { mso-number-format: "0\.00"; text-align: right; }
+                        .txt { mso-number-format: "\@"; }
+                        .center { text-align: center; }
+                        .bold { font-weight: bold; }
+                        .title { font-size: 15pt; font-weight: bold; color: #0c4a6e; }
+                        .subtitle { font-size: 10pt; color: #475569; margin-bottom: 10px; }
+                        .sec-title { font-size: 11.5pt; font-weight: bold; color: #0f172a; margin: 12px 0 6px 0; }
+                        .bg-total { background-color: #f0f9ff; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class="title">LAPORAN PENGIRIMAN PESANAN & PERFORMA KURIR</div>
+                    <div class="subtitle">Periode: <?= htmlspecialchars($startDate) ?> s/d <?= htmlspecialchars($endDate) ?> | Dicetak: <?= date('Y-m-d H:i:s') ?></div>
+
+                    <div class="sec-title">A. REKAPITULASI PENGIRIMAN PER KURIR / ARMADA</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Kurir / Pengantar</th>
+                                <th>No. Polisi / Armada</th>
+                                <th>Total Kiriman</th>
+                                <th>Ongkir Berbayar</th>
+                                <th>Free / Termasuk Kirim</th>
+                                <th>Total Jarak (KM)</th>
+                                <th>Total Ongkos Kirim (Rp)</th>
+                                <th>Total Nilai Nota Diantar (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($courierSummary)): ?>
+                                <tr><td colspan="9" class="center">Tidak ada data pengiriman pada periode ini.</td></tr>
+                            <?php else: foreach ($courierSummary as $idx => $cs): ?>
+                                <tr>
+                                    <td class="center"><?= $idx + 1 ?></td>
+                                    <td class="bold"><?= htmlspecialchars($cs['courier_name']) ?></td>
+                                    <td class="center"><?= htmlspecialchars($cs['plate_number']) ?></td>
+                                    <td class="num"><?= (int)$cs['total_trips'] ?></td>
+                                    <td class="num"><?= (int)$cs['paid_trips'] ?></td>
+                                    <td class="num"><?= (int)$cs['free_trips'] ?></td>
+                                    <td class="dec"><?= (float)$cs['total_distance_km'] ?></td>
+                                    <td class="num bold"><?= (float)$cs['total_delivery_fee'] ?></td>
+                                    <td class="num"><?= (float)$cs['total_grand_amount'] ?></td>
+                                </tr>
+                            <?php endforeach; endif; ?>
+                            <tr class="bg-total">
+                                <td colspan="3" class="center">TOTAL KESELURUHAN</td>
+                                <td class="num"><?= (int)($dKpi['total_delivery_orders'] ?? 0) ?></td>
+                                <td class="num"><?= (int)($dKpi['paid_delivery_orders'] ?? 0) ?></td>
+                                <td class="num"><?= (int)($dKpi['free_delivery_orders'] ?? 0) ?></td>
+                                <td class="dec"><?= (float)($dKpi['total_distance_km'] ?? 0) ?></td>
+                                <td class="num"><?= (float)($dKpi['total_delivery_fee'] ?? 0) ?></td>
+                                <td class="num"><?= (float)($dKpi['total_grand_amount'] ?? 0) ?></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="sec-title">B. DAFTAR RINCIAN FAKTUR KIRIMAN</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>No. Faktur</th>
+                                <th>Tanggal / Waktu</th>
+                                <th>Cabang</th>
+                                <th>Pelanggan</th>
+                                <th>Kategori</th>
+                                <th>Rincian Item Dikirim</th>
+                                <th>Kurir Pengantar</th>
+                                <th>No. Polisi</th>
+                                <th>Jarak (KM)</th>
+                                <th>Jenis Ongkir</th>
+                                <th>Biaya Ongkir (Rp)</th>
+                                <th>Nilai Produk Bersih (Rp)</th>
+                                <th>Total Faktur (Rp)</th>
+                                <th>Metode Bayar</th>
+                                <th>Kasir Input</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($deliveries)): ?>
+                                <tr><td colspan="16" class="center">Tidak ada rincian faktur kiriman.</td></tr>
+                            <?php else: foreach ($deliveries as $i => $dv):
+                                $netGoods = (float)$dv['subtotal'] - (float)$dv['discount'];
+                                $delivTypeLabel = ((float)$dv['delivery_fee'] > 0) ? 'Ongkir Berbayar' : (((int)$dv['is_delivery_included'] === 1) ? 'Termasuk Kirim (Include)' : 'Gratis Radius');
+                            ?>
+                                <tr>
+                                    <td class="center"><?= $i + 1 ?></td>
+                                    <td class="txt bold"><?= htmlspecialchars($dv['invoice_number']) ?></td>
+                                    <td class="txt"><?= htmlspecialchars($dv['created_at']) ?></td>
+                                    <td><?= htmlspecialchars($dv['branch_name']) ?></td>
+                                    <td><?= htmlspecialchars($dv['customer_name']) ?></td>
+                                    <td class="center"><?= htmlspecialchars($dv['customer_category']) ?></td>
+                                    <td><?= htmlspecialchars($dv['items_summary']) ?></td>
+                                    <td class="bold"><?= htmlspecialchars($dv['courier_name']) ?></td>
+                                    <td class="center"><?= htmlspecialchars($dv['plate_number']) ?></td>
+                                    <td class="dec"><?= (float)$dv['delivery_distance_km'] ?></td>
+                                    <td class="center"><?= htmlspecialchars($delivTypeLabel) ?></td>
+                                    <td class="num bold"><?= (float)$dv['delivery_fee'] ?></td>
+                                    <td class="num"><?= $netGoods ?></td>
+                                    <td class="num bold"><?= (float)$dv['grand_total'] ?></td>
+                                    <td class="center"><?= htmlspecialchars($dv['payment_method']) ?></td>
+                                    <td><?= htmlspecialchars($dv['cashier_name']) ?></td>
+                                </tr>
+                            <?php endforeach; endif; ?>
+                        </tbody>
+                    </table>
+                </body>
+                </html>
+                <?php
+                exit;
+            }
+
+            echo json_encode([
+                'success' => true,
+                'kpi' => [
+                    'total_delivery_orders' => (int)($dKpi['total_delivery_orders'] ?? 0),
+                    'paid_delivery_orders' => (int)($dKpi['paid_delivery_orders'] ?? 0),
+                    'free_delivery_orders' => (int)($dKpi['free_delivery_orders'] ?? 0),
+                    'total_delivery_fee' => (float)($dKpi['total_delivery_fee'] ?? 0),
+                    'total_distance_km' => round((float)($dKpi['total_distance_km'] ?? 0), 2),
+                    'total_goods_value' => (float)($dKpi['total_goods_value'] ?? 0),
+                    'total_grand_amount' => (float)($dKpi['total_grand_amount'] ?? 0)
+                ],
+                'drivers_list' => $driversList,
+                'courier_summary' => $courierSummary,
+                'deliveries' => $deliveries
             ]);
             break;
 
@@ -16466,6 +16823,7 @@ try {
             $menuTitles = [
                 'pos' => 'POS Penjualan',
                 'reports' => 'Laporan Penjualan',
+                'reports:deliveries' => 'Laporan Kiriman & Kurir',
                 'ess' => 'Portal ESS Karyawan',
                 'employees' => 'Kelola Karyawan',
                 'payroll' => 'Payroll & Slip Gaji',

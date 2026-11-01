@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.5.7",
-    "build": "20261101-83",
+    "version": "1.5.8",
+    "build": "20261101-84",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.5.8",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Informasi Ringkasan Kiriman pada Laporan Penjualan & Sub-Modul Laporan Kiriman Kurir (FR-REP-05)",
+            "description": "Menambahkan informasi lengkap laporan kiriman dan kurir pada menu Laporan Penjualan (#tab-reports): (1) Info Kiriman Langsung di Laporan Penjualan & Omzet (#subtab-reports-sales): Menambahkan Kartu KPI 'Ongkos Kirim (Kiriman)' (menyelaraskan rekonsiliasi Penjualan Bersih + Ongkos Kirim = Total Metode Pembayaran), Banner 'Ringkasan Laporan Kiriman & Ongkos Kirim Periode Ini' (Total Kiriman, Pendapatan Ongkir, Berbayar vs Free/Include, Total Jarak, dan tombol pintas), panel 'Rekap Kiriman per Kurir' di bawah Komposisi Metode Pembayaran, serta kolom 'Kiriman / Ongkir' pada tabel Daftar Transaksi Penjualan Terakhir; (2) Sub-Tab Khusus 'Laporan Kiriman & Kurir' (#subtab-reports-deliveries): Menyediakan filter Tanggal, Jenis Ongkir (Semua / Ongkir Berbayar / Free & Include Kirim), Kurir Pengantar, dan Metode Bayar, 5 Kartu KPI Kiriman, Tabel Rekapitulasi Performa Pengiriman per Kurir & Armada, Tabel Daftar Rincian Faktur Kiriman Pelanggan (Delivery Ledger), serta tombol 'Export Excel Kiriman' (export_delivery_excel); (3) Integrasi Pengaturan Role & Kompatibilitas Penuh: Menambahkan hak akses sub-tab reports:deliveries pada matriks Pengaturan Role, dukungan SQLite & MariaDB/MySQL hosting, serta 100% bebas token ES2020 (?., ??) untuk Android 8.1.",
+            "rollback_command": "git checkout v1.5.7"
+        },
         {
             "version": "1.5.7",
             "commit": "HEAD",

@@ -2024,6 +2024,16 @@ function autoMigrateAndSync($pdo) {
             $canTrf = ($isSuper || $isMgr || $isStaff) ? 1 : 0;
             $stmtSubPerm->execute([$role, 'stock-in:transfer', '2. Transfer Cabang', $canTrf, $canTrf, $canTrf, ($isSuper || $isMgr) ? 1 : 0, ($isSuper || $isMgr) ? 1 : 0]);
         }
+
+        // Seed sub-tab Laporan Kiriman & Kurir (reports:deliveries)
+        $stmtRepDelivPerm = $pdo->prepare("INSERT OR IGNORE INTO role_menu_permissions (role, menu_key, menu_title, can_access, can_view, can_create, can_update, can_delete, parent_key, is_subtab) VALUES (?, 'reports:deliveries', 'Laporan Kiriman & Kurir', ?, ?, ?, ?, ?, 'reports', 1)");
+        foreach ($roleAccessRules as $role => $allowedMenus) {
+            $isSuper = in_array($role, ['SUPERADMIN', 'SUPER_ADMIN']);
+            $isMgr = in_array($role, ['BRANCH_MANAGER', 'MANAGER']);
+            $canRep = in_array('reports', $allowedMenus) ? 1 : 0;
+            $udRep = ($canRep && ($isSuper || $isMgr)) ? 1 : 0;
+            $stmtRepDelivPerm->execute([$role, $canRep, $canRep, $udRep, $udRep, $udRep]);
+        }
     } catch (Exception $eSubPerm) {}
 
     // Pastikan tabel stock_transfers & stock_transfer_items tersedia pada database SQLite lama
@@ -2522,7 +2532,21 @@ function autoMigrateMysql($pdo) {
                 $stmtMyPerm->execute([$rCode, 'stock-in', 'Input Penambahan Stok', 1, 1, 1, $ud, $ud, null, 0]);
                 $stmtMyPerm->execute([$rCode, 'stock-in:manual', '1. Penambahan Manual', 1, 1, 1, $ud, $ud, 'stock-in', 1]);
                 $stmtMyPerm->execute([$rCode, 'stock-in:transfer', '2. Transfer Cabang', $canTrf, $canTrf, $canTrf, $ud, $ud, 'stock-in', 1]);
+                $canRepMy = ($rCode !== 'STAFF') ? 1 : 0;
+                $stmtMyPerm->execute([$rCode, 'reports:deliveries', 'Laporan Kiriman & Kurir', $canRepMy, $canRepMy, $ud, $ud, $ud, 'reports', 1]);
             }
+        }
+
+        // Pastikan kolom pengiriman pada tabel sales tersedia lengkap di MySQL hosting
+        $salesMysqlCols = getDbTableColumns($pdo, 'sales');
+        if (!empty($salesMysqlCols)) {
+            if (!in_array('delivery_fee', $salesMysqlCols)) $pdo->exec("ALTER TABLE `sales` ADD COLUMN `delivery_fee` DECIMAL(15,2) DEFAULT 0");
+            if (!in_array('delivery_distance_km', $salesMysqlCols)) $pdo->exec("ALTER TABLE `sales` ADD COLUMN `delivery_distance_km` DECIMAL(10,2) DEFAULT 0");
+            if (!in_array('courier_vehicle_id', $salesMysqlCols)) $pdo->exec("ALTER TABLE `sales` ADD COLUMN `courier_vehicle_id` INT DEFAULT NULL");
+            if (!in_array('driver_user_id', $salesMysqlCols)) $pdo->exec("ALTER TABLE `sales` ADD COLUMN `driver_user_id` INT DEFAULT NULL");
+            if (!in_array('driver_name', $salesMysqlCols)) $pdo->exec("ALTER TABLE `sales` ADD COLUMN `driver_name` VARCHAR(150) DEFAULT NULL");
+            if (!in_array('is_delivery_included', $salesMysqlCols)) $pdo->exec("ALTER TABLE `sales` ADD COLUMN `is_delivery_included` TINYINT(1) DEFAULT 0");
+            if (!in_array('delivery_status', $salesMysqlCols)) $pdo->exec("ALTER TABLE `sales` ADD COLUMN `delivery_status` VARCHAR(40) DEFAULT 'NONE'");
         }
     } catch (Exception $eMySt) {}
 }
