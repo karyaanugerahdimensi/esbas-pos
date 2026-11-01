@@ -73,7 +73,7 @@ try {
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="KAD Tech">
     <meta name="application-name" content="KAD Tech Retail">
-    <link rel="manifest" href="manifest.json?v=1.4.7">
+    <link rel="manifest" href="manifest.json?v=1.4.8">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
     <title>KAD Tech Retail - POS Multi-Cabang v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</title>
@@ -12036,6 +12036,9 @@ try {
                             await OfflineDB.setItem('offline_users', data.offline_user_pack);
                         } catch(e){}
                     }
+                    if (data.active_shift) {
+                        state.activeShift = data.active_shift;
+                    }
                     if (data.has_closed_shift !== undefined) {
                         state.currentUserHasClosedShift = (data.has_closed_shift === true);
                         window.userHasClosedShift = (data.has_closed_shift === true);
@@ -14615,15 +14618,12 @@ try {
                             </div>
                         </div>
 
-                        <!-- Input Uang Fisik Aktual di Laci Kasir -->
+                        <!-- Input Uang Fisik Aktual di Laci Kasir (Blind Cash Count - Tanpa Bocoran Clue/Ekspektasi Sistem) -->
                         <div class="space-y-1.5 pt-1">
                             <label class="block text-xs font-black text-slate-800">Total Uang Fisik Aktual di Laci Kasir (Kertas + Koin):</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-sm font-bold text-slate-400">Rp</span>
-                                <input type="number" id="shift-input-actual-cash" oninput="calculateClosingCashDifference(window.closingShiftState ? window.closingShiftState.expectedCash : ${expectedCash})" placeholder="Hitung dan input seluruh uang fisik..." class="w-full pl-11 pr-4 py-2 bg-white border-2 border-rose-300 rounded-xl font-black text-rose-950 text-sm sm:text-base focus:ring-2 focus:ring-rose-500 shadow-inner">
-                            </div>
-                            <div id="closing-cash-status-box" class="p-2.5 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-600 flex items-center space-x-2">
-                                <span>💡</span><span>Masukkan total uang fisik di laci kasir untuk menghitung selisih kas secara otomatis.</span>
+                                <input type="number" id="shift-input-actual-cash" placeholder="Hitung dan input seluruh uang fisik di laci kasir..." class="w-full pl-11 pr-4 py-2.5 bg-white border-2 border-rose-300 rounded-xl font-black text-rose-950 text-sm sm:text-base focus:ring-2 focus:ring-rose-500 shadow-inner">
                             </div>
                         </div>
                     </div>
@@ -14762,6 +14762,63 @@ try {
                     if (data.has_active_open_shift && data.active_open_shift) {
                         state.activeShift = data.active_open_shift;
                         renderShiftBanner();
+
+                        // Jika kasir saat ini bukan pembuka shift (misal kasir Abdul login saat Bima sudah opening)
+                        const curUserId = (state.currentUser ? state.currentUser.id : 0);
+                        const isOpener = (curUserId && Number(curUserId) === Number(data.active_open_shift.user_id));
+
+                        if (!isOpener && !forceOverride) {
+                            const openerName = escapeHtml(data.active_open_shift.opener_name || data.active_open_shift.cashier_name || 'Kasir Rekanan');
+                            const shiftName = escapeHtml(data.active_open_shift.shift_name || 'Shift 1 (Pagi)');
+                            const startTime = escapeHtml(data.active_open_shift.start_time || '-');
+
+                            title.innerHTML = `
+                                <div class="flex items-center space-x-2 flex-wrap">
+                                    <span>Shift Kasir Sedang Aktif</span>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                                        ✓ Toko Sudah Dibuka
+                                    </span>
+                                </div>
+                            `;
+                            desc.innerText = `Cabang: ${(state.currentBranch ? state.currentBranch.name : 'Cabang') || 'Cabang'} • Kasir Bertugas: ${(state.currentUser ? state.currentUser.name : 'Kasir') || 'Kasir'}`;
+
+                            btn.innerText = 'LANJUT TRANSAKSI POS';
+                            btn.className = 'py-3.5 px-5 bg-emerald-600 hover:bg-emerald-700 rounded-2xl text-xs font-black text-white shadow-lg shadow-emerald-200 transition-all uppercase tracking-wider cursor-pointer';
+                            btn.onclick = function() { closeShiftModal(); };
+
+                            body.innerHTML = `
+                                <div class="space-y-4 py-2">
+                                    <div class="p-4 sm:p-5 bg-gradient-to-br from-emerald-50 via-teal-50/30 to-white rounded-2xl sm:rounded-3xl border border-emerald-200 shadow-sm space-y-3">
+                                        <div class="flex items-start space-x-3.5">
+                                            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xl shrink-0 shadow-md">
+                                                🤝
+                                            </div>
+                                            <div class="space-y-1">
+                                                <div class="text-sm font-black text-emerald-950">Shift Kasir Telah Dibuka di Cabang Ini</div>
+                                                <p class="text-xs text-emerald-800 leading-relaxed">
+                                                    Operasional penjualan dan verifikasi stok awal untuk hari ini telah dibuka oleh kasir rekanan <b class="text-emerald-950 font-black">${openerName}</b> pada pukul <b class="font-mono text-emerald-950">${startTime}</b> (${shiftName}).
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="p-3 bg-white/90 rounded-xl border border-emerald-100 text-xs text-emerald-900 flex items-center space-x-2 font-medium">
+                                            <span class="text-base text-emerald-600">✓</span>
+                                            <span>Sesuai SOP, pembukaan shift & verifikasi stok awal hanya dilakukan oleh kasir pertama di awal hari. <b>Anda dapat langsung melayani transaksi penjualan di menu POS.</b></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+                                        <div class="text-slate-600 font-medium">
+                                            Apakah Anda ditugaskan untuk melakukan <b>serah terima</b> atau <b>penutupan shift</b> saat ini?
+                                        </div>
+                                        <button type="button" onclick="openShiftModal(true)" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold transition-colors cursor-pointer">
+                                            Tutup Shift / Serah Terima Kasir &rarr;
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            return;
+                        }
+
                         return openShiftModal();
                     }
 
@@ -15335,26 +15392,8 @@ try {
         }
 
         function calculateClosingCashDifference(expectedCash) {
-            const actual = parseFloat(_val('shift-input-actual-cash')) || 0;
-            const statusBox = document.getElementById('closing-cash-status-box');
-            if (!statusBox) return;
-
-            const targetExpected = (expectedCash !== undefined) ? expectedCash : (window.closingShiftState ? window.closingShiftState.expectedCash : 0);
-            const diff = actual - targetExpected;
-
-            if (actual === 0 && !_val('shift-input-actual-cash')) {
-                statusBox.className = 'p-2.5 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-600 flex items-center space-x-2';
-                statusBox.innerHTML = `<span>💡</span><span>Masukkan total uang fisik di laci kasir untuk menghitung selisih kas secara otomatis.</span>`;
-            } else if (diff === 0) {
-                statusBox.className = 'p-2.5 rounded-xl text-xs font-bold transition-all bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center space-x-2';
-                statusBox.innerHTML = `<span>✓</span><span>Uang Fisik Kasir Cocok Sempurna dengan Ekspektasi Sistem (Selisih: Rp 0).</span>`;
-            } else if (diff < 0) {
-                statusBox.className = 'p-2.5 rounded-xl text-xs font-bold transition-all bg-rose-50 border border-rose-200 text-rose-800 flex items-center space-x-2';
-                statusBox.innerHTML = `<span>⚠️</span><span>Uang Fisik Kasir Kurang (Minus) sebesar: <b>${formatRupiah(Math.abs(diff))}</b> dari ekspektasi sistem.</span>`;
-            } else {
-                statusBox.className = 'p-2.5 rounded-xl text-xs font-bold transition-all bg-amber-50 border border-amber-200 text-amber-800 flex items-center space-x-2';
-                statusBox.innerHTML = `<span>ℹ️</span><span>Uang Fisik Kasir Lebih (Surplus) sebesar: <b>+${formatRupiah(diff)}</b> dari ekspektasi sistem.</span>`;
-            }
+            // Sesuai SOP Audit Kasir (Blind Cash Closing): Hint / Clue status ekspektasi sistem ditiadakan
+            // saat kasir sedang menginput uang fisik di laci kasir agar audit berlangsung murni & independen.
         }
 
         function calculateClosingItemDiff(input) {

@@ -1265,6 +1265,19 @@ try {
             $stmtHasClosed->execute([$user['id'], $todayDate, $todayDate]);
             $hasClosedShiftToday = ((int)$stmtHasClosed->fetchColumn()) > 0;
 
+            // Cari apakah cabang penempatan user saat ini memiliki shift yang berstatus OPEN (dibuka oleh user atau rekan kasir)
+            $userBranchId = (int)($user['branch_id'] ?? 1);
+            $stmtCurOpenShift = $pdo->prepare("
+                SELECT cs.*, u.name as opener_name, u.nik as opener_nik
+                FROM cashier_shifts cs
+                JOIN users u ON u.id = cs.user_id
+                WHERE cs.branch_id = ? AND cs.status = 'OPEN'
+                ORDER BY (CASE WHEN cs.user_id = ? THEN 1 ELSE 2 END) ASC, cs.id DESC
+                LIMIT 1
+            ");
+            $stmtCurOpenShift->execute([$userBranchId, $user['id']]);
+            $curOpenShift = $stmtCurOpenShift->fetch();
+
             $verData = getAppVersionData();
             $offlineUserPack = [
                 'id' => (int)$user['id'],
@@ -1282,6 +1295,7 @@ try {
                 'success' => true,
                 'message' => 'Login berhasil! Selamat datang, ' . $user['name'],
                 'user' => $user,
+                'active_shift' => $curOpenShift ?: null,
                 'offline_user_pack' => $offlineUserPack,
                 'has_closed_shift' => $hasClosedShiftToday,
                 'session_info' => [
@@ -1694,6 +1708,14 @@ try {
             $finalClosedShiftToday = $stmtBranchFinalClosed->fetch();
             $isBranchClosedToday = !empty($finalClosedShiftToday);
 
+            // Cek apakah cabang ini hari ini sudah pernah dibuka (Opening Transaksi di awal hari oleh kasir manapun)
+            $stmtBranchOpenedToday = $pdo->prepare("
+                SELECT COUNT(*) FROM cashier_shifts
+                WHERE branch_id = ? AND (date(start_time) = ? OR (end_time IS NOT NULL AND date(end_time) = ?))
+            ");
+            $stmtBranchOpenedToday->execute([$currentBranch['id'], $todayDate, $todayDate]);
+            $isBranchOpenedToday = ((int)$stmtBranchOpenedToday->fetchColumn()) > 0;
+
             $stmtInitExpCats = $pdo->query("SELECT id, code, name, group_type FROM expense_categories WHERE is_active = 1 ORDER BY name ASC");
             $initialExpCats = $stmtInitExpCats ? $stmtInitExpCats->fetchAll(PDO::FETCH_ASSOC) : [];
 
@@ -1726,6 +1748,7 @@ try {
                 'user_roles' => $userRoles,
                 'active_shift' => $activeShift,
                 'has_closed_shift' => $hasClosedShiftToday,
+                'branch_opened_today' => $isBranchOpenedToday,
                 'branch_closed_today' => $isBranchClosedToday,
                 'final_closed_shift' => $finalClosedShiftToday ?: null,
                 'products' => $products,
@@ -4665,30 +4688,16 @@ try {
 
             $today = date('Y-m-d');
 
-            // Deteksi seluruh shift hari ini di cabang yang dipilih
-            $stmtTodayShifts = $pdo->prepare("
+            // 1. Cek apakah cabang ini sudah memiliki shift yang berstatus OPEN (apapun tanggal bukanya)
+            $stmtAnyOpen = $pdo->prepare("
                 SELECT cs.*, u.name as cashier_name, u.nik as cashier_nik
                 FROM cashier_shifts cs
                 JOIN users u ON u.id = cs.user_id
-                WHERE cs.branch_id = ? AND date(cs.start_time) = ?
-                ORDER BY cs.id ASC
+                WHERE cs.branch_id = ? AND cs.status = 'OPEN'
+                ORDER BY cs.id DESC LIMIT 1
             ");
-            $stmtTodayShifts->execute([$branchId, $today]);
-            $todayShifts = $stmtTodayShifts->fetchAll();
-
-            $todayClosedCount = 0;
-            $activeOpenShift = null;
-            $todayFinalShift = null;
-            foreach ($todayShifts as $ts) {
-                if ($ts['status'] === 'OPEN') {
-                    $activeOpenShift = $ts;
-                } else {
-                    $todayClosedCount++;
-                    if (!empty($ts['is_final_shift'])) {
-                        $todayFinalShift = $ts;
-                    }
-                }
-            }
+            $stmtAnyOpen->execute([$branchId]);
+            $activeOpenShift = $stmtAnyOpen->fetch();
 
             // Jika cabang ini sudah memiliki shift OPEN (misal dibuka oleh kasir rekanan), kembalikan data shift aktif langsung
             if ($activeOpenShift) {
@@ -4710,6 +4719,28 @@ try {
                     'message' => 'Cabang ini sudah memiliki shift aktif yang dibuka oleh ' . ($activeOpenShift['cashier_name'] ?: 'Kasir') . ' (' . ($activeOpenShift['shift_name'] ?: 'Shift Aktif') . '). Anda otomatis tergabung dalam shift ini.'
                 ]);
                 break;
+            }
+
+            // Deteksi seluruh shift hari ini di cabang yang dipilih (baik start maupun end hari ini)
+            $stmtTodayShifts = $pdo->prepare("
+                SELECT cs.*, u.name as cashier_name, u.nik as cashier_nik
+                FROM cashier_shifts cs
+                JOIN users u ON u.id = cs.user_id
+                WHERE cs.branch_id = ? AND (date(cs.start_time) = ? OR (cs.end_time IS NOT NULL AND date(cs.end_time) = ?))
+                ORDER BY cs.id ASC
+            ");
+            $stmtTodayShifts->execute([$branchId, $today, $today]);
+            $todayShifts = $stmtTodayShifts->fetchAll();
+
+            $todayClosedCount = 0;
+            $todayFinalShift = null;
+            foreach ($todayShifts as $ts) {
+                if ($ts['status'] !== 'OPEN') {
+                    $todayClosedCount++;
+                    if (!empty($ts['is_final_shift'])) {
+                        $todayFinalShift = $ts;
+                    }
+                }
             }
 
             // CEK APAKAH HARI INI CABANG SUDAH TUTUP TOKO (Closing Harian / is_final_shift = 1):

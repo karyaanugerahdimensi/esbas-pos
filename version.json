@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.4.7",
-    "build": "20261101-73",
+    "version": "1.4.8",
+    "build": "20261101-74",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.4.8",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Eliminasi Clue Uang Fisik Closing Kasir & Single-Opening Shift Awal Hari (FR-POS-53, FR-POS-54)",
+            "description": "Menyempurnakan alur operasional shift kasir POS: (1) Eliminasi Hint / Clue Uang Fisik Kasir (Blind Cash Closing): Meniadakan status box selisih kas (kurang/lebih/cocok) saat kasir sedang menginput uang fisik aktual di laci pada modal closing shift, menjamin audit kasir berlangsung objektif dan murni tanpa bocoran ekspektasi sistem; (2) Single-Opening Shift Awal Hari Per-Cabang: Menetapkan bahwa opening transaksi dan verifikasi stok awal hanya diberlakukan satu kali di awal hari oleh kasir pembuka pertama di cabang tersebut. Ketika kasir rekanan lain (seperti kasir Abdul setelah kasir Bima opening) login, sistem langsung mengaitkannya ke shift aktif cabang tanpa menuntut atau memunculkan formulir opening stok kembali, sehingga kasir rekanan dapat langsung melayani transaksi penjualan di POS secara lancar; (3) Modal Status Shift Aktif Rekanan yang Jelas: Menyajikan kartu status informatif dengan opsi 'Lanjut Transaksi POS' atau 'Tutup Shift / Serah Terima' saat tombol shift diklik oleh kasir non-pembuka; (4) Kompatibilitas Penuh Android 8: 100% sintaks ES5/ES6 bebas token ES2020.",
+            "rollback_command": "git checkout v1.4.7"
+        },
         {
             "version": "1.4.7",
             "commit": "HEAD",
