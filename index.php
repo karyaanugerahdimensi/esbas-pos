@@ -3121,9 +3121,9 @@ try {
                                 <option value="ALL">🌐 Semua Cabang (Konsolidasi Global)</option>
                             </select>
                         </div>
-                        <button id="btn-stock-reset-master" onclick="openMasterResetModal({ stocks: true, branch_id: (document.getElementById('stock-branch-select') ? document.getElementById('stock-branch-select').value : 'ALL') })" style="display: none;" class="hidden px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-2xs transition-colors" title="Reset persediaan stok fisik menjadi 0 (Superadmin Only)">
-                            <i data-lucide="package-x" class="w-4 h-4 text-rose-600"></i>
-                            <span id="btn-stock-reset-label">Reset Stok Cabang</span>
+                        <button id="btn-stock-reset-master" onclick="openMasterResetModal({ source: 'stocks', branch_id: (document.getElementById('stock-branch-select') ? document.getElementById('stock-branch-select').value : 'ALL') })" style="display: none;" class="hidden px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-2xs transition-colors" title="Reset data transaksi penjualan, pergerakan stok, atau saldo persediaan (Superadmin Only)">
+                            <i data-lucide="refresh-ccw" class="w-4 h-4 text-rose-600"></i>
+                            <span id="btn-stock-reset-label">Reset Transaksi & Stok</span>
                         </button>
                         <button id="btn-stock-adjust-header" onclick="openStockAdjustModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-2 transition-colors">
                             <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
@@ -7784,7 +7784,63 @@ try {
                     <p id="reset-scope-desc" class="text-[11px] text-slate-500">Operasi akan mengeksekusi reset pada <b>seluruh cabang toko</b> tanpa kecuali.</p>
                 </div>
 
-                <!-- 2. Pilihan Opsi Data yang Direset (4 Checkboxes) -->
+                <!-- 2. Pilihan Rentang Waktu / Tanggal Reset (Seluruh Data vs Tanggal Tertentu) -->
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <label class="font-bold text-slate-800 flex items-center gap-1.5">
+                            <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i>
+                            <span>Pilihan Periode / Rentang Waktu Reset:</span>
+                        </label>
+                        <span id="reset-date-mode-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">Semua Waktu (All-Time)</span>
+                    </div>
+
+                    <!-- Mode Selector Buttons: Seluruh Data Sekaligus vs Pilih Tanggal -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="setMasterResetDateMode('ALL')" id="btn-date-mode-all" class="py-2 px-3 rounded-xl border-2 text-[11px] font-black flex items-center justify-center space-x-1.5 transition-all bg-rose-50 border-rose-600 text-rose-800 shadow-xs">
+                            <i data-lucide="database" class="w-3.5 h-3.5"></i>
+                            <span>🔄 Seluruh Data Sekaligus</span>
+                        </button>
+                        <button type="button" onclick="setMasterResetDateMode('CUSTOM')" id="btn-date-mode-custom" class="py-2 px-3 rounded-xl border text-[11px] font-bold flex items-center justify-center space-x-1.5 transition-all bg-white border-slate-300 text-slate-600 hover:border-slate-400">
+                            <i data-lucide="calendar-range" class="w-3.5 h-3.5"></i>
+                            <span>📅 Pilih Tanggal / Rentang</span>
+                        </button>
+                    </div>
+
+                    <!-- Date Picker Container (Hidden saat 'ALL', Muncul saat 'CUSTOM') -->
+                    <div id="master-reset-date-container" class="hidden space-y-2 pt-1 border-t border-slate-200">
+                        <div class="flex items-center justify-between flex-wrap gap-1">
+                            <span class="text-[10px] font-bold text-slate-500">Preset Cepat:</span>
+                            <div class="flex items-center gap-1 flex-wrap">
+                                <button type="button" onclick="setMasterResetDatePreset('today')" class="px-2 py-0.5 bg-white hover:bg-indigo-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 hover:text-indigo-600 transition-colors">Hari Ini</button>
+                                <button type="button" onclick="setMasterResetDatePreset('yesterday')" class="px-2 py-0.5 bg-white hover:bg-indigo-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 hover:text-indigo-600 transition-colors">Kemarin</button>
+                                <button type="button" onclick="setMasterResetDatePreset('7days')" class="px-2 py-0.5 bg-white hover:bg-indigo-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 hover:text-indigo-600 transition-colors">7 Hari</button>
+                                <button type="button" onclick="setMasterResetDatePreset('30days')" class="px-2 py-0.5 bg-white hover:bg-indigo-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 hover:text-indigo-600 transition-colors">30 Hari</button>
+                                <button type="button" onclick="setMasterResetDatePreset('this_month')" class="px-2 py-0.5 bg-white hover:bg-indigo-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 hover:text-indigo-600 transition-colors">Bulan Ini</button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Dari Tanggal:</label>
+                                <input type="date" id="master-reset-start-date" onchange="updateResetDateScopeInfo()" class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Sampai Tanggal:</label>
+                                <input type="date" id="master-reset-end-date" onchange="updateResetDateScopeInfo()" class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+
+                        <!-- Checkbox Opsi Kembalikan Stok Fisik dari Penjualan yang Direset -->
+                        <label id="container-restore-sales-stock" class="flex items-center space-x-2 pt-1 cursor-pointer">
+                            <input type="checkbox" id="reset-opt-restore-stock" checked class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500">
+                            <span class="text-[11px] font-bold text-emerald-700">Pulihkan / Kembalikan Stok Fisik yang terpotong oleh transaksi penjualan pada tanggal tersebut</span>
+                        </label>
+                    </div>
+
+                    <p id="reset-date-scope-desc" class="text-[11px] text-slate-500">Operasi akan mengeksekusi reset pada <b>seluruh data riwayat transaksi</b> dari awal sistem berjalan.</p>
+                </div>
+
+                <!-- 3. Pilihan Opsi Data yang Direset (Checkboxes) -->
                 <div class="space-y-2.5">
                     <div class="flex items-center justify-between">
                         <span class="font-bold text-slate-800 flex items-center gap-1.5">
@@ -7798,15 +7854,15 @@ try {
                         </div>
                     </div>
 
-                    <!-- Option 1: Hapus Stok Seluruh Data -->
+                    <!-- Option 1: Hapus Stok Seluruh Data / Bersihkan Mutasi Stok -->
                     <label class="flex items-start space-x-3 p-3 rounded-2xl border border-slate-200 bg-white hover:bg-rose-50/40 transition-colors cursor-pointer group">
                         <input type="checkbox" id="reset-opt-stocks" class="mt-1 w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
                         <div class="space-y-0.5">
                             <span class="font-bold text-slate-800 group-hover:text-rose-900 block flex items-center gap-1.5">
-                                <span>📦 1. Hapus Stok Seluruh Data</span>
-                                <span class="px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-semibold">Stok = 0</span>
+                                <span id="reset-opt-stocks-title">📦 1. Hapus Stok Seluruh Data</span>
+                                <span id="reset-opt-stocks-badge" class="px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-semibold">Stok = 0</span>
                             </span>
-                            <span class="text-[11px] text-slate-500 block leading-snug">
+                            <span id="reset-opt-stocks-desc" class="text-[11px] text-slate-500 block leading-snug">
                                 Mengosongkan saldo stok fisik seluruh produk (barang jadi & bahan baku) menjadi 0 pada cabang terpilih / semua cabang, serta membersihkan seluruh riwayat kartu mutasi stok fisik.
                             </span>
                         </div>
@@ -23472,11 +23528,11 @@ Manager / Supervisor: __________________
             const btnResetLabel = document.getElementById('btn-stock-reset-label');
             if (btnResetLabel) {
                 if (isGlobal) {
-                    btnResetLabel.innerText = 'Reset Stok Semua Cabang (Global)';
+                    btnResetLabel.innerText = 'Reset Transaksi & Stok (Global)';
                 } else {
                     const brObj = (state.branches || []).find(b => b.id == bId) || userBranch;
                     const brTitle = brObj ? brObj.name : `Cabang #${bId}`;
-                    btnResetLabel.innerText = `Reset Stok ${brTitle}`;
+                    btnResetLabel.innerText = `Reset Transaksi & Stok ${brTitle}`;
                 }
             }
 
@@ -30924,6 +30980,120 @@ Manager / Supervisor: __________________
             updateResetScopeInfo();
         }
 
+        function setMasterResetDateMode(mode) {
+            const btnAll = document.getElementById('btn-date-mode-all');
+            const btnCustom = document.getElementById('btn-date-mode-custom');
+            const container = document.getElementById('master-reset-date-container');
+            const badge = document.getElementById('reset-date-mode-badge');
+            const desc = document.getElementById('reset-date-scope-desc');
+            const stockTitle = document.getElementById('reset-opt-stocks-title');
+            const stockBadge = document.getElementById('reset-opt-stocks-badge');
+            const stockDesc = document.getElementById('reset-opt-stocks-desc');
+
+            if (mode === 'ALL') {
+                if (btnAll) btnAll.className = 'py-2 px-3 rounded-xl border-2 text-[11px] font-black flex items-center justify-center space-x-1.5 transition-all bg-rose-50 border-rose-600 text-rose-800 shadow-xs';
+                if (btnCustom) btnCustom.className = 'py-2 px-3 rounded-xl border text-[11px] font-bold flex items-center justify-center space-x-1.5 transition-all bg-white border-slate-300 text-slate-600 hover:border-slate-400';
+                if (container) container.classList.add('hidden');
+                if (badge) {
+                    badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800';
+                    badge.innerText = 'Semua Waktu (All-Time)';
+                }
+                if (desc) {
+                    desc.innerHTML = 'Operasi akan mengeksekusi reset pada <b>seluruh data riwayat transaksi</b> dari awal sistem berjalan.';
+                }
+                if (stockTitle) stockTitle.innerText = '📦 1. Hapus Stok Seluruh Data';
+                if (stockBadge) {
+                    stockBadge.innerText = 'Stok = 0';
+                    stockBadge.className = 'px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-semibold';
+                }
+                if (stockDesc) stockDesc.innerText = 'Mengosongkan saldo stok fisik seluruh produk (barang jadi & bahan baku) menjadi 0 pada cabang terpilih / semua cabang, serta membersihkan seluruh riwayat kartu mutasi stok fisik.';
+            } else {
+                if (btnAll) btnAll.className = 'py-2 px-3 rounded-xl border text-[11px] font-bold flex items-center justify-center space-x-1.5 transition-all bg-white border-slate-300 text-slate-600 hover:border-slate-400';
+                if (btnCustom) btnCustom.className = 'py-2 px-3 rounded-xl border-2 text-[11px] font-black flex items-center justify-center space-x-1.5 transition-all bg-indigo-50 border-indigo-600 text-indigo-800 shadow-xs';
+                if (container) container.classList.remove('hidden');
+
+                const startInput = document.getElementById('master-reset-start-date');
+                const endInput = document.getElementById('master-reset-end-date');
+                const todayStr = (typeof getDeviceLocalDateString === 'function') ? getDeviceLocalDateString() : new Date().toISOString().split('T')[0];
+                if (startInput && !startInput.value) startInput.value = todayStr;
+                if (endInput && !endInput.value) endInput.value = todayStr;
+
+                updateResetDateScopeInfo();
+
+                if (stockTitle) stockTitle.innerText = '📦 1. Bersihkan Kartu Pergerakan Stok';
+                if (stockBadge) {
+                    stockBadge.innerText = 'Mutasi Tanggal Terpilih';
+                    stockBadge.className = 'px-1.5 py-0.2 rounded text-[9px] bg-amber-100 text-amber-800 font-semibold';
+                }
+                if (stockDesc) stockDesc.innerText = 'Menghapus riwayat kartu mutasi pergerakan stok fisik (stock_movements) yang tercatat pada rentang tanggal terpilih.';
+            }
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            }
+        }
+
+        function setMasterResetDatePreset(preset) {
+            const today = new Date();
+            const pad = function(n) { return (n < 10 ? '0' : '') + n; };
+            const formatDate = function(d) {
+                return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+            };
+            const startInput = document.getElementById('master-reset-start-date');
+            const endInput = document.getElementById('master-reset-end-date');
+            if (!startInput || !endInput) return;
+
+            if (preset === 'today') {
+                startInput.value = formatDate(today);
+                endInput.value = formatDate(today);
+            } else if (preset === 'yesterday') {
+                const yest = new Date();
+                yest.setDate(today.getDate() - 1);
+                startInput.value = formatDate(yest);
+                endInput.value = formatDate(yest);
+            } else if (preset === '7days') {
+                const d7 = new Date();
+                d7.setDate(today.getDate() - 6);
+                startInput.value = formatDate(d7);
+                endInput.value = formatDate(today);
+            } else if (preset === '30days') {
+                const d30 = new Date();
+                d30.setDate(today.getDate() - 29);
+                startInput.value = formatDate(d30);
+                endInput.value = formatDate(today);
+            } else if (preset === 'this_month') {
+                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                startInput.value = formatDate(firstDay);
+                endInput.value = formatDate(today);
+            }
+            updateResetDateScopeInfo();
+        }
+
+        function updateResetDateScopeInfo() {
+            const startInput = document.getElementById('master-reset-start-date');
+            const endInput = document.getElementById('master-reset-end-date');
+            const badge = document.getElementById('reset-date-mode-badge');
+            const desc = document.getElementById('reset-date-scope-desc');
+            if (!startInput || !endInput || !badge || !desc) return;
+
+            const sVal = startInput.value;
+            const eVal = endInput.value;
+            if (!sVal || !eVal) {
+                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800';
+                badge.innerText = 'Pilih Tanggal';
+                desc.innerHTML = '<span class="text-amber-700 font-bold">Harap tentukan tanggal mulai dan tanggal selesai!</span>';
+                return;
+            }
+
+            badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-600 text-white';
+            if (sVal === eVal) {
+                badge.innerText = '📅 Tanggal: ' + sVal;
+                desc.innerHTML = 'Operasi reset <b>HANYA BERDAMPAK</b> pada data transaksi yang tercatat pada tanggal <b>' + sVal + '</b>. Transaksi sebelum dan sesudah tanggal ini tetap utuh dan aman.';
+            } else {
+                badge.innerText = '📅 ' + sVal + ' s/d ' + eVal;
+                desc.innerHTML = 'Operasi reset <b>HANYA BERDAMPAK</b> pada data transaksi antara tanggal <b>' + sVal + '</b> sampai <b>' + eVal + '</b>. Transaksi di luar rentang ini tetap utuh dan aman.';
+            }
+        }
+
         // ==========================================
         // 15.1 SINKRONISASI DATABASE MASTER (HOSTING & LOKAL)
         // ==========================================
@@ -31300,6 +31470,12 @@ Manager / Supervisor: __________________
                 if (optBom) optBom.checked = false;
                 if (optShifts) optShifts.checked = false;
                 if (optExpenses) optExpenses.checked = false;
+            } else if (preselectOpts.source === 'stocks') {
+                if (optStocks) optStocks.checked = true;
+                if (optSales) optSales.checked = true;
+                if (optBom) optBom.checked = true;
+                if (optShifts) optShifts.checked = false;
+                if (optExpenses) optExpenses.checked = false;
             } else {
                 if (optStocks) optStocks.checked = !!preselectOpts.stocks;
                 if (optSales) optSales.checked = !!preselectOpts.sales;
@@ -31307,6 +31483,22 @@ Manager / Supervisor: __________________
                 if (optShifts) optShifts.checked = !!preselectOpts.shifts;
                 if (optExpenses) optExpenses.checked = !!preselectOpts.expenses;
             }
+
+            // Inisialisasi Mode Tanggal: default 'ALL' atau sesuai preselectOpts.date_mode
+            const initDateMode = preselectOpts.date_mode || 'ALL';
+            setMasterResetDateMode(initDateMode);
+
+            const todayStr = (typeof getDeviceLocalDateString === 'function') ? getDeviceLocalDateString() : new Date().toISOString().split('T')[0];
+            const startInput = document.getElementById('master-reset-start-date');
+            const endInput = document.getElementById('master-reset-end-date');
+            if (startInput) startInput.value = preselectOpts.start_date || todayStr;
+            if (endInput) endInput.value = preselectOpts.end_date || todayStr;
+            if (initDateMode === 'CUSTOM') {
+                updateResetDateScopeInfo();
+            }
+
+            const optRestoreStock = document.getElementById('reset-opt-restore-stock');
+            if (optRestoreStock) optRestoreStock.checked = true;
 
             // Auto-fill credentials if Superadmin
             if (state.loggedInUser && ['SUPER_ADMIN', 'SUPERADMIN'].includes(state.loggedInUser.role)) {
@@ -31432,14 +31624,33 @@ Manager / Supervisor: __________________
 
             const branchLabel = branchId === 'ALL' ? 'SEMUA CABANG (GLOBAL WIPE)' : ((document.getElementById('master-reset-branch-select').selectedOptions[0] ? document.getElementById('master-reset-branch-select').selectedOptions[0].text : '') || `Cabang #${branchId}`);
             
+            // Evaluasi mode tanggal
+            const isDateCustom = !document.getElementById('master-reset-date-container').classList.contains('hidden');
+            let startDateVal = null;
+            let endDateVal = null;
+            let restoreSalesStockVal = false;
+
+            if (isDateCustom) {
+                startDateVal = document.getElementById('master-reset-start-date') ? document.getElementById('master-reset-start-date').value : '';
+                endDateVal = document.getElementById('master-reset-end-date') ? document.getElementById('master-reset-end-date').value : '';
+                if (!startDateVal || !endDateVal) {
+                    alert('Harap tentukan Tanggal Mulai dan Tanggal Selesai untuk reset data berdasarkan tanggal!');
+                    return;
+                }
+                const restoreCb = document.getElementById('reset-opt-restore-stock');
+                restoreSalesStockVal = restoreCb ? restoreCb.checked : true;
+            }
+
+            const dateScopeText = isDateCustom ? `Rentang Tanggal: ${startDateVal} s/d ${endDateVal}` : 'Rentang Tanggal: SELURUH DATA SEKALIGUS (All-Time)';
+
             const selectedItems = [];
-            if (purgeStocks) selectedItems.push('1. Stok Seluruh Produk (Set ke 0)');
-            if (purgeSales) selectedItems.push('2. Riwayat Transaksi Penjualan & Piutang');
+            if (purgeStocks) selectedItems.push(isDateCustom ? '1. Bersihkan Kartu Pergerakan Stok pada Tanggal Terpilih' : '1. Stok Seluruh Produk (Set ke 0)');
+            if (purgeSales) selectedItems.push('2. Riwayat Transaksi Penjualan & Piutang' + (isDateCustom && restoreSalesStockVal ? ' (Stok fisik dipulihkan)' : ''));
             if (purgeBom) selectedItems.push('3. Log Pemakaian Bahan Baku (BOM)');
             if (purgeShifts) selectedItems.push('4. Riwayat Laporan Shift & Meteran Air');
             if (purgeExpenses) selectedItems.push('5. Buku Catatan Beban Operasional Cabang');
 
-            const finalConfirm = confirm(`⚠️ PERINGATAN TINGKAT TINGGI!\n\nAnda akan MENGHAPUS / MERESET:\n• ${selectedItems.join('\n• ')}\n\nLingkup Target: ${branchLabel}\n\nOperasi ini bersifat PERMANEN dan TIDAK DAPAT DIBATALKAN!\n\nApakah Anda benar-benar yakin ingin mengeksekusi reset?`);
+            const finalConfirm = confirm(`⚠️ PERINGATAN TINGKAT TINGGI!\n\nAnda akan MENGHAPUS / MERESET:\n• ${selectedItems.join('\n• ')}\n\nLingkup Target: ${branchLabel}\nPeriode: ${dateScopeText}\n\nOperasi ini bersifat PERMANEN dan TIDAK DAPAT DIBATALKAN!\n\nApakah Anda benar-benar yakin ingin mengeksekusi reset?`);
             if (!finalConfirm) return;
 
             submitBtn.disabled = true;
@@ -31451,6 +31662,10 @@ Manager / Supervisor: __________________
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         branch_id: branchId,
+                        date_scope: isDateCustom ? 'CUSTOM' : 'ALL',
+                        start_date: startDateVal,
+                        end_date: endDateVal,
+                        restore_sales_stock: restoreSalesStockVal,
                         purge_stocks: purgeStocks,
                         purge_sales: purgeSales,
                         purge_bom: purgeBom,

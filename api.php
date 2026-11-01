@@ -14723,6 +14723,24 @@ try {
             $adminUserId = !empty($input['admin_user_id']) ? (int)$input['admin_user_id'] : ($_SESSION['user_id'] ?? null);
             $targetBranchId = (isset($input['branch_id']) && $input['branch_id'] !== 'ALL' && $input['branch_id'] !== '') ? (int)$input['branch_id'] : 0;
             
+            // Opsi Rentang Tanggal Reset Data Transaksi (Seluruh Data / Berdasarkan Tanggal yang Dipilih)
+            $dateScope = trim($input['date_scope'] ?? 'ALL');
+            $startDate = !empty($input['start_date']) ? trim($input['start_date']) : null;
+            $endDate = !empty($input['end_date']) ? trim($input['end_date']) : null;
+            $restoreSalesStock = isset($input['restore_sales_stock']) ? !empty($input['restore_sales_stock']) : true;
+
+            if ($dateScope === 'CUSTOM') {
+                if (empty($startDate) || empty($endDate)) {
+                    echo json_encode(['success' => false, 'message' => 'Harap tentukan Tanggal Mulai dan Tanggal Selesai untuk reset data berdasarkan tanggal.']);
+                    break;
+                }
+                if ($startDate > $endDate) {
+                    $tmpDate = $startDate;
+                    $startDate = $endDate;
+                    $endDate = $tmpDate;
+                }
+            }
+
             $purgeStocks = !empty($input['purge_stocks']);
             $purgeSales = !empty($input['purge_sales']);
             $purgeBom = !empty($input['purge_bom']);
@@ -14781,112 +14799,212 @@ try {
                 // 1. HAPUS DATA PENJUALAN
                 // ----------------------------------------------------
                 if ($purgeSales) {
-                    if ($targetBranchId > 0) {
-                        $stmtSales = $pdo->prepare("SELECT id FROM sales WHERE branch_id = ?");
-                        $stmtSales->execute([$targetBranchId]);
-                    } else {
-                        $stmtSales = $pdo->query("SELECT id FROM sales");
-                    }
-                    $salesList = $stmtSales->fetchAll(PDO::FETCH_ASSOC);
-                    $saleIds = array_column($salesList, 'id');
-                    $countSales = count($saleIds);
-
-                    if ($countSales > 0) {
-                        $chunks = array_chunk($saleIds, 500);
-                        foreach ($chunks as $chunkIds) {
-                            $inPlaceholders = implode(',', array_fill(0, count($chunkIds), '?'));
-                            $pdo->prepare("DELETE FROM receivable_payments WHERE receivable_id IN (SELECT id FROM customer_receivables WHERE sale_id IN ($inPlaceholders))")->execute($chunkIds);
-                            $pdo->prepare("DELETE FROM customer_receivables WHERE sale_id IN ($inPlaceholders)")->execute($chunkIds);
-                            $pdo->prepare("DELETE FROM sale_items WHERE sale_id IN ($inPlaceholders)")->execute($chunkIds);
-                            $pdo->prepare("DELETE FROM sales WHERE id IN ($inPlaceholders)")->execute($chunkIds);
+                    if ($dateScope === 'CUSTOM') {
+                        $sqlSales = "SELECT id, invoice_number, branch_id FROM sales WHERE date(created_at) BETWEEN ? AND ?";
+                        $paramsSales = [$startDate, $endDate];
+                        if ($targetBranchId > 0) {
+                            $sqlSales .= " AND branch_id = ?";
+                            $paramsSales[] = $targetBranchId;
                         }
-                    }
+                        $stmtSales = $pdo->prepare($sqlSales);
+                        $stmtSales->execute($paramsSales);
+                        $salesList = $stmtSales->fetchAll(PDO::FETCH_ASSOC);
+                        $saleIds = array_column($salesList, 'id');
+                        $countSales = count($saleIds);
 
-                    if ($targetBranchId > 0) {
-                        $pdo->prepare("DELETE FROM customer_receivables WHERE branch_id = ?")->execute([$targetBranchId]);
-                        $pdo->prepare("DELETE FROM sales WHERE branch_id = ?")->execute([$targetBranchId]);
+                        if ($countSales > 0) {
+                            // Jika restoreSalesStock aktif, kembalikan stok fisik produk jadi dan bahan baku BOM
+                            if ($restoreSalesStock) {
+                                foreach ($salesList as $s) {
+                                    $sId = (int)$s['id'];
+                                    $bId = (int)$s['branch_id'];
+                                    $inv = $s['invoice_number'];
+
+                                    // A. Kembalikan stok produk jadi
+                                    $stmtItems = $pdo->prepare("SELECT product_id, qty FROM sale_items WHERE sale_id = ?");
+                                    $stmtItems->execute([$sId]);
+                                    $items = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
+                                    foreach ($items as $it) {
+                                        $pId = (int)$it['product_id'];
+                                        $q = (float)$it['qty'];
+                                        if ($q > 0) {
+                                            $pdo->prepare("UPDATE branch_stocks SET stock = stock + ?, last_updated = datetime('now', 'localtime') WHERE branch_id = ? AND product_id = ?")->execute([$q, $bId, $pId]);
+                                        }
+                                    }
+
+                                    // B. Kembalikan stok bahan baku BOM jika ada pemotongan BOM
+                                    $stmtBomDeds = $pdo->prepare("
+                                        SELECT product_id, SUM(ABS(qty_change)) as total_deducted 
+                                        FROM stock_movements 
+                                        WHERE reference_no = ? AND movement_type = 'BOM_DEDUCTION' AND branch_id = ?
+                                        GROUP BY product_id
+                                    ");
+                                    $stmtBomDeds->execute([$inv, $bId]);
+                                    $bomDeds = $stmtBomDeds->fetchAll(PDO::FETCH_ASSOC);
+                                    foreach ($bomDeds as $bd) {
+                                        $ingId = (int)$bd['product_id'];
+                                        $iq = (float)$bd['total_deducted'];
+                                        if ($iq > 0) {
+                                            $pdo->prepare("UPDATE branch_stocks SET stock = stock + ?, last_updated = datetime('now', 'localtime') WHERE branch_id = ? AND product_id = ?")->execute([$iq, $bId, $ingId]);
+                                        }
+                                    }
+
+                                    // Hapus kartu mutasi stok terkait transaksi ini (STOCK_OUT_SALE & BOM_DEDUCTION)
+                                    $pdo->prepare("DELETE FROM stock_movements WHERE reference_no = ? AND branch_id = ?")->execute([$inv, $bId]);
+                                }
+                            }
+
+                            $chunks = array_chunk($saleIds, 500);
+                            foreach ($chunks as $chunkIds) {
+                                $inPlaceholders = implode(',', array_fill(0, count($chunkIds), '?'));
+                                $pdo->prepare("DELETE FROM receivable_payments WHERE receivable_id IN (SELECT id FROM customer_receivables WHERE sale_id IN ($inPlaceholders))")->execute($chunkIds);
+                                $pdo->prepare("DELETE FROM customer_receivables WHERE sale_id IN ($inPlaceholders)")->execute($chunkIds);
+                                $pdo->prepare("DELETE FROM sale_items WHERE sale_id IN ($inPlaceholders)")->execute($chunkIds);
+                                $pdo->prepare("DELETE FROM sales WHERE id IN ($inPlaceholders)")->execute($chunkIds);
+                            }
+                        }
+
+                        $restMsg = $restoreSalesStock ? " (Stok fisik dipulihkan)" : "";
+                        $summary[] = "Penjualan: $countSales transaksi faktur dihapus (Rentang: $startDate s/d $endDate){$restMsg}";
                     } else {
-                        $pdo->exec("DELETE FROM receivable_payments");
-                        $pdo->exec("DELETE FROM customer_receivables");
-                        $pdo->exec("DELETE FROM sale_items");
-                        $pdo->exec("DELETE FROM sales");
+                        if ($targetBranchId > 0) {
+                            $stmtSales = $pdo->prepare("SELECT id FROM sales WHERE branch_id = ?");
+                            $stmtSales->execute([$targetBranchId]);
+                        } else {
+                            $stmtSales = $pdo->query("SELECT id FROM sales");
+                        }
+                        $salesList = $stmtSales->fetchAll(PDO::FETCH_ASSOC);
+                        $saleIds = array_column($salesList, 'id');
+                        $countSales = count($saleIds);
+
+                        if ($countSales > 0) {
+                            $chunks = array_chunk($saleIds, 500);
+                            foreach ($chunks as $chunkIds) {
+                                $inPlaceholders = implode(',', array_fill(0, count($chunkIds), '?'));
+                                $pdo->prepare("DELETE FROM receivable_payments WHERE receivable_id IN (SELECT id FROM customer_receivables WHERE sale_id IN ($inPlaceholders))")->execute($chunkIds);
+                                $pdo->prepare("DELETE FROM customer_receivables WHERE sale_id IN ($inPlaceholders)")->execute($chunkIds);
+                                $pdo->prepare("DELETE FROM sale_items WHERE sale_id IN ($inPlaceholders)")->execute($chunkIds);
+                                $pdo->prepare("DELETE FROM sales WHERE id IN ($inPlaceholders)")->execute($chunkIds);
+                            }
+                        }
+
+                        if ($targetBranchId > 0) {
+                            $pdo->prepare("DELETE FROM customer_receivables WHERE branch_id = ?")->execute([$targetBranchId]);
+                            $pdo->prepare("DELETE FROM sales WHERE branch_id = ?")->execute([$targetBranchId]);
+                        } else {
+                            $pdo->exec("DELETE FROM receivable_payments");
+                            $pdo->exec("DELETE FROM customer_receivables");
+                            $pdo->exec("DELETE FROM sale_items");
+                            $pdo->exec("DELETE FROM sales");
+                        }
+                        $summary[] = "Penjualan: $countSales transaksi faktur dihapus (Seluruh Data)";
                     }
-                    $summary[] = "Penjualan: $countSales transaksi faktur dihapus";
                 }
 
                 // ----------------------------------------------------
                 // 2. HAPUS PEMAKAIAN BAHAN BAKU (BOM)
                 // ----------------------------------------------------
                 if ($purgeBom) {
-                    if ($targetBranchId > 0) {
-                        $stmtDelBom = $pdo->prepare("
+                    if ($dateScope === 'CUSTOM') {
+                        $sqlDelBom = "
                             DELETE FROM stock_movements 
-                            WHERE branch_id = ? 
-                              AND (movement_type = 'BOM_DEDUCTION' OR notes LIKE '%BOM%' OR notes LIKE '%Resep%' OR notes LIKE '%Konsumsi%')
-                        ");
-                        $stmtDelBom->execute([$targetBranchId]);
+                            WHERE (movement_type = 'BOM_DEDUCTION' OR notes LIKE '%BOM%' OR notes LIKE '%Resep%' OR notes LIKE '%Konsumsi%')
+                              AND date(created_at) BETWEEN ? AND ?
+                        ";
+                        $paramsDelBom = [$startDate, $endDate];
+                        if ($targetBranchId > 0) {
+                            $sqlDelBom .= " AND branch_id = ?";
+                            $paramsDelBom[] = $targetBranchId;
+                        }
+                        $stmtDelBom = $pdo->prepare($sqlDelBom);
+                        $stmtDelBom->execute($paramsDelBom);
                         $countBom = $stmtDelBom->rowCount();
+                        $summary[] = "Pemakaian BOM: $countBom riwayat log mutasi dibersihkan (Rentang: $startDate s/d $endDate)";
                     } else {
-                        $stmtDelBom = $pdo->prepare("
-                            DELETE FROM stock_movements 
-                            WHERE movement_type = 'BOM_DEDUCTION' OR notes LIKE '%BOM%' OR notes LIKE '%Resep%' OR notes LIKE '%Konsumsi%'
-                        ");
-                        $stmtDelBom->execute();
-                        $countBom = $stmtDelBom->rowCount();
+                        if ($targetBranchId > 0) {
+                            $stmtDelBom = $pdo->prepare("
+                                DELETE FROM stock_movements 
+                                WHERE branch_id = ? 
+                                  AND (movement_type = 'BOM_DEDUCTION' OR notes LIKE '%BOM%' OR notes LIKE '%Resep%' OR notes LIKE '%Konsumsi%')
+                            ");
+                            $stmtDelBom->execute([$targetBranchId]);
+                            $countBom = $stmtDelBom->rowCount();
+                        } else {
+                            $stmtDelBom = $pdo->prepare("
+                                DELETE FROM stock_movements 
+                                WHERE movement_type = 'BOM_DEDUCTION' OR notes LIKE '%BOM%' OR notes LIKE '%Resep%' OR notes LIKE '%Konsumsi%'
+                            ");
+                            $stmtDelBom->execute();
+                            $countBom = $stmtDelBom->rowCount();
+                        }
+                        $summary[] = "Pemakaian BOM: $countBom riwayat log mutasi dibersihkan (Seluruh Data)";
                     }
-                    $summary[] = "Pemakaian BOM: $countBom riwayat log mutasi dibersihkan";
                 }
 
                 // ----------------------------------------------------
-                // 3. HAPUS STOK SELURUH DATA (SET STOK = 0)
+                // 3. HAPUS STOK SELURUH DATA / BERSIHKAN KARTU PERGERAKAN
                 // ----------------------------------------------------
                 if ($purgeStocks) {
-                    if ($targetBranchId > 0) {
-                        $stmtStk = $pdo->prepare("UPDATE branch_stocks SET stock = 0 WHERE branch_id = ?");
-                        $stmtStk->execute([$targetBranchId]);
-                        $countStocks = (int)$pdo->query("SELECT COUNT(*) FROM branch_stocks WHERE branch_id = " . (int)$targetBranchId)->fetchColumn();
-
-                        // Pastikan seluruh produk katalog aktif juga terdaftar dengan stock 0 di cabang ini jika belum ada
-                        try {
-                            $pdo->prepare("
-                                INSERT OR IGNORE INTO branch_stocks (branch_id, product_id, stock, local_cogs, local_price, is_active)
-                                SELECT ?, p.id, 0, COALESCE(p.cogs, 0), COALESCE(p.selling_price, 0), 1
-                                FROM products p
-                                WHERE (p.is_active IS NULL OR p.is_active = 1)
-                            ")->execute([$targetBranchId]);
-                        } catch (Exception $eBs) {}
-
-                        $stmtSm = $pdo->prepare("DELETE FROM stock_movements WHERE branch_id = ?");
-                        $stmtSm->execute([$targetBranchId]);
+                    if ($dateScope === 'CUSTOM') {
+                        // Jika mode filter tanggal, bersihkan mutasi stok di kartu pergerakan pada tanggal terpilih
+                        $sqlSm = "DELETE FROM stock_movements WHERE date(created_at) BETWEEN ? AND ?";
+                        $paramsSm = [$startDate, $endDate];
+                        if ($targetBranchId > 0) {
+                            $sqlSm .= " AND branch_id = ?";
+                            $paramsSm[] = $targetBranchId;
+                        }
+                        $stmtSm = $pdo->prepare($sqlSm);
+                        $stmtSm->execute($paramsSm);
                         $countSm = $stmtSm->rowCount();
-
-                        $stmtBName = $pdo->prepare("SELECT name FROM branches WHERE id = ?");
-                        $stmtBName->execute([$targetBranchId]);
-                        $tBName = $stmtBName->fetchColumn() ?: "Cabang #$targetBranchId";
-
-                        $summary[] = "Stok: $countStocks produk di cabang {$tBName} di-reset ke 0 ($countSm mutasi stok dibersihkan)";
+                        $summary[] = "Kartu Pergerakan Stok: $countSm mutasi dibersihkan (Rentang: $startDate s/d $endDate)";
                     } else {
-                        $stmtStk = $pdo->prepare("UPDATE branch_stocks SET stock = 0");
-                        $stmtStk->execute();
-                        $countStocks = (int)$pdo->query("SELECT COUNT(*) FROM branch_stocks")->fetchColumn();
-                        $countBranches = (int)$pdo->query("SELECT COUNT(DISTINCT branch_id) FROM branch_stocks")->fetchColumn();
+                        if ($targetBranchId > 0) {
+                            $stmtStk = $pdo->prepare("UPDATE branch_stocks SET stock = 0 WHERE branch_id = ?");
+                            $stmtStk->execute([$targetBranchId]);
+                            $countStocks = (int)$pdo->query("SELECT COUNT(*) FROM branch_stocks WHERE branch_id = " . (int)$targetBranchId)->fetchColumn();
 
-                        // Pastikan seluruh produk katalog aktif terdaftar dengan stock 0 di semua cabang jika belum ada
-                        try {
-                            $pdo->exec("
-                                INSERT OR IGNORE INTO branch_stocks (branch_id, product_id, stock, local_cogs, local_price, is_active)
-                                SELECT b.id, p.id, 0, COALESCE(p.cogs, 0), COALESCE(p.selling_price, 0), 1
-                                FROM branches b
-                                CROSS JOIN products p
-                                WHERE (p.is_active IS NULL OR p.is_active = 1)
-                            ");
-                        } catch (Exception $eBsAll) {}
+                            // Pastikan seluruh produk katalog aktif juga terdaftar dengan stock 0 di cabang ini jika belum ada
+                            try {
+                                $pdo->prepare("
+                                    INSERT OR IGNORE INTO branch_stocks (branch_id, product_id, stock, local_cogs, local_price, is_active)
+                                    SELECT ?, p.id, 0, COALESCE(p.cogs, 0), COALESCE(p.selling_price, 0), 1
+                                    FROM products p
+                                    WHERE (p.is_active IS NULL OR p.is_active = 1)
+                                ")->execute([$targetBranchId]);
+                            } catch (Exception $eBs) {}
 
-                        $stmtSm = $pdo->prepare("DELETE FROM stock_movements");
-                        $stmtSm->execute();
-                        $countSm = $stmtSm->rowCount();
+                            $stmtSm = $pdo->prepare("DELETE FROM stock_movements WHERE branch_id = ?");
+                            $stmtSm->execute([$targetBranchId]);
+                            $countSm = $stmtSm->rowCount();
 
-                        $summary[] = "Stok: $countStocks item produk di SELURUH CABANG ($countBranches cabang) di-reset ke 0 ($countSm mutasi stok dibersihkan)";
+                            $stmtBName = $pdo->prepare("SELECT name FROM branches WHERE id = ?");
+                            $stmtBName->execute([$targetBranchId]);
+                            $tBName = $stmtBName->fetchColumn() ?: "Cabang #$targetBranchId";
+
+                            $summary[] = "Stok: $countStocks produk di cabang {$tBName} di-reset ke 0 ($countSm mutasi stok dibersihkan)";
+                        } else {
+                            $stmtStk = $pdo->prepare("UPDATE branch_stocks SET stock = 0");
+                            $stmtStk->execute();
+                            $countStocks = (int)$pdo->query("SELECT COUNT(*) FROM branch_stocks")->fetchColumn();
+                            $countBranches = (int)$pdo->query("SELECT COUNT(DISTINCT branch_id) FROM branch_stocks")->fetchColumn();
+
+                            // Pastikan seluruh produk katalog aktif terdaftar dengan stock 0 di semua cabang jika belum ada
+                            try {
+                                $pdo->exec("
+                                    INSERT OR IGNORE INTO branch_stocks (branch_id, product_id, stock, local_cogs, local_price, is_active)
+                                    SELECT b.id, p.id, 0, COALESCE(p.cogs, 0), COALESCE(p.selling_price, 0), 1
+                                    FROM branches b
+                                    CROSS JOIN products p
+                                    WHERE (p.is_active IS NULL OR p.is_active = 1)
+                                ");
+                            } catch (Exception $eBsAll) {}
+
+                            $stmtSm = $pdo->prepare("DELETE FROM stock_movements");
+                            $stmtSm->execute();
+                            $countSm = $stmtSm->rowCount();
+
+                            $summary[] = "Stok: $countStocks item produk di SELURUH CABANG ($countBranches cabang) di-reset ke 0 ($countSm mutasi stok dibersihkan)";
+                        }
                     }
                 }
 
@@ -14894,76 +15012,123 @@ try {
                 // 4. HAPUS LAPORAN & RIWAYAT SHIFT KASIR
                 // ----------------------------------------------------
                 if ($purgeShifts) {
-                    if ($targetBranchId > 0) {
-                        $stmtShiftIds = $pdo->prepare("SELECT id FROM cashier_shifts WHERE branch_id = ?");
-                        $stmtShiftIds->execute([$targetBranchId]);
+                    if ($dateScope === 'CUSTOM') {
+                        $sqlShift = "SELECT id FROM cashier_shifts WHERE (date(start_time) BETWEEN ? AND ? OR date(created_at) BETWEEN ? AND ?)";
+                        $paramsShift = [$startDate, $endDate, $startDate, $endDate];
+                        if ($targetBranchId > 0) {
+                            $sqlShift .= " AND branch_id = ?";
+                            $paramsShift[] = $targetBranchId;
+                        }
+                        $stmtShiftIds = $pdo->prepare($sqlShift);
+                        $stmtShiftIds->execute($paramsShift);
                         $shiftIds = $stmtShiftIds->fetchAll(PDO::FETCH_COLUMN);
+                        $countShifts = count($shiftIds);
 
-                        $pdo->prepare("DELETE FROM water_meter_logs WHERE branch_id = ?")->execute([$targetBranchId]);
-                        $pdo->prepare("DELETE FROM branch_expenses WHERE branch_id = ? AND (source = 'SHIFT_EXPENSE' OR source = 'SHIFT_MEAL' OR shift_id IS NOT NULL)")->execute([$targetBranchId]);
-                        
                         if (!empty($shiftIds)) {
                             $inShift = implode(',', array_fill(0, count($shiftIds), '?'));
+                            $pdo->prepare("DELETE FROM water_meter_logs WHERE shift_id IN ($inShift)")->execute($shiftIds);
+                            $pdo->prepare("DELETE FROM branch_expenses WHERE shift_id IN ($inShift)")->execute($shiftIds);
                             $pdo->prepare("DELETE FROM employee_meal_allowances WHERE shift_id IN ($inShift)")->execute($shiftIds);
                             $pdo->prepare("UPDATE salary_loans SET shift_id = NULL WHERE shift_id IN ($inShift)")->execute($shiftIds);
+                            $pdo->prepare("UPDATE sales SET shift_id = NULL WHERE shift_id IN ($inShift)")->execute($shiftIds);
+                            $pdo->prepare("DELETE FROM cashier_shifts WHERE id IN ($inShift)")->execute($shiftIds);
                         }
-                        $pdo->prepare("UPDATE sales SET shift_id = NULL WHERE branch_id = ?")->execute([$targetBranchId]);
-                        
-                        $stmtDelShift = $pdo->prepare("DELETE FROM cashier_shifts WHERE branch_id = ?");
-                        $stmtDelShift->execute([$targetBranchId]);
-                        $countShifts = $stmtDelShift->rowCount();
+
+                        // Hapus water_meter_logs pada rentang tanggal tersebut
+                        $sqlWm = "DELETE FROM water_meter_logs WHERE date(created_at) BETWEEN ? AND ?";
+                        $paramsWm = [$startDate, $endDate];
+                        if ($targetBranchId > 0) {
+                            $sqlWm .= " AND branch_id = ?";
+                            $paramsWm[] = $targetBranchId;
+                        }
+                        $pdo->prepare($sqlWm)->execute($paramsWm);
+
+                        $summary[] = "Shift: $countShifts riwayat shift & log meteran air dihapus (Rentang: $startDate s/d $endDate)";
                     } else {
-                        $pdo->exec("DELETE FROM water_meter_logs");
-                        $pdo->exec("DELETE FROM branch_expenses WHERE source = 'SHIFT_EXPENSE' OR source = 'SHIFT_MEAL' OR shift_id IS NOT NULL");
-                        $pdo->exec("DELETE FROM employee_meal_allowances WHERE shift_id IS NOT NULL");
-                        $pdo->exec("UPDATE salary_loans SET shift_id = NULL");
-                        $pdo->exec("UPDATE sales SET shift_id = NULL");
-                        
-                        $stmtDelShift = $pdo->prepare("DELETE FROM cashier_shifts");
-                        $stmtDelShift->execute();
-                        $countShifts = $stmtDelShift->rowCount();
+                        if ($targetBranchId > 0) {
+                            $stmtShiftIds = $pdo->prepare("SELECT id FROM cashier_shifts WHERE branch_id = ?");
+                            $stmtShiftIds->execute([$targetBranchId]);
+                            $shiftIds = $stmtShiftIds->fetchAll(PDO::FETCH_COLUMN);
+
+                            $pdo->prepare("DELETE FROM water_meter_logs WHERE branch_id = ?")->execute([$targetBranchId]);
+                            $pdo->prepare("DELETE FROM branch_expenses WHERE branch_id = ? AND (source = 'SHIFT_EXPENSE' OR source = 'SHIFT_MEAL' OR shift_id IS NOT NULL)")->execute([$targetBranchId]);
+                            
+                            if (!empty($shiftIds)) {
+                                $inShift = implode(',', array_fill(0, count($shiftIds), '?'));
+                                $pdo->prepare("DELETE FROM employee_meal_allowances WHERE shift_id IN ($inShift)")->execute($shiftIds);
+                                $pdo->prepare("UPDATE salary_loans SET shift_id = NULL WHERE shift_id IN ($inShift)")->execute($shiftIds);
+                            }
+                            $pdo->prepare("UPDATE sales SET shift_id = NULL WHERE branch_id = ?")->execute([$targetBranchId]);
+                            
+                            $stmtDelShift = $pdo->prepare("DELETE FROM cashier_shifts WHERE branch_id = ?");
+                            $stmtDelShift->execute([$targetBranchId]);
+                            $countShifts = $stmtDelShift->rowCount();
+                        } else {
+                            $pdo->exec("DELETE FROM water_meter_logs");
+                            $pdo->exec("DELETE FROM branch_expenses WHERE source = 'SHIFT_EXPENSE' OR source = 'SHIFT_MEAL' OR shift_id IS NOT NULL");
+                            $pdo->exec("DELETE FROM employee_meal_allowances WHERE shift_id IS NOT NULL");
+                            $pdo->exec("UPDATE salary_loans SET shift_id = NULL");
+                            $pdo->exec("UPDATE sales SET shift_id = NULL");
+                            
+                            $stmtDelShift = $pdo->prepare("DELETE FROM cashier_shifts");
+                            $stmtDelShift->execute();
+                            $countShifts = $stmtDelShift->rowCount();
+                        }
+                        $summary[] = "Shift: $countShifts riwayat shift & log meteran air dihapus (Seluruh Data)";
                     }
-                    $summary[] = "Shift: $countShifts riwayat shift & log meteran air dihapus";
                 }
 
                 // ----------------------------------------------------
                 // 5. HAPUS BEBAN OPERASIONAL CABANG (BRANCH EXPENSES)
                 // ----------------------------------------------------
                 if ($purgeExpenses) {
-                    if ($targetBranchId > 0) {
-                        try {
-                            $pdo->prepare("UPDATE vehicle_fuel_logs SET expense_record_id = NULL WHERE expense_record_id IN (SELECT id FROM branch_expenses WHERE branch_id = ?)")->execute([$targetBranchId]);
-                            $pdo->prepare("UPDATE vehicle_service_logs SET expense_record_id = NULL WHERE expense_record_id IN (SELECT id FROM branch_expenses WHERE branch_id = ?)")->execute([$targetBranchId]);
-                        } catch (Exception $eFk) {}
-
-                        $stmtDelExp = $pdo->prepare("DELETE FROM branch_expenses WHERE branch_id = ?");
-                        $stmtDelExp->execute([$targetBranchId]);
+                    if ($dateScope === 'CUSTOM') {
+                        $sqlExp = "DELETE FROM branch_expenses WHERE (date(expense_date) BETWEEN ? AND ? OR (expense_date IS NULL AND date(created_at) BETWEEN ? AND ?))";
+                        $paramsExp = [$startDate, $endDate, $startDate, $endDate];
+                        if ($targetBranchId > 0) {
+                            $sqlExp .= " AND branch_id = ?";
+                            $paramsExp[] = $targetBranchId;
+                        }
+                        $stmtDelExp = $pdo->prepare($sqlExp);
+                        $stmtDelExp->execute($paramsExp);
                         $countExp = $stmtDelExp->rowCount();
-
-                        try {
-                            $pdo->prepare("DELETE FROM employee_meal_allowances WHERE branch_id = ?")->execute([$targetBranchId]);
-                        } catch (Exception $eMeal) {}
-
-                        $stmtBName = $pdo->prepare("SELECT name FROM branches WHERE id = ?");
-                        $stmtBName->execute([$targetBranchId]);
-                        $tBName = $stmtBName->fetchColumn() ?: "Cabang #$targetBranchId";
-
-                        $summary[] = "Beban Operasional: $countExp catatan pengeluaran di cabang {$tBName} berhasil dihapus";
+                        $summary[] = "Beban Operasional: $countExp catatan pengeluaran dihapus (Rentang: $startDate s/d $endDate)";
                     } else {
-                        try {
-                            $pdo->exec("UPDATE vehicle_fuel_logs SET expense_record_id = NULL WHERE expense_record_id IS NOT NULL");
-                            $pdo->exec("UPDATE vehicle_service_logs SET expense_record_id = NULL WHERE expense_record_id IS NOT NULL");
-                        } catch (Exception $eFk) {}
+                        if ($targetBranchId > 0) {
+                            try {
+                                $pdo->prepare("UPDATE vehicle_fuel_logs SET expense_record_id = NULL WHERE expense_record_id IN (SELECT id FROM branch_expenses WHERE branch_id = ?)")->execute([$targetBranchId]);
+                                $pdo->prepare("UPDATE vehicle_service_logs SET expense_record_id = NULL WHERE expense_record_id IN (SELECT id FROM branch_expenses WHERE branch_id = ?)")->execute([$targetBranchId]);
+                            } catch (Exception $eFk) {}
 
-                        $stmtDelExp = $pdo->prepare("DELETE FROM branch_expenses");
-                        $stmtDelExp->execute();
-                        $countExp = $stmtDelExp->rowCount();
+                            $stmtDelExp = $pdo->prepare("DELETE FROM branch_expenses WHERE branch_id = ?");
+                            $stmtDelExp->execute([$targetBranchId]);
+                            $countExp = $stmtDelExp->rowCount();
 
-                        try {
-                            $pdo->exec("DELETE FROM employee_meal_allowances");
-                        } catch (Exception $eMeal) {}
+                            try {
+                                $pdo->prepare("DELETE FROM employee_meal_allowances WHERE branch_id = ?")->execute([$targetBranchId]);
+                            } catch (Exception $eMeal) {}
 
-                        $summary[] = "Beban Operasional: $countExp catatan pengeluaran di SELURUH CABANG berhasil dihapus";
+                            $stmtBName = $pdo->prepare("SELECT name FROM branches WHERE id = ?");
+                            $stmtBName->execute([$targetBranchId]);
+                            $tBName = $stmtBName->fetchColumn() ?: "Cabang #$targetBranchId";
+
+                            $summary[] = "Beban Operasional: $countExp catatan pengeluaran di cabang {$tBName} berhasil dihapus (Seluruh Data)";
+                        } else {
+                            try {
+                                $pdo->exec("UPDATE vehicle_fuel_logs SET expense_record_id = NULL WHERE expense_record_id IS NOT NULL");
+                                $pdo->exec("UPDATE vehicle_service_logs SET expense_record_id = NULL WHERE expense_record_id IS NOT NULL");
+                            } catch (Exception $eFk) {}
+
+                            $stmtDelExp = $pdo->prepare("DELETE FROM branch_expenses");
+                            $stmtDelExp->execute();
+                            $countExp = $stmtDelExp->rowCount();
+
+                            try {
+                                $pdo->exec("DELETE FROM employee_meal_allowances");
+                            } catch (Exception $eMeal) {}
+
+                            $summary[] = "Beban Operasional: $countExp catatan pengeluaran di SELURUH CABANG berhasil dihapus (Seluruh Data)";
+                        }
                     }
                 }
 
@@ -14976,12 +15141,17 @@ try {
                     $branchName = $stmtB->fetchColumn() ?: "Cabang #$targetBranchId";
                 }
 
+                $periodLabel = ($dateScope === 'CUSTOM') ? " (Rentang: {$startDate} s/d {$endDate})" : " (Seluruh Data)";
+
                 echo json_encode([
                     'success' => true,
-                    'message' => "BERHASIL! Data untuk {$branchName} berhasil direset:\n• " . implode("\n• ", $summary),
+                    'message' => "BERHASIL! Data untuk {$branchName}{$periodLabel} berhasil direset:\n• " . implode("\n• ", $summary),
                     'summary' => $summary,
                     'branch_id' => $targetBranchId > 0 ? $targetBranchId : 'ALL',
-                    'branch_name' => $branchName
+                    'branch_name' => $branchName,
+                    'date_scope' => $dateScope,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
                 ]);
 
             } catch (Exception $e) {

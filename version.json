@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.5.2",
-    "build": "20261101-78",
+    "version": "1.5.3",
+    "build": "20261101-79",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.5.3",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Opsi Reset Data Transaksi Berdasarkan Tanggal & Seluruh Data Sekaligus pada Menu Manajemen Stok & Kartu Pergerakan (FR-STK-06)",
+            "description": "Menambahkan kapabilitas kontrol reset data transaksi pada Menu Manajemen Stok & Kartu Pergerakan (Stock Ledger) dan pusat reset sistem: (1) Opsi Tanggal Fleksibel vs Seluruh Data Sekaligus: Administrator dapat memilih apakah ingin mereset seluruh data sekaligus (All-Time wipe) atau hanya mereset data transaksi yang tercatat pada tanggal / rentang tanggal tertentu (start_date s/d end_date) dengan preset cepat (Hari Ini, Kemarin, 7 Hari, 30 Hari, Bulan Ini); (2) Restorasi Stok Fisik Otomatis: Saat mereset penjualan berdasarkan rentang tanggal, sistem menyediakan opsi untuk memulihkan / mengembalikan kuantitas stok produk jadi dan bahan baku BOM yang terpotong kembali ke saldo fisik cabang (branch_stocks); (3) Pembersihan Selektif Transaksional: Mendukung penghapusan terisolasi pada riwayat mutasi kartu pergerakan stok, log pemakaian BOM, laporan shift kasir, dan beban operasional hanya pada periode tanggal yang dipilih; (4) Pembaruan UI & Tombol Menu Stok: Memperbarui tombol di Menu Manajemen Stok & Kartu Pergerakan menjadi 'Reset Transaksi & Stok' dengan integrasi pemilihan cabang dan modal terpadu; (5) Kompatibilitas Penuh Android 8.1: 100% sintaks JavaScript bebas token modern ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.5.2"
+        },
         {
             "version": "1.5.2",
             "commit": "HEAD",
