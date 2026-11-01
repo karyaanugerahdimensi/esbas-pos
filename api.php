@@ -15013,7 +15013,7 @@ try {
                 // ----------------------------------------------------
                 if ($purgeShifts) {
                     if ($dateScope === 'CUSTOM') {
-                        $sqlShift = "SELECT id FROM cashier_shifts WHERE (date(start_time) BETWEEN ? AND ? OR date(created_at) BETWEEN ? AND ?)";
+                        $sqlShift = "SELECT id FROM cashier_shifts WHERE (date(start_time) BETWEEN ? AND ? OR (end_time IS NOT NULL AND date(end_time) BETWEEN ? AND ?))";
                         $paramsShift = [$startDate, $endDate, $startDate, $endDate];
                         if ($targetBranchId > 0) {
                             $sqlShift .= " AND branch_id = ?";
@@ -15034,8 +15034,8 @@ try {
                             $pdo->prepare("DELETE FROM cashier_shifts WHERE id IN ($inShift)")->execute($shiftIds);
                         }
 
-                        // Hapus water_meter_logs pada rentang tanggal tersebut
-                        $sqlWm = "DELETE FROM water_meter_logs WHERE date(created_at) BETWEEN ? AND ?";
+                        // Hapus water_meter_logs pada rentang tanggal tersebut (menggunakan log_date resmi)
+                        $sqlWm = "DELETE FROM water_meter_logs WHERE date(log_date) BETWEEN ? AND ?";
                         $paramsWm = [$startDate, $endDate];
                         if ($targetBranchId > 0) {
                             $sqlWm .= " AND branch_id = ?";
@@ -15083,8 +15083,8 @@ try {
                 // ----------------------------------------------------
                 if ($purgeExpenses) {
                     if ($dateScope === 'CUSTOM') {
-                        $sqlExp = "DELETE FROM branch_expenses WHERE (date(expense_date) BETWEEN ? AND ? OR (expense_date IS NULL AND date(created_at) BETWEEN ? AND ?))";
-                        $paramsExp = [$startDate, $endDate, $startDate, $endDate];
+                        $sqlExp = "DELETE FROM branch_expenses WHERE date(expense_date) BETWEEN ? AND ?";
+                        $paramsExp = [$startDate, $endDate];
                         if ($targetBranchId > 0) {
                             $sqlExp .= " AND branch_id = ?";
                             $paramsExp[] = $targetBranchId;

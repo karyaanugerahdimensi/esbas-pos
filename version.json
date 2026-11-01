@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.5.3",
-    "build": "20261101-79",
+    "version": "1.5.4",
+    "build": "20261101-80",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.5.4",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Perbaikan Kompatibilitas Kolom Tanggal MariaDB/MySQL Hosting pada Reset Shift Kasir & Meteran Air (FR-STK-08)",
+            "description": "Menyelesaikan kendala eksekusi reset data transaksi pada hosting produksi MySQL/MariaDB (SQLSTATE[42S22]: Unknown column 'created_at' in 'WHERE'): (1) Penggunaan Kolom Tanggal Sah pada cashier_shifts: Menghapus referensi kolom created_at pada kueri filter tanggal cashier_shifts dan menggantikannya dengan evaluasi tanggal sah start_time serta end_time; (2) Penyelarasan Kolom water_meter_logs: Menggunakan kolom bisnis resmi log_date untuk penghapusan log meteran air periodik; (3) Penyelarasan Kolom branch_expenses: Menstandarkan kueri filter beban operasional cabang menggunakan kolom tanggal resmi expense_date; (4) Integritas Transaksi Multi-Cabang: Memastikan proses reset data parsial maupun seluruh data berjalan mulus tanpa rollback exception pada seluruh varian DBMS (MariaDB, MySQL, SQLite).",
+            "rollback_command": "git checkout v1.5.3"
+        },
         {
             "version": "1.5.3",
             "commit": "HEAD",
