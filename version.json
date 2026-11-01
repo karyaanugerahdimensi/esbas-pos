@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.4.4",
-    "build": "20261101-69",
+    "version": "1.4.5",
+    "build": "20261101-70",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.4.5",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Proteksi Pergantian Hari & Resolusi Shift Menggantung (Cross-Day Shift & End Day Resolution) (FR-POS-50)",
+            "description": "Menyediakan perlindungan integritas pembukuan pergantian hari ketika shift kasir belum ditutup pada hari sebelumnya: (1) Modal Peringatan Cross-Day Shift (#cross-day-shift-modal): Mendeteksi otomatis ketika shift aktif memiliki tanggal buka sebelum hari ini dan menampilkan modal interaktif sebelum transaksi diproses; (2) Pilihan 1 - Konfirmasi YA Masuk Hari Kemarin: Mengizinkan transaksi lanjutan masuk ke tanggal bisnis shift kemarin (misal operasional malam melewati tengah malam) dan mengunci konfirmasi per-shift id agar tidak berulang; (3) Pilihan 2 - Konfirmasi Tutup End Day Kemarin: Mengarahkan kasir langsung ke proses Tutup Toko (Closing Day) untuk shift kemarin, mengunci sisa stok malam dan rekonsiliasi kas, serta otomatis membuka formulir Opening Shift baru untuk tanggal hari ini; (4) Indikator Visual Banner Kasir: Menampilkan badge status amber dengan tanggal bisnis shift kemarin pada banner dan sidebar; (5) Kompatibilitas Penuh Android 8: 100% kode ES5/ES6 bebas ES2020 blocker.",
+            "rollback_command": "git checkout v1.4.4"
+        },
         {
             "version": "1.4.4",
             "commit": "HEAD",
