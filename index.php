@@ -13251,6 +13251,15 @@ try {
                         state.currentUserHasClosedShift = (data.has_closed_shift === true);
                         window.userHasClosedShift = (data.has_closed_shift === true);
                     }
+                    if (data.branch_closed_today !== undefined) {
+                        state.branchClosedToday = (data.branch_closed_today === true);
+                    }
+                    if (data.final_closed_shift !== undefined) {
+                        state.finalClosedShift = data.final_closed_shift || null;
+                    }
+                    if (typeof updateShiftReportSubtabVisibility === 'function') {
+                        updateShiftReportSubtabVisibility();
+                    }
                     // Keterkaitan Lokasi: setel cabang aktif ke cabang penempatan karyawan
                     if (data.user && data.user.branch_id) {
                         const targetBranch = (state.branches || []).find(b => b.id == data.user.branch_id);
@@ -13561,7 +13570,10 @@ try {
                     const curUser = state.currentUser || state.loggedInUser;
                     const userRole = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
                     const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
-                    const hasClosed = (state.currentUserHasClosedShift === true) || (window.userHasClosedShift === true);
+                    const hasClosed = (state.currentUserHasClosedShift === true) 
+                                   || (window.userHasClosedShift === true)
+                                   || (state.branchClosedToday === true)
+                                   || (state.finalClosedShift !== null);
                     if (isManagerOrAdmin || hasClosed) {
                         loadShiftReports();
                     } else {
@@ -18002,8 +18014,11 @@ try {
             }
 
             // Untuk level selain Super Admin dan Branch Manager:
-            // Sub menu baru muncul setelah proses closing shift setiap user
-            const hasClosed = (state.currentUserHasClosedShift === true) || (window.userHasClosedShift === true);
+            // Sub menu baru muncul setelah proses closing shift setiap user atau saat toko sudah tutup (Closing Day)
+            const hasClosed = (state.currentUserHasClosedShift === true) 
+                           || (window.userHasClosedShift === true)
+                           || (state.branchClosedToday === true)
+                           || (state.finalClosedShift !== null);
             if (hasClosed) {
                 btnShifts.classList.remove('hidden');
             } else {
@@ -18018,7 +18033,10 @@ try {
             const curUser = state.currentUser || state.loggedInUser;
             const userRole = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
             const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
-            const hasClosed = (state.currentUserHasClosedShift === true) || (window.userHasClosedShift === true);
+            const hasClosed = (state.currentUserHasClosedShift === true) 
+                           || (window.userHasClosedShift === true)
+                           || (state.branchClosedToday === true)
+                           || (state.finalClosedShift !== null);
 
             // Validasi: selain superadmin & branch manager tidak bisa masuk subtab shift sebelum closing
             if (subtab === 'shifts' && !isManagerOrAdmin && !hasClosed) {
@@ -18140,6 +18158,11 @@ try {
                     if (container) container.innerHTML = `<div class="col-span-full p-6 text-center text-rose-600 bg-rose-50 rounded-2xl border border-rose-200 text-xs font-bold">${escapeHtml(data.message || 'Gagal memuat data shift')}</div>`;
                     return;
                 }
+
+                // Sukses memuat data laporan shift
+                state.currentUserHasClosedShift = true;
+                window.userHasClosedShift = true;
+                updateShiftReportSubtabVisibility();
 
                 currentDailyShiftReportData = data;
                 renderDailyClosingSummary(data.daily_summary, data.report_date);

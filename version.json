@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.6.2",
-    "build": "20261101-88",
+    "version": "1.6.3",
+    "build": "20261101-89",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.6.3",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Perbaikan Akses Laporan Shift Kasir & Tutup Toko Pasca Closing Day bagi Seluruh Kasir Cabang (FR-POS-61)",
+            "description": "Menyelesaikan kendala kasir (seperti Bima) yang terhalang alert 'Sub-menu Laporan Shift Kasir & Tutup Toko baru dapat diakses setelah Anda menyelesaikan proses tutup shift (Closing Shift)' meskipun cabang telah berstatus Toko Tutup (Closing Day): (1) Deteksi Status Tutup Toko & Closed Shift Cabang di Backend: Memperbaiki action get_shift_reports, bootstrap, dan login di api.php agar mengizinkan akses kasir jika cabang telah berstatus CLOSED / is_final_shift = 1 (Closing Day) atau jika terdapat shift yang berstatus CLOSED pada tanggal laporan di cabang tersebut; (2) Identifikasi Shift Closer (closed_by_user_id): Menambahkan kolom closed_by_user_id pada cashier_shifts untuk mencatat kasir yang mengeksekusi penutupan shift terlepas dari siapa yang membuka shift di awal hari, serta menyertakan seluruh shift CLOSED di cabang penugasan dalam query kasir; (3) Sinkronisasi State & Hak Akses Frontend: Menyelaraskan evaluasi hasClosed pada updateShiftReportSubtabVisibility, setReportSubtab, dan loadShiftReports di index.php agar langsung bernilai TRUE saat branchClosedToday atau finalClosedShift aktif; (4) Kompatibilitas Penuh Android 8.1: Bebas operator ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.6.2"
+        },
         {
             "version": "1.6.2",
             "commit": "HEAD",

@@ -120,6 +120,12 @@ if (!isset($pdo) && file_exists(__DIR__ . '/db.php')) {
     require __DIR__ . '/db.php';
 }
 
+if (isset($pdo)) {
+    try {
+        $pdo->exec("ALTER TABLE cashier_shifts ADD COLUMN closed_by_user_id INTEGER DEFAULT NULL");
+    } catch (Exception $eCol) {}
+}
+
 // ========================================================
 // SECURITY & BRANCH ISOLATION ENFORCEMENT
 // ========================================================
@@ -1371,16 +1377,40 @@ try {
             unset($user['password']);
 
             $todayDate = date('Y-m-d');
-            $stmtHasClosed = $pdo->prepare("
+            $userBranchId = (int)($user['branch_id'] ?? 1);
+
+            // Cek apakah cabang ini sudah melakukan closing final (Tutup Toko Hari Ini)
+            $stmtBranchFinalClosed = $pdo->prepare("
+                SELECT cs.*, u.name as closer_name 
+                FROM cashier_shifts cs
+                JOIN users u ON u.id = cs.user_id
+                WHERE cs.branch_id = ? AND cs.status = 'CLOSED' AND cs.is_final_shift = 1
+                  AND (date(cs.start_time) = ? OR (cs.end_time IS NOT NULL AND date(cs.end_time) = ?))
+                ORDER BY cs.id DESC LIMIT 1
+            ");
+            $stmtBranchFinalClosed->execute([$userBranchId, $todayDate, $todayDate]);
+            $finalClosedShiftToday = $stmtBranchFinalClosed->fetch();
+            $isBranchClosedToday = !empty($finalClosedShiftToday);
+
+            // Cek apakah ada shift yang berstatus CLOSED di cabang ini pada hari ini
+            $stmtBranchClosedToday = $pdo->prepare("
                 SELECT COUNT(*) FROM cashier_shifts
-                WHERE user_id = ? AND status = 'CLOSED' 
+                WHERE branch_id = ? AND status = 'CLOSED'
                   AND (date(start_time) = ? OR (end_time IS NOT NULL AND date(end_time) = ?))
             ");
-            $stmtHasClosed->execute([$user['id'], $todayDate, $todayDate]);
-            $hasClosedShiftToday = ((int)$stmtHasClosed->fetchColumn()) > 0;
+            $stmtBranchClosedToday->execute([$userBranchId, $todayDate, $todayDate]);
+            $hasClosedShiftAtBranch = ((int)$stmtBranchClosedToday->fetchColumn()) > 0;
+
+            // Cek apakah user saat ini pernah melakukan closing shift pada hari ini
+            $stmtHasClosed = $pdo->prepare("
+                SELECT COUNT(*) FROM cashier_shifts
+                WHERE (user_id = ? OR (closed_by_user_id IS NOT NULL AND closed_by_user_id = ?)) AND status = 'CLOSED' 
+                  AND (date(start_time) = ? OR (end_time IS NOT NULL AND date(end_time) = ?))
+            ");
+            $stmtHasClosed->execute([$user['id'], $user['id'], $todayDate, $todayDate]);
+            $hasClosedShiftToday = $isBranchClosedToday || $hasClosedShiftAtBranch || (((int)$stmtHasClosed->fetchColumn()) > 0);
 
             // Cari apakah cabang penempatan user saat ini memiliki shift yang berstatus OPEN (dibuka oleh user atau rekan kasir)
-            $userBranchId = (int)($user['branch_id'] ?? 1);
             $stmtCurOpenShift = $pdo->prepare("
                 SELECT cs.*, u.name as opener_name, u.nik as opener_nik
                 FROM cashier_shifts cs
@@ -1412,6 +1442,8 @@ try {
                 'active_shift' => $curOpenShift ?: null,
                 'offline_user_pack' => $offlineUserPack,
                 'has_closed_shift' => $hasClosedShiftToday,
+                'branch_closed_today' => $isBranchClosedToday,
+                'final_closed_shift' => $finalClosedShiftToday ?: null,
                 'session_info' => [
                     'login_time' => $loginTime,
                     'expires_at' => $loginTime + $maxSessionSeconds,
@@ -1799,17 +1831,8 @@ try {
                 }
             }
 
-            // Cek apakah user saat ini sudah pernah melakukan closing shift pada hari ini
-            $todayDate = date('Y-m-d');
-            $stmtHasClosed = $pdo->prepare("
-                SELECT COUNT(*) FROM cashier_shifts
-                WHERE user_id = ? AND status = 'CLOSED' 
-                  AND (date(start_time) = ? OR (end_time IS NOT NULL AND date(end_time) = ?))
-            ");
-            $stmtHasClosed->execute([$currentUser['id'], $todayDate, $todayDate]);
-            $hasClosedShiftToday = ((int)$stmtHasClosed->fetchColumn()) > 0;
-
             // Cek apakah cabang ini sudah melakukan closing final (Tutup Toko Hari Ini)
+            $todayDate = date('Y-m-d');
             $stmtBranchFinalClosed = $pdo->prepare("
                 SELECT cs.*, u.name as closer_name 
                 FROM cashier_shifts cs
@@ -1821,6 +1844,24 @@ try {
             $stmtBranchFinalClosed->execute([$currentBranch['id'], $todayDate, $todayDate]);
             $finalClosedShiftToday = $stmtBranchFinalClosed->fetch();
             $isBranchClosedToday = !empty($finalClosedShiftToday);
+
+            // Cek apakah ada shift yang berstatus CLOSED di cabang ini pada hari ini
+            $stmtBranchClosedToday = $pdo->prepare("
+                SELECT COUNT(*) FROM cashier_shifts
+                WHERE branch_id = ? AND status = 'CLOSED'
+                  AND (date(start_time) = ? OR (end_time IS NOT NULL AND date(end_time) = ?))
+            ");
+            $stmtBranchClosedToday->execute([$currentBranch['id'], $todayDate, $todayDate]);
+            $hasClosedShiftAtBranch = ((int)$stmtBranchClosedToday->fetchColumn()) > 0;
+
+            // Cek apakah user saat ini pernah melakukan closing shift pada hari ini
+            $stmtHasClosed = $pdo->prepare("
+                SELECT COUNT(*) FROM cashier_shifts
+                WHERE (user_id = ? OR (closed_by_user_id IS NOT NULL AND closed_by_user_id = ?)) AND status = 'CLOSED' 
+                  AND (date(start_time) = ? OR (end_time IS NOT NULL AND date(end_time) = ?))
+            ");
+            $stmtHasClosed->execute([$currentUser['id'], $currentUser['id'], $todayDate, $todayDate]);
+            $hasClosedShiftToday = $isBranchClosedToday || $hasClosedShiftAtBranch || (((int)$stmtHasClosed->fetchColumn()) > 0);
 
             // Cek apakah cabang ini hari ini sudah pernah dibuka (Opening Transaksi di awal hari oleh kasir manapun)
             $stmtBranchOpenedToday = $pdo->prepare("
@@ -7036,6 +7077,8 @@ try {
                 if (isset($closingMap[105])) $closingPlastik = (int)$closingMap[105];
 
                 // D. Update cashier_shifts dengan snapshot stok akhir penutupan yang telah tersinkronisasi
+                $closedByUserId = $sessionUserId > 0 ? $sessionUserId : (int)($input['user_id'] ?? ($shift['user_id'] ?? 0));
+
                 $stmtUpdate = $pdo->prepare("
                     UPDATE cashier_shifts
                     SET end_time = ?,
@@ -7059,6 +7102,7 @@ try {
                         water_meter_adjustment_type = ?,
                         water_meter_adjustment_reason = ?,
                         water_meter_dispensed_galon = ?,
+                        closed_by_user_id = ?,
                         status = 'CLOSED'
                     WHERE id = ?
                 ");
@@ -7078,6 +7122,7 @@ try {
                     $adjustmentType,
                     $adjustmentReason ?: null,
                     $dispensedGalon,
+                    $closedByUserId,
                     $shiftId
                 ]);
 
@@ -7138,31 +7183,58 @@ try {
                 $branchId = $sessionBranchId;
             }
 
-            // 2. Cek apakah user telah melakukan closing shift pada tanggal ini atau hari ini
+            // 2. Cek apakah ada shift yang sudah ditutup untuk user ini atau cabang ini pada tanggal ini
             $hasClosedShiftForUser = false;
+            $hasClosedShiftForBranch = false;
+            $isBranchClosedOnDate = false;
+
+            // Cek apakah cabang sudah melakukan Closing Day (Tutup Toko) pada tanggal ini
+            $chkFinalStmt = $pdo->prepare("
+                SELECT COUNT(*) FROM cashier_shifts
+                WHERE branch_id = ? AND status = 'CLOSED' AND is_final_shift = 1
+                  AND (date(start_time) = ? OR (end_time IS NOT NULL AND date(end_time) = ?))
+            ");
+            $chkFinalStmt->execute([$branchId, $reportDate, $reportDate]);
+            $isBranchClosedOnDate = ((int)$chkFinalStmt->fetchColumn()) > 0;
+
+            // Cek apakah ada shift yang berstatus CLOSED di cabang ini pada tanggal ini
+            $chkBranchClosedStmt = $pdo->prepare("
+                SELECT COUNT(*) FROM cashier_shifts
+                WHERE branch_id = ? AND status = 'CLOSED'
+                  AND (date(start_time) = ? OR (end_time IS NOT NULL AND date(end_time) = ?))
+            ");
+            $chkBranchClosedStmt->execute([$branchId, $reportDate, $reportDate]);
+            $hasClosedShiftForBranch = ((int)$chkBranchClosedStmt->fetchColumn()) > 0;
+
             if ($reqUserId > 0) {
                 $chkClosedStmt = $pdo->prepare("
                     SELECT COUNT(*) FROM cashier_shifts 
-                    WHERE user_id = ? AND branch_id = ? AND status = 'CLOSED' 
+                    WHERE (user_id = ? OR (closed_by_user_id IS NOT NULL AND closed_by_user_id = ?)) AND branch_id = ? AND status = 'CLOSED' 
                       AND (date(start_time) = ? OR (end_time IS NOT NULL AND date(end_time) = ?))
                 ");
-                $chkClosedStmt->execute([$reqUserId, $branchId, $reportDate, $reportDate]);
+                $chkClosedStmt->execute([$reqUserId, $reqUserId, $branchId, $reportDate, $reportDate]);
                 $hasClosedShiftForUser = ((int)$chkClosedStmt->fetchColumn()) > 0;
             }
 
-            // Aturan Bisnis: Level selain Super Admin dan Branch Manager TIDAK BISA mengakses laporan shift sebelum proses tutup shift
-            if (!$isManagerOrAdmin && !$hasClosedShiftForUser) {
+            // Aturan Bisnis SOP: Akses laporan shift kasir & tutup toko terbuka jika:
+            // 1. Level Super Admin, Branch Manager, atau Manager
+            // 2. ATAU cabang sudah melakukan Tutup Toko (Closing Day / is_final_shift = 1)
+            // 3. ATAU cabang sudah memiliki shift yang berstatus CLOSED pada tanggal tersebut
+            // 4. ATAU kasir yang bersangkutan telah menyelesaikan proses tutup shift miliknya
+            $canViewShiftReport = $isManagerOrAdmin || $isBranchClosedOnDate || $hasClosedShiftForBranch || $hasClosedShiftForUser;
+
+            if (!$canViewShiftReport) {
                 echo json_encode([
                     'success' => false,
                     'can_view' => false,
                     'has_closed_shift' => false,
-                    'message' => 'Laporan Shift Kasir & Tutup Toko belum dapat diakses sebelum Anda menyelesaikan proses tutup shift (Closing Shift).'
+                    'message' => 'Laporan Shift Kasir & Tutup Toko belum dapat diakses sebelum Anda atau cabang menyelesaikan proses tutup shift (Closing Shift / Tutup Toko).'
                 ]);
                 exit;
             }
 
             // 3. Kueri shift:
-            // Jika bukan manajer/admin: HANYA berdasarkan usernya saja (WHERE cs.user_id = ?)
+            // Jika bukan manajer/admin: Tampilkan shift yang sudah berstatus CLOSED di cabang penugasan atau shift milik kasir
             // Jika manajer/admin: seluruh shift cabang
             if (!$isManagerOrAdmin) {
                 $stmtShifts = $pdo->prepare("
@@ -7170,10 +7242,11 @@ try {
                     FROM cashier_shifts cs
                     JOIN users u ON u.id = cs.user_id
                     JOIN branches b ON b.id = cs.branch_id
-                    WHERE cs.branch_id = ? AND (date(cs.start_time) = ? OR (cs.end_time IS NOT NULL AND date(cs.end_time) = ?)) AND cs.user_id = ?
+                    WHERE cs.branch_id = ? AND (date(cs.start_time) = ? OR (cs.end_time IS NOT NULL AND date(cs.end_time) = ?))
+                      AND (cs.status = 'CLOSED' OR cs.user_id = ? OR (cs.closed_by_user_id IS NOT NULL AND cs.closed_by_user_id = ?))
                     ORDER BY cs.id ASC
                 ");
-                $stmtShifts->execute([$branchId, $reportDate, $reportDate, $reqUserId]);
+                $stmtShifts->execute([$branchId, $reportDate, $reportDate, $reqUserId, $reqUserId]);
             } else {
                 $stmtShifts = $pdo->prepare("
                     SELECT cs.*, u.name as cashier_name, u.nik as cashier_nik, b.name as branch_name
