@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.5.8",
-    "build": "20261101-84",
+    "version": "1.5.9",
+    "build": "20261101-85",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.5.9",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Informasi Ringkasan Diskon pada Laporan Penjualan & Sub-Modul Laporan Diskon Promo (FR-REP-06)",
+            "description": "Menambahkan informasi lengkap laporan diskon & potongan harga pada halaman Laporan Penjualan (#tab-reports): (1) Info Diskon Langsung di Halaman Laporan Penjualan & Omzet (#subtab-reports-sales): Memperkaya Kartu KPI 'Diskon Promo' dengan jumlah nota berdiskon & persentase rasio diskon terhadap omzet, menambahkan Banner 'Ringkasan Laporan Diskon & Potongan Harga Periode Ini' (Nota Berdiskon, Total Potongan Diskon, Rata-Rata Diskon/Nota, Rasio Diskon, dan tombol pintas), menambahkan seksi 'Rekap Pemberian Diskon' per kasir & kategori pelanggan, serta menambahkan kolom 'Diskon' pada tabel Daftar Transaksi Penjualan Terakhir; (2) Sub-Tab Khusus 'Laporan Diskon & Promo' (#subtab-reports-discounts): Menyediakan filter Tanggal, Kategori Pelanggan, Kasir Pemberi Diskon, dan Metode Bayar, 5 Kartu KPI Audit Diskon (termasuk Laba Kotor & Margin Pasca-Diskon), Tabel Rekap Pemberian Diskon per Kasir, Tabel Rekap Penerima Diskon per Pelanggan, Tabel Daftar Rincian Faktur Berdiskon (Discount Audit Ledger), serta tombol 'Export Excel Diskon' (export_discount_excel); (3) Integrasi Pengaturan Role & Kompatibilitas Penuh: Menambahkan hak akses sub-tab reports:discounts pada matriks Pengaturan Role, dukungan SQLite & MariaDB/MySQL hosting, serta 100% bebas token ES2020 (?., ??) untuk Android 8.1.",
+            "rollback_command": "git checkout v1.5.8"
+        },
         {
             "version": "1.5.8",
             "commit": "HEAD",

@@ -1177,6 +1177,10 @@ try {
                             <i data-lucide="truck" class="w-4 h-4"></i>
                             <span>Laporan Kiriman & Kurir</span>
                         </button>
+                        <button onclick="setReportSubtab('discounts')" id="report-subtab-btn-discounts" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="percent" class="w-4 h-4"></i>
+                            <span>Laporan Diskon & Promo</span>
+                        </button>
                         <button onclick="switchTab('partner-sales')" id="report-subtab-btn-partner" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200" title="Buka Modul Laporan Penjualan Mitra B2B">
                             <i data-lucide="handshake" class="w-4 h-4 text-emerald-600"></i>
                             <span>Penjualan Mitra B2B</span>
@@ -1245,9 +1249,10 @@ try {
                             <h3 id="kpi-gross-profit" class="text-lg font-black text-emerald-700 mt-1">Rp 0</h3>
                             <p id="kpi-gross-margin" class="text-[11px] text-emerald-600 font-bold mt-0.5">Margin: 0%</p>
                         </div>
-                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                            <p class="text-xs text-slate-400 font-semibold">Diskon Promo</p>
+                        <div class="bg-white p-4 rounded-2xl border border-rose-200 shadow-sm bg-gradient-to-br from-rose-50/70 to-white">
+                            <p class="text-xs text-rose-700 font-bold">Diskon Promo</p>
                             <h3 id="kpi-discount" class="text-lg font-black text-rose-600 mt-1">Rp 0</h3>
+                            <p id="kpi-discount-orders-sub" class="text-[11px] text-rose-500 font-bold mt-0.5">0 Nota Diskon</p>
                         </div>
                         <div class="bg-white p-4 rounded-2xl border border-sky-200 shadow-sm bg-gradient-to-br from-sky-50/70 to-white">
                             <p class="text-xs text-sky-700 font-bold">Ongkos Kirim (Kiriman)</p>
@@ -1336,6 +1341,44 @@ try {
                         </div>
                     </div>
 
+                    <!-- Quick Discount & Promo Report Summary Banner -->
+                    <div class="bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-transparent border border-rose-200/80 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-sm">
+                                <i data-lucide="percent" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    <span>Ringkasan Laporan Diskon & Potongan Harga Periode Ini</span>
+                                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-semibold">Audit Diskon POS</span>
+                                </h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Pantau jumlah nota berdiskon, nominal potongan promo/member, rasio diskon terhadap omzet, dan kasir pemberi diskon.</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
+                            <div class="bg-white px-3.5 py-2 rounded-xl border border-rose-200 shadow-2xs">
+                                <span class="text-slate-400 block text-[10px] font-semibold">Nota Berdiskon</span>
+                                <span id="quick-disc-orders" class="font-black text-slate-800 text-sm">0 Nota</span>
+                            </div>
+                            <div class="bg-white px-3.5 py-2 rounded-xl border border-rose-200 shadow-2xs">
+                                <span class="text-slate-400 block text-[10px] font-semibold">Total Potongan Diskon</span>
+                                <span id="quick-disc-total" class="font-black text-rose-600 text-sm">Rp 0</span>
+                            </div>
+                            <div class="bg-white px-3.5 py-2 rounded-xl border border-rose-200 shadow-2xs">
+                                <span class="text-slate-400 block text-[10px] font-semibold">Rata-Rata / Nota</span>
+                                <span id="quick-disc-avg" class="font-black text-slate-800 text-sm">Rp 0</span>
+                            </div>
+                            <div class="bg-white px-3.5 py-2 rounded-xl border border-rose-200 shadow-2xs">
+                                <span class="text-slate-400 block text-[10px] font-semibold">Rasio Diskon</span>
+                                <span id="quick-disc-rate" class="font-black text-slate-800 text-sm">0%</span>
+                            </div>
+                            <button onclick="setReportSubtab('discounts')" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition-all shadow-sm">
+                                <span>Lihat Laporan Diskon Lengkap</span>
+                                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Quick Shift Stock Discrepancy Alert Banner (Hanya Muncul Jika Ditemukan Selisih) -->
                     <div id="sales-report-stock-diff-banner" class="hidden bg-rose-50 border border-rose-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
                         <div class="flex items-center gap-3">
@@ -1396,6 +1439,16 @@ try {
                                 </div>
                                 <div id="sales-courier-breakdown-list" class="space-y-2"></div>
                             </div>
+                            <div class="pt-4 border-t border-slate-100">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                                        <i data-lucide="percent" class="w-4 h-4 text-rose-600"></i>
+                                        <span>Rekap Pemberian Diskon</span>
+                                    </h3>
+                                    <button type="button" onclick="setReportSubtab('discounts')" class="text-[11px] font-bold text-rose-600 hover:text-rose-800 hover:underline">Detail Diskon →</button>
+                                </div>
+                                <div id="sales-discount-breakdown-list" class="space-y-2"></div>
+                            </div>
                         </div>
                     </div>
 
@@ -1414,6 +1467,7 @@ try {
                                         <th class="py-3 px-3">Cabang</th>
                                         <th class="py-3 px-3">Kasir</th>
                                         <th class="py-3 px-3">Metode</th>
+                                        <th class="py-3 px-3 text-right">Diskon</th>
                                         <th class="py-3 px-3">Kiriman / Ongkir</th>
                                         <th class="py-3 px-3 text-right">Total Bayar</th>
                                         <th class="py-3 px-3 text-right">Laba Kotor</th>
@@ -1854,6 +1908,197 @@ try {
                                     </tr>
                                 </thead>
                                 <tbody id="deliv-orders-tbody" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ---------------------------------------------------- -->
+                <!-- SUBTAB 6: LAPORAN DISKON & POTONGAN PROMO             -->
+                <!-- ---------------------------------------------------- -->
+                <div id="subtab-reports-discounts" class="hidden space-y-6">
+                    <!-- Filter Bar Laporan Diskon -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-3 items-center justify-between">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">Dari Tanggal:</label>
+                                <input type="date" id="disc-report-start-date" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">Sampai Tanggal:</label>
+                                <input type="date" id="disc-report-end-date" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">Kategori Pelanggan:</label>
+                                <select id="disc-report-category-filter" onchange="loadDiscountReports()" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium">
+                                    <option value="ALL">Semua Kategori</option>
+                                    <option value="REGULER">REGULER</option>
+                                    <option value="MEMBER">MEMBER</option>
+                                    <option value="RESELLER">RESELLER</option>
+                                    <option value="MITRA">MITRA B2B</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">Kasir Pemberi Diskon:</label>
+                                <select id="disc-report-cashier-filter" onchange="loadDiscountReports()" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium">
+                                    <option value="ALL">Semua Kasir</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">Metode Bayar:</label>
+                                <select id="disc-report-payment-filter" onchange="loadDiscountReports()" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium">
+                                    <option value="ALL">Semua Metode</option>
+                                    <option value="CASH">Tunai (Cash)</option>
+                                    <option value="QRIS">QRIS</option>
+                                    <option value="DEBIT">Debit EDC</option>
+                                    <option value="TRANSFER">Transfer Bank</option>
+                                    <option value="PIUTANG">Piutang Cust</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="loadDiscountReports()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-2">
+                                <i data-lucide="filter" class="w-4 h-4"></i>
+                                <span>Terapkan Filter</span>
+                            </button>
+                            <button type="button" onclick="exportDiscountReportExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-2">
+                                <i data-lucide="download" class="w-4 h-4"></i>
+                                <span>Export Excel Diskon</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- KPI Cards Laporan Diskon -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs text-slate-400 font-semibold">Total Nota Berdiskon</p>
+                                <span class="p-1.5 bg-rose-50 text-rose-600 rounded-lg text-xs">🏷️</span>
+                            </div>
+                            <h3 id="disc-kpi-orders" class="text-lg font-black text-slate-800 mt-1">0 Nota</h3>
+                            <p id="disc-kpi-orders-sub" class="text-[11px] text-slate-500 mt-0.5">0% dari total transaksi</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-rose-200 shadow-sm bg-gradient-to-br from-rose-50/70 to-white">
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs text-rose-700 font-bold">Total Potongan Diskon</p>
+                                <span class="p-1.5 bg-rose-100 text-rose-700 rounded-lg text-xs">💸</span>
+                            </div>
+                            <h3 id="disc-kpi-amount" class="text-lg font-black text-rose-600 mt-1">Rp 0</h3>
+                            <p id="disc-kpi-rate-sub" class="text-[11px] text-rose-600 font-semibold mt-0.5">Rasio Omzet: 0%</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs text-slate-400 font-semibold">Rata-Rata Diskon / Nota</p>
+                                <span class="p-1.5 bg-amber-50 text-amber-700 rounded-lg text-xs">📊</span>
+                            </div>
+                            <h3 id="disc-kpi-avg" class="text-lg font-black text-amber-700 mt-1">Rp 0</h3>
+                            <p id="disc-kpi-max-sub" class="text-[11px] text-slate-500 mt-0.5">Diskon Maks: Rp 0</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs text-slate-400 font-semibold">Penjualan Bersih Nota Diskon</p>
+                                <span class="p-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs">🧾</span>
+                            </div>
+                            <h3 id="disc-kpi-net-sales" class="text-lg font-black text-indigo-900 mt-1">Rp 0</h3>
+                            <p id="disc-kpi-gross-sub" class="text-[11px] text-slate-500 mt-0.5">Sebelum Diskon: Rp 0</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm bg-gradient-to-br from-emerald-50/70 to-white">
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs text-emerald-700 font-bold">Laba Kotor Nota Diskon</p>
+                                <span class="p-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-xs">🛡️</span>
+                            </div>
+                            <h3 id="disc-kpi-profit" class="text-lg font-black text-emerald-700 mt-1">Rp 0</h3>
+                            <p id="disc-kpi-margin-sub" class="text-[11px] text-emerald-600 font-semibold mt-0.5">Margin Pasca-Diskon: 0%</p>
+                        </div>
+                    </div>
+
+                    <!-- Grid 2 Tabel Rekapitulasi Audit Diskon (Per Kasir & Per Pelanggan) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <div class="lg:col-span-6 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                                        <i data-lucide="user-check" class="w-4 h-4 text-rose-600"></i>
+                                        <span>Rekap Pemberian Diskon per Kasir</span>
+                                    </h3>
+                                    <p class="text-[11px] text-slate-500 mt-0.5">Audit frekuensi dan nilai potongan harga yang diinput oleh masing-masing kasir.</p>
+                                </div>
+                                <span id="disc-cashier-count-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">0 Kasir</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50 text-slate-600 font-bold border-b">
+                                        <tr>
+                                            <th class="py-2.5 px-3">Nama Kasir</th>
+                                            <th class="py-2.5 px-3 text-center">Nota</th>
+                                            <th class="py-2.5 px-3 text-right">Subtotal Kotor</th>
+                                            <th class="py-2.5 px-3 text-right">Total Diskon</th>
+                                            <th class="py-2.5 px-3 text-right">Sisa Laba</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="disc-cashier-summary-tbody" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-6 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                                        <i data-lucide="users" class="w-4 h-4 text-indigo-600"></i>
+                                        <span>Rekap Penerima Diskon per Pelanggan</span>
+                                    </h3>
+                                    <p class="text-[11px] text-slate-500 mt-0.5">Pelanggan dan kategori tier yang menerima potongan harga terbanyak.</p>
+                                </div>
+                                <span id="disc-customer-count-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800">0 Pelanggan</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50 text-slate-600 font-bold border-b">
+                                        <tr>
+                                            <th class="py-2.5 px-3">Nama Pelanggan</th>
+                                            <th class="py-2.5 px-3 text-center">Kategori</th>
+                                            <th class="py-2.5 px-3 text-center">Nota</th>
+                                            <th class="py-2.5 px-3 text-right">Belanja Kotor</th>
+                                            <th class="py-2.5 px-3 text-right">Total Diskon</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="disc-customer-summary-tbody" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Daftar Rincian Faktur Berdiskon -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                                    <i data-lucide="badge-percent" class="w-4 h-4 text-rose-600"></i>
+                                    <span>Daftar Rincian Faktur Berdiskon (Discount Audit Ledger)</span>
+                                </h3>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Klik nomor faktur untuk melihat rincian nota lengkap atau mengunduh Excel per transaksi.</p>
+                            </div>
+                            <span id="disc-orders-count-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">0 Faktur</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-600 font-bold border-b">
+                                    <tr>
+                                        <th class="py-3 px-3">No. Faktur</th>
+                                        <th class="py-3 px-3">Waktu</th>
+                                        <th class="py-3 px-3">Kasir</th>
+                                        <th class="py-3 px-3">Pelanggan</th>
+                                        <th class="py-3 px-3">Item Produk Dibeli</th>
+                                        <th class="py-3 px-3 text-right">Subtotal Kotor</th>
+                                        <th class="py-3 px-3 text-right">Potongan Diskon</th>
+                                        <th class="py-3 px-3 text-right">Total Bayar</th>
+                                        <th class="py-3 px-3 text-right">Laba Kotor</th>
+                                        <th class="py-3 px-3 text-center">Metode</th>
+                                        <th class="py-3 px-3 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="disc-orders-tbody" class="divide-y divide-slate-100"></tbody>
                             </table>
                         </div>
                     </div>
@@ -16757,6 +17002,10 @@ try {
             const delivEndSync = document.getElementById('deliv-report-end-date');
             if (delivStartSync && start) delivStartSync.value = start;
             if (delivEndSync && end) delivEndSync.value = end;
+            const discStartSync = document.getElementById('disc-report-start-date');
+            const discEndSync = document.getElementById('disc-report-end-date');
+            if (discStartSync && start) discStartSync.value = start;
+            if (discEndSync && end) discEndSync.value = end;
 
             const res = await fetch(`api.php?action=sales_reports&branch_id=${branchId}&start_date=${start}&end_date=${end}&payment_method=${method}`);
             const data = await res.json();
@@ -16770,6 +17019,12 @@ try {
             document.getElementById('kpi-gross-profit').innerText = formatRupiah(data.kpi.gross_profit);
             document.getElementById('kpi-gross-margin').innerText = `Margin: ${data.kpi.gross_margin_percent}%`;
             document.getElementById('kpi-discount').innerText = formatRupiah(data.kpi.total_discount);
+            const elKpiDiscSub = document.getElementById('kpi-discount-orders-sub');
+            if (elKpiDiscSub) {
+                const discCnt = Number(data.kpi.discounted_orders_count) || 0;
+                const discRate = Number(data.kpi.discount_rate_percent) || 0;
+                elKpiDiscSub.innerText = discCnt > 0 ? `${discCnt} Nota Diskon • ${formatDecimal(discRate)}%` : '0 Nota Diskon';
+            }
             const elKpiDelivFee = document.getElementById('kpi-delivery-fee');
             if (elKpiDelivFee) elKpiDelivFee.innerText = formatRupiah(data.kpi.total_delivery_fee || 0);
             const elKpiDelivSub = document.getElementById('kpi-delivery-orders-sub');
@@ -16790,6 +17045,16 @@ try {
             if (elQuickDelivSplit) elQuickDelivSplit.innerText = `${Number(data.kpi.paid_delivery_count) || 0} / ${Number(data.kpi.free_delivery_count) || 0} Nota`;
             const elQuickDelivDist = document.getElementById('quick-deliv-distance');
             if (elQuickDelivDist) elQuickDelivDist.innerText = `${formatDecimal(Number(data.kpi.total_delivery_distance_km) || 0)} km`;
+
+            // Populate Quick Discount & Promo Summary Banner
+            const elQuickDiscOrders = document.getElementById('quick-disc-orders');
+            if (elQuickDiscOrders) elQuickDiscOrders.innerText = `${Number(data.kpi.discounted_orders_count) || 0} Nota`;
+            const elQuickDiscTotal = document.getElementById('quick-disc-total');
+            if (elQuickDiscTotal) elQuickDiscTotal.innerText = formatRupiah(data.kpi.total_discount || 0);
+            const elQuickDiscAvg = document.getElementById('quick-disc-avg');
+            if (elQuickDiscAvg) elQuickDiscAvg.innerText = formatRupiah(data.kpi.avg_discount_per_order || 0);
+            const elQuickDiscRate = document.getElementById('quick-disc-rate');
+            if (elQuickDiscRate) elQuickDiscRate.innerText = `${formatDecimal(Number(data.kpi.discount_rate_percent) || 0)}%`;
 
             // Populate Quick BOM Consumption Summary Banner
             if (data.bom_summary && Array.isArray(data.bom_summary)) {
@@ -16873,7 +17138,41 @@ try {
                 }
             }
 
+            const discBreakEl = document.getElementById('sales-discount-breakdown-list');
+            if (discBreakEl) {
+                const discArr = (data.discount_summary && Array.isArray(data.discount_summary.breakdown)) ? data.discount_summary.breakdown : [];
+                if (discArr.length > 0) {
+                    discBreakEl.innerHTML = discArr.map(function(d) {
+                        const cshName = escapeHtml(d.cashier_name || '-');
+                        const catName = escapeHtml(d.customer_category || 'REGULER');
+                        const gSub = Number(d.gross_subtotal) || 0;
+                        const tDisc = Number(d.total_discount) || 0;
+                        const pct = gSub > 0 ? formatDecimal((tDisc / gSub) * 100, 1) : '0';
+                        return '<div class="p-2.5 bg-rose-50/70 border border-rose-100 rounded-xl flex items-center justify-between text-xs">' +
+                            '<div>' +
+                                '<p class="font-bold text-slate-800">🏷️ ' + cshName + ' <span class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-bold">' + catName + '</span></p>' +
+                                '<p class="text-[10px] text-slate-500 mt-0.5">' + (Number(d.discount_count) || 0) + ' nota berdiskon • rata-rata ' + pct + '%</p>' +
+                            '</div>' +
+                            '<div class="text-right">' +
+                                '<span class="font-extrabold text-rose-700">- ' + formatRupiah(tDisc) + '</span>' +
+                                '<span class="block text-[10px] text-slate-400">Kotor: ' + formatRupiah(gSub) + '</span>' +
+                            '</div>' +
+                        '</div>';
+                    }).join('');
+                } else {
+                    discBreakEl.innerHTML = '<p class="text-xs text-slate-400">Tidak ada transaksi berdiskon pada periode ini.</p>';
+                }
+            }
+
             document.getElementById('report-transactions-body').innerHTML = data.recent_sales.map(function(s) {
+                let discCellHtml = '<span class="text-[11px] text-slate-300">-</span>';
+                const discVal = Number(s.discount) || 0;
+                if (discVal > 0) {
+                    const subVal = Number(s.subtotal) || 0;
+                    const discPctTxt = subVal > 0 ? ('<p class="text-[10px] text-rose-500 mt-0.5">' + formatDecimal((discVal / subVal) * 100, 1) + '% dari ' + formatRupiah(subVal) + '</p>') : '';
+                    discCellHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">🏷️ -' + formatRupiah(discVal) + '</span>' + discPctTxt;
+                }
+
                 let delivCellHtml = '<span class="text-[11px] text-slate-400">Ambil di Toko</span>';
                 if (Number(s.is_delivery_order) === 1) {
                     const feeVal = Number(s.delivery_fee) || 0;
@@ -16898,6 +17197,7 @@ try {
                     <td class="py-2.5 px-3 text-slate-700 font-medium">${s.branch_name}</td>
                     <td class="py-2.5 px-3 text-slate-600">${s.cashier_name}</td>
                     <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">${s.payment_method}</span></td>
+                    <td class="py-2.5 px-3 text-right">${discCellHtml}</td>
                     <td class="py-2.5 px-3">${delivCellHtml}</td>
                     <td class="py-2.5 px-3 text-right font-bold text-slate-800">${formatRupiah(s.grand_total)}</td>
                     <td class="py-2.5 px-3 text-right font-bold text-emerald-700">${formatRupiah(s.gross_profit)}</td>
@@ -16915,7 +17215,7 @@ try {
                     </td>
                 </tr>
             `;
-            }).join('') || `<tr><td colspan="9" class="text-center py-6 text-slate-400">Belum ada riwayat transaksi</td></tr>`;
+            }).join('') || `<tr><td colspan="10" class="text-center py-6 text-slate-400">Belum ada riwayat transaksi</td></tr>`;
             lucide.createIcons();
         }
 
@@ -17346,6 +17646,201 @@ try {
             window.open(url, '_blank');
         }
 
+        async function loadDiscountReports() {
+            const startInput = document.getElementById('disc-report-start-date');
+            const endInput = document.getElementById('disc-report-end-date');
+            const salesStart = document.getElementById('report-start-date');
+            const salesEnd = document.getElementById('report-end-date');
+            const today = new Date().toISOString().split('T')[0];
+
+            if (startInput && !startInput.value) {
+                startInput.value = (salesStart && salesStart.value) ? salesStart.value : today;
+            }
+            if (endInput && !endInput.value) {
+                endInput.value = (salesEnd && salesEnd.value) ? salesEnd.value : today;
+            }
+
+            const start = startInput ? startInput.value : today;
+            const end = endInput ? endInput.value : today;
+            const catEl = document.getElementById('disc-report-category-filter');
+            const cshEl = document.getElementById('disc-report-cashier-filter');
+            const payEl = document.getElementById('disc-report-payment-filter');
+
+            const customerCategory = catEl ? catEl.value : 'ALL';
+            const prevCashier = cshEl ? cshEl.value : 'ALL';
+            const paymentMethod = payEl ? payEl.value : 'ALL';
+            const branchId = state.currentBranch ? state.currentBranch.id : '';
+
+            try {
+                const url = `api.php?action=discount_reports&branch_id=${branchId}&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&customer_category=${encodeURIComponent(customerCategory)}&cashier_filter=${encodeURIComponent(prevCashier)}&payment_method=${encodeURIComponent(paymentMethod)}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (!data.success) {
+                    console.error('Gagal memuat laporan diskon:', data.error || 'Unknown error');
+                    return;
+                }
+
+                // Populate dropdown Kasir Pemberi Diskon
+                if (cshEl) {
+                    const cashiersList = Array.isArray(data.cashiers_list) ? data.cashiers_list : [];
+                    let optsHtml = '<option value="ALL">Semua Kasir</option>';
+                    cashiersList.forEach(function(cName) {
+                        const safeVal = escapeHtml(cName);
+                        const selAttr = (cName === prevCashier) ? ' selected' : '';
+                        optsHtml += '<option value="' + safeVal + '"' + selAttr + '>' + safeVal + '</option>';
+                    });
+                    cshEl.innerHTML = optsHtml;
+                }
+
+                const kpi = data.kpi || {};
+                const totOrders = Number(kpi.total_discounted_orders) || 0;
+                const storeTx = Number(kpi.period_total_orders) || 0;
+                const ordRatio = Number(kpi.discounted_orders_ratio_percent) || 0;
+
+                const elOrders = document.getElementById('disc-kpi-orders');
+                if (elOrders) elOrders.innerText = totOrders + ' Nota';
+                const elOrdersSub = document.getElementById('disc-kpi-orders-sub');
+                if (elOrdersSub) elOrdersSub.innerText = storeTx > 0 ? (totOrders + ' dari ' + storeTx + ' Nota (' + formatDecimal(ordRatio, 1) + '%)') : '0% dari total transaksi';
+
+                const elAmount = document.getElementById('disc-kpi-amount');
+                if (elAmount) elAmount.innerText = formatRupiah(kpi.total_discount_amount || 0);
+                const elRateSub = document.getElementById('disc-kpi-rate-sub');
+                if (elRateSub) elRateSub.innerText = 'Rasio Omzet: ' + formatDecimal(Number(kpi.discount_pct_of_store_gross) || 0, 2) + '% (' + formatDecimal(Number(kpi.discount_pct_of_discounted_sales) || 0, 1) + '% nota diskon)';
+
+                const elAvg = document.getElementById('disc-kpi-avg');
+                if (elAvg) elAvg.innerText = formatRupiah(kpi.avg_discount_per_order || 0);
+                const elMaxSub = document.getElementById('disc-kpi-max-sub');
+                if (elMaxSub) elMaxSub.innerText = 'Diskon Maks: ' + formatRupiah(kpi.max_single_discount || 0);
+
+                const elNet = document.getElementById('disc-kpi-net-sales');
+                if (elNet) elNet.innerText = formatRupiah(kpi.discounted_net_sales || 0);
+                const elGrossSub = document.getElementById('disc-kpi-gross-sub');
+                if (elGrossSub) elGrossSub.innerText = 'Sebelum Diskon: ' + formatRupiah(kpi.discounted_gross_subtotal || 0);
+
+                const elProfit = document.getElementById('disc-kpi-profit');
+                if (elProfit) elProfit.innerText = formatRupiah(kpi.discounted_gross_profit || 0);
+                const elMarginSub = document.getElementById('disc-kpi-margin-sub');
+                if (elMarginSub) elMarginSub.innerText = 'Margin Pasca-Diskon: ' + formatDecimal(Number(kpi.discounted_margin_percent) || 0, 1) + '%';
+
+                // Tabel 1: Rekap per Kasir
+                const cashiers = Array.isArray(data.cashier_summary) ? data.cashier_summary : [];
+                const cshBadge = document.getElementById('disc-cashier-count-badge');
+                if (cshBadge) cshBadge.innerText = cashiers.length + ' Kasir';
+                const cshTbody = document.getElementById('disc-cashier-summary-tbody');
+                if (cshTbody) {
+                    if (cashiers.length === 0) {
+                        cshTbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-slate-400">Tidak ada pemberian diskon kasir pada filter ini.</td></tr>';
+                    } else {
+                        cshTbody.innerHTML = cashiers.map(function(cs) {
+                            const gSub = Number(cs.gross_subtotal) || 0;
+                            const tDisc = Number(cs.total_discount) || 0;
+                            const pct = gSub > 0 ? formatDecimal((tDisc / gSub) * 100, 1) : '0';
+                            return '<tr class="hover:bg-slate-50 transition-colors">' +
+                                '<td class="py-2.5 px-3 font-bold text-slate-800">' + escapeHtml(cs.cashier_name || '-') + '</td>' +
+                                '<td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">' + (Number(cs.discount_orders) || 0) + 'x</span></td>' +
+                                '<td class="py-2.5 px-3 text-right text-slate-600">' + formatRupiah(gSub) + '</td>' +
+                                '<td class="py-2.5 px-3 text-right font-extrabold text-rose-600">- ' + formatRupiah(tDisc) + '<span class="block text-[10px] font-semibold text-rose-400">' + pct + '%</span></td>' +
+                                '<td class="py-2.5 px-3 text-right font-bold text-emerald-700">' + formatRupiah(cs.gross_profit || 0) + '</td>' +
+                            '</tr>';
+                        }).join('');
+                    }
+                }
+
+                // Tabel 2: Rekap per Pelanggan
+                const customers = Array.isArray(data.customer_summary) ? data.customer_summary : [];
+                const custBadge = document.getElementById('disc-customer-count-badge');
+                if (custBadge) custBadge.innerText = customers.length + ' Pelanggan';
+                const custTbody = document.getElementById('disc-customer-summary-tbody');
+                if (custTbody) {
+                    if (customers.length === 0) {
+                        custTbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-slate-400">Tidak ada penerima diskon pada filter ini.</td></tr>';
+                    } else {
+                        custTbody.innerHTML = customers.map(function(cu) {
+                            const gSub = Number(cu.gross_subtotal) || 0;
+                            const tDisc = Number(cu.total_discount) || 0;
+                            return '<tr class="hover:bg-slate-50 transition-colors">' +
+                                '<td class="py-2.5 px-3 font-bold text-slate-800">' + escapeHtml(cu.customer_name || 'Pelanggan Umum') + '</td>' +
+                                '<td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700">' + escapeHtml(cu.customer_category || 'REGULER') + '</span></td>' +
+                                '<td class="py-2.5 px-3 text-center font-semibold text-slate-700">' + (Number(cu.discount_orders) || 0) + 'x</td>' +
+                                '<td class="py-2.5 px-3 text-right text-slate-600">' + formatRupiah(gSub) + '</td>' +
+                                '<td class="py-2.5 px-3 text-right font-extrabold text-rose-600">- ' + formatRupiah(tDisc) + '</td>' +
+                            '</tr>';
+                        }).join('');
+                    }
+                }
+
+                // Tabel 3: Daftar Rincian Faktur Berdiskon
+                const discRows = Array.isArray(data.discounts) ? data.discounts : [];
+                const ordBadge = document.getElementById('disc-orders-count-badge');
+                if (ordBadge) ordBadge.innerText = discRows.length + ' Faktur';
+                const ordTbody = document.getElementById('disc-orders-tbody');
+                if (ordTbody) {
+                    if (discRows.length === 0) {
+                        ordTbody.innerHTML = '<tr><td colspan="11" class="text-center py-6 text-slate-400">Belum ada faktur berdiskon pada rentang tanggal ini.</td></tr>';
+                    } else {
+                        ordTbody.innerHTML = discRows.map(function(dr) {
+                            const inv = escapeHtml(dr.invoice_number || '');
+                            const cust = escapeHtml(dr.customer_name || 'Pelanggan Umum');
+                            const cat = escapeHtml(dr.customer_category || 'REGULER');
+                            const itemsSum = escapeHtml(dr.items_summary || '-');
+                            const discNum = Number(dr.discount) || 0;
+                            const discPct = formatDecimal(Number(dr.discount_percent) || 0, 1);
+                            const gpNum = Number(dr.gross_profit) || 0;
+                            const gpClass = gpNum < 0 ? 'text-rose-700' : 'text-emerald-700';
+                            return '<tr class="hover:bg-slate-50 transition-colors">' +
+                                '<td class="py-2.5 px-3 font-mono font-bold">' +
+                                    '<button type="button" onclick="openSaleDetailModal(\'' + inv + '\')" class="text-indigo-600 hover:text-indigo-800 hover:underline flex items-center space-x-1 font-bold text-left">' +
+                                        '<span>' + inv + '</span>' +
+                                        '<i data-lucide="external-link" class="w-3 h-3 text-indigo-400"></i>' +
+                                    '</button>' +
+                                '</td>' +
+                                '<td class="py-2.5 px-3 text-slate-500 whitespace-nowrap">' + escapeHtml(dr.created_at || '') + '</td>' +
+                                '<td class="py-2.5 px-3 text-slate-700 font-medium">' + escapeHtml(dr.cashier_name || '-') + '<p class="text-[10px] text-slate-400">' + escapeHtml(dr.branch_name || '') + '</p></td>' +
+                                '<td class="py-2.5 px-3"><span class="font-semibold text-slate-800">' + cust + '</span> <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">' + cat + '</span></td>' +
+                                '<td class="py-2.5 px-3 text-slate-700 max-w-[240px]"><span class="line-clamp-2" title="' + itemsSum + '">' + itemsSum + '</span></td>' +
+                                '<td class="py-2.5 px-3 text-right text-slate-600 whitespace-nowrap">' + formatRupiah(dr.subtotal || 0) + '</td>' +
+                                '<td class="py-2.5 px-3 text-right whitespace-nowrap"><span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-700">🏷️ -' + formatRupiah(discNum) + ' (' + discPct + '%)</span></td>' +
+                                '<td class="py-2.5 px-3 text-right font-bold text-slate-800 whitespace-nowrap">' + formatRupiah(dr.grand_total || 0) + '</td>' +
+                                '<td class="py-2.5 px-3 text-right font-bold ' + gpClass + ' whitespace-nowrap">' + formatRupiah(gpNum) + '</td>' +
+                                '<td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">' + escapeHtml(dr.payment_method || '-') + '</span></td>' +
+                                '<td class="py-2.5 px-3 text-center">' +
+                                    '<div class="flex items-center justify-center space-x-1">' +
+                                        '<button type="button" onclick="openSaleDetailModal(\'' + inv + '\')" class="p-1 px-2 text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg font-bold inline-flex items-center space-x-1">' +
+                                            '<i data-lucide="eye" class="w-3 h-3"></i><span>Detail</span>' +
+                                        '</button>' +
+                                        '<button type="button" onclick="exportSingleSaleExcel(\'' + inv + '\')" class="p-1 px-2 text-[11px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg font-bold inline-flex items-center space-x-1">' +
+                                            '<i data-lucide="file-spreadsheet" class="w-3 h-3"></i><span>Excel</span>' +
+                                        '</button>' +
+                                    '</div>' +
+                                '</td>' +
+                            '</tr>';
+                        }).join('');
+                    }
+                }
+                lucide.createIcons();
+            } catch (err) {
+                console.error('Error loading discount reports:', err);
+            }
+        }
+
+        function exportDiscountReportExcel() {
+            const startInput = document.getElementById('disc-report-start-date');
+            const endInput = document.getElementById('disc-report-end-date');
+            const today = new Date().toISOString().split('T')[0];
+            const start = (startInput && startInput.value) ? startInput.value : today;
+            const end = (endInput && endInput.value) ? endInput.value : today;
+            const catEl = document.getElementById('disc-report-category-filter');
+            const cshEl = document.getElementById('disc-report-cashier-filter');
+            const payEl = document.getElementById('disc-report-payment-filter');
+            const customerCategory = catEl ? catEl.value : 'ALL';
+            const cashierFilter = cshEl ? cshEl.value : 'ALL';
+            const paymentMethod = payEl ? payEl.value : 'ALL';
+            const branchId = state.currentBranch ? state.currentBranch.id : '';
+
+            const url = `api.php?action=export_discount_excel&branch_id=${branchId}&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&customer_category=${encodeURIComponent(customerCategory)}&cashier_filter=${encodeURIComponent(cashierFilter)}&payment_method=${encodeURIComponent(paymentMethod)}`;
+            window.open(url, '_blank');
+        }
+
         function exportSingleSaleExcel(invoiceNumber) {
             if (!invoiceNumber) return;
             const url = `api.php?action=export_sales_excel&invoice_number=${encodeURIComponent(invoiceNumber)}`;
@@ -17417,12 +17912,14 @@ try {
             state.reportActiveSubtab = subtab;
             const btnSales = document.getElementById('report-subtab-btn-sales');
             const btnDeliveries = document.getElementById('report-subtab-btn-deliveries');
+            const btnDiscounts = document.getElementById('report-subtab-btn-discounts');
             const btnAR = document.getElementById('report-subtab-btn-receivables');
             const btnShifts = document.getElementById('report-subtab-btn-shifts');
             const btnBom = document.getElementById('report-subtab-btn-bom');
 
             const viewSales = document.getElementById('subtab-reports-sales');
             const viewDeliveries = document.getElementById('subtab-reports-deliveries');
+            const viewDiscounts = document.getElementById('subtab-reports-discounts');
             const viewAR = document.getElementById('subtab-reports-ar');
             const viewShifts = document.getElementById('subtab-reports-shifts');
             const viewBOM = document.getElementById('subtab-reports-bom');
@@ -17433,12 +17930,14 @@ try {
 
             if (btnSales) btnSales.className = inactiveClass;
             if (btnDeliveries) btnDeliveries.className = inactiveClass;
+            if (btnDiscounts) btnDiscounts.className = inactiveClass;
             if (btnAR) btnAR.className = inactiveClass;
             if (btnShifts) btnShifts.className = inactiveClass;
             if (btnBom) btnBom.className = inactiveClass;
 
             if (viewSales) viewSales.classList.add('hidden');
             if (viewDeliveries) viewDeliveries.classList.add('hidden');
+            if (viewDiscounts) viewDiscounts.classList.add('hidden');
             if (viewAR) viewAR.classList.add('hidden');
             if (viewShifts) viewShifts.classList.add('hidden');
             if (viewBOM) viewBOM.classList.add('hidden');
@@ -17453,6 +17952,16 @@ try {
                 if (dStart && !dStart.value && sStart && sStart.value) dStart.value = sStart.value;
                 if (dEnd && !dEnd.value && sEnd && sEnd.value) dEnd.value = sEnd.value;
                 loadDeliveryReports();
+            } else if (subtab === 'discounts') {
+                if (viewDiscounts) viewDiscounts.classList.remove('hidden');
+                if (btnDiscounts) btnDiscounts.className = activeClass;
+                const dcStart = document.getElementById('disc-report-start-date');
+                const dcEnd = document.getElementById('disc-report-end-date');
+                const sStart = document.getElementById('report-start-date');
+                const sEnd = document.getElementById('report-end-date');
+                if (dcStart && !dcStart.value && sStart && sStart.value) dcStart.value = sStart.value;
+                if (dcEnd && !dcEnd.value && sEnd && sEnd.value) dcEnd.value = sEnd.value;
+                loadDiscountReports();
             } else if (subtab === 'receivables') {
                 if (viewAR) viewAR.classList.remove('hidden');
                 if (btnAR) btnAR.className = activeClass;
@@ -33520,6 +34029,7 @@ Manager / Supervisor: __________________
                 // Reports
                 { id: 'report-subtab-btn-sales', key: 'reports:sales' },
                 { id: 'report-subtab-btn-deliveries', key: 'reports:deliveries' },
+                { id: 'report-subtab-btn-discounts', key: 'reports:discounts' },
                 { id: 'report-subtab-btn-receivables', key: 'reports:ar' },
                 { id: 'report-subtab-btn-shifts', key: 'reports:shifts' },
                 { id: 'report-subtab-btn-bom', key: 'reports:bom' },
@@ -33967,6 +34477,7 @@ Manager / Supervisor: __________________
                 subtabs: [
                     { key: 'reports:sales', title: 'Laporan Penjualan', desc: 'Rekap omzet, produk terlaris, filter kurun waktu, ekspor excel' },
                     { key: 'reports:deliveries', title: 'Laporan Kiriman & Kurir', desc: 'Rekap pengiriman pesanan pelanggan, pendapatan ongkos kirim, jarak, dan performa kurir' },
+                    { key: 'reports:discounts', title: 'Laporan Diskon & Promo', desc: 'Audit pemberian potongan harga / diskon promo per kasir, pelanggan, dan faktur' },
                     { key: 'reports:ar', title: 'Piutang Usaha', desc: 'Monitoring piutang pelanggan & pelunasan faktur' },
                     { key: 'reports:shifts', title: 'Shift Kasir', desc: 'Audit shift kasir, saldo kas laci, dan selisih kas fisik' },
                     { key: 'reports:bom', title: 'Pemakaian Bahan (BOM)', desc: 'Audit pemakaian bahan baku & formula resep' }

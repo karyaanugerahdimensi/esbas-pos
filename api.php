@@ -8522,6 +8522,9 @@ try {
                     COUNT(s.id) as total_transactions,
                     COALESCE(SUM(s.subtotal), 0) as gross_sales,
                     COALESCE(SUM(s.discount), 0) as total_discount,
+                    COALESCE(SUM(CASE WHEN COALESCE(s.discount, 0) > 0 THEN 1 ELSE 0 END), 0) as discounted_orders_count,
+                    COALESCE(SUM(CASE WHEN COALESCE(s.discount, 0) > 0 THEN s.subtotal ELSE 0 END), 0) as discounted_gross_sales,
+                    COALESCE(MAX(COALESCE(s.discount, 0)), 0) as max_discount,
                     COALESCE(SUM(s.tax), 0) as total_tax,
                     COALESCE(SUM(s.delivery_fee), 0) as total_delivery_fee,
                     COALESCE(SUM(CASE WHEN {$isDelivExpr} THEN 1 ELSE 0 END), 0) as delivery_orders_count,
@@ -8541,6 +8544,9 @@ try {
             $grossProfit = $netSales - $summary['total_cogs'];
             $grossMargin = $netSales > 0 ? round(($grossProfit / $netSales) * 100, 1) : 0;
             $aov = $summary['total_transactions'] > 0 ? round($summary['total_revenue'] / $summary['total_transactions']) : 0;
+            $discOrdersCount = (int)($summary['discounted_orders_count'] ?? 0);
+            $avgDiscountPerOrder = $discOrdersCount > 0 ? round((float)$summary['total_discount'] / $discOrdersCount) : 0;
+            $discountRatePercent = (float)$summary['gross_sales'] > 0 ? round(((float)$summary['total_discount'] / (float)$summary['gross_sales']) * 100, 2) : 0;
 
             $stmtPayment = $pdo->prepare("
                 SELECT s.payment_method, COUNT(s.id) as count, SUM(s.grand_total) as total
@@ -8583,6 +8589,24 @@ try {
             $stmtCourierSnap->execute($params);
             $courierBreakdown = $stmtCourierSnap->fetchAll();
 
+            // Rekap ringkas pemberian diskon per kasir & kategori pelanggan pada periode yang sama
+            $stmtDiscSnap = $pdo->prepare("
+                SELECT 
+                    u.name as cashier_name,
+                    COALESCE(s.customer_category, 'REGULER') as customer_category,
+                    COUNT(s.id) as discount_count,
+                    COALESCE(SUM(s.subtotal), 0) as gross_subtotal,
+                    COALESCE(SUM(s.discount), 0) as total_discount,
+                    COALESCE(SUM(s.grand_total), 0) as total_grand
+                FROM sales s
+                JOIN users u ON u.id = s.user_id
+                $whereSql AND COALESCE(s.discount, 0) > 0
+                GROUP BY u.name, COALESCE(s.customer_category, 'REGULER')
+                ORDER BY total_discount DESC, discount_count DESC
+            ");
+            $stmtDiscSnap->execute($params);
+            $discountBreakdown = $stmtDiscSnap->fetchAll();
+
             $stmtTopProducts = $pdo->prepare("
                 SELECT si.product_name, SUM(si.qty) as total_qty, 
                        SUM(si.subtotal_price) as total_sales,
@@ -8610,7 +8634,7 @@ try {
             $customerCategoryBreakdown = $stmtCatBreakdown->fetchAll();
 
             $stmtList = $pdo->prepare("
-                SELECT s.id, s.invoice_number, s.created_at, s.grand_total, s.total_cogs,
+                SELECT s.id, s.invoice_number, s.created_at, s.subtotal, COALESCE(s.discount, 0) as discount, s.grand_total, s.total_cogs,
                        (s.grand_total - COALESCE(s.tax, 0) - COALESCE(s.delivery_fee, 0) - s.total_cogs) as gross_profit,
                        s.payment_method, s.customer_name, s.customer_category, s.sales_type,
                        COALESCE(s.delivery_fee, 0) as delivery_fee,
@@ -8664,6 +8688,11 @@ try {
                     'total_transactions' => (int)$summary['total_transactions'],
                     'gross_sales' => (float)$summary['gross_sales'],
                     'total_discount' => (float)$summary['total_discount'],
+                    'discounted_orders_count' => $discOrdersCount,
+                    'discounted_gross_sales' => (float)($summary['discounted_gross_sales'] ?? 0),
+                    'max_discount' => (float)($summary['max_discount'] ?? 0),
+                    'avg_discount_per_order' => (float)$avgDiscountPerOrder,
+                    'discount_rate_percent' => (float)$discountRatePercent,
                     'net_sales' => (float)$netSales,
                     'total_cogs' => (float)$summary['total_cogs'],
                     'gross_profit' => (float)$grossProfit,
@@ -8680,6 +8709,9 @@ try {
                 'payment_breakdown' => $paymentBreakdown,
                 'delivery_summary' => [
                     'couriers' => $courierBreakdown
+                ],
+                'discount_summary' => [
+                    'breakdown' => $discountBreakdown
                 ],
                 'customer_category_breakdown' => $customerCategoryBreakdown,
                 'top_products' => $topProducts,
@@ -8976,6 +9008,321 @@ try {
                 'drivers_list' => $driversList,
                 'courier_summary' => $courierSummary,
                 'deliveries' => $deliveries
+            ]);
+            break;
+
+        case 'discount_reports':
+        case 'export_discount_excel':
+            $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : null;
+            $startDate = !empty($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
+            $endDate = !empty($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
+            $customerCategory = strtoupper(trim($_GET['customer_category'] ?? 'ALL'));
+            $paymentMethod = strtoupper(trim($_GET['payment_method'] ?? 'ALL'));
+            $cashierFilter = trim($_GET['cashier_filter'] ?? 'ALL');
+
+            // Hitung total seluruh transaksi toko pada periode/cabang untuk rasio pembanding
+            $storeWhere = "WHERE date(s.created_at) BETWEEN ? AND ? AND (s.status IS NULL OR s.status != 'CANCELLED')";
+            $storeParams = [$startDate, $endDate];
+            if ($branchId) {
+                $storeWhere .= " AND s.branch_id = ?";
+                $storeParams[] = $branchId;
+            }
+            $stStoreTotals = $pdo->prepare("SELECT COUNT(s.id) as total_tx, COALESCE(SUM(s.subtotal), 0) as gross_sales FROM sales s {$storeWhere}");
+            $stStoreTotals->execute($storeParams);
+            $storeTotals = $stStoreTotals->fetch(PDO::FETCH_ASSOC);
+            $periodTotalTx = (int)($storeTotals['total_tx'] ?? 0);
+            $periodGrossSales = (float)($storeTotals['gross_sales'] ?? 0);
+
+            $baseDiscWhere = "{$storeWhere} AND COALESCE(s.discount, 0) > 0";
+            $baseDiscParams = $storeParams;
+
+            // Daftar kasir pemberi diskon untuk dropdown filter
+            $stCashiers = $pdo->prepare("
+                SELECT DISTINCT u.name as cashier_name
+                FROM sales s
+                JOIN users u ON u.id = s.user_id
+                {$baseDiscWhere}
+                ORDER BY u.name ASC
+            ");
+            $stCashiers->execute($baseDiscParams);
+            $cashiersList = array_values(array_filter($stCashiers->fetchAll(PDO::FETCH_COLUMN)));
+
+            $filterWhere = $baseDiscWhere;
+            $filterParams = $baseDiscParams;
+            if ($customerCategory !== 'ALL' && $customerCategory !== '') {
+                $filterWhere .= " AND UPPER(COALESCE(s.customer_category, 'REGULER')) = ?";
+                $filterParams[] = $customerCategory;
+            }
+            if ($paymentMethod !== 'ALL' && $paymentMethod !== '') {
+                $filterWhere .= " AND s.payment_method = ?";
+                $filterParams[] = $paymentMethod;
+            }
+            if ($cashierFilter !== 'ALL' && $cashierFilter !== '') {
+                $filterWhere .= " AND u.name = ?";
+                $filterParams[] = $cashierFilter;
+            }
+
+            // 1. KPI Summary Diskon
+            $stDiscKpi = $pdo->prepare("
+                SELECT 
+                    COUNT(s.id) as total_discounted_orders,
+                    COALESCE(SUM(s.discount), 0) as total_discount_amount,
+                    COALESCE(MAX(s.discount), 0) as max_single_discount,
+                    COALESCE(SUM(s.subtotal), 0) as discounted_gross_subtotal,
+                    COALESCE(SUM(s.subtotal - COALESCE(s.discount, 0)), 0) as discounted_net_sales,
+                    COALESCE(SUM(s.total_cogs), 0) as discounted_total_cogs,
+                    COALESCE(SUM((s.subtotal - COALESCE(s.discount, 0)) - s.total_cogs), 0) as discounted_gross_profit,
+                    COALESCE(SUM(s.grand_total), 0) as discounted_grand_total
+                FROM sales s
+                JOIN users u ON u.id = s.user_id
+                {$filterWhere}
+            ");
+            $stDiscKpi->execute($filterParams);
+            $dcKpi = $stDiscKpi->fetch(PDO::FETCH_ASSOC);
+
+            $totDiscOrders = (int)($dcKpi['total_discounted_orders'] ?? 0);
+            $totDiscAmt = (float)($dcKpi['total_discount_amount'] ?? 0);
+            $discGrossSub = (float)($dcKpi['discounted_gross_subtotal'] ?? 0);
+            $discNetSales = (float)($dcKpi['discounted_net_sales'] ?? 0);
+            $discGrossProfit = (float)($dcKpi['discounted_gross_profit'] ?? 0);
+
+            $avgDiscOrder = $totDiscOrders > 0 ? round($totDiscAmt / $totDiscOrders) : 0;
+            $discOrdersRatioPct = $periodTotalTx > 0 ? round(($totDiscOrders / $periodTotalTx) * 100, 1) : 0;
+            $discPctOfDiscountedSales = $discGrossSub > 0 ? round(($totDiscAmt / $discGrossSub) * 100, 2) : 0;
+            $discPctOfStoreGross = $periodGrossSales > 0 ? round(($totDiscAmt / $periodGrossSales) * 100, 2) : 0;
+            $discMarginPct = $discNetSales > 0 ? round(($discGrossProfit / $discNetSales) * 100, 1) : 0;
+
+            // 2. Rekapitulasi Pemberian Diskon per Kasir
+            $stByCashier = $pdo->prepare("
+                SELECT 
+                    u.name as cashier_name,
+                    COUNT(s.id) as discount_orders,
+                    COALESCE(SUM(s.subtotal), 0) as gross_subtotal,
+                    COALESCE(SUM(s.discount), 0) as total_discount,
+                    COALESCE(SUM(s.subtotal - COALESCE(s.discount, 0)), 0) as net_sales,
+                    COALESCE(SUM((s.subtotal - COALESCE(s.discount, 0)) - s.total_cogs), 0) as gross_profit
+                FROM sales s
+                JOIN users u ON u.id = s.user_id
+                {$filterWhere}
+                GROUP BY u.name
+                ORDER BY total_discount DESC, discount_orders DESC
+            ");
+            $stByCashier->execute($filterParams);
+            $cashierSummary = $stByCashier->fetchAll(PDO::FETCH_ASSOC);
+
+            // 3. Rekapitulasi Penerima Diskon per Pelanggan & Kategori
+            $stByCustomer = $pdo->prepare("
+                SELECT 
+                    COALESCE(s.customer_name, 'Pelanggan Umum') as customer_name,
+                    COALESCE(s.customer_category, 'REGULER') as customer_category,
+                    COUNT(s.id) as discount_orders,
+                    COALESCE(SUM(s.subtotal), 0) as gross_subtotal,
+                    COALESCE(SUM(s.discount), 0) as total_discount,
+                    COALESCE(SUM(s.subtotal - COALESCE(s.discount, 0)), 0) as net_sales
+                FROM sales s
+                JOIN users u ON u.id = s.user_id
+                {$filterWhere}
+                GROUP BY COALESCE(s.customer_name, 'Pelanggan Umum'), COALESCE(s.customer_category, 'REGULER')
+                ORDER BY total_discount DESC, discount_orders DESC
+            ");
+            $stByCustomer->execute($filterParams);
+            $customerSummary = $stByCustomer->fetchAll(PDO::FETCH_ASSOC);
+
+            // 4. Daftar Rincian Faktur Berdiskon
+            $limitClause = ($action === 'export_discount_excel') ? '' : 'LIMIT 200';
+            $stDiscRows = $pdo->prepare("
+                SELECT 
+                    s.id, s.invoice_number, s.created_at,
+                    COALESCE(s.customer_name, 'Pelanggan Umum') as customer_name,
+                    COALESCE(s.customer_category, 'REGULER') as customer_category,
+                    s.subtotal,
+                    COALESCE(s.discount, 0) as discount,
+                    COALESCE(s.tax, 0) as tax,
+                    COALESCE(s.delivery_fee, 0) as delivery_fee,
+                    s.grand_total,
+                    s.total_cogs,
+                    ((s.subtotal - COALESCE(s.discount, 0)) - s.total_cogs) as gross_profit,
+                    s.payment_method,
+                    b.name as branch_name,
+                    u.name as cashier_name
+                FROM sales s
+                JOIN branches b ON b.id = s.branch_id
+                JOIN users u ON u.id = s.user_id
+                {$filterWhere}
+                ORDER BY s.id DESC
+                {$limitClause}
+            ");
+            $stDiscRows->execute($filterParams);
+            $discountRows = $stDiscRows->fetchAll(PDO::FETCH_ASSOC);
+
+            if (!empty($discountRows)) {
+                $saleIds = array_map(function($r) { return (int)$r['id']; }, $discountRows);
+                $inIds = implode(',', array_fill(0, count($saleIds), '?'));
+                $stSi = $pdo->prepare("SELECT sale_id, product_name, variant_name, qty FROM sale_items WHERE sale_id IN ({$inIds}) ORDER BY id ASC");
+                $stSi->execute($saleIds);
+                $itemsMap = [];
+                foreach ($stSi->fetchAll(PDO::FETCH_ASSOC) as $si) {
+                    $sid = (int)$si['sale_id'];
+                    $lbl = $si['product_name'] . (!empty($si['variant_name']) ? ' [' . $si['variant_name'] . ']' : '') . ' (' . (float)$si['qty'] . 'x)';
+                    $itemsMap[$sid][] = $lbl;
+                }
+                foreach ($discountRows as &$dRow) {
+                    $sid = (int)$dRow['id'];
+                    $dRow['items_summary'] = isset($itemsMap[$sid]) ? implode(', ', $itemsMap[$sid]) : '-';
+                    $subVal = (float)$dRow['subtotal'];
+                    $discVal = (float)$dRow['discount'];
+                    $dRow['discount_percent'] = $subVal > 0 ? round(($discVal / $subVal) * 100, 1) : 0;
+                }
+                unset($dRow);
+            }
+
+            if ($action === 'export_discount_excel') {
+                $filename = "Laporan_Diskon_Promo_{$startDate}_sd_{$endDate}.xls";
+                header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+                header('Content-Disposition: attachment; filename="' . $filename . '"');
+                header('Pragma: no-cache');
+                header('Expires: 0');
+                echo "\xEF\xBB\xBF";
+                ?>
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+                <head>
+                    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+                    <style>
+                        body { font-family: Arial, sans-serif; font-size: 11pt; }
+                        table { border-collapse: collapse; width: 100%; margin-bottom: 18px; }
+                        th { background-color: #e11d48; color: #ffffff; font-weight: bold; border: 1px solid #9f1239; padding: 6px 10px; text-align: center; }
+                        td { border: 1px solid #cbd5e1; padding: 5px 8px; vertical-align: middle; }
+                        .num { mso-number-format: "\#\,\#\#0"; text-align: right; }
+                        .dec { mso-number-format: "0\.00"; text-align: right; }
+                        .txt { mso-number-format: "\@"; }
+                        .center { text-align: center; }
+                        .bold { font-weight: bold; }
+                        .title { font-size: 16pt; font-weight: bold; color: #9f1239; }
+                        .subtitle { font-size: 10pt; color: #475569; }
+                        .sec-title { font-size: 12pt; font-weight: bold; color: #881337; margin: 12px 0 6px 0; }
+                        .bg-total { background-color: #ffe4e6; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class="title">LAPORAN AUDIT DISKON & POTONGAN HARGA PENJUALAN</div>
+                    <div class="subtitle">Periode: <?= htmlspecialchars($startDate) ?> s/d <?= htmlspecialchars($endDate) ?> | Nota Berdiskon: <?= $totDiscOrders ?> dari <?= $periodTotalTx ?> Nota | Total Diskon: Rp <?= number_format($totDiscAmt, 0, ',', '.') ?></div>
+                    <br />
+                    <div class="sec-title">A. REKAPITULASI PEMBERIAN DISKON PER KASIR</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Kasir</th>
+                                <th>Jumlah Nota Berdiskon</th>
+                                <th>Subtotal Sebelum Diskon (Rp)</th>
+                                <th>Total Potongan Diskon (Rp)</th>
+                                <th>Rasio Diskon (%)</th>
+                                <th>Penjualan Bersih (Rp)</th>
+                                <th>Sisa Laba Kotor (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($cashierSummary)): ?>
+                                <tr><td colspan="8" class="center">Tidak ada data diskon pada periode ini.</td></tr>
+                            <?php else: foreach ($cashierSummary as $idx => $cs):
+                                $cPct = (float)$cs['gross_subtotal'] > 0 ? round(((float)$cs['total_discount'] / (float)$cs['gross_subtotal']) * 100, 2) : 0;
+                            ?>
+                                <tr>
+                                    <td class="center"><?= $idx + 1 ?></td>
+                                    <td class="bold"><?= htmlspecialchars($cs['cashier_name']) ?></td>
+                                    <td class="num"><?= (int)$cs['discount_orders'] ?></td>
+                                    <td class="num"><?= (float)$cs['gross_subtotal'] ?></td>
+                                    <td class="num bold"><?= (float)$cs['total_discount'] ?></td>
+                                    <td class="dec"><?= $cPct ?></td>
+                                    <td class="num"><?= (float)$cs['net_sales'] ?></td>
+                                    <td class="num"><?= (float)$cs['gross_profit'] ?></td>
+                                </tr>
+                            <?php endforeach; endif; ?>
+                        </tbody>
+                    </table>
+
+                    <div class="sec-title">B. DAFTAR RINCIAN FAKTUR BERDISKON</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>No. Faktur</th>
+                                <th>Tanggal / Waktu</th>
+                                <th>Cabang</th>
+                                <th>Kasir</th>
+                                <th>Pelanggan</th>
+                                <th>Kategori</th>
+                                <th>Rincian Item Dibeli</th>
+                                <th>Subtotal Kotor (Rp)</th>
+                                <th>Potongan Diskon (Rp)</th>
+                                <th>Diskon (%)</th>
+                                <th>Ongkos Kirim (Rp)</th>
+                                <th>Total Bayar Nota (Rp)</th>
+                                <th>Laba Kotor (Rp)</th>
+                                <th>Metode Bayar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($discountRows)): ?>
+                                <tr><td colspan="15" class="center">Tidak ada rincian faktur berdiskon.</td></tr>
+                            <?php else: foreach ($discountRows as $i => $dr): ?>
+                                <tr>
+                                    <td class="center"><?= $i + 1 ?></td>
+                                    <td class="txt bold"><?= htmlspecialchars($dr['invoice_number']) ?></td>
+                                    <td class="txt"><?= htmlspecialchars($dr['created_at']) ?></td>
+                                    <td><?= htmlspecialchars($dr['branch_name']) ?></td>
+                                    <td><?= htmlspecialchars($dr['cashier_name']) ?></td>
+                                    <td><?= htmlspecialchars($dr['customer_name']) ?></td>
+                                    <td class="center"><?= htmlspecialchars($dr['customer_category']) ?></td>
+                                    <td><?= htmlspecialchars($dr['items_summary']) ?></td>
+                                    <td class="num"><?= (float)$dr['subtotal'] ?></td>
+                                    <td class="num bold"><?= (float)$dr['discount'] ?></td>
+                                    <td class="dec"><?= (float)$dr['discount_percent'] ?></td>
+                                    <td class="num"><?= (float)$dr['delivery_fee'] ?></td>
+                                    <td class="num bold"><?= (float)$dr['grand_total'] ?></td>
+                                    <td class="num"><?= (float)$dr['gross_profit'] ?></td>
+                                    <td class="center"><?= htmlspecialchars($dr['payment_method']) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                                <tr class="bg-total">
+                                    <td colspan="8" class="center">GRAND TOTAL DISKON PERIODE INI</td>
+                                    <td class="num"><?= $discGrossSub ?></td>
+                                    <td class="num"><?= $totDiscAmt ?></td>
+                                    <td class="dec"><?= $discPctOfDiscountedSales ?></td>
+                                    <td class="num">-</td>
+                                    <td class="num"><?= (float)($dcKpi['discounted_grand_total'] ?? 0) ?></td>
+                                    <td class="num"><?= $discGrossProfit ?></td>
+                                    <td></td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </body>
+                </html>
+                <?php
+                exit;
+            }
+
+            echo json_encode([
+                'success' => true,
+                'kpi' => [
+                    'total_discounted_orders' => $totDiscOrders,
+                    'period_total_orders' => $periodTotalTx,
+                    'discounted_orders_ratio_percent' => $discOrdersRatioPct,
+                    'total_discount_amount' => $totDiscAmt,
+                    'avg_discount_per_order' => $avgDiscOrder,
+                    'max_single_discount' => (float)($dcKpi['max_single_discount'] ?? 0),
+                    'discounted_gross_subtotal' => $discGrossSub,
+                    'discounted_net_sales' => $discNetSales,
+                    'discount_pct_of_discounted_sales' => $discPctOfDiscountedSales,
+                    'discount_pct_of_store_gross' => $discPctOfStoreGross,
+                    'discounted_gross_profit' => $discGrossProfit,
+                    'discounted_margin_percent' => $discMarginPct
+                ],
+                'cashiers_list' => $cashiersList,
+                'cashier_summary' => $cashierSummary,
+                'customer_summary' => $customerSummary,
+                'discounts' => $discountRows
             ]);
             break;
 
@@ -16824,6 +17171,7 @@ try {
                 'pos' => 'POS Penjualan',
                 'reports' => 'Laporan Penjualan',
                 'reports:deliveries' => 'Laporan Kiriman & Kurir',
+                'reports:discounts' => 'Laporan Diskon & Promo',
                 'ess' => 'Portal ESS Karyawan',
                 'employees' => 'Kelola Karyawan',
                 'payroll' => 'Payroll & Slip Gaji',
