@@ -73,7 +73,7 @@ try {
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="KAD Tech">
     <meta name="application-name" content="KAD Tech Retail">
-    <link rel="manifest" href="manifest.json?v=1.4.6">
+    <link rel="manifest" href="manifest.json?v=1.4.7">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
     <title>KAD Tech Retail - POS Multi-Cabang v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</title>
@@ -3786,7 +3786,7 @@ try {
                         <div>
                             <p class="font-bold">Ketentuan & Aturan Transaksi Mitra Rekanan B2B:</p>
                             <p class="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
-                                Setiap mitra bisnis dapat memiliki <strong>kesepakatan harga kontrak khusus per produk</strong>. Jika kontrak khusus diset, POS kasir akan memprioritaskan harga kontrak tersebut. Jika kontrak khusus belum diset, kasir otomatis menerapkan <strong>Harga Tier Mitra</strong> yang telah dikonfigurasi pada menu Master Produk.
+                                Setiap mitra bisnis memiliki <strong>kesepakatan harga kontrak khusus per produk</strong>. Sesuai aturan eksklusivitas katalog mitra, menu POS penjualan <strong>hanya menampilkan dan mengizinkan transaksi untuk produk yang memiliki Kontrak Aktif</strong>. Produk yang belum diset kontrak khusus tidak akan dimunculkan di katalog kasir saat melayani mitra ini.
                             </p>
                         </div>
                     </div>
@@ -12600,11 +12600,28 @@ try {
             if (!grid) return;
             const activeCust = state.selectedCustomer;
             const activeCat = state.selectedCustomerCategory || (activeCust ? activeCust.category : 'REGULER');
+            const catObj = (state.customerCategories || []).find(c => c.code === activeCat || c.name === activeCat || c.id == activeCat);
+            const tier = (catObj && catObj.default_tier) ? catObj.default_tier : activeCat;
+            const isMitraTier = (tier === 'MITRA');
 
             const filtered = state.products.filter(function(p) {
                 if (p.product_type === 'RAW_MATERIAL') return false;
                 var pCat = String(p.category || '').toLowerCase();
                 if (pCat.indexOf('bahan baku') !== -1 || pCat.indexOf('raw material') !== -1) return false;
+
+                // ATURAN PRODUK MITRA: Hanya menampilkan produk yang diset kontrak aktif. Jika tidak diset maka produk tidak dimunculkan di menu pos penjualan
+                if (isMitraTier) {
+                    if (!activeCust || !activeCust.id) {
+                        return false; // Mitra belum dipilih, sembunyikan katalog sampai mitra dipilih
+                    }
+                    const customContract = (state.mitraPrices || []).find(function(mp) {
+                        return (String(mp.customer_id) === String(activeCust.id)) && (String(mp.product_id) === String(p.id));
+                    });
+                    const isContractActive = customContract && Number(customContract.custom_price) > 0;
+                    if (!isContractActive) {
+                        return false; // Produk tidak diset kontrak aktif -> jangan munculkan di menu POS
+                    }
+                }
 
                 const matchCat = (state.selectedCategory === 'ALL' || (p.category || '').toLowerCase() === (state.selectedCategory || '').toLowerCase());
                 const matchKeyword = (!state.searchKeyword || p.name.toLowerCase().includes(state.searchKeyword) || p.sku.toLowerCase().includes(state.searchKeyword));
@@ -12612,7 +12629,27 @@ try {
             });
 
             if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-3 text-center py-12 text-slate-400 dark:text-slate-500 text-sm">Tidak ada produk jadi ditemukan</div>`;
+                if (isMitraTier) {
+                    if (!activeCust || !activeCust.id) {
+                        grid.innerHTML = `
+                            <div class="col-span-full text-center py-12 text-slate-400 dark:text-slate-500 text-sm">
+                                <div class="text-3xl mb-2">🤝</div>
+                                <div class="font-bold text-slate-700 dark:text-slate-300">Pilih Mitra Terlebih Dahulu</div>
+                                <div class="text-xs text-slate-400 mt-1">Hanya produk yang diset kontrak aktif untuk mitra tersebut yang akan dimunculkan di menu POS penjualan.</div>
+                            </div>
+                        `;
+                    } else {
+                        grid.innerHTML = `
+                            <div class="col-span-full text-center py-12 text-slate-400 dark:text-slate-500 text-sm">
+                                <div class="text-3xl mb-2">📋</div>
+                                <div class="font-bold text-slate-700 dark:text-slate-300">Tidak Ada Produk Kontrak Aktif</div>
+                                <div class="text-xs text-slate-400 mt-1">Mitra <b>${escapeHtml(activeCust.name)}</b> belum memiliki produk yang diset kontrak aktif.<br>Silakan atur kontrak harga di menu <b>Pelanggan &gt; Kontrak Khusus Mitra</b>.</div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    grid.innerHTML = `<div class="col-span-3 text-center py-12 text-slate-400 dark:text-slate-500 text-sm">Tidak ada produk jadi ditemukan</div>`;
+                }
                 return;
             }
 
@@ -12677,6 +12714,22 @@ try {
             if (!state.selectedCustomer) {
                 openSelectCustomerModal(productId, null);
                 return;
+            }
+
+            // ATURAN PRODUK MITRA: Hanya produk dengan Kontrak Aktif yang dapat dipilih
+            const cust = state.selectedCustomer;
+            const cat = state.selectedCustomerCategory || (cust ? cust.category : 'REGULER');
+            const catObj = (state.customerCategories || []).find(c => c.code === cat || c.name === cat || c.id == cat);
+            const tier = (catObj && catObj.default_tier) ? catObj.default_tier : cat;
+            if (tier === 'MITRA') {
+                const customContract = (state.mitraPrices || []).find(function(mp) {
+                    return (String(mp.customer_id) === String(cust.id)) && (String(mp.product_id) === String(product.id));
+                });
+                const isContractActive = customContract && Number(customContract.custom_price) > 0;
+                if (!isContractActive) {
+                    alert("Produk '" + product.name + "' tidak dapat dipilih karena belum diset Kontrak Aktif untuk mitra '" + (cust.name || '') + "'.\n\nHanya produk yang diset kontrak aktif yang dapat ditransaksikan di POS.");
+                    return;
+                }
             }
 
             const isProductStrictStock = (Number(_nn(product.is_stockable, 1)) === 1 && Number(_nn(product.cat_is_stockable, 1)) === 1 && product.requires_stock !== 0);
@@ -12754,6 +12807,22 @@ try {
 
             const product = state.products.find(p => p.id === productId);
             if (!product) return;
+
+            // ATURAN PRODUK MITRA: Hanya produk dengan Kontrak Aktif yang dapat dimasukkan ke keranjang
+            const cust = state.selectedCustomer;
+            const cat = state.selectedCustomerCategory || (cust ? cust.category : 'REGULER');
+            const catObj = (state.customerCategories || []).find(c => c.code === cat || c.name === cat || c.id == cat);
+            const tier = (catObj && catObj.default_tier) ? catObj.default_tier : cat;
+            if (tier === 'MITRA') {
+                const customContract = (state.mitraPrices || []).find(function(mp) {
+                    return (String(mp.customer_id) === String(cust.id)) && (String(mp.product_id) === String(product.id));
+                });
+                const isContractActive = customContract && Number(customContract.custom_price) > 0;
+                if (!isContractActive) {
+                    alert("Produk '" + product.name + "' tidak dapat dimasukkan ke keranjang karena belum diset Kontrak Aktif untuk mitra '" + (cust.name || '') + "'.\n\nHanya produk yang diset kontrak aktif yang dapat ditransaksikan di POS.");
+                    return;
+                }
+            }
 
             const isProductStrictStock = (Number(_nn(product.is_stockable, 1)) === 1 && Number(_nn(product.cat_is_stockable, 1)) === 1 && product.requires_stock !== 0);
             if (isProductStrictStock && product.stock <= 0) {
@@ -26657,7 +26726,7 @@ Manager / Supervisor: __________________
                             <td class="py-3 px-4 text-center">
                                 ${isContractSet ? 
                                     '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✅ Kontrak Aktif</span>' :
-                                    '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500">Tier Mitra Umum</span>'
+                                    '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500" title="Belum diset kontrak. Produk ini tidak akan dimunculkan di menu POS untuk mitra ini.">⚪ Belum Diset (Tidak Tampil di POS)</span>'
                                 }
                             </td>
                             <td class="py-3 px-4 text-center">

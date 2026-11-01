@@ -6853,7 +6853,16 @@ try {
                 // 3. Mitra Contract Pricing Override (Setiap mitra harga berbeda)
                 $unitPrice = (float)$stockRow['local_price'];
 
-                if ($customerCategory === 'MITRA') {
+                // Resolusi default tier dari master customer_categories
+                $effectiveTier = $customerCategory;
+                $stmtTierCheck = $pdo->prepare("SELECT default_tier FROM customer_categories WHERE code = ?");
+                $stmtTierCheck->execute([$customerCategory]);
+                $dbTier = $stmtTierCheck->fetchColumn();
+                if (!empty($dbTier)) {
+                    $effectiveTier = strtoupper(trim($dbTier));
+                }
+
+                if ($effectiveTier === 'MITRA') {
                     // Check if this specific mitra has custom contract price for this product
                     $stmtMitra = $pdo->prepare("SELECT custom_price FROM mitra_custom_prices WHERE customer_id = ? AND product_id = ?");
                     $stmtMitra->execute([$customerId, $pId]);
@@ -6861,18 +6870,24 @@ try {
 
                     if ($customMitraPrice !== false && (float)$customMitraPrice > 0) {
                         $unitPrice = (float)$customMitraPrice;
-                    } elseif ((float)$stockRow['mitra_price'] > 0) {
-                        $unitPrice = (float)$stockRow['mitra_price'];
                     } else {
-                        $unitPrice = (float)$stockRow['local_price'];
+                        // Aturan Bisnis FR-POS-52: Khusus pelanggan tier MITRA, hanya produk dengan Kontrak Aktif yang diizinkan untuk ditransaksikan
+                        if ($pdo->inTransaction()) {
+                            $pdo->rollBack();
+                        }
+                        echo json_encode([
+                            'success' => false,
+                            'message' => "Transaksi ditolak: Produk '{$stockRow['name']}' tidak dapat ditransaksikan karena belum diset Kontrak Aktif untuk mitra '{$customerName}'."
+                        ]);
+                        exit;
                     }
-                } elseif ($customerCategory === 'RESELLER') {
+                } elseif ($effectiveTier === 'RESELLER') {
                     if ((float)$stockRow['reseller_price'] > 0) {
                         $unitPrice = (float)$stockRow['reseller_price'];
                     } else {
                         $unitPrice = (float)$stockRow['local_price'];
                     }
-                } elseif ($customerCategory === 'MEMBER') {
+                } elseif ($effectiveTier === 'MEMBER') {
                     if ((float)$stockRow['member_price'] > 0) {
                         $unitPrice = (float)$stockRow['member_price'];
                     } else {

@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.4.6",
-    "build": "20261101-72",
+    "version": "1.4.7",
+    "build": "20261101-73",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.4.7",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Eksklusivitas Katalog POS Kasir Mitra Khusus Produk Kontrak Aktif (FR-POS-52)",
+            "description": "Menyaring katalog produk di menu POS kasir secara ketat saat melayani pelanggan kategori/tier MITRA sehingga hanya menampilkan produk yang telah diset Kontrak Aktif (custom_price > 0): (1) Filter Eksklusif renderProducts(): Produk tanpa kontrak aktif disembunyikan sepenuhnya dari grid POS, disertai empty state informatif jika mitra belum memiliki produk kontrak aktif atau kasir belum memilih mitra; (2) Dual-Layer Guard Check POS (onProductClick & addToCart): Memvalidasi pemilihan dan penambahan item agar produk tanpa kontrak aktif tidak dapat dimasukkan ke keranjang kasir; (3) Backend Validation di api.php (checkout_sale): Menolak dan membatalkan transaksi seketika (rollback) jika item penjualan untuk pelanggan tier MITRA belum memiliki kesepakatan kontrak aktif di database; (4) Penyelarasan CRM Subtab 2 & UI Badge: Memperbarui panduan regulasi kontrak mitra dan badge status tabel dari 'Tier Mitra Umum' menjadi '⚪ Belum Diset (Tidak Tampil di POS)'; (5) Kompatibilitas Penuh Android 8: 100% kode ES5/ES6 bebas ES2020 blocker.",
+            "rollback_command": "git checkout v1.4.6"
+        },
         {
             "version": "1.4.6",
             "commit": "HEAD",
