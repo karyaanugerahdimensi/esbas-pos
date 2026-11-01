@@ -10534,6 +10534,33 @@ try {
     <!-- JAVASCRIPT APP LOGIC                                     -->
     <!-- ======================================================== -->
     <script>
+        // ========================================================
+        // ANDROID 8+ (CHROMIUM 58+) & ES2015 COMPATIBILITY HELPERS
+        // ========================================================
+        function _el(id) {
+            return document.getElementById(id);
+        }
+        function _val(id, fallback) {
+            var el = document.getElementById(id);
+            return (el && el.value !== undefined) ? el.value : (fallback !== undefined ? fallback : '');
+        }
+        function _chk(id) {
+            var el = document.getElementById(id);
+            return el ? Boolean(el.checked) : false;
+        }
+        function _cls(id, action, clsName) {
+            var el = document.getElementById(id);
+            if (el && el.classList) {
+                if (action === 'add') el.classList.add(clsName);
+                else if (action === 'remove') el.classList.remove(clsName);
+            }
+        }
+        function _nn(val, fallback) {
+            return (val !== undefined && val !== null) ? val : fallback;
+        }
+        // IndexedDB Vendor Prefix Fallback for Android 8 WebView
+        window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.msIndexedDB;
+
         const state = {
             currentTab: 'pos',
             sidebarCollapsed: (function() {
@@ -10615,9 +10642,26 @@ try {
         };
 
         // ========================================================
-        // PWA SERVICE WORKER REGISTRATION & INSTALL PROMPT
+        // PWA SERVICE WORKER REGISTRATION & INSTALL PROMPT (Android 8+ Compatible)
         // ========================================================
         let deferredPwaPrompt = null;
+
+        function checkPwaInstallVisibility() {
+            try {
+                const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+                const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const pwaBtn = document.getElementById('btn-pwa-install');
+                if (pwaBtn && !isStandalone) {
+                    if (deferredPwaPrompt || isMobileOrTablet) {
+                        pwaBtn.classList.remove('hidden');
+                        pwaBtn.style.display = 'inline-flex';
+                    }
+                }
+            } catch(e) {
+                console.warn('Error checkPwaInstallVisibility:', e);
+            }
+        }
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
@@ -10627,6 +10671,7 @@ try {
                     .catch(err => {
                         console.warn('Gagal mendaftarkan ServiceWorker:', err);
                     });
+                checkPwaInstallVisibility();
             });
         }
 
@@ -10651,7 +10696,7 @@ try {
                     deferredPwaPrompt = null;
                 });
             } else {
-                alert("Petunjuk Pemasangan Web App di Layar Utama (Android / Tablet):\n\n1. Ketuk ikon menu titik tiga (⋮) di pojok kanan atas browser Chrome/Edge.\n2. Pilih 'Tambahkan ke Layar Utama' (Add to Home Screen) atau 'Instal Aplikasi'.\n3. Aplikasi ESBAS Retail POS akan terpasang di menu utama tablet Anda layaknya aplikasi asli (Native App).");
+                alert("Petunjuk Pemasangan Web App di Layar Utama (Android 8+ / Tablet):\n\n1. Ketuk ikon menu titik tiga (⋮) di pojok kanan atas browser Chrome / Samsung Internet.\n2. Pilih 'Tambahkan ke Layar Utama' (Add to Home Screen) atau 'Instal Aplikasi'.\n3. Beri nama 'ESBAS POS' lalu ketuk 'Tambah' / 'Add'.\n4. Buka aplikasi ESBAS POS langsung dari ikon layar utama tablet Anda untuk tampilan penuh mandiri (Standalone) tanpa bilah alamat browser.");
             }
         };
 
@@ -10757,14 +10802,92 @@ try {
             }
         };
 
-        // SHA-256 Salted Hash Helper (Sesuai dengan esbas_salt_2026 di backend)
+        // Pure JavaScript SHA-256 (NIST FIPS 180-4) Fallback untuk Android 8 & Konteks Non-HTTPS (HTTP)
+        function jsSha256(ascii) {
+            function rightRotate(value, amount) {
+                return (value >>> amount) | (value << (32 - amount));
+            }
+            var mathPow = Math.pow;
+            var maxWord = mathPow(2, 32);
+            var lengthProperty = 'length';
+            var i, j;
+            var result = '';
+            var words = [];
+            var asciiBitLength = ascii[lengthProperty] * 8;
+            var hash = jsSha256.h = jsSha256.h || [];
+            var k = jsSha256.k = jsSha256.k || [];
+            var primeCounter = k[lengthProperty];
+            var isComposite = {};
+            for (var candidate = 2; primeCounter < 64; candidate++) {
+                if (!isComposite[candidate]) {
+                    for (i = 0; i < 313; i += candidate) {
+                        isComposite[i] = candidate;
+                    }
+                    hash[primeCounter] = (mathPow(candidate, .5) * maxWord) | 0;
+                    k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+                }
+            }
+            hash = hash.slice(0);
+            ascii += '\x80';
+            while (ascii[lengthProperty] % 64 - 56) ascii += '\x00';
+            for (i = 0; i < ascii[lengthProperty]; i++) {
+                j = ascii.charCodeAt(i);
+                if (j >> 8) return '';
+                words[i >> 2] |= j << ((3 - i) % 4) * 8;
+            }
+            words[words[lengthProperty]] = ((asciiBitLength / maxWord) | 0);
+            words[words[lengthProperty]] = (asciiBitLength) | 0;
+            for (j = 0; j < words[lengthProperty];) {
+                var w = words.slice(j, j += 16);
+                var oldHash = hash;
+                hash = hash.slice(0, 8);
+                for (i = 0; i < 64; i++) {
+                    var i2 = i + j;
+                    var w15 = w[i - 15], w2 = w[i - 2];
+                    var a = hash[0], e = hash[4];
+                    var temp1 = hash[7]
+                        + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+                        + ((e & hash[5]) ^ ((~e) & hash[6]))
+                        + k[i]
+                        + (w[i] = (i < 16) ? w[i] : (
+                            w[i - 16]
+                            + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3))
+                            + w[i - 7]
+                            + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+                        ) | 0);
+                    var temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))
+                        + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+                    hash = [(temp1 + temp2) | 0].concat(hash);
+                    hash[4] = (hash[4] + temp1) | 0;
+                }
+                for (i = 0; i < 8; i++) {
+                    hash[i] = (hash[i] + oldHash[i]) | 0;
+                }
+            }
+            for (i = 0; i < 8; i++) {
+                for (j = 3; j + 1; j--) {
+                    var b = (hash[i] >> (j * 8)) & 255;
+                    result += ((b < 16) ? '0' : '') + b.toString(16);
+                }
+            }
+            return result;
+        }
+
+        // SHA-256 Salted Hash Helper (Mendukung WebCrypto & Fallback JS Murni untuk HTTP / Android 8)
         async function sha256Salted(input) {
             const salt = 'esbas_salt_2026';
             const text = (input || '') + ':' + salt;
-            const msgBuffer = new TextEncoder().encode(text);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            if (window.crypto && window.crypto.subtle && typeof window.crypto.subtle.digest === 'function') {
+                try {
+                    const msgBuffer = new TextEncoder().encode(text);
+                    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                } catch (e) {
+                    console.warn('WebCrypto gagal, fallback ke JS SHA-256:', e);
+                }
+            }
+            return jsSha256(text);
         }
 
         // Otentikasi Pengguna Offline Menggunakan Data Cache IndexedDB
@@ -11896,7 +12019,7 @@ try {
 
             if (tab === 'dashboard') {
                 const curUser = state.currentUser || state.loggedInUser;
-                const role = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+                const role = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
                 const isAllowed = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(role);
                 if (!isAllowed) {
                     alert('Akses Ditolak: Halaman Dashboard Eksekutif hanya dapat diakses oleh Superadmin dan Branch Manager.');
@@ -11915,7 +12038,7 @@ try {
                     loadReceivablesReport();
                 } else if (state.reportActiveSubtab === 'shifts') {
                     const curUser = state.currentUser || state.loggedInUser;
-                    const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+                    const userRole = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
                     const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
                     const hasClosed = (state.currentUserHasClosedShift === true) || (window.userHasClosedShift === true);
                     if (isManagerOrAdmin || hasClosed) {
@@ -12023,16 +12146,16 @@ try {
             if (!select) return;
             const curUser = state.currentUser || state.loggedInUser;
             const isSuper = canUserAccessAllBranches();
-            const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const userRole = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
             const isManager = ['BRANCHMANAGER', 'MANAGER'].includes(userRole);
 
             // Tentukan cabang yang diizinkan untuk diakses user ini
             let allowedBranches = state.branches || [];
             if (!isSuper) {
-                if (isManager && Array.isArray(curUser?.assigned_branch_ids) && curUser.assigned_branch_ids.length > 0) {
+                if (isManager && Array.isArray((curUser && curUser.assigned_branch_ids)) && curUser.assigned_branch_ids.length > 0) {
                     const assignedSet = new Set(curUser.assigned_branch_ids.map(Number));
                     allowedBranches = (state.branches || []).filter(b => assignedSet.has(Number(b.id)));
-                } else if (isManager && Array.isArray(curUser?.assigned_branches) && curUser.assigned_branches.length > 0) {
+                } else if (isManager && Array.isArray((curUser && curUser.assigned_branches)) && curUser.assigned_branches.length > 0) {
                     allowedBranches = curUser.assigned_branches;
                 } else {
                     const userBranch = getUserAssignedBranch();
@@ -12051,7 +12174,7 @@ try {
             } else {
                 select.disabled = false;
                 select.title = isSuper ? "Pilih cabang untuk memantau/mengelola operasional (Akses Global)" : "Pilih cabang tugas Anda (Multi-Cabang Manager)";
-                const activeBId = state.currentBranch ? state.currentBranch.id : allowedBranches[0]?.id;
+                const activeBId = state.currentBranch ? state.currentBranch.id : (allowedBranches[0] ? allowedBranches[0].id : 1);
                 select.innerHTML = allowedBranches.map(b => 
                     `<option value="${b.id}" ${b.id === activeBId ? 'selected' : ''}>${b.name}</option>`
                 ).join('');
@@ -12156,7 +12279,7 @@ try {
                 return;
             }
 
-            const isProductStrictStock = (Number(product.is_stockable ?? 1) === 1 && Number(product.cat_is_stockable ?? 1) === 1 && product.requires_stock !== 0);
+            const isProductStrictStock = (Number(_nn(product.is_stockable, 1)) === 1 && Number(_nn(product.cat_is_stockable, 1)) === 1 && product.requires_stock !== 0);
             if (isProductStrictStock && product.stock <= 0) {
                 alert(`Stok '${product.name}' habis di cabang ini!`);
                 return;
@@ -12232,7 +12355,7 @@ try {
             const product = state.products.find(p => p.id === productId);
             if (!product) return;
 
-            const isProductStrictStock = (Number(product.is_stockable ?? 1) === 1 && Number(product.cat_is_stockable ?? 1) === 1 && product.requires_stock !== 0);
+            const isProductStrictStock = (Number(_nn(product.is_stockable, 1)) === 1 && Number(_nn(product.cat_is_stockable, 1)) === 1 && product.requires_stock !== 0);
             if (isProductStrictStock && product.stock <= 0) {
                 alert(`Stok '${product.name}' habis di cabang ini!`);
                 return;
@@ -12558,7 +12681,7 @@ try {
                 // Simpan parameter aktif di state agar saat submit checkout selalu akurat
                 state.currentPosDriverUserId = driverId;
                 state.currentPosDriverName = driverName;
-                state.currentPosVehicleId = linkedVehicle ? linkedVehicle.id : (vehicleSelect?.value ? parseInt(vehicleSelect.value) : null);
+                state.currentPosVehicleId = linkedVehicle ? linkedVehicle.id : ((vehicleSelect ? vehicleSelect.value : '') ? parseInt(vehicleSelect.value) : null);
 
                 // Tampilan Ringkas & Bersih
                 const lockedView = document.getElementById('pos-driver-locked-view');
@@ -12635,7 +12758,7 @@ try {
         }
 
         async function onDeliveryToggleChange() {
-            const isChecked = document.getElementById('check-delivery-mode')?.checked || false;
+            const isChecked = _chk('check-delivery-mode') || false;
             const badge = document.getElementById('pos-delivery-badge');
             const box = document.getElementById('pos-delivery-box');
 
@@ -12687,7 +12810,7 @@ try {
         }
 
         async function calculateDeliveryFeeForPOS() {
-            const isChecked = document.getElementById('check-delivery-mode')?.checked || false;
+            const isChecked = _chk('check-delivery-mode') || false;
             if (!isChecked) return;
 
             const feeEl = document.getElementById('pos-delivery-fee-display');
@@ -12764,7 +12887,7 @@ try {
                     }
                 } else {
                     // Kasus 3: Titik koordinat pelanggan belum diatur di CRM
-                    const baseFee = state.currentDeliverySetting?.base_fee || 10000;
+                    const baseFee = (state.currentDeliverySetting ? state.currentDeliverySetting.base_fee : 10000) || 10000;
                     state.currentDeliveryFee = baseFee;
                     if (distEl && (localDistKm === null || localDistKm === 0)) distEl.innerText = '-';
                     if (feeEl) {
@@ -12830,7 +12953,7 @@ try {
             });
 
             const tax = totalTax;
-            const isDelivery = document.getElementById('check-delivery-mode')?.checked || false;
+            const isDelivery = _chk('check-delivery-mode') || false;
             const deliveryFee = isDelivery ? (state.currentDeliveryFee || 0) : 0;
             const grandTotal = Math.max(0, subtotal - discount) + tax + deliveryFee;
 
@@ -13020,7 +13143,7 @@ try {
 
             // 3. Tampilkan Subtotal, Diskon, Ongkir, Pajak, Grand Total
             const subtotal = state.cart.reduce((acc, c) => acc + (c.price * c.qty), 0);
-            const discountInput = parseFloat(document.getElementById('input-discount')?.value) || 0;
+            const discountInput = parseFloat(_val('input-discount')) || 0;
             const discount = Math.min(subtotal, Math.max(0, discountInput));
 
             let totalTax = 0;
@@ -13037,7 +13160,7 @@ try {
                 }
             });
 
-            const isDelivery = document.getElementById('check-delivery-mode')?.checked || false;
+            const isDelivery = _chk('check-delivery-mode') || false;
             const deliveryFee = isDelivery ? (state.currentDeliveryFee || 0) : 0;
             const grandTotal = Math.max(0, subtotal - discount) + totalTax + deliveryFee;
 
@@ -13163,7 +13286,7 @@ try {
             if (state.paymentMethod !== 'CASH') return;
             const subtotal = state.cart.reduce((acc, c) => acc + (c.price * c.qty), 0);
             const discount = parseFloat(document.getElementById('input-discount').value) || 0;
-            const isDelivery = document.getElementById('check-delivery-mode')?.checked || false;
+            const isDelivery = _chk('check-delivery-mode') || false;
             const deliveryFee = isDelivery ? (state.currentDeliveryFee || 0) : 0;
             
             let totalTax = 0;
@@ -13188,7 +13311,7 @@ try {
         function setExactCash() {
             const subtotal = state.cart.reduce((acc, c) => acc + (c.price * c.qty), 0);
             const discount = parseFloat(document.getElementById('input-discount').value) || 0;
-            const isDelivery = document.getElementById('check-delivery-mode')?.checked || false;
+            const isDelivery = _chk('check-delivery-mode') || false;
             const deliveryFee = isDelivery ? (state.currentDeliveryFee || 0) : 0;
 
             let totalTax = 0;
@@ -13229,12 +13352,12 @@ try {
 
             const subtotal = state.cart.reduce((acc, c) => acc + (c.price * c.qty), 0);
             const discount = parseFloat(document.getElementById('input-discount').value) || 0;
-            const isDelivery = document.getElementById('check-delivery-mode')?.checked || false;
+            const isDelivery = _chk('check-delivery-mode') || false;
             const deliveryFee = isDelivery ? (state.currentDeliveryFee || 0) : 0;
             const deliveryDistance = isDelivery ? (state.currentDeliveryDistance || 0) : 0;
-            const courierVehicleId = isDelivery ? (parseInt(document.getElementById('pos-courier-select')?.value) || state.currentPosVehicleId || null) : null;
+            const courierVehicleId = isDelivery ? (parseInt(_val('pos-courier-select')) || state.currentPosVehicleId || null) : null;
             const driverSelect = document.getElementById('pos-driver-employee-select');
-            const driverUserId = isDelivery ? (parseInt(driverSelect?.value) || state.currentPosDriverUserId || null) : null;
+            const driverUserId = isDelivery ? (parseInt((driverSelect ? driverSelect.value : '')) || state.currentPosDriverUserId || null) : null;
             let driverName = null;
             if (isDelivery) {
                 if (driverSelect && driverSelect.selectedIndex >= 0 && driverSelect.options[driverSelect.selectedIndex]) {
@@ -13343,14 +13466,14 @@ try {
                 setPaymentMethod(state.paymentMethod);
 
                 const nowTs = Date.now();
-                const offlineRef = 'INV-OFF-' + (state.currentBranch?.id || 1) + '-' + (state.currentUser?.id || 1) + '-' + nowTs.toString(36).toUpperCase();
+                const offlineRef = 'INV-OFF-' + ((state.currentBranch ? state.currentBranch.id : 1) || 1) + '-' + ((state.currentUser ? state.currentUser.id : 1) || 1) + '-' + nowTs.toString(36).toUpperCase();
 
                 const offlineSale = {
                     id: offlineRef,
                     offline_ref: offlineRef,
                     invoice_number: offlineRef,
-                    branch_id: state.currentBranch?.id || 1,
-                    user_id: state.currentUser?.id || 1,
+                    branch_id: (state.currentBranch ? state.currentBranch.id : 1) || 1,
+                    user_id: (state.currentUser ? state.currentUser.id : 1) || 1,
                     shift_id: state.activeShift ? state.activeShift.id : null,
                     customer_id: custId,
                     customer_name: custName,
@@ -13537,8 +13660,8 @@ try {
                     statusText.innerText = `${shiftTitle.toUpperCase()} AKTIF (BUKA)`;
                     statusText.className = 'text-sm font-bold text-emerald-700';
                 }
-                const openerInfo = (state.activeShift.opener_name && state.activeShift.opener_name !== state.currentUser?.name) ? ` (dibuka oleh ${state.activeShift.opener_name})` : '';
-                if (detailsText) detailsText.innerText = `${shiftTitle}${openerInfo} • Kasir: ${state.currentUser?.name || 'Kasir'} • Modal: ${formatRupiah(state.activeShift.initial_cash)} • Mulai: ${state.activeShift.start_time}`;
+                const openerInfo = (state.activeShift.opener_name && state.activeShift.opener_name !== (state.currentUser ? state.currentUser.name : 'Kasir')) ? ` (dibuka oleh ${state.activeShift.opener_name})` : '';
+                if (detailsText) detailsText.innerText = `${shiftTitle}${openerInfo} • Kasir: ${(state.currentUser ? state.currentUser.name : 'Kasir') || 'Kasir'} • Modal: ${formatRupiah(state.activeShift.initial_cash)} • Mulai: ${state.activeShift.start_time}`;
                 if (btnLabel) btnLabel.innerText = `Tutup ${shiftTitle}`;
 
                 if (btnToggleShift) {
@@ -13550,13 +13673,13 @@ try {
                     topbarShiftBadge.className = 'cursor-pointer hidden sm:flex items-center space-x-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shrink-0 max-w-[150px] sm:max-w-none';
                 }
                 if (topbarShiftText) {
-                    topbarShiftText.innerText = `${shiftTitle}: ${state.currentUser?.name || 'Buka'}`;
+                    topbarShiftText.innerText = `${shiftTitle}: ${(state.currentUser ? state.currentUser.name : 'Kasir') || 'Buka'}`;
                     topbarShiftText.className = 'text-[11px] sm:text-xs font-bold text-emerald-800 dark:text-emerald-300 truncate whitespace-nowrap';
                 }
             } else {
                 if (state.branchClosedToday) {
-                    const closerName = escapeHtml(state.finalClosedShift?.closer_name || state.finalClosedShift?.cashier_name || 'Kasir');
-                    const closeTime = escapeHtml(state.finalClosedShift?.end_time || '');
+                    const closerName = escapeHtml((state.finalClosedShift ? state.finalClosedShift.closer_name : '') || (state.finalClosedShift ? state.finalClosedShift.cashier_name : '') || 'Kasir');
+                    const closeTime = escapeHtml((state.finalClosedShift ? state.finalClosedShift.end_time : '') || '');
                     if (indicator) indicator.className = 'w-3.5 h-3.5 rounded-full bg-slate-500';
                     if (statusText) {
                         statusText.innerText = 'TOKO TUTUP (CLOSING HARIAN SELESAI) 🌙';
@@ -13641,7 +13764,7 @@ try {
                         </span>
                     </div>
                 `;
-                desc.innerText = `Cabang: ${state.currentBranch?.name || 'Cabang'} • Kasir: ${state.currentUser?.name || 'Kasir'} • Mulai: ${state.activeShift.start_time || '-'}`;
+                desc.innerText = `Cabang: ${(state.currentBranch ? state.currentBranch.name : 'Cabang') || 'Cabang'} • Kasir: ${(state.currentUser ? state.currentUser.name : 'Kasir') || 'Kasir'} • Mulai: ${state.activeShift.start_time || '-'}`;
                 btn.innerText = isFinalCandidate ? 'Tutup Toko (Closing Day) & Simpan Rekap Malam' : `Tutup ${shiftName} & Serah Terima (Lanjut Shift ${shiftNum + 1})`;
                 btn.className = 'py-3.5 px-5 bg-rose-600 hover:bg-rose-700 rounded-2xl text-xs font-black text-white shadow-lg shadow-rose-200 transition-all uppercase tracking-wider';
 
@@ -13662,10 +13785,10 @@ try {
                 }
 
                 try {
-                    const initCash = closingData?.initial_cash ?? (parseFloat(state.activeShift.initial_cash) || 0);
-                    const cashSales = closingData?.cash_sales ?? 0;
-                    const expectedCash = closingData?.expected_cash ?? (initCash + cashSales);
-                    const txCount = closingData?.total_transactions ?? 0;
+                    const initCash = (closingData && closingData.initial_cash !== undefined && closingData.initial_cash !== null ? closingData.initial_cash : (parseFloat(state.activeShift.initial_cash) || 0));
+                    const cashSales = (closingData && closingData.cash_sales !== undefined ? closingData.cash_sales : 0);
+                    const expectedCash = (closingData && closingData.expected_cash !== undefined && closingData.expected_cash !== null ? closingData.expected_cash : (initCash + cashSales));
+                    const txCount = (closingData && closingData.total_transactions !== undefined ? closingData.total_transactions : 0);
                     let items = (closingData && Array.isArray(closingData.items) && closingData.items.length > 0) ? closingData.items : [];
 
                     // Fail-safe jika response backend kosong: gunakan state.products yang distok (is_stockable = 1) di cabang ini
@@ -13687,21 +13810,21 @@ try {
                             closing_qty: p.stock || 0
                         }));
                     }
-                    const waterMeter = closingData?.water_meter || {};
-                    const meterYesterday = waterMeter.meter_yesterday ?? 0;
-                    const meterYesterdayDate = waterMeter.last_log_date ?? null;
+                    const waterMeter = (closingData ? closingData.water_meter : {}) || {};
+                    const meterYesterday = _nn(waterMeter.meter_yesterday, 0);
+                    const meterYesterdayDate = _nn(waterMeter.last_log_date, null);
 
                     window.closingShiftState = {
                         initialCash: initCash,
                         cashSales: cashSales,
                         expectedCash: expectedCash,
-                        categories: closingData?.expense_categories || [],
-                        employees: closingData?.branch_employees || [],
+                        categories: (closingData ? closingData.expense_categories : []) || [],
+                        employees: (closingData ? closingData.branch_employees : []) || [],
                         waterMeter: waterMeter,
-                        totalGalonSold: closingData?.total_galon_sold || 0
+                        totalGalonSold: (closingData ? closingData.total_galon_sold : 0) || 0
                     };
 
-                    const totalGalonSold = closingData?.total_galon_sold || 0;
+                    const totalGalonSold = (closingData ? closingData.total_galon_sold : 0) || 0;
 
                     let closingItemsRows = '';
                     if (items.length > 0) {
@@ -14024,7 +14147,7 @@ try {
                         const finalInfo = data.final_shift_info || {};
                         const closerName = escapeHtml(finalInfo.cashier_name || 'Kasir');
                         const closeTime = escapeHtml(finalInfo.end_time || '-');
-                        const isSuperAdmin = (state.currentUser?.role === 'SUPER_ADMIN');
+                        const isSuperAdmin = ((state.currentUser ? state.currentUser.role : '') === 'SUPER_ADMIN');
 
                         title.innerHTML = `
                             <div class="flex items-center space-x-2 flex-wrap">
@@ -14034,7 +14157,7 @@ try {
                                 </span>
                             </div>
                         `;
-                        desc.innerText = `Cabang: ${state.currentBranch?.name || 'Cabang'} • Status: Closing Harian Telah Selesai`;
+                        desc.innerText = `Cabang: ${(state.currentBranch ? state.currentBranch.name : 'Cabang') || 'Cabang'} • Status: Closing Harian Telah Selesai`;
 
                         btn.innerText = 'TUTUP (KEMBALI)';
                         btn.className = 'py-3 px-5 bg-slate-200 hover:bg-slate-300 rounded-2xl text-xs font-bold text-slate-700 transition-all uppercase tracking-wider';
@@ -14103,7 +14226,7 @@ try {
                             </span>
                         </div>
                     `;
-                    desc.innerText = `Cabang: ${state.currentBranch?.name || 'Cabang'} • Kasir: ${state.currentUser?.name || 'Kasir'}`;
+                    desc.innerText = `Cabang: ${(state.currentBranch ? state.currentBranch.name : 'Cabang') || 'Cabang'} • Kasir: ${(state.currentUser ? state.currentUser.name : 'Kasir') || 'Kasir'}`;
                     btn.innerText = `BUKA ${nextName.toUpperCase()}`;
                     btn.className = 'py-3.5 px-5 bg-emerald-600 hover:bg-emerald-700 rounded-2xl text-xs font-black text-white shadow-lg shadow-emerald-200 transition-all uppercase tracking-wider';
                     btn.onclick = () => executeShiftAction();
@@ -14432,8 +14555,8 @@ try {
         }
 
         function updateClosingCashSummary() {
-            const initCash = window.closingShiftState?.initialCash || 0;
-            const cashSales = window.closingShiftState?.cashSales || 0;
+            const initCash = (window.closingShiftState ? window.closingShiftState.initialCash : 0) || 0;
+            const cashSales = (window.closingShiftState ? window.closingShiftState.cashSales : 0) || 0;
 
             let totExp = 0;
             document.querySelectorAll('.closing-expense-row .expense-amount-input').forEach(el => {
@@ -14485,7 +14608,7 @@ try {
             const emptyNote = list.querySelector('.empty-expense-note');
             if (emptyNote) emptyNote.remove();
 
-            const categories = window.closingShiftState?.categories || [];
+            const categories = (window.closingShiftState ? window.closingShiftState.categories : []) || [];
             const catOptions = categories.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('') || '<option value="Biaya Operasional Toko">Biaya Operasional Toko</option>';
 
             const div = document.createElement('div');
@@ -14586,14 +14709,14 @@ try {
         }
 
         function calculateClosingCashDifference(expectedCash) {
-            const actual = parseFloat(document.getElementById('shift-input-actual-cash')?.value) || 0;
+            const actual = parseFloat(_val('shift-input-actual-cash')) || 0;
             const statusBox = document.getElementById('closing-cash-status-box');
             if (!statusBox) return;
 
             const targetExpected = (expectedCash !== undefined) ? expectedCash : (window.closingShiftState ? window.closingShiftState.expectedCash : 0);
             const diff = actual - targetExpected;
 
-            if (actual === 0 && !document.getElementById('shift-input-actual-cash')?.value) {
+            if (actual === 0 && !_val('shift-input-actual-cash')) {
                 statusBox.className = 'p-2.5 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-600 flex items-center space-x-2';
                 statusBox.innerHTML = `<span>💡</span><span>Masukkan total uang fisik di laci kasir untuk menghitung selisih kas secara otomatis.</span>`;
             } else if (diff === 0) {
@@ -14616,7 +14739,7 @@ try {
         // WATER METER COUNTER & ADJUSTMENT HELPERS
         // ==========================================
         function calculateWaterMeterOutput() {
-            const yesterday = parseFloat(document.getElementById('closing-meter-yesterday')?.value) || 0;
+            const yesterday = parseFloat(_val('closing-meter-yesterday')) || 0;
             const todayInput = document.getElementById('closing-meter-today');
             const todayVal = todayInput ? todayInput.value.trim() : '';
             const previewEl = document.getElementById('closing-meter-dispensed-preview');
@@ -14632,8 +14755,8 @@ try {
 
             const today = parseFloat(todayVal) || 0;
             const diff = today - yesterday;
-            const adjType = document.getElementById('closing-meter-adj-type')?.value || 'PULSE';
-            const adjVal = parseFloat(document.getElementById('closing-meter-adj-val')?.value) || 0;
+            const adjType = _val('closing-meter-adj-type') || 'PULSE';
+            const adjVal = parseFloat(_val('closing-meter-adj-val')) || 0;
 
             let galon = 0;
             if (adjType === 'GALON') {
@@ -14680,8 +14803,8 @@ try {
             const meterTodayInput = document.getElementById('closing-meter-today');
             const modeBadge = document.getElementById('closing-shift-mode-badge');
             const isChecked = chk ? chk.checked : false;
-            const shiftNum = parseInt(state.activeShift?.shift_number) || 1;
-            const shiftName = state.activeShift?.shift_name || ('Shift ' + shiftNum);
+            const shiftNum = parseInt((state.activeShift ? state.activeShift.shift_number : 1)) || 1;
+            const shiftName = (state.activeShift ? state.activeShift.shift_name : 'Shift 1') || ('Shift ' + shiftNum);
 
             if (meterSection) {
                 if (isChecked) {
@@ -14754,10 +14877,10 @@ try {
         }
 
         function calculateModalMeterOutput() {
-            const yesterday = parseFloat(document.getElementById('wma-yesterday')?.value) || 0;
-            const today = parseFloat(document.getElementById('wma-today')?.value) || 0;
-            const adjType = document.getElementById('wma-adj-type')?.value || 'PULSE';
-            const adjVal = parseFloat(document.getElementById('wma-adj-val')?.value) || 0;
+            const yesterday = parseFloat(_val('wma-yesterday')) || 0;
+            const today = parseFloat(_val('wma-today')) || 0;
+            const adjType = _val('wma-adj-type') || 'PULSE';
+            const adjVal = parseFloat(_val('wma-adj-val')) || 0;
             const previewEl = document.getElementById('wma-calc-preview');
 
             const diff = today - yesterday;
@@ -14853,12 +14976,12 @@ try {
             if (e) e.preventDefault();
             const branchId = state.currentBranch ? state.currentBranch.id : 1;
             const userId = state.currentUser ? state.currentUser.id : 1;
-            const date = document.getElementById('wma-date')?.value;
-            const yesterday = parseFloat(document.getElementById('wma-yesterday')?.value) || 0;
-            const today = parseFloat(document.getElementById('wma-today')?.value) || 0;
-            const adjVal = parseFloat(document.getElementById('wma-adj-val')?.value) || 0;
-            const adjType = document.getElementById('wma-adj-type')?.value || 'PULSE';
-            const reason = document.getElementById('wma-reason')?.value?.trim() || '';
+            const date = _val('wma-date');
+            const yesterday = parseFloat(_val('wma-yesterday')) || 0;
+            const today = parseFloat(_val('wma-today')) || 0;
+            const adjVal = parseFloat(_val('wma-adj-val')) || 0;
+            const adjType = _val('wma-adj-type') || 'PULSE';
+            const reason = _val('wma-reason').trim() || '';
 
             if (!date) {
                 alert('Silakan pilih tanggal pencatatan.');
@@ -14912,8 +15035,8 @@ try {
                 const closeMin = document.getElementById('closing-raw-mineral') ? parseInt(document.getElementById('closing-raw-mineral').value) : null;
                 const closeRo = document.getElementById('closing-raw-ro') ? parseInt(document.getElementById('closing-raw-ro').value) : null;
                 const closePl = document.getElementById('closing-raw-plastik') ? parseInt(document.getElementById('closing-raw-plastik').value) : null;
-                const notes = document.getElementById('shift-input-notes')?.value || '';
-                const isFinal = document.getElementById('check-is-final-shift')?.checked ? 1 : 0;
+                const notes = _val('shift-input-notes') || '';
+                const isFinal = _chk('check-is-final-shift') ? 1 : 0;
 
                 // Collect dynamic closing items
                 const dynamicClosingItems = [];
@@ -14932,9 +15055,9 @@ try {
                 // Collect 3 Jenis Pengeluaran Kasir
                 const expenses = [];
                 document.querySelectorAll('.closing-expense-row').forEach(row => {
-                    const cat = row.querySelector('.expense-category-input')?.value || 'Biaya Operasional Toko';
-                    const amt = parseFloat(row.querySelector('.expense-amount-input')?.value) || 0;
-                    const nts = row.querySelector('.expense-notes-input')?.value || '';
+                    const cat = (row.querySelector('.expense-category-input') ? row.querySelector('.expense-category-input').value : '') || 'Biaya Operasional Toko';
+                    const amt = parseFloat((row.querySelector('.expense-amount-input') ? row.querySelector('.expense-amount-input').value : '')) || 0;
+                    const nts = (row.querySelector('.expense-notes-input') ? row.querySelector('.expense-notes-input').value : '') || '';
                     if (amt > 0) {
                         expenses.push({ category: cat, amount: amt, notes: nts });
                     }
@@ -14942,9 +15065,9 @@ try {
 
                 const loans = [];
                 document.querySelectorAll('.closing-loan-row').forEach(row => {
-                    const uId = parseInt(row.querySelector('.loan-user-input')?.value) || 0;
-                    const amt = parseFloat(row.querySelector('.loan-amount-input')?.value) || 0;
-                    const nts = row.querySelector('.loan-notes-input')?.value || '';
+                    const uId = parseInt((row.querySelector('.loan-user-input') ? row.querySelector('.loan-user-input').value : '')) || 0;
+                    const amt = parseFloat((row.querySelector('.loan-amount-input') ? row.querySelector('.loan-amount-input').value : '')) || 0;
+                    const nts = (row.querySelector('.loan-notes-input') ? row.querySelector('.loan-notes-input').value : '') || '';
                     if (amt > 0 && uId > 0) {
                         loans.push({ user_id: uId, amount: amt, notes: nts });
                     }
@@ -14952,9 +15075,9 @@ try {
 
                 const meals = [];
                 document.querySelectorAll('.closing-meal-row').forEach(row => {
-                    const uId = parseInt(row.querySelector('.meal-user-input')?.value) || 0;
-                    const amt = parseFloat(row.querySelector('.meal-amount-input')?.value) || 0;
-                    const nts = row.querySelector('.meal-notes-input')?.value || '';
+                    const uId = parseInt((row.querySelector('.meal-user-input') ? row.querySelector('.meal-user-input').value : '')) || 0;
+                    const amt = parseFloat((row.querySelector('.meal-amount-input') ? row.querySelector('.meal-amount-input').value : '')) || 0;
+                    const nts = (row.querySelector('.meal-notes-input') ? row.querySelector('.meal-notes-input').value : '') || '';
                     if (amt > 0 && uId > 0) {
                         meals.push({ user_id: uId, amount: amt, notes: nts });
                     }
@@ -15004,16 +15127,16 @@ try {
                     }
 
                     if (data.is_final_shift) {
-                        alert(`Penutupan Toko Malam Selesai (Closing Akhir Terkunci)!\n\nShift: ${data.summary?.shift_name || 'Shift Akhir'}\nUang Fisik Aktual: ${formatRupiah(data.summary.actual_cash)}\nEkspektasi Sistem: ${formatRupiah(data.summary.expected_cash)}\nSelisih Kas: ${formatRupiah(data.summary.cash_difference)}${disbInfo}${meterInfo}\n\nLaporan pengeluaran telah otomatis tersinkronisasi ke Beban Operasional, Kasbon, dan Slip Gaji!`);
+                        alert(`Penutupan Toko Malam Selesai (Closing Akhir Terkunci)!\n\nShift: ${(data.summary ? data.summary.shift_name : 'Shift') || 'Shift Akhir'}\nUang Fisik Aktual: ${formatRupiah(data.summary.actual_cash)}\nEkspektasi Sistem: ${formatRupiah(data.summary.expected_cash)}\nSelisih Kas: ${formatRupiah(data.summary.cash_difference)}${disbInfo}${meterInfo}\n\nLaporan pengeluaran telah otomatis tersinkronisasi ke Beban Operasional, Kasbon, dan Slip Gaji!`);
                         state.branchClosedToday = true;
                         state.finalClosedShift = {
-                            id: data.summary?.shift_id,
-                            shift_name: data.summary?.shift_name || 'Shift Akhir',
-                            cashier_name: state.currentUser?.name || 'Kasir',
+                            id: (data.summary ? data.summary.shift_id : null),
+                            shift_name: (data.summary ? data.summary.shift_name : 'Shift') || 'Shift Akhir',
+                            cashier_name: (state.currentUser ? state.currentUser.name : 'Kasir') || 'Kasir',
                             end_time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
                         };
                     } else {
-                        alert(`Shift Berhasil Ditutup (Serah Terima Kasir Selesai)!\n\nShift: ${data.summary?.shift_name || 'Shift 1'}\nUang Fisik Aktual: ${formatRupiah(data.summary.actual_cash)}\nEkspektasi Sistem: ${formatRupiah(data.summary.expected_cash)}\nSelisih Kas: ${formatRupiah(data.summary.cash_difference)}${disbInfo}${meterInfo}\n\nSisa stok fisik & saldo kas otomatis siap diserahterimakan ke Shift berikutnya.`);
+                        alert(`Shift Berhasil Ditutup (Serah Terima Kasir Selesai)!\n\nShift: ${(data.summary ? data.summary.shift_name : 'Shift') || 'Shift 1'}\nUang Fisik Aktual: ${formatRupiah(data.summary.actual_cash)}\nEkspektasi Sistem: ${formatRupiah(data.summary.expected_cash)}\nSelisih Kas: ${formatRupiah(data.summary.cash_difference)}${disbInfo}${meterInfo}\n\nSisa stok fisik & saldo kas otomatis siap diserahterimakan ke Shift berikutnya.`);
                     }
                     state.activeShift = null;
                     state.currentUserHasClosedShift = true;
@@ -15027,10 +15150,10 @@ try {
                 } else alert(data.message || data.error);
             } else {
                 const actionBtn = document.getElementById('shift-modal-action-btn');
-                const nextNum = parseInt(actionBtn?.getAttribute('data-next-shift-number')) || 1;
-                const nextName = actionBtn?.getAttribute('data-next-shift-name') || ('Shift ' + nextNum);
+                const nextNum = parseInt((actionBtn ? actionBtn.getAttribute('data-next-shift-number') : null)) || 1;
+                const nextName = (actionBtn ? actionBtn.getAttribute('data-next-shift-name') : null) || ('Shift ' + nextNum);
 
-                const initCash = parseFloat(document.getElementById('shift-input-initial-cash')?.value) || 0;
+                const initCash = parseFloat(_val('shift-input-initial-cash')) || 0;
 
                 // Collect dynamic opening items
                 const dynamicOpeningItems = [];
@@ -15115,8 +15238,8 @@ try {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            branch_id: state.currentBranch?.id || 1,
-                            user_id: state.currentUser?.id || 1,
+                            branch_id: (state.currentBranch ? state.currentBranch.id : 1) || 1,
+                            user_id: (state.currentUser ? state.currentUser.id : 1) || 1,
                             shift_number: nextNum,
                             shift_name: nextName,
                             initial_cash: initCash,
@@ -15137,13 +15260,13 @@ try {
                     const offShift = {
                         id: offShiftRef,
                         offline_ref: offShiftRef,
-                        branch_id: state.currentBranch?.id || 1,
-                        user_id: state.currentUser?.id || 1,
+                        branch_id: (state.currentBranch ? state.currentBranch.id : 1) || 1,
+                        user_id: (state.currentUser ? state.currentUser.id : 1) || 1,
                         shift_number: nextNum,
                         shift_name: nextName,
                         initial_cash: initCash,
                         status: 'OPEN',
-                        cashier_name: state.currentUser?.name || 'Kasir',
+                        cashier_name: (state.currentUser ? state.currentUser.name : 'Kasir') || 'Kasir',
                         start_time: new Date().toISOString()
                     };
                     await OfflineDB.setItem('offline_shifts', offShift);
@@ -15593,7 +15716,7 @@ try {
             updateStoreResetButtonsVisibility();
             const btnShifts = document.getElementById('report-subtab-btn-shifts');
             const curUser = state.currentUser || state.loggedInUser;
-            const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const userRole = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
             const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
 
             if (!btnShifts) return;
@@ -15618,7 +15741,7 @@ try {
 
         function setReportSubtab(subtab) {
             const curUser = state.currentUser || state.loggedInUser;
-            const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const userRole = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
             const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
             const hasClosed = (state.currentUserHasClosedShift === true) || (window.userHasClosedShift === true);
 
@@ -15686,7 +15809,7 @@ try {
 
             const branchLabel = document.getElementById('shift-report-branch-label');
             if (branchLabel) {
-                branchLabel.innerText = state.currentBranch?.name || 'Cabang Aktif';
+                branchLabel.innerText = (state.currentBranch ? state.currentBranch.name : 'Cabang') || 'Cabang Aktif';
             }
 
             const container = document.getElementById('shift-cards-container');
@@ -15730,7 +15853,7 @@ try {
         function renderDailyClosingSummary(summary, reportDate) {
             if (!summary) return;
             const curUser = state.currentUser || state.loggedInUser;
-            const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const userRole = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
             const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
 
             const titleEl = document.getElementById('daily-closing-summary-title');
@@ -15739,7 +15862,7 @@ try {
 
             if (titleEl) {
                 if (!isManagerOrAdmin) {
-                    titleEl.innerText = `Rekapitulasi Shift Saya (${curUser?.name || 'Kasir'})`;
+                    titleEl.innerText = `Rekapitulasi Shift Saya (${(curUser ? curUser.name : '') || 'Kasir'})`;
                 } else {
                     titleEl.innerText = 'Rekapitulasi Penutupan Toko Harian';
                 }
@@ -15755,7 +15878,7 @@ try {
 
             if (sectionTitle) {
                 if (!isManagerOrAdmin) {
-                    sectionTitle.innerText = `Rincian Laporan Shift Saya (${curUser?.name || 'Kasir'}) [Data Terisolasi Akun]`;
+                    sectionTitle.innerText = `Rincian Laporan Shift Saya (${(curUser ? curUser.name : '') || 'Kasir'}) [Data Terisolasi Akun]`;
                 } else {
                     sectionTitle.innerText = 'Rincian Laporan Kasir Per-Shift (Data Terisolasi)';
                 }
@@ -16126,7 +16249,7 @@ try {
                 return;
             }
 
-            const branchName = s.branch_name || (state.currentBranch?.name || 'OUTLET');
+            const branchName = s.branch_name || ((state.currentBranch ? state.currentBranch.name : 'Cabang') || 'OUTLET');
             const diff = s.cash_difference || 0;
             const diffStr = (diff >= 0 ? '+' : '') + formatRupiah(diff);
 
@@ -16187,7 +16310,7 @@ TTD Kasir: __________________
             }
             const data = currentDailyShiftReportData;
             const ds = data.daily_summary;
-            const branchName = state.currentBranch?.name || 'SEMUA CABANG';
+            const branchName = (state.currentBranch ? state.currentBranch.name : 'Cabang') || 'SEMUA CABANG';
 
             const shiftsStr = (data.shifts || []).map(s => 
                 `[${s.shift_name}] ${s.cashier_name} | Omzet: ${formatRupiah(s.total_sales)} | Tunai: ${formatRupiah(s.cash_sales)} | Fisik: ${formatRupiah(s.actual_cash)}`
@@ -16910,8 +17033,8 @@ Manager / Supervisor: __________________
                 document.getElementById('ws-name').value = shift.name || '';
                 document.getElementById('ws-start-time').value = shift.start_time || '07:00';
                 document.getElementById('ws-end-time').value = shift.end_time || '15:00';
-                document.getElementById('ws-tolerance').value = shift.late_tolerance_mins ?? 15;
-                document.getElementById('ws-is-active').value = shift.is_active ?? 1;
+                document.getElementById('ws-tolerance').value = _nn(shift.late_tolerance_mins, 15);
+                document.getElementById('ws-is-active').value = _nn(shift.is_active, 1);
                 document.getElementById('ws-is-day-off').checked = shift.is_day_off == 1;
             } else {
                 title.innerText = 'Tambah Shift Jam Kerja Baru';
@@ -16988,7 +17111,7 @@ Manager / Supervisor: __________________
 
             if (bSelect && state.branches && state.branches.length > 0) {
                 if (!isSuperAdmin) {
-                    const userBranch = state.branches.find(b => parseInt(b.id) === parseInt(userBranchId)) || { id: userBranchId, name: state.currentBranch?.name || 'Cabang Penugasan' };
+                    const userBranch = state.branches.find(b => parseInt(b.id) === parseInt(userBranchId)) || { id: userBranchId, name: (state.currentBranch ? state.currentBranch.name : 'Cabang') || 'Cabang Penugasan' };
                     bSelect.innerHTML = `<option value="${userBranch.id}" selected>${userBranch.name} (Terkunci)</option>`;
                     bSelect.value = userBranch.id;
                     bSelect.disabled = true;
@@ -17015,8 +17138,8 @@ Manager / Supervisor: __________________
             const isSuperAdmin = (role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'SUPER ADMIN');
             const isManager = isManagerOrSuperAdminUser(curUser);
             const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
-            const bId = (!isSuperAdmin && userBranchId) ? userBranchId : (document.getElementById('ess-roster-branch-select')?.value || state.currentBranch.id);
-            const mVal = document.getElementById('ess-roster-month-input')?.value || new Date().toISOString().slice(0, 7);
+            const bId = (!isSuperAdmin && userBranchId) ? userBranchId : (_val('ess-roster-branch-select') || state.currentBranch.id);
+            const mVal = _val('ess-roster-month-input') || new Date().toISOString().slice(0, 7);
 
             const impBtn = document.getElementById('btn-import-schedule');
             if (impBtn) impBtn.style.display = isManager ? '' : 'none';
@@ -17124,12 +17247,12 @@ Manager / Supervisor: __________________
         }
 
         function closeSingleScheduleModal() {
-            document.getElementById('single-schedule-edit-modal')?.classList.add('hidden');
+            _cls('single-schedule-edit-modal', 'add', 'hidden');
         }
 
         async function saveSingleScheduleForm(e) {
             e.preventDefault();
-            const bId = document.getElementById('ess-roster-branch-select')?.value || state.currentBranch.id;
+            const bId = _val('ess-roster-branch-select') || state.currentBranch.id;
             const uId = document.getElementById('sched-cell-user-id').value;
             const date = document.getElementById('sched-cell-date').value;
             const shiftId = document.getElementById('sched-cell-shift-select').value;
@@ -17150,17 +17273,17 @@ Manager / Supervisor: __________________
         }
 
         function exportMonthlySchedules() {
-            const bId = document.getElementById('ess-roster-branch-select')?.value || state.currentBranch.id;
-            const mVal = document.getElementById('ess-roster-month-input')?.value || new Date().toISOString().slice(0, 7);
+            const bId = _val('ess-roster-branch-select') || state.currentBranch.id;
+            const mVal = _val('ess-roster-month-input') || new Date().toISOString().slice(0, 7);
             window.location.href = `api.php?action=export_monthly_schedules&branch_id=${bId}&month=${mVal}&download=1`;
         }
 
         function openImportScheduleModal() {
-            document.getElementById('import-schedule-modal')?.classList.remove('hidden');
+            _cls('import-schedule-modal', 'remove', 'hidden');
         }
 
         function closeImportScheduleModal() {
-            document.getElementById('import-schedule-modal')?.classList.add('hidden');
+            _cls('import-schedule-modal', 'add', 'hidden');
         }
 
         function handleScheduleFileSelect(event) {
@@ -17175,7 +17298,7 @@ Manager / Supervisor: __________________
 
         async function submitImportSchedule(e) {
             e.preventDefault();
-            const bId = document.getElementById('ess-roster-branch-select')?.value || state.currentBranch.id;
+            const bId = _val('ess-roster-branch-select') || state.currentBranch.id;
             const csvText = document.getElementById('import-sched-text').value;
 
             if (!csvText.trim()) {
@@ -17197,16 +17320,16 @@ Manager / Supervisor: __________________
         }
 
         function openHolidaySetterModal() {
-            document.getElementById('holiday-setter-modal')?.classList.remove('hidden');
+            _cls('holiday-setter-modal', 'remove', 'hidden');
         }
 
         function closeHolidaySetterModal() {
-            document.getElementById('holiday-setter-modal')?.classList.add('hidden');
+            _cls('holiday-setter-modal', 'add', 'hidden');
         }
 
         async function submitHolidaySetter(e) {
             e.preventDefault();
-            const bId = document.getElementById('ess-roster-branch-select')?.value || state.currentBranch.id;
+            const bId = _val('ess-roster-branch-select') || state.currentBranch.id;
             const date = document.getElementById('holiday-date-input').value;
             const notes = document.getElementById('holiday-notes-input').value;
 
@@ -17578,8 +17701,8 @@ Manager / Supervisor: __________________
         async function loadAttendanceReport() {
             const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
             const isManager = isManagerOrSuperAdminUser(curUser);
-            const bId = document.getElementById('ess-att-branch-select')?.value || '';
-            const mVal = document.getElementById('ess-att-month-input')?.value || new Date().toISOString().slice(0, 7);
+            const bId = _val('ess-att-branch-select') || '';
+            const mVal = _val('ess-att-month-input') || new Date().toISOString().slice(0, 7);
 
             try {
                 const res = await fetch(`api.php?action=get_attendance_report&branch_id=${bId}&month=${mVal}&user_id=${curUser.id}&actor_id=${curUser.id}`);
@@ -17706,8 +17829,8 @@ Manager / Supervisor: __________________
         async function loadEmployeePayslip() {
             const curUser = state.currentUser || state.loggedInUser || { id: 3, role: 'CASHIER' };
             const isManager = isManagerOrSuperAdminUser(curUser);
-            const uId = isManager ? (document.getElementById('ess-payslip-user-select')?.value || curUser.id) : curUser.id;
-            const mVal = document.getElementById('ess-payslip-month-input')?.value || new Date().toISOString().slice(0, 7);
+            const uId = isManager ? (_val('ess-payslip-user-select') || curUser.id) : curUser.id;
+            const mVal = _val('ess-payslip-month-input') || new Date().toISOString().slice(0, 7);
 
             try {
                 const res = await fetch(`api.php?action=get_employee_payslip&user_id=${uId}&req_user_id=${curUser.id}&month=${mVal}`);
@@ -17900,7 +18023,7 @@ Manager / Supervisor: __________________
             const tbody = document.getElementById('payroll-table-body');
             if (!tbody) return;
 
-            const q = (document.getElementById('payroll-search-input')?.value || '').toLowerCase().trim();
+            const q = (_val('payroll-search-input') || '').toLowerCase().trim();
             const filtered = (payrollModuleState.payrolls || []).filter(p => {
                 if (!q) return true;
                 const mNik = (p.nik || '').toLowerCase().includes(q);
@@ -18357,7 +18480,7 @@ Manager / Supervisor: __________________
         }
 
         async function openPayrollSlipModal(userId, month = null) {
-            const mVal = month || payrollModuleState.month || document.getElementById('payroll-month-input')?.value || new Date().toISOString().slice(0, 7);
+            const mVal = month || payrollModuleState.month || _val('payroll-month-input') || new Date().toISOString().slice(0, 7);
             const curUser = state.currentUser || state.loggedInUser || { id: 1 };
 
             try {
@@ -18479,26 +18602,26 @@ Manager / Supervisor: __________________
         }
 
         function recalcStarquaEditor() {
-            const baseSalary = parseFloat(document.getElementById('sq-ed-base-salary')?.value) || 0;
+            const baseSalary = parseFloat(_val('sq-ed-base-salary')) || 0;
 
             // Insentif 7 Produk
             let totIncentives = 0;
             for (let i = 0; i < 7; i++) {
-                const q = parseFloat(document.getElementById(`sq-ed-inc-qty-${i}`)?.value) || 0;
-                const r = parseFloat(document.getElementById(`sq-ed-inc-rate-${i}`)?.value) || 0;
+                const q = parseFloat(_val(`sq-ed-inc-qty-${i}`)) || 0;
+                const r = parseFloat(_val(`sq-ed-inc-rate-${i}`)) || 0;
                 totIncentives += (q * r);
             }
 
             // Fasilitas 5 Items
             let totFacilities = 0;
             for (let i = 0; i < 5; i++) {
-                const q = parseFloat(document.getElementById(`sq-ed-fac-qty-${i}`)?.value) || 0;
-                const r = parseFloat(document.getElementById(`sq-ed-fac-rate-${i}`)?.value) || 0;
+                const q = parseFloat(_val(`sq-ed-fac-qty-${i}`)) || 0;
+                const r = parseFloat(_val(`sq-ed-fac-rate-${i}`)) || 0;
                 totFacilities += (q * r);
             }
 
             // Lebihan
-            const overageVal = parseFloat(document.getElementById('sq-ed-overage-rate')?.value) || 0;
+            const overageVal = parseFloat(_val('sq-ed-overage-rate')) || 0;
 
             // Subtotal 1 (Penerimaan Kotor)
             const sub1 = baseSalary + totIncentives + totFacilities + overageVal;
@@ -18508,8 +18631,8 @@ Manager / Supervisor: __________________
             // Subtotal 2 (Penggantian Biaya)
             let sub2 = 0;
             for (let i = 0; i < 2; i++) {
-                const q = parseFloat(document.getElementById(`sq-ed-reimb-qty-${i}`)?.value) || 0;
-                const r = parseFloat(document.getElementById(`sq-ed-reimb-rate-${i}`)?.value) || 0;
+                const q = parseFloat(_val(`sq-ed-reimb-qty-${i}`)) || 0;
+                const r = parseFloat(_val(`sq-ed-reimb-rate-${i}`)) || 0;
                 sub2 += (q * r);
             }
             const sub2El = document.getElementById('sq-ed-subtotal-2');
@@ -18518,8 +18641,8 @@ Manager / Supervisor: __________________
             // Subtotal 3 (Potongan Ketidakhadiran)
             let sub3 = 0;
             for (let i = 0; i < 3; i++) {
-                const q = parseFloat(document.getElementById(`sq-ed-abs-qty-${i}`)?.value) || 0;
-                const r = parseFloat(document.getElementById(`sq-ed-abs-rate-${i}`)?.value) || 0;
+                const q = parseFloat(_val(`sq-ed-abs-qty-${i}`)) || 0;
+                const r = parseFloat(_val(`sq-ed-abs-rate-${i}`)) || 0;
                 sub3 += (q * r);
             }
             const sub3El = document.getElementById('sq-ed-subtotal-3');
@@ -18528,16 +18651,16 @@ Manager / Supervisor: __________________
             // Subtotal 4 (Potongan Lain-lain)
             let sub4 = 0;
             for (let i = 0; i < 3; i++) {
-                const q = parseFloat(document.getElementById(`sq-ed-oth-qty-${i}`)?.value) || 0;
-                const r = parseFloat(document.getElementById(`sq-ed-oth-rate-${i}`)?.value) || 0;
+                const q = parseFloat(_val(`sq-ed-oth-qty-${i}`)) || 0;
+                const r = parseFloat(_val(`sq-ed-oth-rate-${i}`)) || 0;
                 sub4 += (q * r);
             }
             const sub4El = document.getElementById('sq-ed-subtotal-4');
             if (sub4El) sub4El.innerText = formatRupiah(sub4);
 
             // Subtotal 5 (Pinjaman)
-            const loanQ = parseFloat(document.getElementById('sq-ed-loan-qty-0')?.value) || 0;
-            const loanR = parseFloat(document.getElementById('sq-ed-loan-rate-0')?.value) || 0;
+            const loanQ = parseFloat(_val('sq-ed-loan-qty-0')) || 0;
+            const loanR = parseFloat(_val('sq-ed-loan-rate-0')) || 0;
             const sub5 = loanQ * loanR;
             const sub5El = document.getElementById('sq-ed-subtotal-5');
             if (sub5El) sub5El.innerText = formatRupiah(sub5);
@@ -18564,7 +18687,7 @@ Manager / Supervisor: __________________
         }
 
         async function openPayrollEditorModal(userId, month = null) {
-            const mVal = month || payrollModuleState.month || document.getElementById('payroll-month-input')?.value || new Date().toISOString().slice(0, 7);
+            const mVal = month || payrollModuleState.month || _val('payroll-month-input') || new Date().toISOString().slice(0, 7);
             const curUser = state.currentUser || state.loggedInUser || { id: 1 };
 
             try {
@@ -18610,7 +18733,7 @@ Manager / Supervisor: __________________
                 }
 
                 const overage = (details.overage && details.overage.length) ? details.overage : [{ rate: 40500 }];
-                document.getElementById('sq-ed-overage-rate').value = overage[0]?.rate || 40500;
+                document.getElementById('sq-ed-overage-rate').value = (overage[0] ? overage[0].rate : 0) || 40500;
 
                 const reimb = (details.reimbursements && details.reimbursements.length) ? details.reimbursements : [
                     { qty: 11, rate: 5000 }, { qty: 1, rate: 50000 }
@@ -18642,8 +18765,8 @@ Manager / Supervisor: __________________
                 const loans = (details.loan_installments && details.loan_installments.length) ? details.loan_installments : [
                     { qty: 0, rate: 0 }
                 ];
-                if (document.getElementById('sq-ed-loan-qty-0')) document.getElementById('sq-ed-loan-qty-0').value = loans[0]?.qty || 0;
-                if (document.getElementById('sq-ed-loan-rate-0')) document.getElementById('sq-ed-loan-rate-0').value = loans[0]?.rate || 0;
+                if (document.getElementById('sq-ed-loan-qty-0')) document.getElementById('sq-ed-loan-qty-0').value = (loans[0] ? loans[0].qty : 0) || 0;
+                if (document.getElementById('sq-ed-loan-rate-0')) document.getElementById('sq-ed-loan-rate-0').value = (loans[0] ? loans[0].rate : 0) || 0;
 
                 const notes = (details.notes_list && details.notes_list.length) ? details.notes_list : [
                     "Lembur 11 Jam",
@@ -18675,24 +18798,24 @@ Manager / Supervisor: __________________
         }
 
         function recalcPayrollEditorTotals() {
-            const attDays = parseInt(document.getElementById('ped-attendance-days')?.value) || 0;
-            const rateTrans = parseFloat(document.getElementById('ped-daily-transport-rate')?.value) || 0;
+            const attDays = parseInt(_val('ped-attendance-days')) || 0;
+            const rateTrans = parseFloat(_val('ped-daily-transport-rate')) || 0;
             const transTotal = attDays * rateTrans;
             if (document.getElementById('ped-transport-total')) document.getElementById('ped-transport-total').value = transTotal;
 
-            const baseSal = parseFloat(document.getElementById('ped-base-salary')?.value) || 0;
-            const allow = parseFloat(document.getElementById('ped-allowance')?.value) || 0;
-            const comm = parseFloat(document.getElementById('ped-sales-commission')?.value) || 0;
-            const overtime = parseFloat(document.getElementById('ped-overtime-pay')?.value) || 0;
-            const bonus = parseFloat(document.getElementById('ped-bonus-pay')?.value) || 0;
+            const baseSal = parseFloat(_val('ped-base-salary')) || 0;
+            const allow = parseFloat(_val('ped-allowance')) || 0;
+            const comm = parseFloat(_val('ped-sales-commission')) || 0;
+            const overtime = parseFloat(_val('ped-overtime-pay')) || 0;
+            const bonus = parseFloat(_val('ped-bonus-pay')) || 0;
 
             const gross = baseSal + allow + transTotal + comm + overtime + bonus;
 
-            const late = parseFloat(document.getElementById('ped-late-deduction')?.value) || 0;
-            const absence = parseFloat(document.getElementById('ped-absence-deduction')?.value) || 0;
-            const loan = parseFloat(document.getElementById('ped-loan-deduction')?.value) || 0;
-            const tax = parseFloat(document.getElementById('ped-tax-deduction')?.value) || 0;
-            const other = parseFloat(document.getElementById('ped-other-deduction')?.value) || 0;
+            const late = parseFloat(_val('ped-late-deduction')) || 0;
+            const absence = parseFloat(_val('ped-absence-deduction')) || 0;
+            const loan = parseFloat(_val('ped-loan-deduction')) || 0;
+            const tax = parseFloat(_val('ped-tax-deduction')) || 0;
+            const other = parseFloat(_val('ped-other-deduction')) || 0;
 
             const deductions = late + absence + loan + tax + other;
             const net = Math.max(0, gross - deductions);
@@ -18713,15 +18836,15 @@ Manager / Supervisor: __________________
             const curUser = curPayslip.user || {};
 
             // Mengumpulkan data Starqua
-            const baseSalary = parseFloat(document.getElementById('sq-ed-base-salary')?.value) || 0;
+            const baseSalary = parseFloat(_val('sq-ed-base-salary')) || 0;
 
             const incNames = ['Air Mineral', 'Es Kristal', 'Gas', 'RO', 'Aqua', 'Penjualan Depot', 'Warung'];
             const incUnits = ['Galon', 'Order', 'Tabung', 'Galon', 'Galon', 'Hari', 'Galon'];
             const compiledIncentives = [];
             let totIncentives = 0;
             for (let i = 0; i < 7; i++) {
-                const q = parseFloat(document.getElementById(`sq-ed-inc-qty-${i}`)?.value) || 0;
-                const r = parseFloat(document.getElementById(`sq-ed-inc-rate-${i}`)?.value) || 0;
+                const q = parseFloat(_val(`sq-ed-inc-qty-${i}`)) || 0;
+                const r = parseFloat(_val(`sq-ed-inc-rate-${i}`)) || 0;
                 const tot = q * r;
                 totIncentives += tot;
                 compiledIncentives.push({
@@ -18739,8 +18862,8 @@ Manager / Supervisor: __________________
             let totFacilities = 0;
             let uangMakanHari = 0;
             for (let i = 0; i < 5; i++) {
-                const q = parseFloat(document.getElementById(`sq-ed-fac-qty-${i}`)?.value) || 0;
-                const r = parseFloat(document.getElementById(`sq-ed-fac-rate-${i}`)?.value) || 0;
+                const q = parseFloat(_val(`sq-ed-fac-qty-${i}`)) || 0;
+                const r = parseFloat(_val(`sq-ed-fac-rate-${i}`)) || 0;
                 const tot = q * r;
                 totFacilities += tot;
                 if (i === 0) uangMakanHari = q;
@@ -18753,7 +18876,7 @@ Manager / Supervisor: __________________
                 });
             }
 
-            const overageRate = parseFloat(document.getElementById('sq-ed-overage-rate')?.value) || 0;
+            const overageRate = parseFloat(_val('sq-ed-overage-rate')) || 0;
             const compiledOverage = [{
                 name: 'Lebih Setoran',
                 qty: overageRate > 0 ? 1 : 0,
@@ -18770,8 +18893,8 @@ Manager / Supervisor: __________________
             let sub2 = 0;
             let lemburNominal = 0;
             for (let i = 0; i < 2; i++) {
-                const q = parseFloat(document.getElementById(`sq-ed-reimb-qty-${i}`)?.value) || 0;
-                const r = parseFloat(document.getElementById(`sq-ed-reimb-rate-${i}`)?.value) || 0;
+                const q = parseFloat(_val(`sq-ed-reimb-qty-${i}`)) || 0;
+                const r = parseFloat(_val(`sq-ed-reimb-rate-${i}`)) || 0;
                 const tot = q * r;
                 sub2 += tot;
                 if (i === 0) lemburNominal = tot;
@@ -18788,8 +18911,8 @@ Manager / Supervisor: __________________
             const compiledAbsence = [];
             let sub3 = 0;
             for (let i = 0; i < 3; i++) {
-                const q = parseFloat(document.getElementById(`sq-ed-abs-qty-${i}`)?.value) || 0;
-                const r = parseFloat(document.getElementById(`sq-ed-abs-rate-${i}`)?.value) || 0;
+                const q = parseFloat(_val(`sq-ed-abs-qty-${i}`)) || 0;
+                const r = parseFloat(_val(`sq-ed-abs-rate-${i}`)) || 0;
                 const tot = q * r;
                 sub3 += tot;
                 compiledAbsence.push({
@@ -18807,8 +18930,8 @@ Manager / Supervisor: __________________
             let sub4 = 0;
             let kasbonNominal = 0;
             for (let i = 0; i < 3; i++) {
-                const q = parseFloat(document.getElementById(`sq-ed-oth-qty-${i}`)?.value) || 0;
-                const r = parseFloat(document.getElementById(`sq-ed-oth-rate-${i}`)?.value) || 0;
+                const q = parseFloat(_val(`sq-ed-oth-qty-${i}`)) || 0;
+                const r = parseFloat(_val(`sq-ed-oth-rate-${i}`)) || 0;
                 const tot = q * r;
                 sub4 += tot;
                 if (i === 0) kasbonNominal = tot;
@@ -18821,8 +18944,8 @@ Manager / Supervisor: __________________
                 });
             }
 
-            const loanQ = parseFloat(document.getElementById('sq-ed-loan-qty-0')?.value) || 0;
-            const loanR = parseFloat(document.getElementById('sq-ed-loan-rate-0')?.value) || 0;
+            const loanQ = parseFloat(_val('sq-ed-loan-qty-0')) || 0;
+            const loanR = parseFloat(_val('sq-ed-loan-rate-0')) || 0;
             const sub5 = loanQ * loanR;
             const compiledLoans = [{
                 name: 'Cicilan',
@@ -18832,7 +18955,7 @@ Manager / Supervisor: __________________
                 total: sub5
             }];
 
-            const rawNotes = document.getElementById('sq-ed-notes-list')?.value || '';
+            const rawNotes = _val('sq-ed-notes-list') || '';
             const compiledNotes = rawNotes.split('\n').map(s => s.trim()).filter(s => s.length > 0);
 
             const detailsObj = {
@@ -18865,8 +18988,8 @@ Manager / Supervisor: __________________
                 overtime_pay: lemburNominal,
                 bonus_pay: (sub2 - lemburNominal) + overageRate,
                 gross_salary: gross,
-                late_deduction: (compiledAbsence[0]?.total || 0),
-                absence_deduction: (compiledAbsence[1]?.total || 0) + (compiledAbsence[2]?.total || 0),
+                late_deduction: ((compiledAbsence[0] ? compiledAbsence[0].total : 0) || 0),
+                absence_deduction: ((compiledAbsence[1] ? compiledAbsence[1].total : 0) || 0) + ((compiledAbsence[2] ? compiledAbsence[2].total : 0) || 0),
                 loan_deduction: kasbonNominal + sub5,
                 tax_deduction: 0,
                 other_deduction: (sub4 - kasbonNominal),
@@ -19001,8 +19124,8 @@ Manager / Supervisor: __________________
         }
 
         function calculateLoanSimulation() {
-            const amount = parseFloat(document.getElementById('loan-amount-input')?.value) || 0;
-            const tenor = parseInt(document.getElementById('loan-tenor-select')?.value) || 1;
+            const amount = parseFloat(_val('loan-amount-input')) || 0;
+            const tenor = parseInt(_val('loan-tenor-select')) || 1;
             const deduction = tenor > 0 ? Math.round(amount / tenor) : 0;
             const targetEl = document.getElementById('loan-simulation-deduction');
             if (targetEl) targetEl.value = formatRupiah(deduction);
@@ -19105,7 +19228,7 @@ Manager / Supervisor: __________________
         }
 
         function closeLoanRepayModal() {
-            document.getElementById('loan-repay-modal')?.classList.add('hidden');
+            _cls('loan-repay-modal', 'add', 'hidden');
         }
 
         async function submitLoanRepayForm(e) {
@@ -19173,8 +19296,8 @@ Manager / Supervisor: __________________
             const tbody = document.getElementById('employee-table-body');
             if (!tbody) return;
 
-            const q = (document.getElementById('emp-table-search')?.value || '').toLowerCase().trim();
-            const branchFilter = document.getElementById('emp-table-branch-filter')?.value || 'ALL';
+            const q = (_val('emp-table-search') || '').toLowerCase().trim();
+            const branchFilter = _val('emp-table-branch-filter') || 'ALL';
 
             const filtered = (allEmployeesData || []).filter(e => {
                 // Search filter
@@ -19425,7 +19548,7 @@ Manager / Supervisor: __________________
             roleSelect.onchange = handleEmployeeRoleChange;
             handleEmployeeRoleChange();
 
-            document.getElementById('emp-shift-detail-action')?.classList.add('hidden');
+            _cls('emp-shift-detail-action', 'add', 'hidden');
             document.getElementById('employee-modal').classList.remove('hidden');
             lucide.createIcons();
         }
@@ -19562,7 +19685,7 @@ Manager / Supervisor: __________________
             const isManager = ['BRANCHMANAGER', 'BRANCH_MANAGER', 'MANAGER'].includes(roleClean);
             const isExempt = isSuper || isManager;
             const defaultShiftId = (!isExempt && document.getElementById('emp-default-shift').value) ? parseInt(document.getElementById('emp-default-shift').value) : null;
-            const assignedVehicleId = document.getElementById('emp-assigned-vehicle')?.value ? parseInt(document.getElementById('emp-assigned-vehicle').value) : null;
+            const assignedVehicleId = _val('emp-assigned-vehicle') ? parseInt(document.getElementById('emp-assigned-vehicle').value) : null;
 
             let branchId = null;
             let assignedBranchIds = null;
@@ -20154,7 +20277,7 @@ Manager / Supervisor: __________________
         }
 
         function calcDefaultTierPrices(force = false) {
-            const retail = parseFloat(document.getElementById('prod-price')?.value) || 0;
+            const retail = parseFloat(_val('prod-price')) || 0;
             const elMitra = document.getElementById('prod-mitra-price');
             const elReseller = document.getElementById('prod-reseller-price');
             const elMember = document.getElementById('prod-member-price');
@@ -20172,7 +20295,7 @@ Manager / Supervisor: __________________
         }
 
         function onSellingPriceChange() {
-            const isNew = !document.getElementById('prod-id')?.value;
+            const isNew = !_val('prod-id');
             if (isNew) {
                 calcDefaultTierPrices(true);
             }
@@ -21635,7 +21758,7 @@ Manager / Supervisor: __________________
 
         function onRecipeIngredientChange() {
             const ingId = parseInt(document.getElementById('recipe-ingredient-select').value);
-            const rawList = state.recipesData?.raw_materials || [];
+            const rawList = (state.recipesData ? state.recipesData.raw_materials : []) || [];
             const raw = rawList.find(r => r.id === ingId);
             const unit = raw ? raw.unit : 'gram';
             renderUnitSelectOptions('recipe-unit-name', unit);
@@ -21645,7 +21768,7 @@ Manager / Supervisor: __________________
             document.getElementById('recipe-finished-id').value = fgId;
             document.getElementById('recipe-modal-product-name').innerText = 'Produk: ' + fgName;
 
-            const rawList = state.recipesData?.raw_materials || [];
+            const rawList = (state.recipesData ? state.recipesData.raw_materials : []) || [];
             document.getElementById('recipe-ingredient-select').innerHTML = rawList.map(rm => 
                 `<option value="${rm.id}">${rm.name} (${rm.sku} - Satuan: ${rm.unit})</option>`
             ).join('');
@@ -22107,7 +22230,7 @@ Manager / Supervisor: __________________
 
             // Update Hak Akses Tombol Header Sesuai Peran Pengguna
             const curUser = state.currentUser || state.loggedInUser;
-            const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const userRole = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
             const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
 
             const btnHeaderAdjust = document.getElementById('btn-stock-adjust-header');
@@ -22254,7 +22377,7 @@ Manager / Supervisor: __________________
             const canAccessAll = canUserAccessAllBranches();
             const userBranch = getUserAssignedBranch();
             const curUser = state.currentUser || state.loggedInUser;
-            const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const userRole = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
             const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
 
             // 1. Populasi Dropdown Cabang
@@ -22275,7 +22398,7 @@ Manager / Supervisor: __________________
                     if (targetBranchId) {
                         branchSelect.value = targetBranchId;
                     } else {
-                        const pageBranch = document.getElementById('stock-branch-select')?.value;
+                        const pageBranch = _val('stock-branch-select');
                         if (pageBranch && pageBranch !== 'ALL') {
                             branchSelect.value = pageBranch;
                         } else if (state.currentBranch) {
@@ -22362,7 +22485,7 @@ Manager / Supervisor: __________________
         }
 
         async function loadStockAdjustProducts(selectedProductId = null) {
-            const bId = parseInt(document.getElementById('adj-branch-select')?.value || (state.currentBranch ? state.currentBranch.id : 1));
+            const bId = parseInt(_val('adj-branch-select') || (state.currentBranch ? state.currentBranch.id : 1));
             const prodSelect = document.getElementById('adj-product-select');
             if (prodSelect && prodSelect.options.length === 0) {
                 prodSelect.innerHTML = '<option value="">⏳ Memuat daftar barang...</option>';
@@ -22408,7 +22531,7 @@ Manager / Supervisor: __________________
         }
 
         async function onStockAdjustBranchChange() {
-            const curPId = parseInt(document.getElementById('adj-product-select')?.value || 0);
+            const curPId = parseInt(_val('adj-product-select') || 0);
             await loadStockAdjustProducts(curPId);
         }
 
@@ -22489,7 +22612,7 @@ Manager / Supervisor: __________________
         async function saveStockAdjustForm(e) {
             e.preventDefault();
             const curUser = state.currentUser || state.loggedInUser;
-            const userRole = String(curUser?.role || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const userRole = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
             const isManagerOrAdmin = ['SUPERADMIN', 'BRANCHMANAGER', 'MANAGER'].includes(userRole);
 
             const branchId = parseInt(document.getElementById('adj-branch-select').value);
@@ -22834,9 +22957,9 @@ Manager / Supervisor: __________________
                 }
 
                 const branchId = branchSel ? branchSel.value : 'ALL';
-                const customerId = document.getElementById('partner-filter-customer')?.value || 'ALL';
-                const paymentStatus = document.getElementById('partner-filter-status')?.value || 'ALL';
-                const paymentMethod = document.getElementById('partner-filter-method')?.value || 'ALL';
+                const customerId = _val('partner-filter-customer') || 'ALL';
+                const paymentStatus = _val('partner-filter-status') || 'ALL';
+                const paymentMethod = _val('partner-filter-method') || 'ALL';
 
                 let url = `api.php?action=partner_sales_report&period_type=${encodeURIComponent(partnerPeriodType)}`;
                 if (branchId) url += `&branch_id=${encodeURIComponent(branchId)}`;
@@ -22845,29 +22968,29 @@ Manager / Supervisor: __________________
                 if (paymentMethod) url += `&payment_method=${encodeURIComponent(paymentMethod)}`;
 
                 if (partnerPeriodType === 'weekly') {
-                    const preset = document.getElementById('partner-control-week-preset')?.value || 'this_week';
+                    const preset = _val('partner-control-week-preset') || 'this_week';
                     url += `&week_preset=${encodeURIComponent(preset)}`;
                 } else if (partnerPeriodType === 'monthly') {
-                    const m = document.getElementById('partner-control-month')?.value;
-                    const y = document.getElementById('partner-control-year')?.value;
+                    const m = _val('partner-control-month');
+                    const y = _val('partner-control-year');
                     if (m) url += `&month=${m}`;
                     if (y) url += `&year=${y}`;
                 } else if (partnerPeriodType === 'quarter') {
-                    const q = document.getElementById('partner-control-quarter')?.value;
-                    const y = document.getElementById('partner-control-year')?.value;
+                    const q = _val('partner-control-quarter');
+                    const y = _val('partner-control-year');
                     if (q) url += `&quarter=${q}`;
                     if (y) url += `&year=${y}`;
                 } else if (partnerPeriodType === 'semester') {
-                    const s = document.getElementById('partner-control-semester')?.value;
-                    const y = document.getElementById('partner-control-year')?.value;
+                    const s = _val('partner-control-semester');
+                    const y = _val('partner-control-year');
                     if (s) url += `&semester=${s}`;
                     if (y) url += `&year=${y}`;
                 } else if (partnerPeriodType === 'yearly') {
-                    const y = document.getElementById('partner-control-year')?.value;
+                    const y = _val('partner-control-year');
                     if (y) url += `&year=${y}`;
                 } else if (partnerPeriodType === 'custom') {
-                    const sDate = document.getElementById('partner-control-start-date')?.value;
-                    const eDate = document.getElementById('partner-control-end-date')?.value;
+                    const sDate = _val('partner-control-start-date');
+                    const eDate = _val('partner-control-end-date');
                     if (sDate) url += `&start_date=${encodeURIComponent(sDate)}`;
                     if (eDate) url += `&end_date=${encodeURIComponent(eDate)}`;
                 }
@@ -22942,10 +23065,10 @@ Manager / Supervisor: __________________
                         const rankMedals = ['🥇', '🥈', '🥉', '🏅'];
                         const medal = rankMedals[idx] || '⭐';
                         const partnerTitle = p.partner_name || p.customer_name || 'Mitra';
-                        const totalOrders = p.total_orders ?? p.order_count ?? 0;
-                        const totalRevenue = p.total_revenue ?? p.total_spend ?? 0;
-                        const totalItems = p.total_items ?? 0;
-                        const totalProfit = p.total_profit ?? p.gross_profit ?? 0;
+                        const totalOrders = _nn(p.total_orders, _nn(p.order_count, 0));
+                        const totalRevenue = _nn(p.total_revenue, _nn(p.total_spend, 0));
+                        const totalItems = _nn(p.total_items, 0);
+                        const totalProfit = _nn(p.total_profit, _nn(p.gross_profit, 0));
                         return `
                             <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 flex items-center space-x-3 hover:bg-slate-100/70 transition-colors">
                                 <span class="text-2xl">${medal}</span>
@@ -22975,7 +23098,7 @@ Manager / Supervisor: __________________
             const tbody = document.getElementById('partner-orders-tbody');
             if (!tbody) return;
 
-            const searchQuery = (document.getElementById('partner-orders-search')?.value || '').toLowerCase().trim();
+            const searchQuery = (_val('partner-orders-search') || '').toLowerCase().trim();
             const orders = partnerReportRawData.orders || [];
 
             const filtered = orders.filter(o => {
@@ -23016,7 +23139,7 @@ Manager / Supervisor: __________________
                     const shownItems = items.slice(0, 2);
                     const itemLines = shownItems.map(it => {
                         const vText = it.variant_name ? ` (${it.variant_name})` : '';
-                        const qty = it.quantity ?? it.qty ?? 0;
+                        const qty = _nn(it.quantity, _nn(it.qty, 0));
                         return `<div class="truncate text-slate-700 font-medium" title="${escapeHtml(it.product_name + vText)}">• <strong>${qty}x</strong> ${escapeHtml(it.product_name + vText)} <span class="text-slate-400 font-mono text-[10px]">@${formatRupiah(it.unit_price)}</span></div>`;
                     }).join('');
                     const moreCount = items.length - shownItems.length;
@@ -23054,11 +23177,11 @@ Manager / Supervisor: __________________
                             <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${escapeHtml(o.payment_method || 'CASH')}</span>
                         </td>
                         <td class="py-3 px-3 text-right font-mono font-bold text-slate-900">
-                            ${formatRupiah(o.final_total ?? o.grand_total ?? 0)}
+                            ${formatRupiah(_nn(o.final_total, _nn(o.grand_total, 0)))}
                         </td>
                         <td class="py-3 px-3 text-right font-mono ${profitColor}">
                             <div>${formatRupiah(o.profit || 0)}</div>
-                            <div class="text-[10px] text-slate-400 font-normal">HPP: ${formatRupiah(o.cogs ?? o.total_cogs ?? 0)}</div>
+                            <div class="text-[10px] text-slate-400 font-normal">HPP: ${formatRupiah(_nn(o.cogs, _nn(o.total_cogs, 0)))}</div>
                         </td>
                         <td class="py-3 px-3 text-center whitespace-nowrap">
                             <div class="flex items-center justify-center space-x-1.5">
@@ -23124,10 +23247,10 @@ Manager / Supervisor: __________________
                     const vText = it.variant_name ? ` <span class="text-emerald-700 font-medium">(${escapeHtml(it.variant_name)})</span>` : '';
                     const profit = Number(it.profit || 0);
                     const profitClass = profit >= 0 ? 'text-indigo-700 font-bold' : 'text-rose-600 font-bold';
-                    const qty = it.quantity ?? it.qty ?? 0;
-                    const subtotal = it.subtotal ?? it.subtotal_price ?? 0;
-                    const costPrice = it.cost_price ?? it.unit_cogs ?? 0;
-                    const totalCogs = it.total_cogs ?? it.subtotal_cogs ?? 0;
+                    const qty = _nn(it.quantity, _nn(it.qty, 0));
+                    const subtotal = _nn(it.subtotal, _nn(it.subtotal_price, 0));
+                    const costPrice = _nn(it.cost_price, _nn(it.unit_cogs, 0));
+                    const totalCogs = _nn(it.total_cogs, _nn(it.subtotal_cogs, 0));
                     return `
                         <tr class="hover:bg-slate-50">
                             <td class="py-2.5 px-3 text-slate-400 font-mono">${idx + 1}</td>
@@ -23147,12 +23270,12 @@ Manager / Supervisor: __________________
             }
 
             // Summary Breakdown
-            document.getElementById('pod-modal-subtotal').innerText = formatRupiah(order.total_amount ?? order.subtotal ?? 0);
+            document.getElementById('pod-modal-subtotal').innerText = formatRupiah(_nn(order.total_amount, _nn(order.subtotal, 0)));
             document.getElementById('pod-modal-discount').innerText = `- ${formatRupiah(order.discount || 0)}`;
             document.getElementById('pod-modal-delivery').innerText = formatRupiah(order.delivery_fee || 0);
-            document.getElementById('pod-modal-grand-total').innerText = formatRupiah(order.final_total ?? order.grand_total ?? 0);
+            document.getElementById('pod-modal-grand-total').innerText = formatRupiah(_nn(order.final_total, _nn(order.grand_total, 0)));
 
-            const finalTotal = Number(order.final_total ?? order.grand_total ?? 0);
+            const finalTotal = Number(_nn(order.final_total, _nn(order.grand_total, 0)));
             const profitMargin = finalTotal > 0 ? ((Number(order.profit || 0) / finalTotal) * 100).toFixed(1) : '0';
             document.getElementById('pod-modal-total-profit').innerText = `${formatRupiah(order.profit || 0)} (Margin: ${profitMargin}%)`;
 
@@ -23175,9 +23298,9 @@ Manager / Supervisor: __________________
         function exportPartnerSalesExcel() {
             const branchSel = document.getElementById('partner-filter-branch');
             const branchId = branchSel ? branchSel.value : 'ALL';
-            const customerId = document.getElementById('partner-filter-customer')?.value || 'ALL';
-            const paymentStatus = document.getElementById('partner-filter-status')?.value || 'ALL';
-            const paymentMethod = document.getElementById('partner-filter-method')?.value || 'ALL';
+            const customerId = _val('partner-filter-customer') || 'ALL';
+            const paymentStatus = _val('partner-filter-status') || 'ALL';
+            const paymentMethod = _val('partner-filter-method') || 'ALL';
 
             let url = `api.php?action=export_partner_sales_excel&period_type=${encodeURIComponent(partnerPeriodType)}`;
             if (branchId) url += `&branch_id=${encodeURIComponent(branchId)}`;
@@ -23186,29 +23309,29 @@ Manager / Supervisor: __________________
             if (paymentMethod) url += `&payment_method=${encodeURIComponent(paymentMethod)}`;
 
             if (partnerPeriodType === 'weekly') {
-                const preset = document.getElementById('partner-control-week-preset')?.value || 'this_week';
+                const preset = _val('partner-control-week-preset') || 'this_week';
                 url += `&week_preset=${encodeURIComponent(preset)}`;
             } else if (partnerPeriodType === 'monthly') {
-                const m = document.getElementById('partner-control-month')?.value;
-                const y = document.getElementById('partner-control-year')?.value;
+                const m = _val('partner-control-month');
+                const y = _val('partner-control-year');
                 if (m) url += `&month=${m}`;
                 if (y) url += `&year=${y}`;
             } else if (partnerPeriodType === 'quarter') {
-                const q = document.getElementById('partner-control-quarter')?.value;
-                const y = document.getElementById('partner-control-year')?.value;
+                const q = _val('partner-control-quarter');
+                const y = _val('partner-control-year');
                 if (q) url += `&quarter=${q}`;
                 if (y) url += `&year=${y}`;
             } else if (partnerPeriodType === 'semester') {
-                const s = document.getElementById('partner-control-semester')?.value;
-                const y = document.getElementById('partner-control-year')?.value;
+                const s = _val('partner-control-semester');
+                const y = _val('partner-control-year');
                 if (s) url += `&semester=${s}`;
                 if (y) url += `&year=${y}`;
             } else if (partnerPeriodType === 'yearly') {
-                const y = document.getElementById('partner-control-year')?.value;
+                const y = _val('partner-control-year');
                 if (y) url += `&year=${y}`;
             } else if (partnerPeriodType === 'custom') {
-                const sDate = document.getElementById('partner-control-start-date')?.value;
-                const eDate = document.getElementById('partner-control-end-date')?.value;
+                const sDate = _val('partner-control-start-date');
+                const eDate = _val('partner-control-end-date');
                 if (sDate) url += `&start_date=${encodeURIComponent(sDate)}`;
                 if (eDate) url += `&end_date=${encodeURIComponent(eDate)}`;
             }
@@ -23309,9 +23432,9 @@ Manager / Supervisor: __________________
             try {
                 const branchSelect = document.getElementById('exp-ledger-branch-select');
                 const bId = branchSelect ? branchSelect.value : (state.currentBranch ? state.currentBranch.id : '');
-                const sDate = document.getElementById('exp-ledger-start-date')?.value || '';
-                const eDate = document.getElementById('exp-ledger-end-date')?.value || '';
-                const catFilter = document.getElementById('exp-ledger-cat-filter')?.value || 'ALL';
+                const sDate = _val('exp-ledger-start-date') || '';
+                const eDate = _val('exp-ledger-end-date') || '';
+                const catFilter = _val('exp-ledger-cat-filter') || 'ALL';
 
                 let url = `api.php?action=get_branch_expenses&category=${encodeURIComponent(catFilter)}`;
                 if (bId) url += `&branch_id=${bId}`;
@@ -23436,9 +23559,9 @@ Manager / Supervisor: __________________
             const tbody = document.getElementById('expense-categories-table-body');
             if (!tbody) return;
 
-            const groupFilter = document.getElementById('exp-cat-group-filter')?.value || 'ALL';
-            const statusFilter = document.getElementById('exp-cat-status-filter')?.value || 'ALL';
-            const searchKeyword = (document.getElementById('exp-cat-search-input')?.value || '').toLowerCase().trim();
+            const groupFilter = _val('exp-cat-group-filter') || 'ALL';
+            const statusFilter = _val('exp-cat-status-filter') || 'ALL';
+            const searchKeyword = (_val('exp-cat-search-input') || '').toLowerCase().trim();
 
             let filtered = (state.expenseCategories || []).filter(cat => {
                 if (groupFilter !== 'ALL' && cat.group_type !== groupFilter) return false;
@@ -23537,7 +23660,7 @@ Manager / Supervisor: __________________
         }
 
         function autoGenerateExpenseCategoryCode() {
-            const name = document.getElementById('exp-cat-name')?.value.trim() || '';
+            const name = _val('exp-cat-name').trim() || '';
             let slug = name.replace(/[^A-Za-z0-9]/g, '').toUpperCase().substring(0, 6);
             if (!slug) slug = 'EXP' + Math.floor(100 + Math.random() * 900);
             else slug = 'EXP-' + slug;
@@ -24125,7 +24248,7 @@ Manager / Supervisor: __________________
             }
 
             updatePosCustomerUI();
-            if (document.getElementById('check-delivery-mode')?.checked) {
+            if (_chk('check-delivery-mode')) {
                 calculateDeliveryFeeForPOS();
             }
         }
@@ -24281,7 +24404,7 @@ Manager / Supervisor: __________________
             renderPosTierButtons();
             renderPosModalTierButtons();
             renderPosCustomerSelect();
-            const query = document.getElementById('pos-modal-cust-search-input')?.value || '';
+            const query = _val('pos-modal-cust-search-input') || '';
             renderPosModalCustomerList(query);
             renderProducts();
         }
@@ -24605,8 +24728,8 @@ Manager / Supervisor: __________________
         }
 
         function copyCustAddressToSearch() {
-            const address = document.getElementById('cust-address')?.value?.trim() || '';
-            const name = document.getElementById('cust-name')?.value?.trim() || '';
+            const address = _val('cust-address').trim() || '';
+            const name = _val('cust-name').trim() || '';
             const query = address || name;
             if (!query) {
                 alert('Silakan ketik Nama Pelanggan atau Alamat Lengkap terlebih dahulu pada formulir di sebelah kiri.');
@@ -24639,9 +24762,9 @@ Manager / Supervisor: __________________
 
         async function searchCustAddressOnMap() {
             const input = document.getElementById('cust-modal-search-input');
-            let query = input?.value?.trim() || '';
+            let query = (input && input.value ? input.value.trim() : '') || '';
             if (!query) {
-                query = document.getElementById('cust-address')?.value?.trim() || '';
+                query = _val('cust-address').trim() || '';
                 if (query && input) {
                     input.value = query;
                     toggleCustSearchClearBtn();
@@ -24733,9 +24856,9 @@ Manager / Supervisor: __________________
         }
 
         function onCustBranchChangeInModal() {
-            const bId = document.getElementById('cust-branch')?.value;
+            const bId = _val('cust-branch');
             const b = (state.branches || []).find(x => x.id == bId);
-            if (b && (!document.getElementById('cust-latitude')?.value || !document.getElementById('cust-id')?.value)) {
+            if (b && (!_val('cust-latitude') || !_val('cust-id'))) {
                 const bLat = parseFloat(b.latitude);
                 const bLon = parseFloat(b.longitude);
                 if (!isNaN(bLat) && !isNaN(bLon)) {
@@ -24751,7 +24874,7 @@ Manager / Supervisor: __________________
         }
 
         function resetCustPickerToBranch() {
-            const bId = document.getElementById('cust-branch')?.value;
+            const bId = _val('cust-branch');
             const b = (state.branches || []).find(x => x.id == bId) || state.currentBranch || (state.branches || [])[0];
             if (b) {
                 const bLat = parseFloat(b.latitude) || -6.879400;
@@ -24849,10 +24972,10 @@ Manager / Supervisor: __________________
                 document.getElementById('cust-phone').value = '';
                 document.getElementById('cust-email').value = '';
                 document.getElementById('cust-discount').value = '0';
-                document.getElementById('cust-branch').value = userBranch?.id || (state.currentBranch ? state.currentBranch.id : '');
+                document.getElementById('cust-branch').value = (userBranch ? userBranch.id : '') || (state.currentBranch ? state.currentBranch.id : '');
                 document.getElementById('cust-address').value = '';
-                const defLat = state.currentBranch?.latitude || -6.879400;
-                const defLon = state.currentBranch?.longitude || 107.530000;
+                const defLat = (state.currentBranch ? state.currentBranch.latitude : -6.879400) || -6.879400;
+                const defLon = (state.currentBranch ? state.currentBranch.longitude : 107.530000) || 107.530000;
                 document.getElementById('cust-latitude').value = Number(defLat).toFixed(6);
                 document.getElementById('cust-longitude').value = Number(defLon).toFixed(6);
                 document.getElementById('cust-notes').value = '';
@@ -24890,8 +25013,8 @@ Manager / Supervisor: __________________
                     },
                     err => {
                         // Fallback koordinat sekitar Cimahi/Cabang
-                        const defLat = state.currentBranch?.latitude || -6.879400;
-                        const defLon = state.currentBranch?.longitude || 107.530000;
+                        const defLat = (state.currentBranch ? state.currentBranch.latitude : -6.879400) || -6.879400;
+                        const defLon = (state.currentBranch ? state.currentBranch.longitude : 107.530000) || 107.530000;
                         const sLat = (defLat + (Math.random() - 0.5) * 0.02).toFixed(6);
                         const sLon = (defLon + (Math.random() - 0.5) * 0.02).toFixed(6);
                         document.getElementById('cust-latitude').value = sLat;
@@ -24908,8 +25031,8 @@ Manager / Supervisor: __________________
 
         // --- CUSTOMER MINI-MAP PICKER ---
         function updateCustPickerFromInputs() {
-            const lat = parseFloat(document.getElementById('cust-latitude')?.value);
-            const lon = parseFloat(document.getElementById('cust-longitude')?.value);
+            const lat = parseFloat(_val('cust-latitude'));
+            const lon = parseFloat(_val('cust-longitude'));
             updateCustPickerBadge(lat, lon);
             if (!isNaN(lat) && !isNaN(lon) && state.customerPickerMap && state.customerPickerMarker) {
                 state.customerPickerMarker.setLatLng([lat, lon]);
@@ -24921,14 +25044,14 @@ Manager / Supervisor: __________________
             const container = document.getElementById('cust-modal-map-picker');
             if (!container) return;
 
-            let lat = parseFloat(document.getElementById('cust-latitude')?.value);
-            let lon = parseFloat(document.getElementById('cust-longitude')?.value);
+            let lat = parseFloat(_val('cust-latitude'));
+            let lon = parseFloat(_val('cust-longitude'));
 
             if (isNaN(lat) || isNaN(lon) || (lat === 0 && lon === 0)) {
-                const bId = document.getElementById('cust-branch')?.value;
+                const bId = _val('cust-branch');
                 const b = (state.branches || []).find(x => x.id == bId) || state.currentBranch;
-                lat = parseFloat(b?.latitude) || -6.879400;
-                lon = parseFloat(b?.longitude) || 107.530000;
+                lat = parseFloat((b ? b.latitude : null)) || -6.879400;
+                lon = parseFloat((b ? b.longitude : null)) || 107.530000;
                 document.getElementById('cust-latitude').value = lat.toFixed(6);
                 document.getElementById('cust-longitude').value = lon.toFixed(6);
             }
@@ -25000,8 +25123,8 @@ Manager / Supervisor: __________________
                 await loadCustomers();
             }
 
-            const branchLat = parseFloat(state.currentBranch?.latitude) || -6.879400;
-            const branchLon = parseFloat(state.currentBranch?.longitude) || 107.530000;
+            const branchLat = parseFloat((state.currentBranch ? state.currentBranch.latitude : -6.879400)) || -6.879400;
+            const branchLon = parseFloat((state.currentBranch ? state.currentBranch.longitude : 107.530000)) || 107.530000;
 
             if (!state.customerMap) {
                 state.customerMap = L.map('customer-geospatial-map').setView([branchLat, branchLon], 12);
@@ -25034,7 +25157,7 @@ Manager / Supervisor: __________________
                 state.branches.map(b => `<option value="${b.id}" ${curBVal == b.id ? 'selected' : ''}>🏢 ${b.name}</option>`).join('');
 
             const bFilterVal = bFilter.value || 'ALL';
-            const catFilterVal = document.getElementById('cust-map-category-filter')?.value || 'ALL';
+            const catFilterVal = _val('cust-map-category-filter') || 'ALL';
 
             const filteredCusts = state.customers.filter(c => {
                 const matchBranch = (bFilterVal === 'ALL' || c.branch_id == bFilterVal);
@@ -25070,8 +25193,8 @@ Manager / Supervisor: __________________
                 state.customerMapPolyline = null;
             }
 
-            const bFilterVal = document.getElementById('cust-map-branch-filter')?.value || 'ALL';
-            const catFilterVal = document.getElementById('cust-map-category-filter')?.value || 'ALL';
+            const bFilterVal = _val('cust-map-branch-filter') || 'ALL';
+            const catFilterVal = _val('cust-map-category-filter') || 'ALL';
 
             // 1. Add branch markers (Outlet toko acuan)
             state.branches.forEach(b => {
@@ -25147,7 +25270,7 @@ Manager / Supervisor: __________________
         }
 
         function onCustomerMapSelectChange() {
-            const cId = parseInt(document.getElementById('cust-map-customer-select')?.value || 0);
+            const cId = parseInt(_val('cust-map-customer-select') || 0);
             const cust = state.customers.find(c => c.id === cId);
             if (cust) {
                 selectCustomerOnMap(cust, true);
@@ -25202,7 +25325,7 @@ Manager / Supervisor: __________________
                 if (cust.phone && cust.phone.length > 5) {
                     let cleanPhone = cust.phone.replace(/[^0-9]/g, '');
                     if (cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.substring(1);
-                    waBtn.href = `https://wa.me/${cleanPhone}?text=Halo%20${encodeURIComponent(cust.name)},%20kami%20dari%20${encodeURIComponent(state.currentBranch?.name || 'Kasir')}.`;
+                    waBtn.href = `https://wa.me/${cleanPhone}?text=Halo%20${encodeURIComponent(cust.name)},%20kami%20dari%20${encodeURIComponent((state.currentBranch ? state.currentBranch.name : 'Cabang') || 'Kasir')}.`;
                     waContainer.classList.remove('hidden');
                 } else {
                     waContainer.classList.add('hidden');
@@ -25392,7 +25515,7 @@ Manager / Supervisor: __________________
             });
             select.innerHTML = html;
 
-            const defaultBranchId = state.currentBranch?.id || curUser.branch_id || (branches[0] ? branches[0].id : 1);
+            const defaultBranchId = (state.currentBranch ? state.currentBranch.id : 1) || curUser.branch_id || (branches[0] ? branches[0].id : 1);
             select.value = defaultBranchId;
 
             if (!isSuper) {
@@ -25477,7 +25600,7 @@ Manager / Supervisor: __________________
             const badgeEl = document.getElementById('cust-import-valid-badge');
             const textInput = document.getElementById('cust-import-text-input');
             const branchSelect = document.getElementById('cust-import-branch-select');
-            const targetBranchId = branchSelect ? parseInt(branchSelect.value) : (state.currentBranch?.id || 1);
+            const targetBranchId = branchSelect ? parseInt(branchSelect.value) : ((state.currentBranch ? state.currentBranch.id : 1) || 1);
 
             const fileName = file.name.toLowerCase();
             const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
@@ -25669,7 +25792,7 @@ Manager / Supervisor: __________________
                 return;
             }
 
-            const targetBranchId = branchSelect ? parseInt(branchSelect.value) : (state.currentBranch?.id || 1);
+            const targetBranchId = branchSelect ? parseInt(branchSelect.value) : ((state.currentBranch ? state.currentBranch.id : 1) || 1);
             const targetBranchName = (branchSelect && branchSelect.selectedOptions[0]) ? branchSelect.selectedOptions[0].text : 'Cabang Terpilih';
 
             const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
@@ -25795,7 +25918,7 @@ Manager / Supervisor: __________________
             const btnSubmit = document.getElementById('btn-submit-import-customers');
             const branchSelect = document.getElementById('cust-import-branch-select');
 
-            const targetBranchId = branchSelect ? parseInt(branchSelect.value) : (state.currentBranch?.id || 1);
+            const targetBranchId = branchSelect ? parseInt(branchSelect.value) : ((state.currentBranch ? state.currentBranch.id : 1) || 1);
             const targetBranchName = (branchSelect && branchSelect.selectedOptions[0]) ? branchSelect.selectedOptions[0].text : 'Cabang Terpilih';
 
             const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
@@ -26142,7 +26265,7 @@ Manager / Supervisor: __________________
                     const cogs = Number(st.local_cogs);
                     const price = Number(st.local_price);
                     const margin = price > 0 ? Math.round(((price - cogs) / price) * 100) : 0;
-                    const isActive = Number(st.is_active ?? 1) === 1;
+                    const isActive = Number(_nn(st.is_active, 1)) === 1;
 
                     // Hitung status pengiriman cabang (0 = Standar, 1 = Wajib Ongkir, 2 = Termasuk Biaya Kirim)
                     let currentDelivMode = 0;
@@ -26375,7 +26498,7 @@ Manager / Supervisor: __________________
                         document.getElementById('bp-cogs').value = Number(st.local_cogs);
                         document.getElementById('bp-info-cogs-display').innerText = formatRupiah(Number(st.local_cogs));
                         document.getElementById('bp-local-price').value = Number(st.local_price);
-                        if (activeCheckbox) activeCheckbox.checked = Number(st.is_active ?? 1) === 1;
+                        if (activeCheckbox) activeCheckbox.checked = Number(_nn(st.is_active, 1)) === 1;
                         if (delivSelect) {
                             if (Number(st.is_delivery_included) === 1 || Number(st.is_delivery_required) === 2) {
                                 delivSelect.value = '2';
@@ -26491,7 +26614,7 @@ Manager / Supervisor: __________________
             if (!tbody) return;
 
             let cats = state.customerCategories || [];
-            const kw = (document.getElementById('cust-cat-search-keyword')?.value || '').toLowerCase().trim();
+            const kw = (_val('cust-cat-search-keyword') || '').toLowerCase().trim();
 
             if (state.custCatStatusFilter === 'ACTIVE') {
                 cats = cats.filter(c => c.is_active == 1);
@@ -26847,7 +26970,8 @@ Manager / Supervisor: __________________
             }
 
             tbody.innerHTML = filtered.map(v => {
-                const branchName = state.branches.find(b => b.id === v.branch_id)?.name || 'Semua Cabang';
+                const _foundBr = state.branches.find(b => b.id === v.branch_id);
+                const branchName = (_foundBr ? _foundBr.name : 'Semua Cabang');
                 const ratioText = (v.fuel_ratio_unit === 'METER_PER_LITER') ? `${formatDecimal(v.fuel_ratio)} m/L` : `${formatDecimal(v.fuel_ratio)} km/L`;
                 
                 let statusBadge = '';
@@ -27482,8 +27606,8 @@ Manager / Supervisor: __________________
             const mapContainer = document.getElementById('logistics-map');
             if (!mapContainer) return;
 
-            const branchLat = state.currentBranch?.latitude || -6.879400;
-            const branchLon = state.currentBranch?.longitude || 107.530000;
+            const branchLat = (state.currentBranch ? state.currentBranch.latitude : -6.879400) || -6.879400;
+            const branchLon = (state.currentBranch ? state.currentBranch.longitude : 107.530000) || 107.530000;
 
             if (!state.logisticsMap) {
                 state.logisticsMap = L.map('logistics-map').setView([branchLat, branchLon], 13);
@@ -27589,8 +27713,8 @@ Manager / Supervisor: __________________
         async function drawDeliveryRouteOnMap() {
             if (!state.logisticsMap) return;
 
-            const bId = parseInt(document.getElementById('map-branch-select')?.value || 1);
-            const cId = parseInt(document.getElementById('map-customer-select')?.value || 1);
+            const bId = parseInt(_val('map-branch-select') || 1);
+            const cId = parseInt(_val('map-customer-select') || 1);
 
             const branch = state.branches.find(b => b.id === bId);
             const cust = state.customers.find(c => c.id === cId);
@@ -27812,8 +27936,8 @@ Manager / Supervisor: __________________
         }
 
         function copyBranchAddressToSearch() {
-            const address = document.getElementById('branch-modal-address')?.value?.trim() || '';
-            const name = document.getElementById('branch-modal-name')?.value?.trim() || '';
+            const address = _val('branch-modal-address').trim() || '';
+            const name = _val('branch-modal-name').trim() || '';
             const query = address || name;
             if (!query) {
                 alert('Silakan ketik Nama Outlet atau Alamat Fisik Toko terlebih dahulu pada formulir di sebelah kiri.');
@@ -27846,9 +27970,9 @@ Manager / Supervisor: __________________
 
         async function searchBranchAddressOnMap() {
             const input = document.getElementById('branch-modal-search-input');
-            let query = input?.value?.trim() || '';
+            let query = (input && input.value ? input.value.trim() : '') || '';
             if (!query) {
-                query = document.getElementById('branch-modal-address')?.value?.trim() || '';
+                query = _val('branch-modal-address').trim() || '';
                 if (query && input) {
                     input.value = query;
                     toggleBranchSearchClearBtn();
@@ -27964,7 +28088,7 @@ Manager / Supervisor: __________________
                                       .replace(/\b(gang|gg|blok)\.?\s*[a-zA-Z0-9\-]+/gi, ' ')
                                       .replace(/\s+/g, ' ').trim();
                     
-                    const branchName = document.getElementById('branch-modal-name')?.value || '';
+                    const branchName = _val('branch-modal-name') || '';
                     let cityCandidate = '';
                     const cityMatches = (query + ' ' + branchName).match(/\b(cimahi|bandung|jakarta|surabaya|medan|semarang|yogyakarta|jogja|tangerang|bekasi|depok|bogor|malang|solo|denpasar)\b/i);
                     if (cityMatches) {
@@ -28019,8 +28143,8 @@ Manager / Supervisor: __________________
             document.getElementById('branch-modal-name').value = '';
             document.getElementById('branch-modal-phone').value = '';
             document.getElementById('branch-modal-address').value = '';
-            const defLat = state.currentBranch?.latitude || -6.879400;
-            const defLon = state.currentBranch?.longitude || 107.530000;
+            const defLat = (state.currentBranch ? state.currentBranch.latitude : -6.879400) || -6.879400;
+            const defLon = (state.currentBranch ? state.currentBranch.longitude : 107.530000) || 107.530000;
             document.getElementById('branch-modal-lat').value = Number(defLat).toFixed(6);
             document.getElementById('branch-modal-lng').value = Number(defLon).toFixed(6);
             document.getElementById('branch-modal-radius').value = '100';
@@ -28120,8 +28244,8 @@ Manager / Supervisor: __________________
                 await loadBranches();
             }
 
-            const branchLat = parseFloat(state.currentBranch?.latitude) || -6.879400;
-            const branchLon = parseFloat(state.currentBranch?.longitude) || 107.530000;
+            const branchLat = parseFloat((state.currentBranch ? state.currentBranch.latitude : -6.879400)) || -6.879400;
+            const branchLon = parseFloat((state.currentBranch ? state.currentBranch.longitude : 107.530000)) || 107.530000;
 
             if (!state.branchMap) {
                 state.branchMap = L.map('branch-geospatial-map').setView([branchLat, branchLon], 12);
@@ -28148,7 +28272,7 @@ Manager / Supervisor: __________________
             const bSelect = document.getElementById('branch-map-select');
             if (!bSelect) return;
 
-            const curBId = state.currentBranch ? state.currentBranch.id : (state.branches[0]?.id || 1);
+            const curBId = state.currentBranch ? state.currentBranch.id : (state.(branches[0] ? branches[0].id : 1) || 1);
             bSelect.innerHTML = state.branches.map(b => `
                 <option value="${b.id}" ${b.id === curBId ? 'selected' : ''}>🏢 ${b.name} (${b.code})</option>
             `).join('');
@@ -28168,7 +28292,7 @@ Manager / Supervisor: __________________
             }
             state.branchMapCircles = [];
 
-            const statusFilter = document.getElementById('branch-map-status-filter')?.value || 'ALL';
+            const statusFilter = _val('branch-map-status-filter') || 'ALL';
 
             const filteredBranches = state.branches.filter(b => {
                 if (statusFilter === 'ACTIVE') return b.is_active != 0;
@@ -28224,7 +28348,7 @@ Manager / Supervisor: __________________
         }
 
         function onBranchMapSelectChange() {
-            const bId = parseInt(document.getElementById('branch-map-select')?.value || 0);
+            const bId = parseInt(_val('branch-map-select') || 0);
             const branch = state.branches.find(b => b.id === bId);
             if (branch) {
                 selectBranchOnMap(branch, true);
@@ -28323,13 +28447,13 @@ Manager / Supervisor: __________________
             const container = document.getElementById('branch-modal-map-picker');
             if (!container) return;
 
-            let lat = parseFloat(document.getElementById('branch-modal-lat')?.value);
-            let lon = parseFloat(document.getElementById('branch-modal-lng')?.value);
-            let radius = parseInt(document.getElementById('branch-modal-radius')?.value) || 100;
+            let lat = parseFloat(_val('branch-modal-lat'));
+            let lon = parseFloat(_val('branch-modal-lng'));
+            let radius = parseInt(_val('branch-modal-radius')) || 100;
 
             if (isNaN(lat) || isNaN(lon) || (lat === 0 && lon === 0)) {
-                lat = parseFloat(state.currentBranch?.latitude) || -6.879400;
-                lon = parseFloat(state.currentBranch?.longitude) || 107.530000;
+                lat = parseFloat((state.currentBranch ? state.currentBranch.latitude : -6.879400)) || -6.879400;
+                lon = parseFloat((state.currentBranch ? state.currentBranch.longitude : 107.530000)) || 107.530000;
                 document.getElementById('branch-modal-lat').value = lat.toFixed(6);
                 document.getElementById('branch-modal-lng').value = lon.toFixed(6);
             }
@@ -28360,7 +28484,7 @@ Manager / Supervisor: __________________
                     document.getElementById('branch-modal-lat').value = pos.lat.toFixed(6);
                     document.getElementById('branch-modal-lng').value = pos.lng.toFixed(6);
                     if (state.branchPickerCircle) state.branchPickerCircle.setLatLng(pos);
-                    updateBranchPickerBadge(pos.lat, pos.lng, parseInt(document.getElementById('branch-modal-radius')?.value) || 100);
+                    updateBranchPickerBadge(pos.lat, pos.lng, parseInt(_val('branch-modal-radius')) || 100);
                 });
 
                 state.branchPickerMap.on('click', function(e) {
@@ -28368,7 +28492,7 @@ Manager / Supervisor: __________________
                     if (state.branchPickerCircle) state.branchPickerCircle.setLatLng(e.latlng);
                     document.getElementById('branch-modal-lat').value = e.latlng.lat.toFixed(6);
                     document.getElementById('branch-modal-lng').value = e.latlng.lng.toFixed(6);
-                    updateBranchPickerBadge(e.latlng.lat, e.latlng.lng, parseInt(document.getElementById('branch-modal-radius')?.value) || 100);
+                    updateBranchPickerBadge(e.latlng.lat, e.latlng.lng, parseInt(_val('branch-modal-radius')) || 100);
                 });
             } else {
                 state.branchPickerMarker.setLatLng([lat, lon]);
@@ -28391,9 +28515,9 @@ Manager / Supervisor: __________________
         }
 
         function updateBranchPickerFromInputs() {
-            const lat = parseFloat(document.getElementById('branch-modal-lat')?.value);
-            const lon = parseFloat(document.getElementById('branch-modal-lng')?.value);
-            const radius = parseInt(document.getElementById('branch-modal-radius')?.value) || 100;
+            const lat = parseFloat(_val('branch-modal-lat'));
+            const lon = parseFloat(_val('branch-modal-lng'));
+            const radius = parseInt(_val('branch-modal-radius')) || 100;
             updateBranchPickerBadge(lat, lon, radius);
             if (!isNaN(lat) && !isNaN(lon) && state.branchPickerMap && state.branchPickerMarker) {
                 state.branchPickerMarker.setLatLng([lat, lon]);
@@ -29690,7 +29814,7 @@ Manager / Supervisor: __________________
                 return;
             }
 
-            const branchLabel = branchId === 'ALL' ? 'SEMUA CABANG (GLOBAL WIPE)' : (document.getElementById('master-reset-branch-select').selectedOptions[0]?.text || `Cabang #${branchId}`);
+            const branchLabel = branchId === 'ALL' ? 'SEMUA CABANG (GLOBAL WIPE)' : ((document.getElementById('master-reset-branch-select').selectedOptions[0] ? document.getElementById('master-reset-branch-select').selectedOptions[0].text : '') || `Cabang #${branchId}`);
             
             const selectedItems = [];
             if (purgeStocks) selectedItems.push('1. Stok Seluruh Produk (Set ke 0)');
@@ -30026,7 +30150,7 @@ Manager / Supervisor: __________________
         }
 
         async function onSettingsBranchChange() {
-            const bId = parseInt(document.getElementById('settings-branch-select')?.value || '0');
+            const bId = parseInt(_val('settings-branch-select') || '0');
             state.settingsSelectedBranchId = bId;
             await loadBranchSettings(bId);
         }
@@ -30068,7 +30192,7 @@ Manager / Supervisor: __________________
         }
 
         async function resetCurrentBranchSettings() {
-            const branchId = parseInt(document.getElementById('settings-branch-select')?.value || '0');
+            const branchId = parseInt(_val('settings-branch-select') || '0');
             if (branchId <= 0) return;
 
             if (!confirm('Apakah Anda yakin ingin menghapus seluruh kustomisasi pengaturan cabang ini dan mengembalikannya ke pengaturan standar kantor pusat?')) {
@@ -30084,7 +30208,7 @@ Manager / Supervisor: __________________
                 const data = await res.json();
                 alert(data.message || 'Pengaturan cabang berhasil di-reset!');
                 if (data.success) {
-                    if (branchId === parseInt(state.currentBranch?.id)) {
+                    if (branchId === parseInt((state.currentBranch ? state.currentBranch.id : 1))) {
                         state.appSettings = data.settings || {};
                         applyAppSettingsToUI();
                     }
@@ -30150,55 +30274,55 @@ Manager / Supervisor: __________________
         }
 
         async function saveAllAppSettings() {
-            const branchId = parseInt(document.getElementById('settings-branch-select')?.value || '0');
+            const branchId = parseInt(_val('settings-branch-select') || '0');
 
             const settingsPayload = {
                 // 1 & 2. Logo & Nama Aplikasi
-                app_name: document.getElementById('set-app-name')?.value.trim() || 'ESBAS RETAIL',
-                app_subtitle: document.getElementById('set-app-subtitle')?.value.trim() || 'POS, BOM & ESS',
-                app_logo_emoji: document.getElementById('set-app-logo-emoji')?.value.trim() || '🛍️',
-                app_logo_url: document.getElementById('set-app-logo-url')?.value.trim() || '',
-                company_name: document.getElementById('set-company-name')?.value.trim() || '',
-                company_address: document.getElementById('set-company-address')?.value.trim() || '',
-                company_phone: document.getElementById('set-company-phone')?.value.trim() || '',
+                app_name: _val('set-app-name').trim() || 'ESBAS RETAIL',
+                app_subtitle: _val('set-app-subtitle').trim() || 'POS, BOM & ESS',
+                app_logo_emoji: _val('set-app-logo-emoji').trim() || '🛍️',
+                app_logo_url: _val('set-app-logo-url').trim() || '',
+                company_name: _val('set-company-name').trim() || '',
+                company_address: _val('set-company-address').trim() || '',
+                company_phone: _val('set-company-phone').trim() || '',
 
                 // 4. Printer USB / IP
-                printer_type: document.getElementById('set-printer-type')?.value || 'BROWSER',
-                printer_ip_address: document.getElementById('set-printer-ip')?.value.trim() || '192.168.1.200',
-                printer_ip_port: document.getElementById('set-printer-port')?.value.trim() || '9100',
-                printer_paper_width: document.getElementById('set-printer-paper-width')?.value || '58mm',
-                printer_auto_cut: document.getElementById('set-printer-auto-cut')?.checked ? '1' : '0',
-                printer_cash_drawer: document.getElementById('set-printer-cash-drawer')?.checked ? '1' : '0',
+                printer_type: _val('set-printer-type') || 'BROWSER',
+                printer_ip_address: _val('set-printer-ip').trim() || '192.168.1.200',
+                printer_ip_port: _val('set-printer-port').trim() || '9100',
+                printer_paper_width: _val('set-printer-paper-width') || '58mm',
+                printer_auto_cut: _chk('set-printer-auto-cut') ? '1' : '0',
+                printer_cash_drawer: _chk('set-printer-cash-drawer') ? '1' : '0',
 
                 // 5. Layout Nota Struk
-                receipt_header_title: document.getElementById('set-receipt-header-title')?.value.trim() || 'ESBAS RETAIL TOKO',
-                receipt_header_subtitle: document.getElementById('set-receipt-header-subtitle')?.value.trim() || 'Pusat Belanja & Grosir Terpadu',
-                receipt_header_custom_text: document.getElementById('set-receipt-header-custom')?.value.trim() || '',
-                receipt_show_logo: document.getElementById('set-receipt-show-logo')?.checked ? '1' : '0',
-                receipt_body_show_sku: document.getElementById('set-receipt-show-sku')?.checked ? '1' : '0',
-                receipt_body_compact_spacing: document.getElementById('set-receipt-compact')?.checked ? '1' : '0',
-                receipt_footer_line1: document.getElementById('set-receipt-footer-1')?.value.trim() || 'Terima Kasih Atas Kunjungan Anda!',
-                receipt_footer_line2: document.getElementById('set-receipt-footer-2')?.value.trim() || '',
-                receipt_footer_line3: document.getElementById('set-receipt-footer-3')?.value.trim() || '',
+                receipt_header_title: _val('set-receipt-header-title').trim() || 'ESBAS RETAIL TOKO',
+                receipt_header_subtitle: _val('set-receipt-header-subtitle').trim() || 'Pusat Belanja & Grosir Terpadu',
+                receipt_header_custom_text: _val('set-receipt-header-custom').trim() || '',
+                receipt_show_logo: _chk('set-receipt-show-logo') ? '1' : '0',
+                receipt_body_show_sku: _chk('set-receipt-show-sku') ? '1' : '0',
+                receipt_body_compact_spacing: _chk('set-receipt-compact') ? '1' : '0',
+                receipt_footer_line1: _val('set-receipt-footer-1').trim() || 'Terima Kasih Atas Kunjungan Anda!',
+                receipt_footer_line2: _val('set-receipt-footer-2').trim() || '',
+                receipt_footer_line3: _val('set-receipt-footer-3').trim() || '',
 
                 // 6. Layout Slip Gaji
-                payslip_header_title: document.getElementById('set-payslip-header-title')?.value.trim() || 'SLIP GAJI KARYAWAN',
-                payslip_company_name: document.getElementById('set-payslip-company-name')?.value.trim() || 'PT ESBAS RETAIL NUSANTARA',
-                payslip_confidential_label: document.getElementById('set-payslip-confidential')?.value.trim() || 'RAHASIA & PRIBADI (CONFIDENTIAL)',
-                payslip_show_terbilang: document.getElementById('set-payslip-show-terbilang')?.checked ? '1' : '0',
-                payslip_show_attendance_detail: document.getElementById('set-payslip-show-attendance')?.checked ? '1' : '0',
-                payslip_signer_1_title: document.getElementById('set-payslip-signer-1')?.value.trim() || 'Penerima (Karyawan)',
-                payslip_signer_2_title: document.getElementById('set-payslip-signer-2')?.value.trim() || 'Finance & Payroll',
-                payslip_footer_notes: document.getElementById('set-payslip-footer-notes')?.value.trim() || '',
+                payslip_header_title: _val('set-payslip-header-title').trim() || 'SLIP GAJI KARYAWAN',
+                payslip_company_name: _val('set-payslip-company-name').trim() || 'PT ESBAS RETAIL NUSANTARA',
+                payslip_confidential_label: _val('set-payslip-confidential').trim() || 'RAHASIA & PRIBADI (CONFIDENTIAL)',
+                payslip_show_terbilang: _chk('set-payslip-show-terbilang') ? '1' : '0',
+                payslip_show_attendance_detail: _chk('set-payslip-show-attendance') ? '1' : '0',
+                payslip_signer_1_title: _val('set-payslip-signer-1').trim() || 'Penerima (Karyawan)',
+                payslip_signer_2_title: _val('set-payslip-signer-2').trim() || 'Finance & Payroll',
+                payslip_footer_notes: _val('set-payslip-footer-notes').trim() || '',
 
                 // 7. Notifikasi WA & Telegram
-                wa_gateway_provider: document.getElementById('set-wa-provider')?.value || 'FONNTE',
-                wa_api_url: document.getElementById('set-wa-api-url')?.value.trim() || 'https://api.fonnte.com/send',
-                wa_api_token: document.getElementById('set-wa-token')?.value.trim() || '',
-                wa_template_message: document.getElementById('set-wa-template')?.value.trim() || '',
-                telegram_bot_token: document.getElementById('set-tg-token')?.value.trim() || '',
-                telegram_chat_id: document.getElementById('set-tg-chat-id')?.value.trim() || '',
-                telegram_template_message: document.getElementById('set-tg-template')?.value.trim() || ''
+                wa_gateway_provider: _val('set-wa-provider') || 'FONNTE',
+                wa_api_url: _val('set-wa-api-url').trim() || 'https://api.fonnte.com/send',
+                wa_api_token: _val('set-wa-token').trim() || '',
+                wa_template_message: _val('set-wa-template').trim() || '',
+                telegram_bot_token: _val('set-tg-token').trim() || '',
+                telegram_chat_id: _val('set-tg-chat-id').trim() || '',
+                telegram_template_message: _val('set-tg-template').trim() || ''
             };
 
             try {
@@ -30213,7 +30337,7 @@ Manager / Supervisor: __________________
                 const data = await res.json();
                 alert(data.message || 'Konfigurasi berhasil disimpan!');
                 if (data.success) {
-                    if (branchId === 0 || branchId === parseInt(state.currentBranch?.id)) {
+                    if (branchId === 0 || branchId === parseInt((state.currentBranch ? state.currentBranch.id : 1))) {
                         state.appSettings = { ...state.appSettings, ...settingsPayload };
                         applyAppSettingsToUI();
                     }
@@ -30225,9 +30349,9 @@ Manager / Supervisor: __________________
         }
 
         function updateReceiptLivePreview() {
-            const showLogo = document.getElementById('set-receipt-show-logo')?.checked;
-            const logoUrl = document.getElementById('set-app-logo-url')?.value.trim();
-            const logoEmoji = document.getElementById('set-app-logo-emoji')?.value || '🛍️';
+            const showLogo = _chk('set-receipt-show-logo');
+            const logoUrl = _val('set-app-logo-url').trim();
+            const logoEmoji = _val('set-app-logo-emoji') || '🛍️';
             const logoEl = document.getElementById('prev-receipt-logo');
             if (logoEl) {
                 if (!showLogo) {
@@ -30243,16 +30367,16 @@ Manager / Supervisor: __________________
             }
 
             if (document.getElementById('prev-receipt-title')) {
-                document.getElementById('prev-receipt-title').innerText = document.getElementById('set-receipt-header-title')?.value || 'ESBAS RETAIL TOKO';
+                document.getElementById('prev-receipt-title').innerText = _val('set-receipt-header-title') || 'ESBAS RETAIL TOKO';
             }
             if (document.getElementById('prev-receipt-subtitle')) {
-                document.getElementById('prev-receipt-subtitle').innerText = document.getElementById('set-receipt-header-subtitle')?.value || 'Pusat Belanja & Grosir';
+                document.getElementById('prev-receipt-subtitle').innerText = _val('set-receipt-header-subtitle') || 'Pusat Belanja & Grosir';
             }
             if (document.getElementById('prev-receipt-custom')) {
-                document.getElementById('prev-receipt-custom').innerText = document.getElementById('set-receipt-header-custom')?.value || '';
+                document.getElementById('prev-receipt-custom').innerText = _val('set-receipt-header-custom') || '';
             }
 
-            const showSku = document.getElementById('set-receipt-show-sku')?.checked;
+            const showSku = _chk('set-receipt-show-sku');
             if (document.getElementById('prev-item-1')) {
                 document.getElementById('prev-item-1').innerText = showSku ? 'Air Galon RO 19L (PRD-001) x2' : 'Air Galon RO 19L x2';
             }
@@ -30261,13 +30385,13 @@ Manager / Supervisor: __________________
             }
 
             if (document.getElementById('prev-receipt-f1')) {
-                document.getElementById('prev-receipt-f1').innerText = document.getElementById('set-receipt-footer-1')?.value || 'Terima Kasih!';
+                document.getElementById('prev-receipt-f1').innerText = _val('set-receipt-footer-1') || 'Terima Kasih!';
             }
             if (document.getElementById('prev-receipt-f2')) {
-                document.getElementById('prev-receipt-f2').innerText = document.getElementById('set-receipt-footer-2')?.value || '';
+                document.getElementById('prev-receipt-f2').innerText = _val('set-receipt-footer-2') || '';
             }
             if (document.getElementById('prev-receipt-f3')) {
-                document.getElementById('prev-receipt-f3').innerText = document.getElementById('set-receipt-footer-3')?.value || '';
+                document.getElementById('prev-receipt-f3').innerText = _val('set-receipt-footer-3') || '';
             }
         }
 
@@ -30518,7 +30642,7 @@ Manager / Supervisor: __________________
         }
 
         function filterRolePermissionsMatrix() {
-            const q = (document.getElementById('role-perm-filter-input')?.value || '').toLowerCase().trim();
+            const q = (_val('role-perm-filter-input') || '').toLowerCase().trim();
             const rows = document.querySelectorAll('#role-permissions-table-body tr');
             rows.forEach(r => {
                 const text = r.innerText.toLowerCase();
@@ -30614,10 +30738,10 @@ Manager / Supervisor: __________________
                     const item = rData[key];
                     if (item && typeof item === 'object') {
                         return {
-                            view: item.view ?? item.access ?? 0,
-                            create: item.create ?? 0,
-                            update: item.update ?? 0,
-                            delete: item.delete ?? 0
+                            view: _nn(item.view, _nn(item.access, 0)),
+                            create: _nn(item.create, 0),
+                            update: _nn(item.update, 0),
+                            delete: _nn(item.delete, 0)
                         };
                     }
                     if (item !== undefined) {
@@ -30751,10 +30875,10 @@ Manager / Supervisor: __________________
                 allPermissionsStructure.forEach(m => {
                     const isSuper = (rCode === 'SUPER_ADMIN' || rCode === 'SUPERADMIN');
                     // Parent menu
-                    const v = isSuper ? 1 : (document.getElementById(`perm-${rCode}-${m.key}-view`)?.checked ? 1 : 0);
-                    const c = isSuper ? 1 : (document.getElementById(`perm-${rCode}-${m.key}-create`)?.checked ? 1 : 0);
-                    const u = isSuper ? 1 : (document.getElementById(`perm-${rCode}-${m.key}-update`)?.checked ? 1 : 0);
-                    const d = isSuper ? 1 : (document.getElementById(`perm-${rCode}-${m.key}-delete`)?.checked ? 1 : 0);
+                    const v = isSuper ? 1 : (_chk(`perm-${rCode}-${m.key}-view`) ? 1 : 0);
+                    const c = isSuper ? 1 : (_chk(`perm-${rCode}-${m.key}-create`) ? 1 : 0);
+                    const u = isSuper ? 1 : (_chk(`perm-${rCode}-${m.key}-update`) ? 1 : 0);
+                    const d = isSuper ? 1 : (_chk(`perm-${rCode}-${m.key}-delete`) ? 1 : 0);
 
                     payloadPerms[rCode][m.key] = {
                         view: v,
@@ -30769,10 +30893,10 @@ Manager / Supervisor: __________________
                     // Sub-tabs
                     if (m.subtabs) {
                         m.subtabs.forEach(sub => {
-                            const subV = isSuper ? 1 : (document.getElementById(`perm-${rCode}-${sub.key}-view`)?.checked ? 1 : 0);
-                            const subC = isSuper ? 1 : (document.getElementById(`perm-${rCode}-${sub.key}-create`)?.checked ? 1 : 0);
-                            const subU = isSuper ? 1 : (document.getElementById(`perm-${rCode}-${sub.key}-update`)?.checked ? 1 : 0);
-                            const subD = isSuper ? 1 : (document.getElementById(`perm-${rCode}-${sub.key}-delete`)?.checked ? 1 : 0);
+                            const subV = isSuper ? 1 : (_chk(`perm-${rCode}-${sub.key}-view`) ? 1 : 0);
+                            const subC = isSuper ? 1 : (_chk(`perm-${rCode}-${sub.key}-create`) ? 1 : 0);
+                            const subU = isSuper ? 1 : (_chk(`perm-${rCode}-${sub.key}-update`) ? 1 : 0);
+                            const subD = isSuper ? 1 : (_chk(`perm-${rCode}-${sub.key}-delete`) ? 1 : 0);
 
                             payloadPerms[rCode][sub.key] = {
                                 view: subV,
@@ -30814,7 +30938,7 @@ Manager / Supervisor: __________________
             document.getElementById('role-description').value = '';
             document.getElementById('role-branch-access').value = '0';
             document.getElementById('role-preset-template').value = 'CASHIER';
-            document.getElementById('role-template-preset-group')?.classList.remove('hidden');
+            _cls('role-template-preset-group', 'remove', 'hidden');
             document.getElementById('role-modal-title').innerText = 'Tambah Role / Group Pengguna Baru';
             document.getElementById('role-modal').classList.remove('hidden');
             lucide.createIcons();
@@ -30827,7 +30951,7 @@ Manager / Supervisor: __________________
             document.getElementById('role-name').value = role.name;
             document.getElementById('role-description').value = role.description || '';
             document.getElementById('role-branch-access').value = role.can_access_all_branches ? '1' : '0';
-            document.getElementById('role-template-preset-group')?.classList.add('hidden');
+            _cls('role-template-preset-group', 'add', 'hidden');
             document.getElementById('role-modal-title').innerText = 'Edit Role: ' + role.name;
             document.getElementById('role-modal').classList.remove('hidden');
             lucide.createIcons();
@@ -30844,7 +30968,7 @@ Manager / Supervisor: __________________
             const name = document.getElementById('role-name').value.trim();
             const description = document.getElementById('role-description').value.trim();
             const canAccessAllBranches = parseInt(document.getElementById('role-branch-access').value);
-            const templatePreset = document.getElementById('role-preset-template')?.value || 'CASHIER';
+            const templatePreset = _val('role-preset-template') || 'CASHIER';
 
             if (!code || !name) {
                 alert('Kode dan Nama Role wajib diisi.');
@@ -30924,9 +31048,9 @@ Manager / Supervisor: __________________
 
 
         function testThermalPrinter() {
-            const pType = document.getElementById('set-printer-type')?.value || 'BROWSER';
-            const ip = document.getElementById('set-printer-ip')?.value || '192.168.1.200';
-            const port = document.getElementById('set-printer-port')?.value || '9100';
+            const pType = _val('set-printer-type') || 'BROWSER';
+            const ip = _val('set-printer-ip') || '192.168.1.200';
+            const port = _val('set-printer-port') || '9100';
 
             if (pType === 'IP_NETWORK') {
                 alert(`[TEST PRINTER IP]: Mengirim sinyal ESC/POS Raw Data ke IP: ${ip}:${port}...\nStatus: Terhubung & siap mencetak.`);
@@ -30948,18 +31072,18 @@ Manager / Supervisor: __________________
         async function testSendReceipt(channel) {
             const dest = (channel === 'WA') 
                 ? (prompt('Masukkan Nomor WhatsApp Tujuan untuk Tes Simulasi (misal: 081234567890):', '081234567890'))
-                : (prompt('Masukkan Chat ID Telegram untuk Tes Simulasi (misal: -1001234567890):', document.getElementById('set-tg-chat-id')?.value || '-1001234567890'));
+                : (prompt('Masukkan Chat ID Telegram untuk Tes Simulasi (misal: -1001234567890):', _val('set-tg-chat-id') || '-1001234567890'));
 
             if (!dest) return;
 
             const sampleSale = {
                 invoice_number: 'INV/20261012/001',
                 created_at: '12/10/2026 14:30',
-                cashier_name: state.currentUser?.name || 'Siti Rahmawati',
+                cashier_name: (state.currentUser ? state.currentUser.name : 'Kasir') || 'Siti Rahmawati',
                 customer_name: 'Pelanggan Umum',
                 customer_category: 'REGULER',
-                branch_name: state.currentBranch?.name || 'Cabang Pusat Cimahi',
-                branch_address: state.currentBranch?.address || 'Jl. Raya No. 1',
+                branch_name: (state.currentBranch ? state.currentBranch.name : 'Cabang') || 'Cabang Pusat Cimahi',
+                branch_address: (state.currentBranch ? state.currentBranch.address : '') || 'Jl. Raya No. 1',
                 subtotal: 73000,
                 discount: 0,
                 tax: 0,
@@ -31023,8 +31147,8 @@ Manager / Supervisor: __________________
             const logoEmoji = s.app_logo_emoji || '🛍️';
             const storeTitle = s.receipt_header_title || (s.app_name || 'ESBAS RETAIL TOKO');
             const storeSubtitle = s.receipt_header_subtitle || (s.app_subtitle || 'Pusat Belanja & Grosir Terpadu');
-            const branchName = sale.branch_name || state.currentBranch?.name || s.company_name || 'Cabang Utama';
-            const branchAddress = sale.branch_address || state.currentBranch?.address || '';
+            const branchName = sale.branch_name || (state.currentBranch ? state.currentBranch.name : 'Cabang') || s.company_name || 'Cabang Utama';
+            const branchAddress = sale.branch_address || (state.currentBranch ? state.currentBranch.address : '') || '';
             const customLegalText = s.receipt_header_custom_text || '';
 
             let headerParts = [];
@@ -31047,7 +31171,7 @@ Manager / Supervisor: __________________
             // 2. METADATA TRANSAKSI (Persis sesuai Pratinjau Struk)
             const invoiceNo = sale.invoice_number || '-';
             const dateStr = sale.created_at || (new Date().toLocaleString('id-ID'));
-            const cashierName = sale.cashier_name || state.currentUser?.name || 'Kasir';
+            const cashierName = sale.cashier_name || (state.currentUser ? state.currentUser.name : 'Kasir') || 'Kasir';
             const custName = sale.customer_name || 'Pelanggan Umum';
 
             let metaParts = [
@@ -31483,7 +31607,7 @@ Manager / Supervisor: __________________
                         opt.innerText = `🏪 ${b.name} (${b.code})`;
                         branchSelect.appendChild(opt);
                     });
-                    branchSelect.value = String(state.execSelectedBranchId || (canAccessAll ? 0 : branchList[0]?.id || 0));
+                    branchSelect.value = String(state.execSelectedBranchId || (canAccessAll ? 0 : (branchList[0] ? branchList[0].id : 0) || 0));
                     if (!canAccessAll) {
                         branchSelect.disabled = true;
                         branchSelect.classList.add('opacity-80', 'cursor-not-allowed');

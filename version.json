@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.3.5",
-    "build": "20261101-60",
+    "version": "1.3.6",
+    "build": "20261101-61",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.3.6",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Kompatibilitas PWA & Standalone Engine untuk Minimal Android 8 (Oreo) / Chromium 58+ (FR-PWA-02)",
+            "description": "Menyempurnakan seluruh arsitektur Progressive Web App (PWA) dan mesin JavaScript aplikasi agar kompatibel penuh pada perangkat Android 8.0/8.1 (Oreo) dengan Chromium/WebView 58+: (1) Eliminasi Total Sintaks ES2020: Mengonversi 344 sintaks optional chaining (?.) dan 30 nullish coalescing (??) menjadi sintaks aman ES5/ES6 yang didukung peramban Android 8, mencegah Uncaught SyntaxError yang membekukan parsing skrip dan ServiceWorker; (2) Fallback SHA-256 JavaScript Murni: Menyediakan mesin hash SHA-256 mandiri (NIST FIPS 180-4) yang menjamin otentikasi kasir offline tetap berjalan 100% pada jaringan non-HTTPS (HTTP) ketika WebCrypto crypto.subtle diblokir peramban lama; (3) Ketahanan Cache Service Worker (sw.js): Menerapkan caching tahan kegagalan (resilient caching) menggunakan Promise.all tanpa pemblokiran instalasi serta sintaks Promise ES5; (4) Penyelarasan Web App Manifest: Menyesuaikan purpose ikon menjadi 'any maskable' dan prefer_related_applications agar memenuhi kriteria instalasi PWA di Android 8; (5) Deteksi Cerdas Visibilitas Tombol Install PWA: Tombol 'Install App' ditampilkan secara proaktif pada perangkat tablet/mobile Android 8 disertai dialog panduan interaktif instalasi layar utama.",
+            "rollback_command": "git checkout v1.3.5"
+        },
         {
             "version": "1.3.5",
             "commit": "HEAD",
