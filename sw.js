@@ -4,7 +4,7 @@
  * Menyediakan kapabilitas offline-first caching, launch standalone, dan background sync.
  */
 
-const CACHE_NAME = 'esbas-pos-v1.4.1';
+const CACHE_NAME = 'esbas-pos-v1.4.2';
 const STATIC_ASSETS = [
     './',
     './index.php',

@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.4.1",
-    "build": "20261101-66",
+    "version": "1.4.2",
+    "build": "20261101-67",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.4.2",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Relokasi Kontrol Operasional Cabang, Sesi, Shift & PWA ke Sidebar Bawah (FR-POS-49)",
+            "description": "Merelokasi kontrol operasional (Pusat Cabang, Sesi 12 Jam, Informasi Shift, Tombol Buka/Tutup Shift, dan Tombol Pasang Aplikasi PWA) ke bagian bawah bilah menu sidebar sebelum info profil user/logout: (1) Eliminasi Tumpukan Header Mobile: Membersihkan bilah atas (topbar) pada layar ponsel sehingga hanya menyisakan tombol Menu Hamburger yang lega (40x40px), judul POS, tombol sinkronisasi offline, dan tombol mode gelap (40x40px) di sisi berlawanan tanpa risiko saling bertumpuk; (2) Komponen Sidebar Operational Card: Menambahkan kartu kontrol operasional terpadu (#sidebar-operational-card) yang menyajikan dropdown pemilihan cabang yang responsif (#sidebar-branch-select), badge countdown sesi 12 jam (#sidebar-session-text), indikator status shift (#sidebar-shift-dot, #sidebar-shift-status-title), tombol aksi buka/tutup shift kasir (#sidebar-btn-shift), serta tombol instalasi PWA (#sidebar-btn-pwa-install); (3) Sinkronisasi State Dua Arah: Menjamin seluruh perubahan cabang, pembaruan sesi countdown, dan status shift (Aktif, Toko Tutup, Belum Buka) tersinkronisasi secara real-time antara topbar desktop dan sidebar mobile; (4) Kompatibilitas Penuh Android 8: Mempertahankan 100% kode ES5/ES6 bebas ES2020 blocker demi kelancaran WebAPK di perangkat lawas.",
+            "rollback_command": "git checkout v1.4.1"
+        },
         {
             "version": "1.4.1",
             "commit": "HEAD",

@@ -73,7 +73,7 @@ try {
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="ESBAS POS">
     <meta name="application-name" content="ESBAS POS Retail">
-    <link rel="manifest" href="manifest.json?v=1.4.1">
+    <link rel="manifest" href="manifest.json?v=1.4.2">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
     <title>ESBAS Retail - POS Multi-Cabang v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</title>
@@ -505,8 +505,47 @@ try {
             </nav>
         </div>
 
-        <!-- Sidebar Bottom: User Profile & Logout -->
+        <!-- Sidebar Bottom: Operational Info, User Profile & Logout -->
         <div id="sidebar-bottom-container" class="p-3 border-t border-slate-800 bg-slate-950/40">
+
+            <!-- Sidebar Operational Card (Cabang, Shift, Sesi, Install PWA) -->
+            <div id="sidebar-operational-card" class="sidebar-label mb-3 space-y-2">
+                <!-- 1. Cabang Operasional (Pusat Cabang) -->
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 space-y-1.5 shadow-sm">
+                    <div class="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        <span class="flex items-center space-x-1.5">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+                            <span>Pusat Cabang</span>
+                        </span>
+                        <span id="sidebar-branch-lock-badge" class="hidden text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-semibold border border-slate-700">🔒 Terkunci</span>
+                    </div>
+                    <select id="sidebar-branch-select" onchange="onSidebarBranchChange()" class="w-full bg-slate-800/90 hover:bg-slate-800 text-xs font-bold text-white rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer truncate">
+                        <!-- Populated via JS -->
+                    </select>
+                </div>
+
+                <!-- 2. Shift Informasi & 3. Sesi 12 Jam -->
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 space-y-2 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-1.5 min-w-0">
+                            <span id="sidebar-shift-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                            <span id="sidebar-shift-status-title" class="text-xs font-bold text-white truncate">Shift 1 (Pagi)</span>
+                        </div>
+                        <span id="sidebar-session-text" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-indigo-950/80 text-indigo-300 border border-indigo-800/80 shrink-0" title="Batas aktif sesi login harian: 12 jam per hari">Sesi: 12j 00m</span>
+                    </div>
+                    <button type="button" id="sidebar-btn-shift" onclick="openShiftModal()" class="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-lg font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all cursor-pointer">
+                        <i data-lucide="clock" class="w-3.5 h-3.5 shrink-0"></i>
+                        <span id="sidebar-btn-shift-label">Tutup Shift 1</span>
+                    </button>
+                </div>
+
+                <!-- 4. Tombol Pasang Aplikasi (Install PWA) -->
+                <button type="button" id="sidebar-btn-pwa-install" onclick="promptPWAInstall()" class="hidden w-full items-center justify-center space-x-2 py-2 px-3 rounded-xl font-bold text-xs bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white shadow-md transition-all cursor-pointer border border-indigo-500/30">
+                    <i data-lucide="download" class="w-4 h-4 shrink-0"></i>
+                    <span>Pasang Aplikasi (Install App)</span>
+                </button>
+            </div>
+
             <!-- Expanded User Card -->
             <div id="sidebar-user-expanded" class="flex items-center justify-between p-2 rounded-xl bg-slate-800/60 border border-slate-800">
                 <div class="flex items-center space-x-2.5 overflow-hidden">
@@ -563,22 +602,22 @@ try {
         <!-- Topbar Utility Bar (Responsive Mobile & Desktop) -->
         <header class="h-14 sm:h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm gap-2 min-w-0">
             <!-- Left: Mobile Trigger & Breadcrumbs -->
-            <div class="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1 mr-1">
-                <button onclick="toggleMobileSidebar()" class="md:hidden p-1.5 sm:p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl shrink-0" title="Buka Menu">
+            <div class="flex items-center space-x-2.5 sm:space-x-3 min-w-0 flex-1 mr-2">
+                <button onclick="toggleMobileSidebar()" class="md:hidden w-10 h-10 flex items-center justify-center text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl shrink-0 transition-colors cursor-pointer" title="Buka Menu Sidebar">
                     <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
                 <div class="min-w-0 flex-1">
-                    <h2 id="topbar-view-title" class="text-xs sm:text-base font-extrabold text-slate-800 dark:text-slate-100 leading-tight truncate whitespace-nowrap block" title="Point of Sale (POS Kasir)">Point of Sale (POS Kasir)</h2>
+                    <h2 id="topbar-view-title" class="text-sm sm:text-base font-extrabold text-slate-800 dark:text-slate-100 leading-tight truncate whitespace-nowrap block" title="Point of Sale (POS Kasir)">Point of Sale (POS Kasir)</h2>
                     <p id="topbar-view-subtitle" class="text-[11px] text-slate-400 dark:text-slate-500 hidden sm:block truncate">Operasional transaksi kasir cepat &bull; Bahan baku BOM terpotong otomatis</p>
                 </div>
             </div>
 
             <!-- Right: Theme Toggle, Branch Selector & Shift Badge -->
             <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
-                <!-- PWA Install Button (Standalone App Shortcut) -->
-                <button type="button" id="btn-pwa-install" onclick="promptPWAInstall()" class="hidden cursor-pointer items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] sm:text-xs px-2.5 py-1 sm:py-1.5 rounded-xl shadow-xs transition-colors shrink-0" title="Pasang ESBAS POS di Layar Utama (PWA)">
+                <!-- PWA Install Button (Desktop Only) -->
+                <button type="button" id="btn-pwa-install" onclick="promptPWAInstall()" class="hidden md:inline-flex cursor-pointer items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl shadow-xs transition-colors shrink-0" title="Pasang ESBAS POS di Layar Utama (PWA)">
                     <i data-lucide="download" class="w-3.5 h-3.5 shrink-0"></i>
-                    <span class="hidden sm:inline">Install App</span>
+                    <span>Install App</span>
                 </button>
 
                 <!-- Offline Sync Status Pill -->
@@ -587,36 +626,36 @@ try {
                     <span id="topbar-offline-sync-text" class="truncate whitespace-nowrap">⚡ Offline (0)</span>
                 </div>
 
-                <!-- Theme Toggle Button (Dark / Light) -->
-                <button type="button" id="theme-toggle-btn" onclick="toggleTheme()" class="p-1.5 sm:p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shrink-0 flex items-center justify-center cursor-pointer" title="Ubah Tema (Gelap / Terang)">
-                    <i data-lucide="sun" class="theme-icon-sun w-4 h-4 hidden"></i>
-                    <i data-lucide="moon" class="theme-icon-moon w-4 h-4"></i>
-                </button>
-
-                <!-- Branch Selector -->
-                <div class="flex items-center space-x-1 sm:space-x-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors max-w-[110px] sm:max-w-[180px]">
-                    <i data-lucide="map-pin" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400 shrink-0"></i>
-                    <select id="branch-select" onchange="onBranchChange()" class="bg-transparent text-[11px] sm:text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer truncate w-full">
+                <!-- Branch Selector (Desktop Only) -->
+                <div id="branch-select-container" class="hidden md:flex items-center space-x-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors max-w-[180px]">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0"></i>
+                    <select id="branch-select" onchange="onBranchChange()" class="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer truncate w-full">
                         <!-- Populated via JS -->
                     </select>
                 </div>
 
-                <!-- 12-Hour Daily Session Lifetime Badge -->
-                <div id="topbar-session-badge" class="hidden md:flex items-center space-x-1.5 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0" title="Batas aktif sesi login harian: 12 jam per hari">
+                <!-- 12-Hour Daily Session Lifetime Badge (Desktop Only) -->
+                <div id="topbar-session-badge" class="hidden md:flex items-center space-x-1.5 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 px-2.5 py-1.5 rounded-xl shrink-0" title="Batas aktif sesi login harian: 12 jam per hari">
                     <i data-lucide="clock" class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0"></i>
-                    <span id="topbar-session-text" class="text-[11px] sm:text-xs font-bold text-indigo-800 dark:text-indigo-300 whitespace-nowrap">Sesi: 12j 00m</span>
+                    <span id="topbar-session-text" class="text-xs font-bold text-indigo-800 dark:text-indigo-300 whitespace-nowrap">Sesi: 12j 00m</span>
                 </div>
 
-                <!-- Shift Status Pill -->
-                <div id="topbar-shift-badge" onclick="openShiftModal()" class="cursor-pointer hidden sm:flex items-center space-x-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shrink-0 max-w-[150px] sm:max-w-none" title="Status Shift Kasir">
+                <!-- Shift Status Pill (Desktop Only) -->
+                <div id="topbar-shift-badge" onclick="openShiftModal()" class="cursor-pointer hidden md:flex items-center space-x-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2.5 py-1.5 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shrink-0 max-w-[150px] sm:max-w-none" title="Status Shift Kasir">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                    <span id="topbar-shift-text" class="text-[11px] sm:text-xs font-bold text-emerald-800 dark:text-emerald-300 truncate whitespace-nowrap">Shift Buka</span>
+                    <span id="topbar-shift-text" class="text-xs font-bold text-emerald-800 dark:text-emerald-300 truncate whitespace-nowrap">Shift Buka</span>
                 </div>
 
-                <!-- Tombol Tutup / Buka Shift Kasir di Header -->
-                <button type="button" id="btn-toggle-shift" onclick="openShiftModal()" class="cursor-pointer flex items-center space-x-1 sm:space-x-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800/80 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl text-rose-700 dark:text-rose-300 font-bold text-[11px] sm:text-xs transition-colors shrink-0 shadow-2xs" title="Tutup / Buka Shift Kasir">
+                <!-- Tombol Tutup / Buka Shift Kasir di Header (Desktop Only) -->
+                <button type="button" id="btn-toggle-shift" onclick="openShiftModal()" class="cursor-pointer hidden md:flex items-center space-x-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800/80 px-2.5 py-1.5 rounded-xl text-rose-700 dark:text-rose-300 font-bold text-xs transition-colors shrink-0 shadow-2xs" title="Tutup / Buka Shift Kasir">
                     <i data-lucide="clock" class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0"></i>
                     <span id="btn-shift-label" class="truncate whitespace-nowrap">Tutup Shift</span>
+                </button>
+
+                <!-- Theme Toggle Button (Dark / Light) -->
+                <button type="button" id="theme-toggle-btn" onclick="toggleTheme()" class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shrink-0 flex items-center justify-center cursor-pointer shadow-2xs" title="Ubah Tema (Gelap / Terang)">
+                    <i data-lucide="sun" class="theme-icon-sun w-4 h-4 hidden"></i>
+                    <i data-lucide="moon" class="theme-icon-moon w-4 h-4"></i>
                 </button>
             </div>
         </header>
@@ -10650,10 +10689,17 @@ try {
                 const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
                 const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
                 const pwaBtn = document.getElementById('btn-pwa-install');
-                if (pwaBtn && !isStandalone) {
+                const sidePwaBtn = document.getElementById('sidebar-btn-pwa-install');
+                if (!isStandalone) {
                     if (deferredPwaPrompt || isMobileOrTablet) {
-                        pwaBtn.classList.remove('hidden');
-                        pwaBtn.style.display = 'inline-flex';
+                        if (pwaBtn) {
+                            pwaBtn.classList.remove('hidden');
+                            pwaBtn.style.display = 'inline-flex';
+                        }
+                        if (sidePwaBtn) {
+                            sidePwaBtn.classList.remove('hidden');
+                            sidePwaBtn.style.display = 'flex';
+                        }
                     }
                 }
             } catch(e) {
@@ -10682,6 +10728,11 @@ try {
                 pwaBtn.classList.remove('hidden');
                 pwaBtn.style.display = 'inline-flex';
             }
+            const sidePwaBtn = document.getElementById('sidebar-btn-pwa-install');
+            if (sidePwaBtn) {
+                sidePwaBtn.classList.remove('hidden');
+                sidePwaBtn.style.display = 'flex';
+            }
         });
 
         window.promptPWAInstall = function() {
@@ -10691,6 +10742,8 @@ try {
                     if (choice.outcome === 'accepted') {
                         const pwaBtn = document.getElementById('btn-pwa-install');
                         if (pwaBtn) pwaBtn.style.display = 'none';
+                        const sidePwaBtn = document.getElementById('sidebar-btn-pwa-install');
+                        if (sidePwaBtn) sidePwaBtn.style.display = 'none';
                     }
                     deferredPwaPrompt = null;
                 });
@@ -11747,10 +11800,11 @@ try {
         function updateSessionBadgeUI(remainingSec) {
             const badgeText = document.getElementById('topbar-session-text');
             const badgeEl = document.getElementById('topbar-session-badge');
-            if (!badgeText || !badgeEl) return;
+            const sideSessionText = document.getElementById('sidebar-session-text');
 
             if (remainingSec === null || remainingSec === undefined) {
-                badgeText.innerText = 'Sesi: 12j 00m';
+                if (badgeText) badgeText.innerText = 'Sesi: 12j 00m';
+                if (sideSessionText) sideSessionText.innerText = 'Sesi: 12j 00m';
                 return;
             }
 
@@ -11758,14 +11812,17 @@ try {
             const minutes = Math.floor((remainingSec % 3600) / 60);
             const formatted = `${hours}j ${minutes < 10 ? '0' : ''}${minutes}m`;
 
-            badgeText.innerText = `Sesi: ${formatted}`;
+            if (badgeText) badgeText.innerText = `Sesi: ${formatted}`;
+            if (sideSessionText) sideSessionText.innerText = `Sesi: ${formatted}`;
 
-            if (remainingSec < 1800) { // kurang dari 30 menit
-                badgeEl.className = 'flex items-center space-x-1.5 bg-rose-50 border border-rose-300 text-rose-800 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0 animate-pulse';
-            } else if (remainingSec < 7200) { // kurang dari 2 jam
-                badgeEl.className = 'flex items-center space-x-1.5 bg-amber-50 border border-amber-300 text-amber-800 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0';
-            } else {
-                badgeEl.className = 'flex items-center space-x-1.5 bg-indigo-50 border border-indigo-200 text-indigo-800 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0';
+            if (badgeEl) {
+                if (remainingSec < 1800) { // kurang dari 30 menit
+                    badgeEl.className = 'hidden md:flex items-center space-x-1.5 bg-rose-50 border border-rose-300 text-rose-800 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0 animate-pulse';
+                } else if (remainingSec < 7200) { // kurang dari 2 jam
+                    badgeEl.className = 'hidden md:flex items-center space-x-1.5 bg-amber-50 border border-amber-300 text-amber-800 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0';
+                } else {
+                    badgeEl.className = 'hidden md:flex items-center space-x-1.5 bg-indigo-50 border border-indigo-200 text-indigo-800 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0';
+                }
             }
         }
 
@@ -12248,7 +12305,9 @@ try {
 
         function renderBranchOptions() {
             const select = document.getElementById('branch-select');
-            if (!select) return;
+            const sideSelect = document.getElementById('sidebar-branch-select');
+            const sideLockBadge = document.getElementById('sidebar-branch-lock-badge');
+            if (!select && !sideSelect) return;
             const curUser = state.currentUser || state.loggedInUser;
             const isSuper = canUserAccessAllBranches();
             const userRole = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
@@ -12270,25 +12329,54 @@ try {
 
             if (allowedBranches.length <= 1) {
                 const b = allowedBranches[0] || getUserAssignedBranch();
-                select.innerHTML = `<option value="${b.id}" selected>🔒 ${b.name} (Terkunci)</option>`;
-                select.disabled = true;
-                select.title = "Lokasi operasional Anda terkunci pada cabang penugasan.";
+                if (select) {
+                    select.innerHTML = `<option value="${b.id}" selected>🔒 ${b.name} (Terkunci)</option>`;
+                    select.disabled = true;
+                    select.title = "Lokasi operasional Anda terkunci pada cabang penugasan.";
+                }
+                if (sideSelect) {
+                    sideSelect.innerHTML = `<option value="${b.id}" selected>${b.name}</option>`;
+                    sideSelect.disabled = true;
+                }
+                if (sideLockBadge) sideLockBadge.classList.remove('hidden');
                 if (state.currentBranch && state.currentBranch.id !== b.id) {
                     state.currentBranch = b;
                 }
             } else {
-                select.disabled = false;
-                select.title = isSuper ? "Pilih cabang untuk memantau/mengelola operasional (Akses Global)" : "Pilih cabang tugas Anda (Multi-Cabang Manager)";
+                if (select) {
+                    select.disabled = false;
+                    select.title = isSuper ? "Pilih cabang untuk memantau/mengelola operasional (Akses Global)" : "Pilih cabang tugas Anda (Multi-Cabang Manager)";
+                }
+                if (sideSelect) {
+                    sideSelect.disabled = false;
+                }
+                if (sideLockBadge) sideLockBadge.classList.add('hidden');
                 const activeBId = state.currentBranch ? state.currentBranch.id : (allowedBranches[0] ? allowedBranches[0].id : 1);
-                select.innerHTML = allowedBranches.map(b => 
+                const optsHtml = allowedBranches.map(b => 
                     `<option value="${b.id}" ${b.id === activeBId ? 'selected' : ''}>${b.name}</option>`
                 ).join('');
+                if (select) select.innerHTML = optsHtml;
+                if (sideSelect) sideSelect.innerHTML = optsHtml;
             }
         }
 
+        async function onSidebarBranchChange() {
+            const sideSelect = document.getElementById('sidebar-branch-select');
+            const topSelect = document.getElementById('branch-select');
+            if (sideSelect && topSelect) {
+                topSelect.value = sideSelect.value;
+            }
+            await onBranchChange();
+        }
+
         async function onBranchChange() {
-            const bId = document.getElementById('branch-select').value;
-            state.currentBranch = state.branches.find(b => b.id == bId);
+            const topSelect = document.getElementById('branch-select');
+            const sideSelect = document.getElementById('sidebar-branch-select');
+            const bId = (topSelect && topSelect.value) ? topSelect.value : (sideSelect ? sideSelect.value : null);
+            if (sideSelect && topSelect && sideSelect.value !== topSelect.value) {
+                sideSelect.value = topSelect.value;
+            }
+            state.currentBranch = (state.branches || []).find(b => b.id == bId) || state.currentBranch;
             initApp();
             if (state.currentTab === 'stocks') loadStockInventory();
             if (state.currentTab === 'reports') {
@@ -13790,6 +13878,10 @@ try {
             const topbarShiftBadge = document.getElementById('topbar-shift-badge');
             const topbarShiftText = document.getElementById('topbar-shift-text');
             const btnToggleShift = document.getElementById('btn-toggle-shift');
+            const sideShiftDot = document.getElementById('sidebar-shift-dot');
+            const sideShiftTitle = document.getElementById('sidebar-shift-status-title');
+            const sideBtnShift = document.getElementById('sidebar-btn-shift');
+            const sideBtnShiftLabel = document.getElementById('sidebar-btn-shift-label');
 
             if (isShiftOpen) {
                 const shiftTitle = state.activeShift.shift_name || ('Shift ' + (state.activeShift.shift_number || 1));
@@ -13803,17 +13895,26 @@ try {
                 if (btnLabel) btnLabel.innerText = `Tutup ${shiftTitle}`;
 
                 if (btnToggleShift) {
-                    btnToggleShift.className = 'cursor-pointer flex items-center space-x-1 sm:space-x-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800/80 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl text-rose-700 dark:text-rose-300 font-bold text-[11px] sm:text-xs transition-colors shrink-0 shadow-2xs';
+                    btnToggleShift.className = 'cursor-pointer hidden md:flex items-center space-x-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800/80 px-2.5 py-1.5 rounded-xl text-rose-700 dark:text-rose-300 font-bold text-xs transition-colors shrink-0 shadow-2xs';
                     btnToggleShift.title = `Tutup ${shiftTitle}`;
                 }
 
                 if (topbarShiftBadge) {
-                    topbarShiftBadge.className = 'cursor-pointer hidden sm:flex items-center space-x-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shrink-0 max-w-[150px] sm:max-w-none';
+                    topbarShiftBadge.className = 'cursor-pointer hidden md:flex items-center space-x-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2.5 py-1.5 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shrink-0 max-w-[150px] sm:max-w-none';
                 }
                 if (topbarShiftText) {
                     topbarShiftText.innerText = `${shiftTitle}: ${(state.currentUser ? state.currentUser.name : 'Kasir') || 'Buka'}`;
-                    topbarShiftText.className = 'text-[11px] sm:text-xs font-bold text-emerald-800 dark:text-emerald-300 truncate whitespace-nowrap';
+                    topbarShiftText.className = 'text-xs font-bold text-emerald-800 dark:text-emerald-300 truncate whitespace-nowrap';
                 }
+
+                // Update Sidebar Operational Card
+                if (sideShiftDot) sideShiftDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0';
+                if (sideShiftTitle) sideShiftTitle.innerText = `${shiftTitle} (Aktif)`;
+                if (sideBtnShift) {
+                    sideBtnShift.className = 'w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-lg font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all cursor-pointer';
+                    sideBtnShift.title = `Tutup ${shiftTitle}`;
+                }
+                if (sideBtnShiftLabel) sideBtnShiftLabel.innerText = `Tutup ${shiftTitle}`;
             } else {
                 if (state.branchClosedToday) {
                     const closerName = escapeHtml((state.finalClosedShift ? state.finalClosedShift.closer_name : '') || (state.finalClosedShift ? state.finalClosedShift.cashier_name : '') || 'Kasir');
@@ -13827,17 +13928,26 @@ try {
                     if (btnLabel) btnLabel.innerText = 'Toko Tutup 🌙';
 
                     if (btnToggleShift) {
-                        btnToggleShift.className = 'cursor-pointer flex items-center space-x-1 sm:space-x-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl text-slate-700 dark:text-slate-300 font-bold text-[11px] sm:text-xs transition-colors shrink-0 shadow-2xs';
+                        btnToggleShift.className = 'cursor-pointer hidden md:flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors shrink-0 shadow-2xs';
                         btnToggleShift.title = 'Toko Tutup (Closing Harian Selesai)';
                     }
 
                     if (topbarShiftBadge) {
-                        topbarShiftBadge.className = 'cursor-pointer hidden sm:flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0 max-w-[150px] sm:max-w-none';
+                        topbarShiftBadge.className = 'cursor-pointer hidden md:flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2.5 py-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0 max-w-[150px] sm:max-w-none';
                     }
                     if (topbarShiftText) {
                         topbarShiftText.innerText = 'Toko Tutup 🌙';
-                        topbarShiftText.className = 'text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-300 truncate whitespace-nowrap';
+                        topbarShiftText.className = 'text-xs font-bold text-slate-700 dark:text-slate-300 truncate whitespace-nowrap';
                     }
+
+                    // Update Sidebar Operational Card
+                    if (sideShiftDot) sideShiftDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-500 shrink-0';
+                    if (sideShiftTitle) sideShiftTitle.innerText = 'Toko Tutup 🌙';
+                    if (sideBtnShift) {
+                        sideBtnShift.className = 'w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-lg font-bold text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all cursor-pointer';
+                        sideBtnShift.title = 'Toko Tutup (Closing Harian Selesai)';
+                    }
+                    if (sideBtnShiftLabel) sideBtnShiftLabel.innerText = 'Toko Tutup 🌙';
                 } else {
                     if (indicator) indicator.className = 'w-3.5 h-3.5 rounded-full bg-rose-500';
                     if (statusText) {
@@ -13848,17 +13958,26 @@ try {
                     if (btnLabel) btnLabel.innerText = 'Buka Shift';
 
                     if (btnToggleShift) {
-                        btnToggleShift.className = 'cursor-pointer flex items-center space-x-1 sm:space-x-1.5 bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl font-bold text-[11px] sm:text-xs transition-colors shrink-0 shadow-xs';
+                        btnToggleShift.className = 'cursor-pointer hidden md:flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600 px-2.5 py-1.5 rounded-xl font-bold text-xs transition-colors shrink-0 shadow-xs';
                         btnToggleShift.title = 'Buka Shift Baru';
                     }
 
                     if (topbarShiftBadge) {
-                        topbarShiftBadge.className = 'cursor-pointer hidden sm:flex items-center space-x-1.5 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/80 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors shrink-0 max-w-[150px] sm:max-w-none';
+                        topbarShiftBadge.className = 'cursor-pointer hidden md:flex items-center space-x-1.5 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/80 px-2.5 py-1.5 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors shrink-0 max-w-[150px] sm:max-w-none';
                     }
                     if (topbarShiftText) {
                         topbarShiftText.innerText = 'Shift Tutup';
-                        topbarShiftText.className = 'text-[11px] sm:text-xs font-bold text-rose-800 dark:text-rose-300 truncate whitespace-nowrap';
+                        topbarShiftText.className = 'text-xs font-bold text-rose-800 dark:text-rose-300 truncate whitespace-nowrap';
                     }
+
+                    // Update Sidebar Operational Card
+                    if (sideShiftDot) sideShiftDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0';
+                    if (sideShiftTitle) sideShiftTitle.innerText = 'Shift Belum Dibuka';
+                    if (sideBtnShift) {
+                        sideBtnShift.className = 'w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-lg font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all cursor-pointer';
+                        sideBtnShift.title = 'Buka Shift Baru';
+                    }
+                    if (sideBtnShiftLabel) sideBtnShiftLabel.innerText = 'Buka Shift Baru';
                 }
             }
             if (window.lucide && typeof lucide.createIcons === 'function') {
