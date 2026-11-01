@@ -50,6 +50,93 @@ foreach ($lines as $lineNum => $line) {
     }
 }
 
+// 3. Verifikasi Keseimbangan Token Bracket ({}, (), [])
+preg_match_all('/<script\b[^>]*>(.*?)<\/script>/is', $html, $matches, PREG_OFFSET_CAPTURE);
+foreach ($matches[1] as $idx => $m) {
+    $js = $m[0];
+    $offset = $m[1];
+    $startLine = substr_count(substr($html, 0, $offset), "\n") + 1;
+    $stack = [];
+    $len = strlen($js);
+    $inString = false;
+    $stringChar = '';
+    $inComment = false;
+    $commentType = '';
+    $curLine = $startLine;
+
+    for ($i = 0; $i < $len; $i++) {
+        $c = $js[$i];
+        $next = ($i + 1 < $len) ? $js[$i + 1] : '';
+
+        if ($c === "\n") {
+            $curLine++;
+            if ($commentType === '//') {
+                $inComment = false;
+                $commentType = '';
+            }
+            continue;
+        }
+
+        if (!$inString && !$inComment) {
+            if ($c === '/' && $next === '/') {
+                $inComment = true;
+                $commentType = '//';
+                $i++;
+                continue;
+            }
+            if ($c === '/' && $next === '*') {
+                $inComment = true;
+                $commentType = '/*';
+                $i++;
+                continue;
+            }
+        } elseif ($inComment) {
+            if ($commentType === '/*' && $c === '*' && $next === '/') {
+                $inComment = false;
+                $commentType = '';
+                $i++;
+            }
+            continue;
+        }
+
+        if (!$inComment) {
+            if (!$inString) {
+                if ($c === '"' || $c === "'" || $c === '`') {
+                    $inString = true;
+                    $stringChar = $c;
+                    continue;
+                }
+            } else {
+                if ($c === '\\') {
+                    $i++;
+                    continue;
+                }
+                if ($c === $stringChar) {
+                    $inString = false;
+                    $stringChar = '';
+                    continue;
+                }
+                continue;
+            }
+        }
+
+        if ($c === '{' || $c === '(' || $c === '[') {
+            $stack[] = ['char' => $c, 'line' => $curLine];
+        } elseif ($c === '}' || $c === ')' || $c === ']') {
+            if (empty($stack)) {
+                $illegalTokens[] = "Rendered Line $curLine: Unexpected closing token '$c' without matching open bracket!";
+                break;
+            }
+            $last = array_pop($stack);
+            $expected = ($last['char'] === '{' ? '}' : ($last['char'] === '(' ? ')' : ']'));
+            if ($c !== $expected) {
+                $illegalTokens[] = "Rendered Line $curLine: Mismatched token '$c', expected '$expected' (opened at line {$last['line']})!";
+                break;
+            }
+        }
+    }
+}
+
 if (!empty($illegalTokens)) {
     echo "FATAL: Ditemukan token ilegal atau sintaks yang tidak kompatibel:\n";
     foreach ($illegalTokens as $t) {

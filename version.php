@@ -10,7 +10,7 @@ if (!function_exists('getAppVersionData')) {
         $data = [
             'app_name' => 'KAD Tech Multicabang',
             'version' => '1.4.5',
-            'build' => '20261101-70',
+            'build' => '20261101-71',
             'release_date' => '2026-11-01',
             'commit_hash' => 'HEAD',
             'branch' => 'main',

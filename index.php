@@ -12663,7 +12663,6 @@ try {
 
             grid.innerHTML = html;
         }
-        }
 
         function onProductClick(productId) {
             // Validasi Cross-Day Shift (Konfirmasi Pergantian Hari & End Day Shift Kemarin)
