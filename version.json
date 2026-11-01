@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.5.9",
-    "build": "20261101-85",
+    "version": "1.6.0",
+    "build": "20261101-86",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.6.0",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Penyederhanaan Banner Laporan Penjualan & Mesin Pagination Tabel Universal 10/20/50/100 Lintas Menu (FR-REP-07, FR-UI-04)",
+            "description": "Menyederhanakan tampilan Laporan Penjualan dan menerapkan kontrol pagination universal (10 / 20 / 50 / 100 baris per halaman) di seluruh tabel data utama aplikasi: (1) Eliminasi Banner Ringkasan di Halaman Laporan Penjualan & Omzet: Menghapus kartu banner memanjang 'Ringkasan Pemakaian Bahan Baku Periode Ini', 'Ringkasan Laporan Kiriman & Ongkos Kirim Periode Ini', dan 'Ringkasan Laporan Diskon & Potongan Harga Periode Ini' agar halaman Laporan Penjualan lebih bersih, ringkas, dan fokus pada kartu KPI serta rincian tabel; (2) Pagination Daftar Transaksi Penjualan (10/20/50/100): Menambahkan bilah navigasi halaman interaktif pada 'Daftar Transaksi Penjualan Terakhir' lengkap dengan indikator jumlah data ('Menampilkan X–Y dari Z data'), pemilih ukuran baris per halaman (10 / 20 / 50 / 100) yang tersimpan otomatis per tabel di localStorage, serta tombol Prev / Nomor Halaman / Next; (3) Standarisasi Pagination di 27 Tabel Lintas Menu Utama: Memberlakukan pagination 10/20/50/100 secara otomatis pada Laporan Penjualan, Piutang, BOM, Kiriman, Diskon, Dashboard Eksekutif, Penjualan Mitra B2B, Master Produk, Kategori, Saldo Stok, Kartu Pergerakan Stok, Penambahan Stok Manual & Transfer Cabang, Pelanggan CRM, Harga Mitra/Cabang, Beban Operasional, Karyawan, Payroll, ESS, Logistik Armada, dan Pembatalan Penjualan; (4) Kompatibilitas Penuh Android 8.1: 100% sintaks JavaScript standar ES5/ES6 bebas operator ES2020.",
+            "rollback_command": "git checkout v1.5.9"
+        },
         {
             "version": "1.5.9",
             "commit": "HEAD",

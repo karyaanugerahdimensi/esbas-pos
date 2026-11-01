@@ -4741,7 +4741,7 @@ try {
                     $params[] = $productId;
                 }
             }
-            $sql .= " ORDER BY sm.id DESC LIMIT 150";
+            $sql .= " ORDER BY sm.id DESC LIMIT 1500";
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
@@ -4895,7 +4895,7 @@ try {
                         $inAllowed = implode(',', array_map('intval', $actorAllowedBranches));
                         $sqlMh .= " AND sm.branch_id IN ({$inAllowed})";
                     }
-                    $sqlMh .= " ORDER BY sm.id DESC LIMIT 60";
+                    $sqlMh .= " ORDER BY sm.id DESC LIMIT 500";
                     $stMh = $pdo->prepare($sqlMh);
                     $stMh->execute($paramsMh);
                     $manualHistory = $stMh->fetchAll(PDO::FETCH_ASSOC);
@@ -4933,7 +4933,7 @@ try {
                             $paramsTrf[] = (int)$filterBranchParam;
                             $paramsTrf[] = (int)$filterBranchParam;
                         }
-                        $sqlTrf .= " ORDER BY st.id DESC LIMIT 60";
+                        $sqlTrf .= " ORDER BY st.id DESC LIMIT 500";
                         $stTrf = $pdo->prepare($sqlTrf);
                         $stTrf->execute($paramsTrf);
                         $transfersList = $stTrf->fetchAll(PDO::FETCH_ASSOC);
@@ -8657,7 +8657,7 @@ try {
                 LEFT JOIN users du ON du.id = COALESCE(s.driver_user_id, v.driver_user_id)
                 $whereSql
                 ORDER BY s.id DESC
-                LIMIT 50
+                LIMIT 2000
             ");
             $stmtList->execute($params);
             $recentSales = $stmtList->fetchAll();
@@ -8811,7 +8811,7 @@ try {
             $courierSummary = $stCourier->fetchAll(PDO::FETCH_ASSOC);
 
             // 3. Daftar Rincian Faktur Kiriman
-            $limitClause = ($action === 'export_delivery_excel') ? '' : 'LIMIT 200';
+            $limitClause = ($action === 'export_delivery_excel') ? '' : 'LIMIT 2000';
             $stRows = $pdo->prepare("
                 SELECT 
                     s.id, s.invoice_number, s.created_at,
@@ -9129,7 +9129,7 @@ try {
             $customerSummary = $stByCustomer->fetchAll(PDO::FETCH_ASSOC);
 
             // 4. Daftar Rincian Faktur Berdiskon
-            $limitClause = ($action === 'export_discount_excel') ? '' : 'LIMIT 200';
+            $limitClause = ($action === 'export_discount_excel') ? '' : 'LIMIT 2000';
             $stDiscRows = $pdo->prepare("
                 SELECT 
                     s.id, s.invoice_number, s.created_at,
@@ -9700,7 +9700,7 @@ try {
                 LEFT JOIN branches b ON b.id = sm.branch_id
                 $whereSm
                 ORDER BY sm.id DESC
-                LIMIT 300
+                LIMIT 1500
             ");
             $stmtTx->execute($paramsSm);
             $rawTx = $stmtTx->fetchAll();

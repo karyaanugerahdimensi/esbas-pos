@@ -1269,116 +1269,6 @@ try {
                         </div>
                     </div>
 
-                    <!-- Quick BOM Ingredients Consumption Banner -->
-                    <div class="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-200/80 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-sm">
-                                <i data-lucide="boxes" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                                    <span>Ringkasan Pemakaian Bahan Baku Periode Ini</span>
-                                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold">Otomatisasi BOM</span>
-                                </h4>
-                                <p class="text-xs text-slate-500 mt-0.5">Pantau volume bahan baku utama yang terpotong otomatis dari penjualan produk olahan/galon.</p>
-                            </div>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-4 text-xs">
-                            <div class="bg-white px-3.5 py-2 rounded-xl border border-amber-200 shadow-2xs">
-                                <span class="text-slate-400 block text-[10px] font-semibold">Air Baku Terpakai</span>
-                                <span id="quick-bom-water" class="font-black text-slate-800 text-sm">0 Liter</span>
-                            </div>
-                            <div class="bg-white px-3.5 py-2 rounded-xl border border-amber-200 shadow-2xs">
-                                <span class="text-slate-400 block text-[10px] font-semibold">Tutup Galon</span>
-                                <span id="quick-bom-caps" class="font-black text-slate-800 text-sm">0 Pcs</span>
-                            </div>
-                            <div class="bg-white px-3.5 py-2 rounded-xl border border-amber-200 shadow-2xs">
-                                <span class="text-slate-400 block text-[10px] font-semibold">Tisu Galon</span>
-                                <span id="quick-bom-tissues" class="font-black text-slate-800 text-sm">0 Pcs</span>
-                            </div>
-                            <button onclick="setReportSubtab('bom')" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition-all shadow-sm">
-                                <span>Lihat Laporan BOM Lengkap</span>
-                                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Quick Delivery & Courier Report Summary Banner -->
-                    <div class="bg-gradient-to-r from-sky-500/10 via-sky-500/5 to-transparent border border-sky-200/80 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-sm">
-                                <i data-lucide="truck" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                                    <span>Ringkasan Laporan Kiriman & Ongkos Kirim Periode Ini</span>
-                                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 font-semibold">Layanan Antar POS</span>
-                                </h4>
-                                <p class="text-xs text-slate-500 mt-0.5">Rekap pesanan pengiriman pelanggan, total pendapatan ongkos kirim, jarak tempuh, dan aktivitas kurir.</p>
-                            </div>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
-                            <div class="bg-white px-3.5 py-2 rounded-xl border border-sky-200 shadow-2xs">
-                                <span class="text-slate-400 block text-[10px] font-semibold">Total Kiriman</span>
-                                <span id="quick-deliv-orders" class="font-black text-slate-800 text-sm">0 Nota</span>
-                            </div>
-                            <div class="bg-white px-3.5 py-2 rounded-xl border border-sky-200 shadow-2xs">
-                                <span class="text-slate-400 block text-[10px] font-semibold">Pendapatan Ongkir</span>
-                                <span id="quick-deliv-fee" class="font-black text-sky-700 text-sm">Rp 0</span>
-                            </div>
-                            <div class="bg-white px-3.5 py-2 rounded-xl border border-sky-200 shadow-2xs">
-                                <span class="text-slate-400 block text-[10px] font-semibold">Berbayar / Free</span>
-                                <span id="quick-deliv-split" class="font-black text-slate-800 text-sm">0 / 0 Nota</span>
-                            </div>
-                            <div class="bg-white px-3.5 py-2 rounded-xl border border-sky-200 shadow-2xs">
-                                <span class="text-slate-400 block text-[10px] font-semibold">Total Jarak</span>
-                                <span id="quick-deliv-distance" class="font-black text-slate-800 text-sm">0 km</span>
-                            </div>
-                            <button onclick="setReportSubtab('deliveries')" class="px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition-all shadow-sm">
-                                <span>Lihat Laporan Kiriman Lengkap</span>
-                                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Quick Discount & Promo Report Summary Banner -->
-                    <div class="bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-transparent border border-rose-200/80 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-sm">
-                                <i data-lucide="percent" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                                    <span>Ringkasan Laporan Diskon & Potongan Harga Periode Ini</span>
-                                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-semibold">Audit Diskon POS</span>
-                                </h4>
-                                <p class="text-xs text-slate-500 mt-0.5">Pantau jumlah nota berdiskon, nominal potongan promo/member, rasio diskon terhadap omzet, dan kasir pemberi diskon.</p>
-                            </div>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
-                            <div class="bg-white px-3.5 py-2 rounded-xl border border-rose-200 shadow-2xs">
-                                <span class="text-slate-400 block text-[10px] font-semibold">Nota Berdiskon</span>
-                                <span id="quick-disc-orders" class="font-black text-slate-800 text-sm">0 Nota</span>
-                            </div>
-                            <div class="bg-white px-3.5 py-2 rounded-xl border border-rose-200 shadow-2xs">
-                                <span class="text-slate-400 block text-[10px] font-semibold">Total Potongan Diskon</span>
-                                <span id="quick-disc-total" class="font-black text-rose-600 text-sm">Rp 0</span>
-                            </div>
-                            <div class="bg-white px-3.5 py-2 rounded-xl border border-rose-200 shadow-2xs">
-                                <span class="text-slate-400 block text-[10px] font-semibold">Rata-Rata / Nota</span>
-                                <span id="quick-disc-avg" class="font-black text-slate-800 text-sm">Rp 0</span>
-                            </div>
-                            <div class="bg-white px-3.5 py-2 rounded-xl border border-rose-200 shadow-2xs">
-                                <span class="text-slate-400 block text-[10px] font-semibold">Rasio Diskon</span>
-                                <span id="quick-disc-rate" class="font-black text-slate-800 text-sm">0%</span>
-                            </div>
-                            <button onclick="setReportSubtab('discounts')" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition-all shadow-sm">
-                                <span>Lihat Laporan Diskon Lengkap</span>
-                                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                            </button>
-                        </div>
-                    </div>
-
                     <!-- Quick Shift Stock Discrepancy Alert Banner (Hanya Muncul Jika Ditemukan Selisih) -->
                     <div id="sales-report-stock-diff-banner" class="hidden bg-rose-50 border border-rose-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
                         <div class="flex items-center gap-3">
@@ -1454,10 +1344,13 @@ try {
 
                     <!-- Transactions List -->
                     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                        <h3 class="font-bold text-slate-800 text-sm mb-4 flex items-center space-x-2">
-                            <i data-lucide="receipt" class="w-4 h-4 text-indigo-600"></i>
-                            <span>Daftar Transaksi Penjualan Terakhir</span>
-                        </h3>
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <h3 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                                <i data-lucide="receipt" class="w-4 h-4 text-indigo-600"></i>
+                                <span>Daftar Transaksi Penjualan Terakhir</span>
+                            </h3>
+                            <span id="sales-tx-list-count-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700">0 Faktur</span>
+                        </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-xs">
                                 <thead class="bg-slate-50 text-slate-500 font-bold border-b">
@@ -12488,6 +12381,257 @@ try {
             return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
         }
 
+        // ========================================================
+        // UNIVERSAL REUSABLE TABLE PAGINATION ENGINE (10/20/50/100)
+        // Kompatibel Penuh Android 8.1+ (ES5/ES6 Standar)
+        // ========================================================
+        var PAGINATED_TABLE_IDS = [
+            // Menu Laporan Penjualan
+            'report-transactions-body',
+            'receivables-table-body',
+            'bom-logs-tbody',
+            'deliv-orders-tbody',
+            'disc-orders-tbody',
+            'deliv-courier-summary-tbody',
+            // Menu Dashboard Eksekutif & Penjualan Mitra B2B
+            'exec-live-transactions-body',
+            'partner-orders-tbody',
+            // Menu Master Produk, Stok & Input Penambahan Stok
+            'master-products-table-body',
+            'categories-table-body',
+            'stock-balance-table-body',
+            'stock-movements-table-body',
+            'stockin-manual-history-body',
+            'stockin-trf-history-body',
+            // Menu Pelanggan & CRM
+            'customers-table-body',
+            'mitra-pricing-table-body',
+            'branch-pricing-table-body',
+            // Menu Beban Operasional
+            'branch-expenses-table-body',
+            // Menu Kelola Karyawan, Payroll & ESS
+            'employee-table-body',
+            'payroll-table-body',
+            'ess-att-logs-table-body',
+            'ess-leaves-table-body',
+            'ess-loans-table-body',
+            'ess-reimburse-table-body',
+            // Menu Armada Logistik & Pembatalan Penjualan
+            'fuel-logs-table-body',
+            'service-logs-table-body',
+            'cancellations-table-body'
+        ];
+
+        var tablePaginationState = {};
+
+        function getSavedTablePageSize(tbodyId) {
+            try {
+                var raw = parseInt(localStorage.getItem('kad_tbl_ps_' + tbodyId) || '10', 10);
+                if (raw === 10 || raw === 20 || raw === 50 || raw === 100) return raw;
+            } catch (e) {}
+            return 10;
+        }
+
+        function ensureTablePaginationBar(tbody) {
+            var tbodyId = tbody.id;
+            var barId = 'pag-bar-' + tbodyId;
+            var existing = document.getElementById(barId);
+            if (existing) return existing;
+
+            var table = tbody.closest ? tbody.closest('table') : tbody.parentNode;
+            if (!table) return null;
+
+            var anchorEl = table;
+            var parentEl = table.parentNode;
+            if (parentEl && parentEl.className && String(parentEl.className).indexOf('overflow-x-auto') !== -1) {
+                anchorEl = parentEl;
+            }
+
+            var bar = document.createElement('div');
+            bar.id = barId;
+            bar.className = 'px-3 py-2.5 mt-2 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 text-xs select-none';
+            if (anchorEl.parentNode) {
+                if (anchorEl.nextSibling) {
+                    anchorEl.parentNode.insertBefore(bar, anchorEl.nextSibling);
+                } else {
+                    anchorEl.parentNode.appendChild(bar);
+                }
+            }
+            return bar;
+        }
+
+        function refreshTablePagination(tbodyId, isMutation) {
+            var tbody = document.getElementById(tbodyId);
+            if (!tbody) return;
+
+            if (!tablePaginationState[tbodyId]) {
+                tablePaginationState[tbodyId] = {
+                    page: 1,
+                    pageSize: getSavedTablePageSize(tbodyId),
+                    prevTotal: -1,
+                    prevSig: ''
+                };
+            }
+            var st = tablePaginationState[tbodyId];
+            var rows = tbody.children;
+            var isPlaceholder = false;
+            if (rows.length === 1 && rows[0].cells && rows[0].cells.length === 1) {
+                var cSpan = parseInt(rows[0].cells[0].getAttribute('colspan') || rows[0].cells[0].colSpan || '1', 10);
+                if (cSpan > 1) isPlaceholder = true;
+            }
+
+            var totalItems = isPlaceholder ? 0 : rows.length;
+            var firstSig = (totalItems > 0 && rows[0]) ? String(rows[0].textContent || '').replace(/\s+/g, ' ').slice(0, 80) : '';
+
+            var pageSize = st.pageSize || 10;
+            var totalPages = totalItems > 0 ? Math.ceil(totalItems / pageSize) : 1;
+
+            if (isMutation) {
+                if (st.prevTotal !== totalItems || st.prevSig !== firstSig) {
+                    st.page = 1;
+                } else if (st.page > totalPages) {
+                    st.page = totalPages;
+                }
+                st.prevTotal = totalItems;
+                st.prevSig = firstSig;
+            } else {
+                if (st.page > totalPages) st.page = totalPages;
+                if (st.page < 1) st.page = 1;
+            }
+
+            if (isPlaceholder) {
+                rows[0].style.display = '';
+            } else {
+                var startIdx = (st.page - 1) * pageSize;
+                var endIdx = startIdx + pageSize;
+                for (var i = 0; i < totalItems; i++) {
+                    rows[i].style.display = (i >= startIdx && i < endIdx) ? '' : 'none';
+                }
+            }
+
+            var bar = ensureTablePaginationBar(tbody);
+            if (!bar) return;
+
+            var alwaysShow = (tbodyId === 'report-transactions-body');
+            if (totalItems === 0 && !alwaysShow) {
+                bar.className = 'hidden';
+                return;
+            }
+
+            bar.className = 'px-3 py-2.5 mt-2 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 text-xs select-none';
+
+            var showFrom = totalItems > 0 ? ((st.page - 1) * pageSize + 1) : 0;
+            var showTo = totalItems > 0 ? Math.min(st.page * pageSize, totalItems) : 0;
+
+            var sizeOptionsHtml = [10, 20, 50, 100].map(function(sz) {
+                var sel = (sz === pageSize) ? ' selected' : '';
+                return '<option value="' + sz + '"' + sel + '>' + sz + ' / hal</option>';
+            }).join('');
+
+            var leftHtml =
+                '<div class="flex flex-wrap items-center gap-2.5 text-slate-500 dark:text-slate-400">' +
+                    '<span>Menampilkan <strong class="font-bold text-slate-800 dark:text-slate-200">' + showFrom + '–' + showTo + '</strong> dari <strong class="font-bold text-slate-800 dark:text-slate-200">' + totalItems + '</strong> data</span>' +
+                    '<span class="text-slate-300 dark:text-slate-700">|</span>' +
+                    '<label class="inline-flex items-center gap-1.5">' +
+                        '<span class="text-[11px] font-semibold">Tampilan:</span>' +
+                        '<select onchange="window.setTablePageSize(\'' + tbodyId + '\', this.value)" class="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 text-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500">' +
+                            sizeOptionsHtml +
+                        '</select>' +
+                    '</label>' +
+                '</div>';
+
+            var pagesList = [];
+            if (totalPages <= 7) {
+                for (var p = 1; p <= totalPages; p++) pagesList.push(p);
+            } else {
+                pagesList.push(1);
+                var winStart = Math.max(2, st.page - 1);
+                var winEnd = Math.min(totalPages - 1, st.page + 1);
+                if (st.page <= 3) {
+                    winStart = 2;
+                    winEnd = 4;
+                } else if (st.page >= totalPages - 2) {
+                    winStart = totalPages - 3;
+                    winEnd = totalPages - 1;
+                }
+                if (winStart > 2) pagesList.push('...');
+                for (var wp = winStart; wp <= winEnd; wp++) pagesList.push(wp);
+                if (winEnd < totalPages - 1) pagesList.push('...');
+                pagesList.push(totalPages);
+            }
+
+            var prevDisabled = (st.page <= 1);
+            var nextDisabled = (st.page >= totalPages);
+            var btnBase = 'min-w-[28px] h-7 px-2 rounded-lg font-bold text-[11px] transition-all inline-flex items-center justify-center ';
+            var btnInactive = btnBase + 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200';
+            var btnActive = btnBase + 'bg-indigo-600 text-white shadow-2xs';
+            var btnDisabled = btnBase + 'bg-slate-50 dark:bg-slate-800/50 text-slate-300 dark:text-slate-600 cursor-not-allowed';
+
+            var navHtml = '<div class="flex items-center gap-1">';
+            navHtml += '<button type="button" ' + (prevDisabled ? 'disabled class="' + btnDisabled + '"' : 'onclick="window.goToTablePage(\'' + tbodyId + '\', ' + (st.page - 1) + ')" class="' + btnInactive + '"') + ' title="Halaman Sebelumnya">&lsaquo; Prev</button>';
+
+            for (var k = 0; k < pagesList.length; k++) {
+                var item = pagesList[k];
+                if (item === '...') {
+                    navHtml += '<span class="px-1 text-slate-400 font-bold">...</span>';
+                } else {
+                    var isCur = (item === st.page);
+                    navHtml += '<button type="button" onclick="window.goToTablePage(\'' + tbodyId + '\', ' + item + ')" class="' + (isCur ? btnActive : btnInactive) + '">' + item + '</button>';
+                }
+            }
+
+            navHtml += '<button type="button" ' + (nextDisabled ? 'disabled class="' + btnDisabled + '"' : 'onclick="window.goToTablePage(\'' + tbodyId + '\', ' + (st.page + 1) + ')" class="' + btnInactive + '"') + ' title="Halaman Berikutnya">Next &rsaquo;</button>';
+            navHtml += '</div>';
+
+            bar.innerHTML = leftHtml + navHtml;
+        }
+
+        window.setTablePageSize = function(tbodyId, newSize) {
+            var parsed = parseInt(newSize, 10);
+            if (parsed !== 10 && parsed !== 20 && parsed !== 50 && parsed !== 100) parsed = 10;
+            if (!tablePaginationState[tbodyId]) {
+                tablePaginationState[tbodyId] = { page: 1, pageSize: parsed, prevTotal: -1, prevSig: '' };
+            }
+            tablePaginationState[tbodyId].pageSize = parsed;
+            tablePaginationState[tbodyId].page = 1;
+            try {
+                localStorage.setItem('kad_tbl_ps_' + tbodyId, String(parsed));
+            } catch (e) {}
+            refreshTablePagination(tbodyId, false);
+        };
+
+        window.goToTablePage = function(tbodyId, targetPage) {
+            var p = parseInt(targetPage, 10) || 1;
+            if (!tablePaginationState[tbodyId]) {
+                tablePaginationState[tbodyId] = { page: p, pageSize: getSavedTablePageSize(tbodyId), prevTotal: -1, prevSig: '' };
+            }
+            if (p < 1) p = 1;
+            tablePaginationState[tbodyId].page = p;
+            refreshTablePagination(tbodyId, false);
+        };
+
+        function initUniversalTablePagination() {
+            if (typeof MutationObserver === 'undefined') return;
+            for (var i = 0; i < PAGINATED_TABLE_IDS.length; i++) {
+                (function(tbId) {
+                    var el = document.getElementById(tbId);
+                    if (!el || el.getAttribute('data-pag-bound') === '1') return;
+                    el.setAttribute('data-pag-bound', '1');
+                    var obs = new MutationObserver(function() {
+                        refreshTablePagination(tbId, true);
+                    });
+                    obs.observe(el, { childList: true });
+                    refreshTablePagination(tbId, false);
+                })(PAGINATED_TABLE_IDS[i]);
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initUniversalTablePagination);
+        } else {
+            setTimeout(initUniversalTablePagination, 0);
+        }
+
         // ==========================================
         // UNIVERSAL FLOATING TOAST NOTIFICATION
         // ==========================================
@@ -17035,47 +17179,9 @@ try {
             }
             document.getElementById('kpi-tx-count').innerText = data.kpi.total_transactions;
             document.getElementById('kpi-aov').innerText = formatRupiah(data.kpi.aov);
-
-            // Populate Quick Delivery & Courier Summary Banner
-            const elQuickDelivOrders = document.getElementById('quick-deliv-orders');
-            if (elQuickDelivOrders) elQuickDelivOrders.innerText = `${Number(data.kpi.delivery_orders_count) || 0} Nota`;
-            const elQuickDelivFee = document.getElementById('quick-deliv-fee');
-            if (elQuickDelivFee) elQuickDelivFee.innerText = formatRupiah(data.kpi.total_delivery_fee || 0);
-            const elQuickDelivSplit = document.getElementById('quick-deliv-split');
-            if (elQuickDelivSplit) elQuickDelivSplit.innerText = `${Number(data.kpi.paid_delivery_count) || 0} / ${Number(data.kpi.free_delivery_count) || 0} Nota`;
-            const elQuickDelivDist = document.getElementById('quick-deliv-distance');
-            if (elQuickDelivDist) elQuickDelivDist.innerText = `${formatDecimal(Number(data.kpi.total_delivery_distance_km) || 0)} km`;
-
-            // Populate Quick Discount & Promo Summary Banner
-            const elQuickDiscOrders = document.getElementById('quick-disc-orders');
-            if (elQuickDiscOrders) elQuickDiscOrders.innerText = `${Number(data.kpi.discounted_orders_count) || 0} Nota`;
-            const elQuickDiscTotal = document.getElementById('quick-disc-total');
-            if (elQuickDiscTotal) elQuickDiscTotal.innerText = formatRupiah(data.kpi.total_discount || 0);
-            const elQuickDiscAvg = document.getElementById('quick-disc-avg');
-            if (elQuickDiscAvg) elQuickDiscAvg.innerText = formatRupiah(data.kpi.avg_discount_per_order || 0);
-            const elQuickDiscRate = document.getElementById('quick-disc-rate');
-            if (elQuickDiscRate) elQuickDiscRate.innerText = `${formatDecimal(Number(data.kpi.discount_rate_percent) || 0)}%`;
-
-            // Populate Quick BOM Consumption Summary Banner
-            if (data.bom_summary && Array.isArray(data.bom_summary)) {
-                let totalWater = 0;
-                let totalCaps = 0;
-                let totalTissues = 0;
-                data.bom_summary.forEach(m => {
-                    const name = (m.name || '').toLowerCase();
-                    const qty = Number(m.total_qty) || 0;
-                    if (name.includes('air')) totalWater += qty;
-                    else if (name.includes('tutup')) totalCaps += qty;
-                    else if (name.includes('tisu')) totalTissues += qty;
-                });
-                const elWater = document.getElementById('quick-bom-water');
-                if (elWater) elWater.innerText = `${totalWater.toLocaleString('id-ID')} Liter`;
-
-                const elCaps = document.getElementById('quick-bom-caps');
-                if (elCaps) elCaps.innerText = `${totalCaps.toLocaleString('id-ID')} Pcs`;
-
-                const elTissues = document.getElementById('quick-bom-tissues');
-                if (elTissues) elTissues.innerText = `${totalTissues.toLocaleString('id-ID')} Pcs`;
+            const elSalesTxBadge = document.getElementById('sales-tx-list-count-badge');
+            if (elSalesTxBadge) {
+                elSalesTxBadge.innerText = ((data.recent_sales && Array.isArray(data.recent_sales)) ? data.recent_sales.length : 0) + ' Faktur';
             }
 
             // Cek selisih stok shift untuk rentang tanggal laporan
