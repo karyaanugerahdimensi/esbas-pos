@@ -5035,8 +5035,8 @@ try {
 
             echo json_encode([
                 'success' => true,
-                'default_initial_cash' => 300000,
-                'default_modal' => 300000,
+                'default_initial_cash' => 50000,
+                'default_modal' => 50000,
                 'next_shift_number' => $nextShiftNumber,
                 'next_shift_name' => $nextShiftName,
                 'next_shift_type' => $nextShiftType,
@@ -5120,7 +5120,9 @@ try {
                 ORDER BY id DESC LIMIT 1
             ");
             $stmtLastClosedAny->execute([$branchId]);
-            $lastWasFinal = (int)($stmtLastClosedAny->fetchColumn() ?? 0);
+            $lastClosedRow = $stmtLastClosedAny->fetch(PDO::FETCH_ASSOC);
+            $hasPrevClosedShift = ($lastClosedRow !== false);
+            $lastWasFinal = $hasPrevClosedShift ? (int)($lastClosedRow['is_final_shift'] ?? 0) : 0;
 
             $stmtCountToday = $pdo->prepare("SELECT COUNT(*) FROM cashier_shifts WHERE branch_id = ? AND date(start_time) = ?");
             $stmtCountToday->execute([$branchId, $today]);
@@ -5176,9 +5178,9 @@ try {
                             $isCap = $prodMeta && ($prodMeta['sku'] === 'RAW-089' || $prodMeta['sku'] === 'RAW-020' || stripos($prodMeta['name'], 'Tutup Galon') !== false);
 
                             // Aturan Bisnis SOP:
-                            // Pada Shift 1 (Pagi / Awal Hari Baru), sisa tutup galon malam kemarin selalu dianggap sudah diretur ke gudang (stok malam = 0)!
+                            // Pada Shift 1 (Pagi / Awal Hari Baru) setelah penutupan hari sebelumnya, sisa tutup galon malam kemarin selalu dianggap sudah diretur ke gudang (stok malam = 0)!
                             // Sehingga jika ada pasokan tutup baru pagi (misal 50), Stok Awal Pagi MURNI 50 (bukan penjumlahan sisa kemarin yang diretur + 50).
-                            if ($isCap && ($shiftNumber == 1 || $lastWasFinal == 1)) {
+                            if ($isCap && $hasPrevClosedShift && ($shiftNumber == 1 || $lastWasFinal == 1)) {
                                 $nightVal = 0;
                             }
 
@@ -5186,7 +5188,10 @@ try {
                             // Jika kasir TIDAK menginput penambahan stok baru (added_qty kosong atau <= 0),
                             // maka stok TIDAK BOLEH dinolkan, melainkan DIABAIKAN dan mengikuti stok yang sudah ada sebelumnya!
                             if ($hasAddedInput && $addedVal > 0) {
-                                $openVal = $nightVal + $addedVal;
+                                // Jika belum ada riwayat shift sebelumnya (misal database baru atau baru direset dengan pertahankan Stok Awal),
+                                // gunakan saldo stok awal cabang saat ini sebagai dasar penjumlahan barang masuk pagi
+                                $baseBeforeAdd = (!$hasPrevClosedShift) ? max($nightVal, $curExistingStock) : $nightVal;
+                                $openVal = $baseBeforeAdd + $addedVal;
                                 $explicitlyUpdated[$pId] = true;
                             } else {
                                 // Diabaikan mengikuti stok yang sudah ada sebelumnya di cabang
@@ -14793,6 +14798,9 @@ try {
 
             $now = date('Y-m-d H:i:s');
             $summary = [];
+            // Opsi Pengecualian: pertahankan Stok Awal (mutasi INITIAL_STOCK) agar tidak ikut terhapus
+            $keepInitialStock = !empty($input['keep_initial_stock']);
+            $smKeepClause = $keepInitialStock ? " AND movement_type <> 'INITIAL_STOCK' AND (reference_no IS NULL OR reference_no NOT LIKE 'INIT-%')" : "";
 
             try {
                 $pdo->beginTransaction();
@@ -14852,7 +14860,7 @@ try {
                                     }
 
                                     // Hapus kartu mutasi stok terkait transaksi ini (STOCK_OUT_SALE & BOM_DEDUCTION)
-                                    $pdo->prepare("DELETE FROM stock_movements WHERE reference_no = ? AND branch_id = ?")->execute([$inv, $bId]);
+                                    $pdo->prepare("DELETE FROM stock_movements WHERE reference_no = ? AND branch_id = ?" . $smKeepClause)->execute([$inv, $bId]);
                                 }
                             }
 
@@ -14911,7 +14919,7 @@ try {
                         $sqlDelBom = "
                             DELETE FROM stock_movements 
                             WHERE (movement_type = 'BOM_DEDUCTION' OR notes LIKE '%BOM%' OR notes LIKE '%Resep%' OR notes LIKE '%Konsumsi%')
-                              AND date(created_at) BETWEEN ? AND ?
+                              AND date(created_at) BETWEEN ? AND ?{$smKeepClause}
                         ";
                         $paramsDelBom = [$startDate, $endDate];
                         if ($targetBranchId > 0) {
@@ -14927,14 +14935,14 @@ try {
                             $stmtDelBom = $pdo->prepare("
                                 DELETE FROM stock_movements 
                                 WHERE branch_id = ? 
-                                  AND (movement_type = 'BOM_DEDUCTION' OR notes LIKE '%BOM%' OR notes LIKE '%Resep%' OR notes LIKE '%Konsumsi%')
+                                  AND (movement_type = 'BOM_DEDUCTION' OR notes LIKE '%BOM%' OR notes LIKE '%Resep%' OR notes LIKE '%Konsumsi%'){$smKeepClause}
                             ");
                             $stmtDelBom->execute([$targetBranchId]);
                             $countBom = $stmtDelBom->rowCount();
                         } else {
                             $stmtDelBom = $pdo->prepare("
                                 DELETE FROM stock_movements 
-                                WHERE movement_type = 'BOM_DEDUCTION' OR notes LIKE '%BOM%' OR notes LIKE '%Resep%' OR notes LIKE '%Konsumsi%'
+                                WHERE (movement_type = 'BOM_DEDUCTION' OR notes LIKE '%BOM%' OR notes LIKE '%Resep%' OR notes LIKE '%Konsumsi%'){$smKeepClause}
                             ");
                             $stmtDelBom->execute();
                             $countBom = $stmtDelBom->rowCount();
@@ -14946,10 +14954,44 @@ try {
                 // ----------------------------------------------------
                 // 3. HAPUS STOK SELURUH DATA / BERSIHKAN KARTU PERGERAKAN
                 // ----------------------------------------------------
+                // Kembalikan saldo branch_stocks ke nilai Stok Awal terakhir yang tercatat (per cabang & produk)
+                $applyInitialStock = function ($bId) use ($pdo) {
+                    $sqlInit = "SELECT branch_id, product_id, stock_after FROM stock_movements WHERE (movement_type = 'INITIAL_STOCK' OR reference_no LIKE 'INIT-%')";
+                    $paramsInit = [];
+                    if ($bId > 0) {
+                        $sqlInit .= " AND branch_id = ?";
+                        $paramsInit[] = $bId;
+                    }
+                    $sqlInit .= " ORDER BY id ASC";
+                    $stInit = $pdo->prepare($sqlInit);
+                    $stInit->execute($paramsInit);
+                    $initMap = [];
+                    foreach ($stInit->fetchAll(PDO::FETCH_ASSOC) as $ri) {
+                        $initMap[(int)$ri['branch_id'] . '-' . (int)$ri['product_id']] = $ri;
+                    }
+                    $stChk = $pdo->prepare("SELECT id FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                    $stUpd = $pdo->prepare("UPDATE branch_stocks SET stock = ? WHERE branch_id = ? AND product_id = ?");
+                    $stIns = $pdo->prepare("INSERT INTO branch_stocks (branch_id, product_id, stock, local_price, local_cogs, is_active) VALUES (?, ?, ?, 0, 0, 1)");
+                    foreach ($initMap as $ri) {
+                        $ibId = (int)$ri['branch_id'];
+                        $ipId = (int)$ri['product_id'];
+                        $iStk = (float)$ri['stock_after'];
+                        $stChk->execute([$ibId, $ipId]);
+                        if ($stChk->fetchColumn() !== false) {
+                            $stUpd->execute([$iStk, $ibId, $ipId]);
+                        } else {
+                            try {
+                                $stIns->execute([$ibId, $ipId, $iStk]);
+                            } catch (Exception $eInsInit) {}
+                        }
+                    }
+                    return count($initMap);
+                };
+
                 if ($purgeStocks) {
                     if ($dateScope === 'CUSTOM') {
                         // Jika mode filter tanggal, bersihkan mutasi stok di kartu pergerakan pada tanggal terpilih
-                        $sqlSm = "DELETE FROM stock_movements WHERE date(created_at) BETWEEN ? AND ?";
+                        $sqlSm = "DELETE FROM stock_movements WHERE date(created_at) BETWEEN ? AND ?" . $smKeepClause;
                         $paramsSm = [$startDate, $endDate];
                         if ($targetBranchId > 0) {
                             $sqlSm .= " AND branch_id = ?";
@@ -14958,6 +15000,7 @@ try {
                         $stmtSm = $pdo->prepare($sqlSm);
                         $stmtSm->execute($paramsSm);
                         $countSm = $stmtSm->rowCount();
+                        $keepMsg = $keepInitialStock ? " (Stok Awal dikecualikan)" : "";
 
                         // Jika pengguna juga memilih opsi nolkan saldo stok fisik produk jadi & bahan baku
                         if (!empty($input['reset_physical_stock_zero'])) {
@@ -14966,9 +15009,14 @@ try {
                             } else {
                                 $pdo->exec("UPDATE branch_stocks SET stock = 0");
                             }
-                            $summary[] = "Stok: Saldo fisik produk di-reset ke 0 & $countSm mutasi dibersihkan (Rentang: $startDate s/d $endDate)";
+                            if ($keepInitialStock) {
+                                $countInit = $applyInitialStock($targetBranchId);
+                                $summary[] = "Stok: Saldo fisik dikembalikan ke Stok Awal ($countInit produk) & $countSm mutasi dibersihkan (Rentang: $startDate s/d $endDate)";
+                            } else {
+                                $summary[] = "Stok: Saldo fisik produk di-reset ke 0 & $countSm mutasi dibersihkan (Rentang: $startDate s/d $endDate)";
+                            }
                         } else {
-                            $summary[] = "Kartu Pergerakan Stok: $countSm mutasi dibersihkan (Rentang: $startDate s/d $endDate)";
+                            $summary[] = "Kartu Pergerakan Stok: $countSm mutasi dibersihkan (Rentang: $startDate s/d $endDate){$keepMsg}";
                         }
                     } else {
                         if ($targetBranchId > 0) {
@@ -14986,7 +15034,7 @@ try {
                                 ")->execute([$targetBranchId]);
                             } catch (Exception $eBs) {}
 
-                            $stmtSm = $pdo->prepare("DELETE FROM stock_movements WHERE branch_id = ?");
+                            $stmtSm = $pdo->prepare("DELETE FROM stock_movements WHERE branch_id = ?" . $smKeepClause);
                             $stmtSm->execute([$targetBranchId]);
                             $countSm = $stmtSm->rowCount();
 
@@ -14994,7 +15042,12 @@ try {
                             $stmtBName->execute([$targetBranchId]);
                             $tBName = $stmtBName->fetchColumn() ?: "Cabang #$targetBranchId";
 
-                            $summary[] = "Stok: $countStocks produk di cabang {$tBName} di-reset ke 0 ($countSm mutasi stok dibersihkan)";
+                            if ($keepInitialStock) {
+                                $countInit = $applyInitialStock($targetBranchId);
+                                $summary[] = "Stok: $countStocks produk di cabang {$tBName} di-reset, $countInit produk dikembalikan ke Stok Awal ($countSm mutasi stok dibersihkan, riwayat Stok Awal dipertahankan)";
+                            } else {
+                                $summary[] = "Stok: $countStocks produk di cabang {$tBName} di-reset ke 0 ($countSm mutasi stok dibersihkan)";
+                            }
                         } else {
                             $stmtStk = $pdo->prepare("UPDATE branch_stocks SET stock = 0");
                             $stmtStk->execute();
@@ -15012,11 +15065,16 @@ try {
                                 ");
                             } catch (Exception $eBsAll) {}
 
-                            $stmtSm = $pdo->prepare("DELETE FROM stock_movements");
+                            $stmtSm = $pdo->prepare("DELETE FROM stock_movements" . ($keepInitialStock ? " WHERE movement_type <> 'INITIAL_STOCK' AND (reference_no IS NULL OR reference_no NOT LIKE 'INIT-%')" : ""));
                             $stmtSm->execute();
                             $countSm = $stmtSm->rowCount();
 
-                            $summary[] = "Stok: $countStocks item produk di SELURUH CABANG ($countBranches cabang) di-reset ke 0 ($countSm mutasi stok dibersihkan)";
+                            if ($keepInitialStock) {
+                                $countInit = $applyInitialStock(0);
+                                $summary[] = "Stok: $countStocks item produk di SELURUH CABANG ($countBranches cabang) di-reset, $countInit produk dikembalikan ke Stok Awal ($countSm mutasi stok dibersihkan, riwayat Stok Awal dipertahankan)";
+                            } else {
+                                $summary[] = "Stok: $countStocks item produk di SELURUH CABANG ($countBranches cabang) di-reset ke 0 ($countSm mutasi stok dibersihkan)";
+                            }
                         }
                     }
                 }

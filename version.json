@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.5.5",
-    "build": "20261101-81",
+    "version": "1.5.6",
+    "build": "20261101-82",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.5.6",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Opsi Pengecualian Hapus Stok Awal pada Reset Data & Default Modal Awal Kasir Rp 50.000 (FR-STK-10, FR-POS-58)",
+            "description": "Menambahkan opsi pengecualian hapus Stok Awal pada fitur Reset Transaksi & Stok serta menyesuaikan nilai default modal kasir: (1) Pengecualian Hapus Stok Awal (keep_initial_stock): Menambahkan sub-opsi checkbox 'Pengecualian: Jangan Hapus Stok Awal' di bawah Opsi 1 (Hapus Stok) pada modal Reset Data; saat dicentang, riwayat mutasi kartu stok bertipe INITIAL_STOCK (INIT-*) tetap dipertahankan dan saldo fisik produk di cabang (branch_stocks) dikembalikan secara akurat ke nilai Stok Awal terakhir (serta 0 untuk produk tanpa stok awal); (2) Default Modal Awal Kasir Rp 50.000: Mengubah nilai default Uang Pangkal / Modal Awal Kasir saat pembukaan shift harian dari Rp 300.000 menjadi Rp 50.000 di backend (api.php) maupun antarmuka kasir (index.php); (3) Proteksi Penambahan Barang Pagi Pasca-Reset: Memastikan penambahan barang pagi pada pembukaan shift pertama pasca-reset tetap menjumlahkan dari saldo Stok Awal cabang yang dipertahankan; (4) Kompatibilitas Penuh Android 8.1: 100% sintaks JavaScript bebas token ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.5.5"
+        },
         {
             "version": "1.5.5",
             "commit": "HEAD",

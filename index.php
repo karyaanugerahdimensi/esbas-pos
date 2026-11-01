@@ -7862,7 +7862,7 @@ try {
 
                     <!-- Option 1: Hapus Stok Seluruh Data / Bersihkan Mutasi Stok -->
                     <label class="flex items-start space-x-3 p-3 rounded-2xl border border-slate-200 bg-white hover:bg-rose-50/40 transition-colors cursor-pointer group">
-                        <input type="checkbox" id="reset-opt-stocks" class="mt-1 w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
+                        <input type="checkbox" id="reset-opt-stocks" onchange="updateResetKeepInitialUI()" class="mt-1 w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
                         <div class="space-y-0.5">
                             <span class="font-bold text-slate-800 group-hover:text-rose-900 block flex items-center gap-1.5">
                                 <span id="reset-opt-stocks-title">📦 1. Hapus Stok Seluruh Data</span>
@@ -7872,6 +7872,14 @@ try {
                                 Mengosongkan saldo stok fisik seluruh produk (barang jadi & bahan baku) menjadi 0 pada cabang terpilih / semua cabang, serta membersihkan seluruh riwayat kartu mutasi stok fisik.
                             </span>
                         </div>
+                    </label>
+                    <!-- Sub-opsi Pengecualian Stok: Jangan Hapus Stok Awal -->
+                    <label id="reset-keep-initial-stock-wrapper" for="reset-opt-keep-initial-stock" class="-mt-1 ml-7 flex items-start space-x-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 cursor-pointer transition-opacity">
+                        <input type="checkbox" id="reset-opt-keep-initial-stock" onchange="onKeepInitialStockToggle()" class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                        <span class="leading-snug">
+                            <span class="block text-[11px] font-bold text-emerald-800">🛡️ Pengecualian: Jangan Hapus Stok Awal</span>
+                            <span class="block text-[10px] text-emerald-700">Riwayat mutasi <b>Stok Awal (INITIAL_STOCK)</b> tetap dipertahankan dan saldo stok produk dikembalikan ke nilai Stok Awal terakhir (bukan 0).</span>
+                        </span>
                     </label>
 
                     <!-- Option 2: Hapus Data Penjualan -->
@@ -15177,7 +15185,7 @@ try {
                     btn.setAttribute('data-next-shift-number', 1);
                     btn.setAttribute('data-next-shift-name', 'Shift 1 (Pagi)');
 
-                    const initCash = data.default_modal || 300000;
+                    const initCash = (data.default_modal !== undefined && data.default_modal !== null) ? data.default_modal : 50000;
                     const items = data.items || [];
 
                     let handoverBannerHtml = '';
@@ -31033,6 +31041,9 @@ Manager / Supervisor: __________________
                 }
                 if (stockDesc) stockDesc.innerText = 'Menghapus riwayat kartu mutasi pergerakan stok fisik (stock_movements) yang tercatat pada rentang tanggal terpilih.';
             }
+            if (typeof updateResetKeepInitialUI === 'function') {
+                updateResetKeepInitialUI();
+            }
             if (typeof lucide !== 'undefined' && lucide.createIcons) {
                 lucide.createIcons();
             }
@@ -31506,6 +31517,10 @@ Manager / Supervisor: __________________
             const optRestoreStock = document.getElementById('reset-opt-restore-stock');
             if (optRestoreStock) optRestoreStock.checked = true;
 
+            const optKeepInitial = document.getElementById('reset-opt-keep-initial-stock');
+            if (optKeepInitial) optKeepInitial.checked = !!preselectOpts.keep_initial_stock;
+            updateResetKeepInitialUI();
+
             // Auto-fill credentials if Superadmin
             if (state.loggedInUser && ['SUPER_ADMIN', 'SUPERADMIN'].includes(state.loggedInUser.role)) {
                 document.getElementById('master-reset-admin-pin').value = state.loggedInUser.pin || '999999';
@@ -31563,6 +31578,43 @@ Manager / Supervisor: __________________
             if (optBom) optBom.checked = checked;
             if (optShifts) optShifts.checked = checked;
             if (optExpenses) optExpenses.checked = checked;
+            updateResetKeepInitialUI();
+        }
+
+        function onKeepInitialStockToggle() {
+            const optKeep = document.getElementById('reset-opt-keep-initial-stock');
+            const optStocks = document.getElementById('reset-opt-stocks');
+            if (optKeep && optKeep.checked && optStocks && !optStocks.checked) {
+                optStocks.checked = true;
+            }
+            updateResetKeepInitialUI();
+        }
+
+        function updateResetKeepInitialUI() {
+            const optStocks = document.getElementById('reset-opt-stocks');
+            const optKeep = document.getElementById('reset-opt-keep-initial-stock');
+            const wrapper = document.getElementById('reset-keep-initial-stock-wrapper');
+            const stockBadge = document.getElementById('reset-opt-stocks-badge');
+            const dateContainer = document.getElementById('master-reset-date-container');
+            const isDateCustom = dateContainer ? !dateContainer.classList.contains('hidden') : false;
+
+            if (wrapper) {
+                if (optStocks && !optStocks.checked) {
+                    wrapper.classList.add('opacity-60');
+                } else {
+                    wrapper.classList.remove('opacity-60');
+                }
+            }
+
+            if (stockBadge && !isDateCustom) {
+                if (optKeep && optKeep.checked) {
+                    stockBadge.innerText = 'Kembali ke Stok Awal';
+                    stockBadge.className = 'px-1.5 py-0.2 rounded text-[9px] bg-emerald-100 text-emerald-800 font-semibold';
+                } else {
+                    stockBadge.innerText = 'Stok = 0';
+                    stockBadge.className = 'px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-semibold';
+                }
+            }
         }
 
         function updateResetScopeInfo() {
@@ -31648,11 +31700,16 @@ Manager / Supervisor: __________________
             }
 
             const zeroPhysicalStockVal = isDateCustom ? (document.getElementById('reset-opt-zero-physical-stock') ? document.getElementById('reset-opt-zero-physical-stock').checked : false) : true;
+            const keepInitialStockVal = document.getElementById('reset-opt-keep-initial-stock') ? document.getElementById('reset-opt-keep-initial-stock').checked : false;
 
             const dateScopeText = isDateCustom ? `Rentang Tanggal: ${startDateVal} s/d ${endDateVal}` : 'Rentang Tanggal: SELURUH DATA SEKALIGUS (All-Time)';
 
             const selectedItems = [];
-            if (purgeStocks) selectedItems.push(isDateCustom ? ('1. Bersihkan Kartu Pergerakan Stok pada Tanggal Terpilih' + (zeroPhysicalStockVal ? ' (Saldo fisik cabang dinolkan)' : '')) : '1. Stok Seluruh Produk (Set ke 0)');
+            if (purgeStocks) {
+                let stockLabel = isDateCustom ? ('1. Bersihkan Kartu Pergerakan Stok pada Tanggal Terpilih' + (zeroPhysicalStockVal ? ' (Saldo fisik cabang dinolkan)' : '')) : '1. Stok Seluruh Produk (Set ke 0)';
+                if (keepInitialStockVal) stockLabel += ' — KECUALI Stok Awal (dipertahankan)';
+                selectedItems.push(stockLabel);
+            }
             if (purgeSales) selectedItems.push('2. Riwayat Transaksi Penjualan & Piutang' + (isDateCustom && restoreSalesStockVal ? ' (Stok fisik dipulihkan)' : ''));
             if (purgeBom) selectedItems.push('3. Log Pemakaian Bahan Baku (BOM)');
             if (purgeShifts) selectedItems.push('4. Riwayat Laporan Shift, Meteran Air & Stok Acuan Malam Kemarin (Reset ke 0)');
@@ -31675,6 +31732,7 @@ Manager / Supervisor: __________________
                         end_date: endDateVal,
                         restore_sales_stock: restoreSalesStockVal,
                         reset_physical_stock_zero: zeroPhysicalStockVal,
+                        keep_initial_stock: keepInitialStockVal,
                         purge_stocks: purgeStocks,
                         purge_sales: purgeSales,
                         purge_bom: purgeBom,
