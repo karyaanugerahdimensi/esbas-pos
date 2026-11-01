@@ -304,6 +304,8 @@ function initDatabaseSchema($pdo) {
         shift_type TEXT DEFAULT 'SHIFT_1',
         is_final_shift INTEGER DEFAULT 0,
         shift_notes TEXT DEFAULT NULL,
+        night_items_json TEXT DEFAULT NULL,
+        opening_added_items_json TEXT DEFAULT NULL,
         opening_items_json TEXT DEFAULT NULL,
         closing_items_json TEXT DEFAULT NULL,
         status TEXT DEFAULT 'OPEN',
@@ -1605,6 +1607,12 @@ function autoMigrateAndSync($pdo) {
     if (!in_array('shift_notes', $shiftCols)) {
         $pdo->exec("ALTER TABLE cashier_shifts ADD COLUMN shift_notes TEXT DEFAULT NULL");
     }
+    if (!in_array('night_items_json', $shiftCols)) {
+        $pdo->exec("ALTER TABLE cashier_shifts ADD COLUMN night_items_json TEXT DEFAULT NULL");
+    }
+    if (!in_array('opening_added_items_json', $shiftCols)) {
+        $pdo->exec("ALTER TABLE cashier_shifts ADD COLUMN opening_added_items_json TEXT DEFAULT NULL");
+    }
     if (!in_array('opening_items_json', $shiftCols)) {
         $pdo->exec("ALTER TABLE cashier_shifts ADD COLUMN opening_items_json TEXT DEFAULT NULL");
     }
@@ -2192,6 +2200,8 @@ function autoMigrateMysql($pdo) {
             'total_meal_allowance' => "ALTER TABLE `cashier_shifts` ADD COLUMN `total_meal_allowance` DECIMAL(15,2) DEFAULT 0",
             'shift_disbursements_json' => "ALTER TABLE `cashier_shifts` ADD COLUMN `shift_disbursements_json` TEXT DEFAULT NULL",
             'shift_notes' => "ALTER TABLE `cashier_shifts` ADD COLUMN `shift_notes` TEXT DEFAULT NULL",
+            'night_items_json' => "ALTER TABLE `cashier_shifts` ADD COLUMN `night_items_json` TEXT DEFAULT NULL",
+            'opening_added_items_json' => "ALTER TABLE `cashier_shifts` ADD COLUMN `opening_added_items_json` TEXT DEFAULT NULL",
             'opening_items_json' => "ALTER TABLE `cashier_shifts` ADD COLUMN `opening_items_json` TEXT DEFAULT NULL",
             'closing_items_json' => "ALTER TABLE `cashier_shifts` ADD COLUMN `closing_items_json` TEXT DEFAULT NULL",
             'closing_raw_mineral' => "ALTER TABLE `cashier_shifts` ADD COLUMN `closing_raw_mineral` DECIMAL(15,2) DEFAULT NULL",

@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.6.1",
-    "build": "20261101-87",
+    "version": "1.6.2",
+    "build": "20261101-88",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.6.2",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Penyelarasan Penuh Formula Stok Akhir = Stok Awal + Stok Opening - Penjualan + Stok Input Tambahan (FR-STK-13, FR-POS-60)",
+            "description": "Menyelaraskan 100% seluruh alur Opening Shift, Penjualan POS, Penambahan Stok Tengah Shift, Closing Shift, dan Laporan Rekonsiliasi Shift dengan rumus baku Stok Akhir = Stok Awal + Stok Opening - Penjualan + Stok Input Tambahan: (1) Pemisahan Kolom Stok Awal & Stok Opening: Menambahkan kolom night_items_json (Stok Awal) dan opening_added_items_json (Stok Opening) pada tabel cashier_shifts (SQLite & MySQL) agar rincian Stok Awal vs tambahan saat buka toko tercatat terpisah dan presisi; (2) Perhitungan Akurat Stok Input Tambahan Tengah Shift: Menghitung seluruh mutasi penambahan manual, pembelian, transfer masuk/keluar, dan penyesuaian stok selama rentang waktu shift (OPEN maupun CLOSED) serta menyeragamkan zona waktu eksplisit created_at pada seluruh pencatatan stock_movements; (3) Rekonsiliasi Stok Akhir Sistem & Deteksi Selisih Akurat: Menghilangkan distorsi standby_refill pada produk jadi non-BOM (seperti Aqua Refill 19L & Gas 3 KG), mendukung pencatatan eksplisit angka 0 pada hitung fisik Closing, memperbaiki pemotongan bahan baku BOM produk jadi standby secara inkremental (hanya sebesar selisih penambahan baru refillQty), serta menampilkan kolom lengkap Awal, +Opening, -Penjualan, +Tambahan, Akhir Sistem, Sisa Fisik, dan Selisih pada Laporan Shift & Tutup Toko (tetap menjaga aturan Blind Count di form input kasir).",
+            "rollback_command": "git checkout v1.6.1"
+        },
         {
             "version": "1.6.1",
             "commit": "HEAD",

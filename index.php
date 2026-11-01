@@ -1626,18 +1626,20 @@ try {
                                 <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200/80">
                                     <tr>
                                         <th class="py-3 px-4">Produk / Bahan Baku</th>
-                                        <th class="py-3 px-4">SKU / Kode</th>
-                                        <th class="py-3 px-4 text-center">Satuan</th>
-                                        <th class="py-3 px-4 text-center">Stok Awal Pagi</th>
-                                        <th class="py-3 px-4 text-center">Total Terjual (POS)</th>
-                                        <th class="py-3 px-4 text-center bg-indigo-50/50 text-indigo-900">Sisa Stok Fisik Malam</th>
-                                        <th class="py-3 px-4 text-center text-rose-700 bg-rose-50/50">Selisih Stok</th>
-                                        <th class="py-3 px-4 text-center">Status</th>
+                                        <th class="py-3 px-3">SKU</th>
+                                        <th class="py-3 px-3 text-center">Stok Awal</th>
+                                        <th class="py-3 px-3 text-center text-emerald-700">+ Opening</th>
+                                        <th class="py-3 px-3 text-center text-rose-700">- Penjualan</th>
+                                        <th class="py-3 px-3 text-center text-sky-700">+ Tambahan</th>
+                                        <th class="py-3 px-3 text-center bg-slate-100/80 text-slate-800">Stok Akhir Sistem</th>
+                                        <th class="py-3 px-3 text-center bg-indigo-50/50 text-indigo-900">Sisa Fisik Malam</th>
+                                        <th class="py-3 px-3 text-center text-rose-700 bg-rose-50/50">Selisih Stok</th>
+                                        <th class="py-3 px-3 text-center">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody id="daily-final-stocks-tbody" class="divide-y divide-slate-100">
                                     <tr>
-                                        <td colspan="8" class="py-8 text-center text-slate-400">Memuat stok akhir penutupan toko...</td>
+                                        <td colspan="10" class="py-8 text-center text-slate-400">Memuat stok akhir penutupan toko...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -15677,6 +15679,13 @@ try {
                                 sopBadge = `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300">🔄 Sisa Fisik Diretur ke Gudang</span>`;
                             }
 
+                            const initQtyVal = (item.initial_qty !== undefined && item.initial_qty !== null) ? Number(item.initial_qty) : Number(item.opening_qty || 0);
+                            const openAddQtyVal = (item.opening_added_qty !== undefined && item.opening_added_qty !== null) ? Number(item.opening_added_qty) : 0;
+                            const extraAddQtyVal = (item.extra_added_qty !== undefined && item.extra_added_qty !== null) ? Number(item.extra_added_qty) : 0;
+                            const extraShiftBadge = (extraAddQtyVal !== 0)
+                                ? `<span class="inline-block mt-0.5 px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 text-[9px] font-bold">Tambahan Shift: ${extraAddQtyVal > 0 ? '+' : ''}${formatDecimal(extraAddQtyVal)} ${itemUnit}</span>`
+                                : '';
+
                             return `
                                 <div class="bg-white/90 p-2.5 sm:p-3 rounded-2xl border border-slate-200 shadow-2xs grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
                                     <div class="sm:col-span-5 min-w-0 pr-1">
@@ -15686,17 +15695,18 @@ try {
                                             ${sopBadge}
                                         </div>
                                         <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${item.sku}</span>
-                                        <span class="block text-[10px] text-indigo-700 font-semibold mt-0.5">Stok Awal Pagi: <b>${item.opening_qty} ${itemUnit}</b></span>
+                                        <span class="block text-[10px] text-indigo-700 font-semibold mt-0.5">Stok Awal: <b>${formatDecimal(initQtyVal)}</b>${openAddQtyVal > 0 ? ` • +Opening: <b>+${formatDecimal(openAddQtyVal)}</b>` : ''} ${itemUnit}</span>
+                                        ${extraShiftBadge}
                                     </div>
                                     <div class="sm:col-span-3 text-left sm:text-center">
-                                        <span class="text-[10px] text-slate-400 uppercase font-bold block sm:hidden">Stok Awal</span>
+                                        <span class="text-[10px] text-slate-400 uppercase font-bold block sm:hidden">Total Pagi</span>
                                         <span class="inline-block px-2.5 py-1 bg-indigo-50 text-indigo-900 border border-indigo-100 rounded-xl text-xs font-black">
-                                            ${item.opening_qty} <span class="text-[9px] font-normal text-indigo-500">${itemUnit}</span>
+                                            ${formatDecimal(item.opening_qty)} <span class="text-[9px] font-normal text-indigo-500">${itemUnit}</span>
                                         </span>
                                     </div>
                                     <div class="sm:col-span-4">
                                         <div class="relative">
-                                            <input type="number" ${legacyId} data-product-id="${item.product_id}" data-product-name="${itemName}" data-unit="${itemUnit}" data-opening-qty="${item.opening_qty}" min="0" value="" placeholder="" class="shift-closing-item-input w-full text-center py-2 px-3 bg-white border border-rose-200 rounded-xl font-black text-slate-900 text-sm focus:ring-2 focus:ring-rose-500 shadow-inner">
+                                            <input type="number" step="any" ${legacyId} data-product-id="${item.product_id}" data-product-name="${itemName}" data-unit="${itemUnit}" data-opening-qty="${item.opening_qty}" min="0" value="" placeholder="" class="shift-closing-item-input w-full text-center py-2 px-3 bg-white border border-rose-200 rounded-xl font-black text-slate-900 text-sm focus:ring-2 focus:ring-rose-500 shadow-inner">
                                         </div>
                                     </div>
                                 </div>
@@ -16857,7 +16867,7 @@ try {
                     const pId = parseInt(input.getAttribute('data-product-id')) || 0;
                     if (pId > 0) {
                         const hasVal = (input.value !== '' && input.value !== null && input.value.trim() !== '');
-                        const rawVal = hasVal ? parseInt(input.value) : null;
+                        const rawVal = hasVal ? parseFloat(input.value) : null;
                         dynamicClosingItems.push({
                             product_id: pId,
                             closing_qty: (rawVal !== null && !isNaN(rawVal)) ? rawVal : null
@@ -18287,7 +18297,11 @@ try {
                         diffBadge = `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black bg-sky-100 text-sky-700 font-mono">+${formatDecimal(diffVal)}</span>`;
                     }
 
-                    const soldAmount = (item.sold_qty !== undefined) ? item.sold_qty : item.usage_qty;
+                    const initQty = (item.initial_qty !== undefined && item.initial_qty !== null) ? Number(item.initial_qty) : Number(item.opening_qty || 0);
+                    const openAddQty = (item.opening_added_qty !== undefined && item.opening_added_qty !== null) ? Number(item.opening_added_qty) : 0;
+                    const extraAddQty = (item.extra_added_qty !== undefined && item.extra_added_qty !== null) ? Number(item.extra_added_qty) : 0;
+                    const expectedQty = (item.expected_qty !== undefined && item.expected_qty !== null) ? Number(item.expected_qty) : Number(item.closing_qty || 0);
+                    const soldAmount = (item.usage_qty !== undefined) ? item.usage_qty : item.sold_qty;
 
                     return `
                     <tr class="hover:bg-slate-50/50">
@@ -18295,13 +18309,19 @@ try {
                             <span>${item.image_emoji || '📦'}</span>
                             <span class="truncate">${escapeHtml(item.name)}</span>
                         </td>
-                        <td class="py-2 px-2 text-center font-mono text-slate-600">${formatDecimal(item.opening_qty)}</td>
-                        <td class="py-2 px-2 text-center">
-                            <span class="font-bold text-indigo-700 block">${formatDecimal(soldAmount)}</span>
+                        <td class="py-2 px-1.5 text-center font-mono text-slate-600">${formatDecimal(initQty)}</td>
+                        <td class="py-2 px-1.5 text-center font-mono ${openAddQty > 0 ? 'font-bold text-emerald-700' : 'text-slate-400'}">${openAddQty > 0 ? '+' + formatDecimal(openAddQty) : '0'}</td>
+                        <td class="py-2 px-1.5 text-center">
+                            <span class="font-bold text-rose-700 block">${soldAmount > 0 ? '-' + formatDecimal(soldAmount) : '0'}</span>
                             ${item.breakdown_subtext ? `<span class="text-[9px] text-slate-400 block font-normal leading-tight mt-0.5">${escapeHtml(item.breakdown_subtext)}</span>` : ''}
                         </td>
-                        <td class="py-2 px-2 text-center font-black text-slate-900 bg-slate-50">${formatDecimal(item.closing_qty)}</td>
-                        <td class="py-2 px-2 text-center font-bold">${diffBadge}</td>
+                        <td class="py-2 px-1.5 text-center">
+                            <span class="font-mono ${extraAddQty !== 0 ? 'font-bold text-sky-700' : 'text-slate-400'} block">${extraAddQty > 0 ? '+' + formatDecimal(extraAddQty) : formatDecimal(extraAddQty)}</span>
+                            ${item.extra_subtext ? `<span class="text-[9px] text-emerald-600 block font-semibold leading-tight mt-0.5">${escapeHtml(item.extra_subtext)}</span>` : ''}
+                        </td>
+                        <td class="py-2 px-1.5 text-center font-mono font-bold text-slate-800 bg-slate-100/70">${formatDecimal(expectedQty)}</td>
+                        <td class="py-2 px-1.5 text-center font-black text-indigo-950 bg-indigo-50/50">${formatDecimal(item.closing_qty)}</td>
+                        <td class="py-2 px-1.5 text-center font-bold">${diffBadge}</td>
                     </tr>
                     `;
                 }).join('');
@@ -18387,12 +18407,12 @@ try {
 
                         <!-- Rincian Pemakaian & Audit Stok Produk Shift Ini -->
                         <div class="space-y-1.5">
-                            <div class="flex items-center justify-between text-[11px] font-bold text-slate-700">
+                            <div class="flex flex-wrap items-center justify-between gap-1 text-[11px] font-bold text-slate-700">
                                 <span class="flex items-center gap-1.5">
-                                    <span>Pemakaian Stok Selama Shift Ini:</span>
+                                    <span>Rekonsiliasi Stok Shift Ini:</span>
                                     ${hasShiftStockDiff ? `<span class="px-1.5 py-0.5 bg-rose-100 text-rose-700 text-[9px] font-black rounded-md border border-rose-200">Ada Selisih</span>` : ''}
                                 </span>
-                                <span class="text-slate-400 font-normal">Awal - Terjual = Fisik & Selisih</span>
+                                <span class="text-slate-400 font-normal text-[10px]">Stok Akhir = Awal + Opening - Penjualan + Tambahan</span>
                             </div>
                             ${hasShiftStockDiff ? `
                             <div class="p-2 bg-rose-50 border border-rose-200 rounded-xl text-[10px] font-bold text-rose-800 flex items-center gap-1.5">
@@ -18405,10 +18425,13 @@ try {
                                     <thead class="bg-slate-50 text-slate-500 font-bold">
                                         <tr>
                                             <th class="py-1.5 px-2.5">Produk</th>
-                                            <th class="py-1.5 px-2 text-center">Awal</th>
-                                            <th class="py-1.5 px-2 text-center">Terjual</th>
-                                            <th class="py-1.5 px-2 text-center">Sisa Fisik</th>
-                                            <th class="py-1.5 px-2 text-center text-rose-600">Selisih</th>
+                                            <th class="py-1.5 px-1.5 text-center">Awal</th>
+                                            <th class="py-1.5 px-1.5 text-center text-emerald-700">+Opening</th>
+                                            <th class="py-1.5 px-1.5 text-center text-rose-700">-Penjualan</th>
+                                            <th class="py-1.5 px-1.5 text-center text-sky-700">+Tambahan</th>
+                                            <th class="py-1.5 px-1.5 text-center bg-slate-100">Akhir Sistem</th>
+                                            <th class="py-1.5 px-1.5 text-center text-indigo-800">Sisa Fisik</th>
+                                            <th class="py-1.5 px-1.5 text-center text-rose-600">Selisih</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-100">
@@ -18487,14 +18510,19 @@ try {
             if (!finalStocks || finalStocks.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="8" class="py-8 text-center text-slate-400 text-xs">Belum ada data stok closing malam untuk tanggal ini.</td>
+                        <td colspan="10" class="py-8 text-center text-slate-400 text-xs">Belum ada data stok closing malam untuk tanggal ini.</td>
                     </tr>
                 `;
                 return;
             }
 
             tbody.innerHTML = finalStocks.map(item => {
-                const totalSold = (item.sold_qty !== undefined) ? item.sold_qty : (item.usage_qty || 0);
+                const initQty = (item.initial_qty !== undefined && item.initial_qty !== null) ? Number(item.initial_qty) : Number(item.opening_qty || 0);
+                const openAddQty = (item.opening_added_qty !== undefined && item.opening_added_qty !== null) ? Number(item.opening_added_qty) : 0;
+                const extraAddQty = (item.extra_added_qty !== undefined && item.extra_added_qty !== null) ? Number(item.extra_added_qty) : 0;
+                const expectedQty = (item.expected_qty !== undefined && item.expected_qty !== null) ? Number(item.expected_qty) : Number(item.closing_qty || 0);
+                const totalSold = (item.usage_qty !== undefined) ? item.usage_qty : (item.sold_qty || 0);
+                const unitLabel = escapeHtml(item.unit || 'pcs');
                 const diffVal = Number(item.difference_qty) || 0;
                 let diffBadge = `<span class="font-mono text-slate-400">0</span>`;
                 if (!isClosed) {
@@ -18509,22 +18537,32 @@ try {
                     <tr class="hover:bg-slate-50/50">
                         <td class="py-3 px-4 font-bold text-slate-800 flex items-center gap-2">
                             <span class="text-base">${item.image_emoji || '📦'}</span>
-                            <span>${escapeHtml(item.name)}</span>
+                            <div>
+                                <span class="block">${escapeHtml(item.name)}</span>
+                                <span class="text-[10px] text-slate-400 font-normal">${unitLabel}</span>
+                            </div>
                         </td>
-                        <td class="py-3 px-4 font-mono text-slate-500 text-[11px]">${escapeHtml(item.sku)}</td>
-                        <td class="py-3 px-4 text-center font-bold text-slate-600">${escapeHtml(item.unit || 'pcs')}</td>
-                        <td class="py-3 px-4 text-center font-semibold text-slate-700">${formatDecimal(item.opening_qty)}</td>
-                        <td class="py-3 px-4 text-center">
-                            <span class="font-bold text-indigo-700 block">${formatDecimal(totalSold)}</span>
+                        <td class="py-3 px-3 font-mono text-slate-500 text-[11px]">${escapeHtml(item.sku)}</td>
+                        <td class="py-3 px-3 text-center font-mono font-semibold text-slate-700">${formatDecimal(initQty)}</td>
+                        <td class="py-3 px-3 text-center font-mono ${openAddQty > 0 ? 'font-bold text-emerald-700' : 'text-slate-400'}">${openAddQty > 0 ? '+' + formatDecimal(openAddQty) : '0'}</td>
+                        <td class="py-3 px-3 text-center">
+                            <span class="font-bold text-rose-700 block">${totalSold > 0 ? '-' + formatDecimal(totalSold) : '0'}</span>
                             ${item.breakdown_subtext ? `<span class="text-[10px] text-slate-400 block font-normal mt-0.5">${escapeHtml(item.breakdown_subtext)}</span>` : ''}
                         </td>
-                        <td class="py-3 px-4 text-center font-black text-indigo-950 bg-indigo-50/40 text-sm">
-                            ${formatDecimal(item.closing_qty)} <span class="text-[10px] text-slate-400 font-normal">${escapeHtml(item.unit || 'pcs')}</span>
+                        <td class="py-3 px-3 text-center">
+                            <span class="font-mono ${extraAddQty !== 0 ? 'font-bold text-sky-700' : 'text-slate-400'} block">${extraAddQty > 0 ? '+' + formatDecimal(extraAddQty) : formatDecimal(extraAddQty)}</span>
+                            ${item.extra_subtext ? `<span class="text-[10px] text-emerald-600 block font-semibold mt-0.5">${escapeHtml(item.extra_subtext)}</span>` : ''}
                         </td>
-                        <td class="py-3 px-4 text-center font-bold">
+                        <td class="py-3 px-3 text-center font-mono font-bold text-slate-900 bg-slate-100/70">
+                            ${formatDecimal(expectedQty)} <span class="text-[10px] text-slate-400 font-normal">${unitLabel}</span>
+                        </td>
+                        <td class="py-3 px-3 text-center font-black text-indigo-950 bg-indigo-50/40 text-sm">
+                            ${formatDecimal(item.closing_qty)} <span class="text-[10px] text-slate-400 font-normal">${unitLabel}</span>
+                        </td>
+                        <td class="py-3 px-3 text-center font-bold">
                             ${diffBadge}
                         </td>
-                        <td class="py-3 px-4 text-center">
+                        <td class="py-3 px-3 text-center">
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isClosed ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
                                 ${isClosed ? 'Terkunci 🔒' : 'Berjalan 🟢'}
                             </span>
@@ -18548,10 +18586,14 @@ try {
 
             const itemsStr = (s.reconciled_items || []).map(it => {
                 const diffVal = Number(it.difference_qty) || 0;
-                const itSold = it.sold_qty !== undefined ? it.sold_qty : it.usage_qty;
+                const initVal = (it.initial_qty !== undefined && it.initial_qty !== null) ? Number(it.initial_qty) : Number(it.opening_qty || 0);
+                const openAddVal = (it.opening_added_qty !== undefined && it.opening_added_qty !== null) ? Number(it.opening_added_qty) : 0;
+                const extraVal = (it.extra_added_qty !== undefined && it.extra_added_qty !== null) ? Number(it.extra_added_qty) : 0;
+                const expVal = (it.expected_qty !== undefined && it.expected_qty !== null) ? Number(it.expected_qty) : Number(it.closing_qty || 0);
+                const itSold = it.usage_qty !== undefined ? it.usage_qty : it.sold_qty;
                 const diffText = diffVal !== 0 ? ` | Selisih ${(diffVal > 0 ? '+' : '') + diffVal}` : ' | Selisih 0';
                 const subtext = it.breakdown_subtext ? ` ${it.breakdown_subtext}` : '';
-                return `  - ${it.name} (${it.sku}): Awal ${it.opening_qty} | Pakai ${itSold}${subtext} | Fisik ${it.closing_qty}${diffText} ${it.unit}`;
+                return `  - ${it.name} (${it.sku}): Awal ${initVal} | +Open ${openAddVal} | -Jual ${itSold}${subtext} | +Tambah ${extraVal} => Sistem ${expVal} | Fisik ${it.closing_qty}${diffText} ${it.unit}`;
             }).join('\n');
 
             const content = 
