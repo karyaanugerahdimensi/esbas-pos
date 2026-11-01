@@ -6086,6 +6086,9 @@ try {
                     Tutup
                 </button>
                 <div class="flex items-center gap-2">
+                    <button id="detail-modal-wa-btn" onclick="sendReceiptViaWAFromDetail()" title="Kirim Nota via WhatsApp Langsung ke Aplikasi" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-xl text-xs font-bold text-white flex items-center space-x-1.5 shadow transition-colors cursor-pointer">
+                        <span>💬 Kirim WA</span>
+                    </button>
                     <button id="detail-modal-export-btn" onclick="exportDetailCurrentInvoice()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-xl text-xs font-bold text-white flex items-center space-x-1.5 shadow">
                         <i data-lucide="download" class="w-3.5 h-3.5"></i>
                         <span>Export Excel Transaksi Ini</span>
@@ -12914,6 +12917,9 @@ try {
         }
 
         function showReceiptModal(sale) {
+            if (!sale.customer_phone && state.selectedCustomer && state.selectedCustomer.phone && state.selectedCustomer.phone !== '-') {
+                sale.customer_phone = state.selectedCustomer.phone;
+            }
             state.lastProcessedSale = sale;
             const s = state.appSettings || {};
 
@@ -30417,35 +30423,197 @@ Manager / Supervisor: __________________
                     })
                 });
                 const data = await res.json();
-                alert(`HASIL TES SIMULASI ${channel}:\n\n` + data.message + `\n\nPesan:\n` + data.message_rendered);
+                if (channel === 'WA') {
+                    if (confirm(`HASIL TES NOTA WHATSAPP:\n\n${data.message}\n\nPesan:\n${data.message_rendered}\n\nApakah Anda ingin langsung memanggil aplikasi WhatsApp yang terpasang sekarang?`)) {
+                        launchWhatsAppDirect(cleanWhatsAppNumber(dest), data.message_rendered);
+                    }
+                } else {
+                    alert(`HASIL TES SIMULASI ${channel}:\n\n` + data.message + `\n\nPesan:\n` + data.message_rendered);
+                }
             } catch (err) {
                 alert('Gagal mengirim simulasi.');
             }
         }
 
-        async function sendReceiptViaWA() {
-            if (!state.lastProcessedSale) {
+        function cleanWhatsAppNumber(phone) {
+            if (!phone) return '';
+            let clean = String(phone).replace(/[^0-9]/g, '');
+            if (clean.startsWith('0')) {
+                clean = '62' + clean.slice(1);
+            } else if (clean.startsWith('8')) {
+                clean = '62' + clean;
+            }
+            return clean;
+        }
+
+        function buildWhatsAppReceiptText(sale) {
+            if (!sale) return '';
+            const s = state.appSettings || {};
+            const storeName = s.receipt_header_title || s.app_name || 'ESBAS RETAIL';
+            const branchName = sale.branch_name || state.currentBranch?.name || s.company_name || 'Pusat';
+            const branchAddress = sale.branch_address || state.currentBranch?.address || '';
+            const custName = sale.customer_name || 'Pelanggan Umum';
+            const cashierName = sale.cashier_name || state.currentUser?.name || 'Kasir';
+            const invoiceNo = sale.invoice_number || '-';
+            const dateStr = sale.created_at || (new Date().toLocaleString('id-ID'));
+            const grandTotalStr = formatRupiah(sale.grand_total || 0);
+            const subtotalStr = formatRupiah(sale.subtotal || 0);
+            const discountStr = (Number(sale.discount) > 0) ? `- ${formatRupiah(sale.discount)}` : 'Rp 0';
+            const taxStr = formatRupiah(sale.tax || 0);
+            const payMethod = sale.payment_method || 'TUNAI';
+            const cashReceivedStr = formatRupiah(sale.cash_received || 0);
+            const cashChangeStr = formatRupiah(sale.cash_change || 0);
+            const footerNote = s.receipt_footer_line1 || 'Terima kasih atas kunjungan Anda!';
+
+            // Format rincian produk belanja
+            const items = sale.items || [];
+            let itemsLines = items.map(it => {
+                const prodName = it.product_name || it.name || 'Produk';
+                const vName = (it.variant_name && !prodName.includes(it.variant_name)) ? ` [${it.variant_name}]` : '';
+                const qty = it.qty || it.quantity || 1;
+                const unitPrice = it.unit_price || (it.subtotal_price ? Math.round(it.subtotal_price / qty) : 0);
+                const sub = it.subtotal_price || (unitPrice * qty);
+                return `• ${prodName}${vName}\n  ${qty}x @ ${formatRupiah(unitPrice)} = *${formatRupiah(sub)}*`;
+            });
+
+            if (Number(sale.delivery_fee) > 0) {
+                const dist = sale.delivery_distance_km ? ` (${formatDecimal(sale.delivery_distance_km)} km)` : '';
+                itemsLines.push(`• Biaya Antar Kurir${dist}: *${formatRupiah(sale.delivery_fee)}*`);
+            }
+
+            const itemsSummary = itemsLines.join('\n');
+
+            let template = s.wa_template_message;
+            if (!template || template.trim() === '') {
+                template = `🧾 *NOTA PENJUALAN ELEKTRONIK*
+*{store_name}*
+📍 {branch_name}
+${branchAddress ? `${branchAddress}\n` : ''}----------------------------------------
+No. Faktur : *{invoice_number}*
+Tanggal    : {date}
+Kasir      : {cashier_name}
+Pelanggan  : {customer_name}
+----------------------------------------
+*DETAIL BELANJA:*
+{items_summary}
+----------------------------------------
+Subtotal     : {subtotal}
+${Number(sale.discount) > 0 ? `Diskon       : {discount}\n` : ''}${Number(sale.tax) > 0 ? `Pajak (PPN)  : {tax}\n` : ''}*TOTAL BAYAR : {grand_total}*
+Metode Bayar : {payment_method}
+${(payMethod === 'CASH' || payMethod === 'TUNAI') && Number(sale.cash_received) > 0 ? `Bayar Tunai  : {cash_received}\nKembalian    : {cash_change}\n` : ''}----------------------------------------
+_{footer_note}_`;
+            }
+
+            return template
+                .replace(/{customer_name}/g, custName)
+                .replace(/{store_name}/g, storeName)
+                .replace(/{branch_name}/g, branchName)
+                .replace(/{cashier_name}/g, cashierName)
+                .replace(/{invoice_number}/g, invoiceNo)
+                .replace(/{date}/g, dateStr)
+                .replace(/{grand_total}/g, grandTotalStr)
+                .replace(/{subtotal}/g, subtotalStr)
+                .replace(/{discount}/g, discountStr)
+                .replace(/{tax}/g, taxStr)
+                .replace(/{delivery_fee}/g, formatRupiah(sale.delivery_fee || 0))
+                .replace(/{payment_method}/g, payMethod)
+                .replace(/{cash_received}/g, cashReceivedStr)
+                .replace(/{cash_change}/g, cashChangeStr)
+                .replace(/{items_summary}/g, itemsSummary)
+                .replace(/{footer_note}/g, footerNote);
+        }
+
+        function launchWhatsAppDirect(cleanPhone, message) {
+            const encodedText = encodeURIComponent(message);
+            // Protocol whatsapp:// langsung memanggil aplikasi native WhatsApp di tablet / smartphone
+            const waAppUrl = `whatsapp://send?phone=${cleanPhone}&text=${encodedText}`;
+            const waWebUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
+
+            showToast('Membuka aplikasi WhatsApp...', 'info');
+
+            // Trigger peluncuran aplikasi WhatsApp secara langsung melalui click event
+            try {
+                const link = document.createElement('a');
+                link.href = waAppUrl;
+                link.target = '_top';
+                link.rel = 'noopener noreferrer';
+                document.body.appendChild(link);
+                link.click();
+                setTimeout(() => {
+                    try {
+                        if (link.parentNode) link.parentNode.removeChild(link);
+                    } catch (e) {}
+                }, 500);
+            } catch (err) {
+                window.location.href = waAppUrl;
+            }
+
+            // Fallback jika browser tablet tertentu memblokir anchor click custom protocol:
+            setTimeout(() => {
+                if (document.hasFocus()) {
+                    try {
+                        window.location.href = waAppUrl;
+                    } catch (e) {
+                        window.open(waWebUrl, '_blank');
+                    }
+                }
+            }, 600);
+        }
+
+        async function sendReceiptViaWA(customSale = null) {
+            const sale = customSale || state.lastProcessedSale;
+            if (!sale) {
                 alert('Pilih atau selesaikan transaksi terlebih dahulu untuk kirim nota WA.');
                 return;
             }
-            const phone = prompt('Kirim Struk WhatsApp ke nomor pelanggan:', state.lastProcessedSale.customer_phone || '081234567890');
+
+            // Ambil nomor telepon pelanggan dari data transaksi atau pelanggan aktif
+            let defaultPhone = (sale.customer_phone && sale.customer_phone !== '-') 
+                ? sale.customer_phone 
+                : (state.selectedCustomer && state.selectedCustomer.phone && state.selectedCustomer.phone !== '-' ? state.selectedCustomer.phone : '');
+
+            const phone = prompt('Kirim Struk WhatsApp ke nomor pelanggan:', defaultPhone || '08');
             if (!phone) return;
 
+            const cleanPhone = cleanWhatsAppNumber(phone);
+            if (!cleanPhone || cleanPhone.length < 7) {
+                alert('Nomor WhatsApp tidak valid. Pastikan nomor diawali dengan 08 atau 62 (minimal 7 digit).');
+                return;
+            }
+
+            // 1. Susun pesan nota elektronik WhatsApp lengkap
+            const receiptMessage = buildWhatsAppReceiptText(sale);
+
+            // 2. Panggil aplikasi WhatsApp yang terpasang di tablet secara langsung
+            launchWhatsAppDirect(cleanPhone, receiptMessage);
+
+            // 3. Catat di backend di latar belakang tanpa mengganggu jalannya aplikasi
             try {
-                const res = await fetch('api.php?action=test_send_electronic_receipt', {
+                fetch('api.php?action=test_send_electronic_receipt', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         channel: 'WA',
-                        destination: phone,
-                        invoice_number: state.lastProcessedSale.invoice_number
+                        destination: cleanPhone,
+                        invoice_number: sale.invoice_number,
+                        branch_id: sale.branch_id || (state.currentBranch ? state.currentBranch.id : 1),
+                        message: receiptMessage
                     })
-                });
-                const data = await res.json();
-                alert('Notifikasi WhatsApp:\n' + data.message);
-            } catch (err) {
-                alert('Gagal mengirim WhatsApp.');
+                }).catch(() => {});
+            } catch (e) {}
+        }
+
+        function sendReceiptViaWAFromDetail() {
+            if (!currentDetailSaleData || !currentDetailSaleData.sale) {
+                alert('Pilih atau buka detail transaksi terlebih dahulu.');
+                return;
             }
+            const s = currentDetailSaleData.sale;
+            const items = currentDetailSaleData.items || [];
+            sendReceiptViaWA({
+                ...s,
+                items: items
+            });
         }
 
         async function sendReceiptViaTelegram() {

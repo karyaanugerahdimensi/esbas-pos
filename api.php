@@ -6403,6 +6403,16 @@ try {
             $customerName = trim($input['customer_name'] ?? 'Pelanggan Umum');
             $customerCategory = trim($input['customer_category'] ?? 'REGULER'); // REGULER, MEMBER, RESELLER, MITRA
             $salesType = trim($input['sales_type'] ?? 'RETAIL');
+
+            $customerPhone = '';
+            if (!empty($customerId)) {
+                $stmtCustPhone = $pdo->prepare("SELECT phone FROM customers WHERE id = ?");
+                $stmtCustPhone->execute([$customerId]);
+                $customerPhone = $stmtCustPhone->fetchColumn() ?: '';
+            }
+            if (empty($customerPhone) && !empty($input['customer_phone'])) {
+                $customerPhone = trim($input['customer_phone']);
+            }
             $items = $input['items'] ?? [];
             $paymentMethod = $input['payment_method'] ?? 'CASH';
             $cashReceived = (float)($input['cash_received'] ?? 0);
@@ -6929,6 +6939,7 @@ try {
                     'branch_id' => $branchId,
                     'customer_id' => $customerId,
                     'customer_name' => $customerName,
+                    'customer_phone' => $customerPhone,
                     'customer_category' => $customerCategory,
                     'sales_type' => $salesType,
                     'subtotal' => $subtotal,
@@ -7457,12 +7468,14 @@ try {
                     SELECT s.*, 
                            b.name as branch_name, b.address as branch_address, b.phone as branch_phone,
                            u.name as cashier_name, u.nik as cashier_nik,
+                           c.phone as customer_phone, c.address as customer_address,
                            v.plate_number, v.vehicle_name,
                            COALESCE(s.driver_name, du.name, v.driver_name, '-') as effective_driver_name,
                            du.name as courier_employee_name, du.nik as courier_employee_nik
                     FROM sales s
                     LEFT JOIN branches b ON b.id = s.branch_id
                     LEFT JOIN users u ON u.id = s.user_id
+                    LEFT JOIN customers c ON c.id = s.customer_id
                     LEFT JOIN courier_vehicles v ON v.id = s.courier_vehicle_id
                     LEFT JOIN users du ON du.id = COALESCE(s.driver_user_id, v.driver_user_id)
                     WHERE s.invoice_number = ?
@@ -7473,12 +7486,14 @@ try {
                     SELECT s.*, 
                            b.name as branch_name, b.address as branch_address, b.phone as branch_phone,
                            u.name as cashier_name, u.nik as cashier_nik,
+                           c.phone as customer_phone, c.address as customer_address,
                            v.plate_number, v.vehicle_name,
                            COALESCE(s.driver_name, du.name, v.driver_name, '-') as effective_driver_name,
                            du.name as courier_employee_name, du.nik as courier_employee_nik
                     FROM sales s
                     LEFT JOIN branches b ON b.id = s.branch_id
                     LEFT JOIN users u ON u.id = s.user_id
+                    LEFT JOIN customers c ON c.id = s.customer_id
                     LEFT JOIN courier_vehicles v ON v.id = s.courier_vehicle_id
                     LEFT JOIN users du ON du.id = COALESCE(s.driver_user_id, v.driver_user_id)
                     WHERE s.id = ?
@@ -14276,14 +14291,44 @@ try {
             $payMethod = $sale['payment_method'] ?? 'TUNAI (CASH)';
             $dateStr = $sale ? $sale['created_at'] : date('d/m/Y H:i');
 
+            // Rincian items riil jika ada data penjualan
+            $itemsSummary = '';
+            if ($sale && !empty($sale['id'])) {
+                $stmtItems = $pdo->prepare("SELECT product_name, variant_name, qty, unit_price, subtotal_price FROM sale_items WHERE sale_id = ? ORDER BY id ASC");
+                $stmtItems->execute([$sale['id']]);
+                $itemsList = $stmtItems->fetchAll();
+                $itemLines = [];
+                foreach ($itemsList as $it) {
+                    $v = (!empty($it['variant_name']) && stripos($it['product_name'], $it['variant_name']) === false) ? " [{$it['variant_name']}]" : "";
+                    $itemLines[] = "• {$it['qty']}x {$it['product_name']}{$v} @ Rp " . number_format($it['unit_price'], 0, ',', '.') . " = Rp " . number_format($it['subtotal_price'], 0, ',', '.');
+                }
+                if (!empty($sale['delivery_fee']) && (float)$sale['delivery_fee'] > 0) {
+                    $dist = !empty($sale['delivery_distance_km']) ? " (" . $sale['delivery_distance_km'] . " km)" : "";
+                    $itemLines[] = "• Biaya Antar Kurir{$dist}: Rp " . number_format($sale['delivery_fee'], 0, ',', '.');
+                }
+                $itemsSummary = implode("\n", $itemLines);
+            }
+            if (empty($itemsSummary)) {
+                $itemsSummary = "- 2x Galon RO @ Rp 19.000\n- 1x Kopi Gayo @ Rp 37.000";
+            }
+
             if ($channel === 'WA') {
                 $template = $sMap['wa_template_message'] ?? "Halo {customer_name},\nTerima kasih belanja di {store_name}!";
                 $msg = $customMessage ?: $template;
                 $msg = str_replace(
                     ['{customer_name}', '{store_name}', '{branch_name}', '{invoice_number}', '{date}', '{grand_total}', '{payment_method}', '{items_summary}', '{footer_note}'],
-                    [$custName, $storeName, $branchName, $invoiceNumber, $dateStr, $grandTotal, $payMethod, "- 2x Galon RO @ Rp 19.000\n- 1x Kopi Gayo @ Rp 37.000", $sMap['receipt_footer_line1'] ?? 'Terima Kasih!'],
+                    [$custName, $storeName, $branchName, $invoiceNumber, $dateStr, $grandTotal, $payMethod, $itemsSummary, $sMap['receipt_footer_line1'] ?? 'Terima Kasih!'],
                     $msg
                 );
+
+                $cleanPhone = preg_replace('/[^\d]/', '', $phone);
+                if (strpos($cleanPhone, '0') === 0) {
+                    $cleanPhone = '62' . substr($cleanPhone, 1);
+                } elseif (strpos($cleanPhone, '8') === 0) {
+                    $cleanPhone = '62' . $cleanPhone;
+                }
+                $waAppUrl = "whatsapp://send?phone={$cleanPhone}&text=" . urlencode($msg);
+                $waWebUrl = "https://api.whatsapp.com/send?phone={$cleanPhone}&text=" . urlencode($msg);
 
                 $targetUrl = $sMap['wa_api_url'] ?: 'https://api.fonnte.com/send';
                 $token = $sMap['wa_api_token'] ?? '';
@@ -14293,11 +14338,14 @@ try {
                     'success' => true,
                     'channel' => 'WHATSAPP',
                     'destination' => $phone,
+                    'clean_phone' => $cleanPhone,
                     'invoice_number' => $invoiceNumber,
                     'message_rendered' => $msg,
+                    'wa_app_url' => $waAppUrl,
+                    'wa_web_url' => $waWebUrl,
                     'gateway_configured' => $isConfigured,
                     'gateway_url' => $targetUrl,
-                    'message' => "Simulasi pengiriman Nota WhatsApp ke {$phone} BERHASIL disiapkan!\n" . ($isConfigured ? "(Mode Terhubung Gateway API)" : "(Mode Simulasi - Token API belum diisi)")
+                    'message' => "Pengiriman Nota WhatsApp ke {$phone} disiapkan!\n" . ($isConfigured ? "(Mode Terhubung Gateway API)" : "(Aplikasi WhatsApp Terpasang Langsung)")
                 ]);
             } else {
                 $template = $sMap['telegram_template_message'] ?? "🛒 Transaksi: {invoice_number}";
@@ -14305,7 +14353,7 @@ try {
                 $cashier = $sale['cashier_name'] ?? 'Kasir Uji Coba';
                 $msg = str_replace(
                     ['{customer_name}', '{cashier_name}', '{store_name}', '{branch_name}', '{invoice_number}', '{date}', '{grand_total}', '{payment_method}', '{items_summary}'],
-                    [$custName, $cashier, $storeName, $branchName, $invoiceNumber, $dateStr, $grandTotal, $payMethod, "- 2x Galon RO @ Rp 19.000\n- 1x Kopi Gayo @ Rp 37.000"],
+                    [$custName, $cashier, $storeName, $branchName, $invoiceNumber, $dateStr, $grandTotal, $payMethod, $itemsSummary],
                     $msg
                 );
 
