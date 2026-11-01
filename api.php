@@ -444,7 +444,7 @@ try {
                 'online' => true,
                 'timestamp' => time(),
                 'server_time' => date('Y-m-d H:i:s'),
-                'app_name' => 'ESBAS POS Multicabang'
+                'app_name' => 'KAD Tech Multicabang'
             ]);
             break;
 
@@ -804,7 +804,7 @@ try {
             $appVer = getAppVersionData();
             $payload = [
                 'success' => true,
-                'app' => 'ESBAS POS',
+                'app' => 'KAD Tech',
                 'export_type' => 'master_data',
                 'version' => $appVer['version'] ?? '1.2.27',
                 'driver' => $pdo->isMysql() ? 'mysql' : 'sqlite',

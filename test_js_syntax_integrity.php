@@ -1,6 +1,6 @@
 <?php
 /**
- * Automated Syntax & Regression Test for ESBAS POS
+ * Automated Syntax & Regression Test for KAD Tech
  * Memverifikasi integritas parsing JavaScript dan memastikan tidak ada SyntaxError.
  */
 

@@ -1,7 +1,7 @@
 @echo off
-title ESBAS POS Web Service
+title KAD Tech Web Service
 echo ===================================================
-echo   Memulai Web Service ESBAS POS...
+echo   Memulai Web Service KAD Tech...
 echo ===================================================
 cd /d "%~dp0"
 

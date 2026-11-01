@@ -1,6 +1,6 @@
 {
-  "name": "ESBAS POS Multicabang",
-  "short_name": "ESBAS POS",
+  "name": "KAD Tech Multicabang",
+  "short_name": "KAD Tech",
   "description": "Sistem Informasi Kasir POS, CRM & Manajemen Multi-Cabang",
   "start_url": "./index.php",
   "scope": "./",

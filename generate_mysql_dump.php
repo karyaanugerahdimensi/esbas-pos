@@ -67,7 +67,7 @@ foreach ($tables as $t) {
 }
 
 $sql = "-- ========================================================\n";
-$sql .= "-- ESBAS POS Database Export (MySQL / MariaDB Compatible)\n";
+$sql .= "-- KAD Tech Database Export (MySQL / MariaDB Compatible)\n";
 $sql .= "-- Generated: " . date('Y-m-d H:i:s') . "\n";
 $sql .= "-- ========================================================\n\n";
 $sql .= "SET FOREIGN_KEY_CHECKS = 0;\n";
@@ -219,7 +219,7 @@ foreach ($orderedTables as $tName) {
 }
 
 $sql .= "SET FOREIGN_KEY_CHECKS = 1;\n";
-$sql .= "\n-- End of ESBAS POS MySQL Dump\n";
+$sql .= "\n-- End of KAD Tech MySQL Dump\n";
 
 file_put_contents($outputFile, $sql);
 echo "SUCCESS: MySQL SQL Dump successfully created at $outputFile (" . number_format(filesize($outputFile)) . " bytes)\n";

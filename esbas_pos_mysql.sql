@@ -1,5 +1,5 @@
 -- ========================================================
--- ESBAS POS Database Export (MySQL / MariaDB Compatible)
+-- KAD Tech Database Export (MySQL / MariaDB Compatible)
 -- Generated: 2026-10-25 02:55:16
 -- ========================================================
 
@@ -1402,4 +1402,4 @@ INSERT INTO `user_roles` (`id`, `code`, `name`, `description`, `is_system`, `can
 
 SET FOREIGN_KEY_CHECKS = 1;
 
--- End of ESBAS POS MySQL Dump
+-- End of KAD Tech MySQL Dump

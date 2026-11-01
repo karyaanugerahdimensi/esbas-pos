@@ -1,11 +1,19 @@
 {
-    "app_name": "ESBAS POS Multicabang",
-    "version": "1.4.2",
-    "build": "20261101-67",
+    "app_name": "KAD Tech Multicabang",
+    "version": "1.4.3",
+    "build": "20261101-68",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.4.3",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Rebranding Sistem Menjadi KAD Tech di Seluruh Berkas & Dokumen (FR-SET-12)",
+            "description": "Menyelaraskan nama produk aplikasi dari ESBAS POS menjadi KAD Tech secara menyeluruh pada seluruh konfigurasi aplikasi, metadata PWA, Service Worker, backend bootstrap API, database scripts, helper versi, dan dokumentasi SRS.",
+            "rollback_command": "git checkout v1.4.2"
+        },
         {
             "version": "1.4.2",
             "commit": "HEAD",
@@ -1010,7 +1018,7 @@
             "version": "1.0.0",
             "commit": "d9d4fbe",
             "date": "2026-10-14",
-            "title": "Rilis Awal ESBAS POS Multicabang",
+            "title": "Rilis Awal KAD Tech Multicabang",
             "description": "Sistem POS kasir multi-cabang, multi-shift, inventori resep BOM otomatis, logistik kurir, dan penggajian.",
             "rollback_command": "git checkout d9d4fbe"
         }

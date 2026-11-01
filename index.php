@@ -71,9 +71,9 @@ try {
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="ESBAS POS">
-    <meta name="application-name" content="ESBAS POS Retail">
-    <link rel="manifest" href="manifest.json?v=1.4.2">
+    <meta name="apple-mobile-web-app-title" content="KAD Tech">
+    <meta name="application-name" content="KAD Tech Retail">
+    <link rel="manifest" href="manifest.json?v=1.4.3">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
     <title>ESBAS Retail - POS Multi-Cabang v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</title>
@@ -615,7 +615,7 @@ try {
             <!-- Right: Theme Toggle, Branch Selector & Shift Badge -->
             <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
                 <!-- PWA Install Button (Desktop Only) -->
-                <button type="button" id="btn-pwa-install" onclick="promptPWAInstall()" class="hidden md:inline-flex cursor-pointer items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl shadow-xs transition-colors shrink-0" title="Pasang ESBAS POS di Layar Utama (PWA)">
+                <button type="button" id="btn-pwa-install" onclick="promptPWAInstall()" class="hidden md:inline-flex cursor-pointer items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl shadow-xs transition-colors shrink-0" title="Pasang KAD Tech di Layar Utama (PWA)">
                     <i data-lucide="download" class="w-3.5 h-3.5 shrink-0"></i>
                     <span>Install App</span>
                 </button>
@@ -10711,7 +10711,7 @@ try {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
                     .then(reg => {
-                        console.log('ESBAS POS ServiceWorker terdaftar:', reg.scope);
+                        console.log('KAD Tech ServiceWorker terdaftar:', reg.scope);
                     })
                     .catch(err => {
                         console.warn('Gagal mendaftarkan ServiceWorker:', err);
@@ -10748,7 +10748,7 @@ try {
                     deferredPwaPrompt = null;
                 });
             } else {
-                alert("Petunjuk Pemasangan Web App di Layar Utama (Android 8+ / Tablet):\n\n1. Ketuk ikon menu titik tiga (⋮) di pojok kanan atas browser Chrome / Samsung Internet.\n2. Pilih 'Tambahkan ke Layar Utama' (Add to Home Screen) atau 'Instal Aplikasi'.\n3. Beri nama 'ESBAS POS' lalu ketuk 'Tambah' / 'Add'.\n4. Buka aplikasi ESBAS POS langsung dari ikon layar utama tablet Anda untuk tampilan penuh mandiri (Standalone) tanpa bilah alamat browser.");
+                alert("Petunjuk Pemasangan Web App di Layar Utama (Android 8+ / Tablet):\n\n1. Ketuk ikon menu titik tiga (⋮) di pojok kanan atas browser Chrome / Samsung Internet.\n2. Pilih 'Tambahkan ke Layar Utama' (Add to Home Screen) atau 'Instal Aplikasi'.\n3. Beri nama 'KAD Tech' lalu ketuk 'Tambah' / 'Add'.\n4. Buka aplikasi KAD Tech langsung dari ikon layar utama tablet Anda untuk tampilan penuh mandiri (Standalone) tanpa bilah alamat browser.");
             }
         };
 

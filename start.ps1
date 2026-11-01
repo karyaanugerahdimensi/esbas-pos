@@ -1,7 +1,7 @@
-# Script PowerShell untuk menjalankan ESBAS POS Web Service
-$Host.UI.RawUI.WindowTitle = "ESBAS POS Web Service"
+# Script PowerShell untuk menjalankan KAD Tech Web Service
+$Host.UI.RawUI.WindowTitle = "KAD Tech Web Service"
 Write-Host "===================================================" -ForegroundColor Cyan
-Write-Host "  Memulai Web Service ESBAS POS..." -ForegroundColor Cyan
+Write-Host "  Memulai Web Service KAD Tech..." -ForegroundColor Cyan
 Write-Host "===================================================" -ForegroundColor Cyan
 
 Set-Location -Path $PSScriptRoot

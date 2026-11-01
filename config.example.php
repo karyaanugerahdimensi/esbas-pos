@@ -1,7 +1,7 @@
 <?php
 /**
  * ====================================================================
- * ESBAS POS - Template Konfigurasi Database (Contoh)
+ * KAD Tech - Template Konfigurasi Database (Contoh)
  * ====================================================================
  * Salin file ini menjadi config.php dan sesuaikan kredensialnya.
  */

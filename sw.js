@@ -1,10 +1,10 @@
 /**
- * ESBAS POS - Progressive Web App Service Worker
+ * KAD Tech - Progressive Web App Service Worker
  * Kompatibel dengan Android 8+ (Chromium 58+ & Modern Browser)
  * Menyediakan kapabilitas offline-first caching, launch standalone, dan background sync.
  */
 
-const CACHE_NAME = 'esbas-pos-v1.4.2';
+const CACHE_NAME = 'kad-tech-v1.4.3';
 const STATIC_ASSETS = [
     './',
     './index.php',
@@ -78,7 +78,7 @@ self.addEventListener('fetch', function(event) {
                             if (indexFallback) return indexFallback;
                             return caches.match('./').then(function(rootFallback) {
                                 if (rootFallback) return rootFallback;
-                                return new Response("<!DOCTYPE html><html><head><meta charset='utf-8'><title>ESBAS POS</title></head><body><div style='text-align:center;padding:40px;font-family:sans-serif;'><h2>Memuat ESBAS POS...</h2><p>Menghubungkan ke sistem...</p></div><script>setTimeout(function(){ window.location.reload(); }, 1200);</script></body></html>", {
+                                return new Response("<!DOCTYPE html><html><head><meta charset='utf-8'><title>KAD Tech</title></head><body><div style='text-align:center;padding:40px;font-family:sans-serif;'><h2>Memuat KAD Tech...</h2><p>Menghubungkan ke sistem...</p></div><script>setTimeout(function(){ window.location.reload(); }, 1200);</script></body></html>", {
                                     headers: { 'Content-Type': 'text/html; charset=utf-8' }
                                 });
                             });

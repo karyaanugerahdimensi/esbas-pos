@@ -1,6 +1,6 @@
 <?php
 /**
- * ESBAS POS Version Helper
+ * KAD Tech Version Helper
  * Menyediakan informasi base version, commit hash, dan riwayat rollback untuk kemudahan audit & troubleshooting.
  */
 
@@ -8,9 +8,9 @@ if (!function_exists('getAppVersionData')) {
     function getAppVersionData() {
         $versionFile = __DIR__ . '/version.json';
         $data = [
-            'app_name' => 'ESBAS POS Multicabang',
-            'version' => '1.4.2',
-            'build' => '20261101-67',
+            'app_name' => 'KAD Tech Multicabang',
+            'version' => '1.4.3',
+            'build' => '20261101-68',
             'release_date' => '2026-11-01',
             'commit_hash' => 'HEAD',
             'branch' => 'main',
