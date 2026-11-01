@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.3.8",
-    "build": "20261101-63",
+    "version": "1.3.9",
+    "build": "20261101-64",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.3.9",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Perbaikan Total Crash WebAPK 'Aplikasi Terhenti' pada Peluncuran PWA Android 8 (FR-PWA-03)",
+            "description": "Menyelesaikan tuntas kendala popup 'Aplikasi terhenti' (crash on launch) saat membuka PWA yang baru terinstall dari layar utama Android 8 (Oreo / API 26): (1) Eliminasi Properti Orientation Manifest: Menghapus deklarasi 'orientation': 'any' pada manifest.json untuk mengeliminasi bug fatal OS Android 8.0 (IllegalStateException: Only fullscreen opaque activities can request orientation) pada aktivitas splash/launcher WebAPK; (2) Eliminasi Array Shortcuts dengan Fragment URI: Menghapus deklarasi static shortcuts ber-hash fragment (#pos, #reports) pada manifest.json yang memicu IllegalArgumentException pada Android 8.0 ShortcutManager; (3) Restrukturisasi Purpose Ikon Manifest: Memisahkan deklarasi purpose menjadi 'any' untuk ikon standar (192px, 512px) dan 'maskable' untuk icon-maskable.png, mengeliminasi kegagalan ekstraksi ikon WebAPK (ResourcesNotFoundException); (4) Penyelarasan Start URL & ID WebAPK: Menetapkan 'start_url': './index.php', 'scope': './', dan 'id': './index.php' agar intent launcher WebAPK terpetakan secara presisi; (5) Optimalisasi Memori & Status Bar: Mengubah apple-mobile-web-app-status-bar-style menjadi 'default' serta mengeliminasi injeksi runtime CDN Tailwind Play (~3MB) di head untuk mencegah Out-Of-Memory (OOM) killer pada RAM 1GB-2GB perangkat tablet Android 8.",
+            "rollback_command": "git checkout v1.3.8"
+        },
         {
             "version": "1.3.8",
             "commit": "HEAD",

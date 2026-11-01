@@ -70,10 +70,10 @@ try {
     <meta name="theme-color" content="#4338ca">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="ESBAS POS">
     <meta name="application-name" content="ESBAS POS Retail">
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json?v=1.3.9">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
     <title>ESBAS Retail - POS Multi-Cabang v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</title>
@@ -91,15 +91,14 @@ try {
             } catch(e) {}
         })();
     </script>
-    <!-- Production Compiled Tailwind CSS & CDN Fallback -->
+    <!-- Production Compiled Tailwind CSS -->
     <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <!-- Lucide Icons with Safe Fallback Stub -->
     <script>
-        tailwind = {
-            darkMode: 'class'
-        };
+        if (typeof window.lucide === 'undefined') {
+            window.lucide = { createIcons: function() {} };
+        }
     </script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Leaflet.js Interactive Map CDN -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />

@@ -2,10 +2,10 @@
   "name": "ESBAS POS Multicabang",
   "short_name": "ESBAS POS",
   "description": "Sistem Informasi Kasir POS, CRM & Manajemen Multi-Cabang",
-  "start_url": "index.php",
+  "id": "./index.php",
+  "start_url": "./index.php",
   "scope": "./",
   "display": "standalone",
-  "orientation": "any",
   "background_color": "#0f172a",
   "theme_color": "#4338ca",
   "prefer_related_applications": false,
@@ -15,35 +15,19 @@
       "src": "assets/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "assets/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "assets/icons/icon-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Kasir POS",
-      "short_name": "POS",
-      "description": "Buka modul kasir penjualan POS langsung",
-      "url": "index.php#pos",
-      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "Laporan Penjualan",
-      "short_name": "Laporan",
-      "description": "Buka laporan penjualan dan omzet",
-      "url": "index.php#reports",
-      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
+      "purpose": "maskable"
     }
   ]
 }
