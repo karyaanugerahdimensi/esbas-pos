@@ -801,6 +801,32 @@ function initDatabaseSchema($pdo) {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
+
+    // 33. Stock Transfers Antar Cabang
+    $pdo->exec("CREATE TABLE IF NOT EXISTS stock_transfers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        transfer_no TEXT UNIQUE NOT NULL,
+        from_branch_id INTEGER NOT NULL,
+        to_branch_id INTEGER NOT NULL,
+        transfer_mode TEXT DEFAULT 'DIRECT',
+        status TEXT DEFAULT 'COMPLETED',
+        notes TEXT,
+        created_by INTEGER DEFAULT 1,
+        received_by INTEGER DEFAULT NULL,
+        cancelled_by INTEGER DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        received_at DATETIME DEFAULT NULL,
+        cancelled_at DATETIME DEFAULT NULL
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS stock_transfer_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        transfer_id INTEGER NOT NULL,
+        product_id INTEGER NOT NULL,
+        qty_sent REAL NOT NULL DEFAULT 0,
+        qty_received REAL NOT NULL DEFAULT 0,
+        notes TEXT
+    )");
 }
 }
 
@@ -1950,6 +1976,7 @@ function autoMigrateAndSync($pdo) {
         ['products', '5. Master Produk & Varian'],
         ['bom', '6. Resep / BOM Bahan'],
         ['stocks', '7. Stok & Kartu Mutasi'],
+        ['stock-in', '7b. Input Penambahan Stok'],
         ['pnl', '8. Laporan Laba Rugi'],
         ['expenses', '9. Beban Operasional Cabang'],
         ['customers', '10. Pelanggan & Mitra CRM'],
@@ -1961,12 +1988,12 @@ function autoMigrateAndSync($pdo) {
     ];
 
     $roleAccessRules = [
-        'SUPERADMIN'     => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'],
-        'SUPER_ADMIN'    => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'],
-        'BRANCH_MANAGER' => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
-        'MANAGER'        => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
-        'CASHIER'        => ['pos', 'reports', 'ess', 'customers'],
-        'STAFF'          => ['ess', 'stocks', 'logistics']
+        'SUPERADMIN'     => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'],
+        'SUPER_ADMIN'    => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'],
+        'BRANCH_MANAGER' => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
+        'MANAGER'        => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
+        'CASHIER'        => ['pos', 'reports', 'ess', 'customers', 'stock-in'],
+        'STAFF'          => ['ess', 'stocks', 'stock-in', 'logistics']
     ];
 
     $stmtRolePerm = $pdo->prepare("INSERT OR IGNORE INTO role_menu_permissions (role, menu_key, menu_title, can_access, can_view, can_create, can_update, can_delete) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
@@ -1977,12 +2004,54 @@ function autoMigrateAndSync($pdo) {
             $mKey = $menu[0];
             $mTitle = $menu[1];
             $can = in_array($mKey, $allowedMenus) ? 1 : 0;
-            $canCreate = ($can && ($isSuper || $isMgr || in_array($mKey, ['pos', 'ess', 'customers']))) ? 1 : 0;
+            $canCreate = ($can && ($isSuper || $isMgr || in_array($mKey, ['pos', 'ess', 'customers', 'stock-in']))) ? 1 : 0;
             $canUpdate = ($can && ($isSuper || $isMgr || in_array($mKey, ['pos', 'ess']))) ? 1 : 0;
             $canDelete = ($can && ($isSuper || ($isMgr && !in_array($mKey, ['sale-cancellations', 'settings'])))) ? 1 : 0;
             $stmtRolePerm->execute([$role, $mKey, $mTitle, $can, $can, $canCreate, $canUpdate, $canDelete]);
         }
     }
+
+    // Seed sub-tab permissions untuk Input Penambahan Stok (1. Penambahan Manual & 2. Transfer Cabang)
+    try {
+        $stmtSubPerm = $pdo->prepare("INSERT OR IGNORE INTO role_menu_permissions (role, menu_key, menu_title, can_access, can_view, can_create, can_update, can_delete, parent_key, is_subtab) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'stock-in', 1)");
+        foreach (array_keys($roleAccessRules) as $role) {
+            $isSuper = in_array($role, ['SUPERADMIN', 'SUPER_ADMIN']);
+            $isMgr = in_array($role, ['BRANCH_MANAGER', 'MANAGER']);
+            $isStaff = ($role === 'STAFF');
+            // 1. Penambahan Manual: aktif default untuk Superadmin, Manager, Staff, dan Kasir
+            $stmtSubPerm->execute([$role, 'stock-in:manual', '1. Penambahan Manual', 1, 1, 1, ($isSuper || $isMgr) ? 1 : 0, ($isSuper || $isMgr) ? 1 : 0]);
+            // 2. Transfer Cabang: aktif default untuk Superadmin, Manager, dan Staff (Kasir default 0, dapat diatur via Pengaturan Role)
+            $canTrf = ($isSuper || $isMgr || $isStaff) ? 1 : 0;
+            $stmtSubPerm->execute([$role, 'stock-in:transfer', '2. Transfer Cabang', $canTrf, $canTrf, $canTrf, ($isSuper || $isMgr) ? 1 : 0, ($isSuper || $isMgr) ? 1 : 0]);
+        }
+    } catch (Exception $eSubPerm) {}
+
+    // Pastikan tabel stock_transfers & stock_transfer_items tersedia pada database SQLite lama
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS stock_transfers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            transfer_no TEXT UNIQUE NOT NULL,
+            from_branch_id INTEGER NOT NULL,
+            to_branch_id INTEGER NOT NULL,
+            transfer_mode TEXT DEFAULT 'DIRECT',
+            status TEXT DEFAULT 'COMPLETED',
+            notes TEXT,
+            created_by INTEGER DEFAULT 1,
+            received_by INTEGER DEFAULT NULL,
+            cancelled_by INTEGER DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            received_at DATETIME DEFAULT NULL,
+            cancelled_at DATETIME DEFAULT NULL
+        )");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS stock_transfer_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            transfer_id INTEGER NOT NULL,
+            product_id INTEGER NOT NULL,
+            qty_sent REAL NOT NULL DEFAULT 0,
+            qty_received REAL NOT NULL DEFAULT 0,
+            notes TEXT
+        )");
+    } catch (Exception $eStTbl) {}
 
     // Ensure CASHIER & MANAGER can create customers in role_menu_permissions
     $pdo->exec("UPDATE role_menu_permissions SET can_access = 1, can_view = 1, can_create = 1 WHERE role = 'CASHIER' AND menu_key IN ('customers', 'customers:list')");
@@ -2400,6 +2469,62 @@ function autoMigrateMysql($pdo) {
             }
         }
     } catch (Exception $e) {}
+
+    // 11. Tabel stock_transfers, stock_transfer_items & Seed Hak Akses stock-in untuk MySQL Hosting
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `stock_transfers` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `transfer_no` VARCHAR(100) UNIQUE NOT NULL,
+            `from_branch_id` INT NOT NULL,
+            `to_branch_id` INT NOT NULL,
+            `transfer_mode` VARCHAR(30) DEFAULT 'DIRECT',
+            `status` VARCHAR(30) DEFAULT 'COMPLETED',
+            `notes` TEXT,
+            `created_by` INT DEFAULT 1,
+            `received_by` INT DEFAULT NULL,
+            `cancelled_by` INT DEFAULT NULL,
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `received_at` DATETIME DEFAULT NULL,
+            `cancelled_at` DATETIME DEFAULT NULL,
+            INDEX `idx_st_from` (`from_branch_id`),
+            INDEX `idx_st_to` (`to_branch_id`),
+            INDEX `idx_st_status` (`status`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `stock_transfer_items` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `transfer_id` INT NOT NULL,
+            `product_id` INT NOT NULL,
+            `qty_sent` DECIMAL(15,4) NOT NULL DEFAULT 0,
+            `qty_received` DECIMAL(15,4) NOT NULL DEFAULT 0,
+            `notes` TEXT,
+            INDEX `idx_sti_transfer` (`transfer_id`),
+            INDEX `idx_sti_product` (`product_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        // Pastikan kolom granular role_menu_permissions tersedia di MySQL
+        $rmpMysqlCols = getDbTableColumns($pdo, 'role_menu_permissions');
+        if (!empty($rmpMysqlCols)) {
+            if (!in_array('can_view', $rmpMysqlCols)) $pdo->exec("ALTER TABLE `role_menu_permissions` ADD COLUMN `can_view` TINYINT(1) DEFAULT 1");
+            if (!in_array('can_create', $rmpMysqlCols)) $pdo->exec("ALTER TABLE `role_menu_permissions` ADD COLUMN `can_create` TINYINT(1) DEFAULT 0");
+            if (!in_array('can_update', $rmpMysqlCols)) $pdo->exec("ALTER TABLE `role_menu_permissions` ADD COLUMN `can_update` TINYINT(1) DEFAULT 0");
+            if (!in_array('can_delete', $rmpMysqlCols)) $pdo->exec("ALTER TABLE `role_menu_permissions` ADD COLUMN `can_delete` TINYINT(1) DEFAULT 0");
+            if (!in_array('parent_key', $rmpMysqlCols)) $pdo->exec("ALTER TABLE `role_menu_permissions` ADD COLUMN `parent_key` VARCHAR(100) DEFAULT NULL");
+            if (!in_array('is_subtab', $rmpMysqlCols)) $pdo->exec("ALTER TABLE `role_menu_permissions` ADD COLUMN `is_subtab` TINYINT(1) DEFAULT 0");
+
+            $stmtMyPerm = $pdo->prepare("INSERT IGNORE INTO `role_menu_permissions` (`role`, `menu_key`, `menu_title`, `can_access`, `can_view`, `can_create`, `can_update`, `can_delete`, `parent_key`, `is_subtab`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            foreach (['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER', 'STAFF', 'CASHIER'] as $rCode) {
+                $isSup = in_array($rCode, ['SUPER_ADMIN', 'SUPERADMIN']);
+                $isMgr = in_array($rCode, ['BRANCH_MANAGER', 'MANAGER']);
+                $isStf = ($rCode === 'STAFF');
+                $ud = ($isSup || $isMgr) ? 1 : 0;
+                $canTrf = ($isSup || $isMgr || $isStf) ? 1 : 0;
+                $stmtMyPerm->execute([$rCode, 'stock-in', 'Input Penambahan Stok', 1, 1, 1, $ud, $ud, null, 0]);
+                $stmtMyPerm->execute([$rCode, 'stock-in:manual', '1. Penambahan Manual', 1, 1, 1, $ud, $ud, 'stock-in', 1]);
+                $stmtMyPerm->execute([$rCode, 'stock-in:transfer', '2. Transfer Cabang', $canTrf, $canTrf, $canTrf, $ud, $ud, 'stock-in', 1]);
+            }
+        }
+    } catch (Exception $eMySt) {}
 }
 }
 

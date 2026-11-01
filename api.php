@@ -1747,8 +1747,8 @@ try {
             $curRole = $currentUser['role'] ?? 'SUPER_ADMIN';
             $normCurRole = str_replace('_', '', strtoupper($curRole));
 
-            // 15 Menu Lengkap Sistem
-            $allMenuKeys = ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
+            // 16 Menu Lengkap Sistem
+            $allMenuKeys = ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
 
             // Jika Super Admin, berikan akses penuh mutlak (1) ke seluruh menu & sub-tab
             if ($normCurRole === 'SUPERADMIN') {
@@ -1786,7 +1786,7 @@ try {
 
             // Pastikan Super Admin tetap dapat mengakses seluruh menu tanpa terkunci
             if ($normCurRole === 'SUPERADMIN') {
-                foreach (['dashboard', 'pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'partner-sales', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'] as $mk) {
+                foreach (['dashboard', 'pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'stock-in:manual', 'stock-in:transfer', 'pnl', 'partner-sales', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'] as $mk) {
                     $userPerms[$mk] = [
                         'access' => 1,
                         'view' => 1,
@@ -4746,6 +4746,668 @@ try {
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
             echo json_encode(['success' => true, 'is_global' => $isGlobal, 'movements' => $stmt->fetchAll()]);
+            break;
+
+        // ==========================================
+        // 5B. INPUT PENAMBAHAN STOK (MANUAL & TRANSFER CABANG)
+        // ==========================================
+        case 'get_stock_in_data':
+        case 'submit_manual_stock_in':
+        case 'create_stock_transfer':
+        case 'receive_stock_transfer':
+        case 'cancel_stock_transfer':
+            // Resolusi identitas pengguna & cabang yang diizinkan
+            $actorUserId = (int)($sessionUserId > 0 ? $sessionUserId : ($input['user_id'] ?? ($_GET['user_id'] ?? 1)));
+            $stmtActor = $pdo->prepare("SELECT id, name, role, branch_id, assigned_branch_ids FROM users WHERE id = ?");
+            $stmtActor->execute([$actorUserId]);
+            $actorRow = $stmtActor->fetch(PDO::FETCH_ASSOC);
+            if (!$actorRow) {
+                $actorRow = ['id' => 1, 'name' => 'Admin', 'role' => 'SUPER_ADMIN', 'branch_id' => 1, 'assigned_branch_ids' => 'ALL'];
+            }
+            $actorRoleRaw = strtoupper(trim($actorRow['role'] ?? 'CASHIER'));
+            $actorRoleNorm = str_replace('_', '', $actorRoleRaw);
+            $actorCanAllBranches = ($actorRoleNorm === 'SUPERADMIN' || $sessionUserCanAccessAll || ($actorRow['assigned_branch_ids'] ?? '') === 'ALL');
+            if (!$actorCanAllBranches) {
+                try {
+                    $stRoleAll = $pdo->prepare("SELECT can_access_all_branches FROM user_roles WHERE code = ?");
+                    $stRoleAll->execute([$actorRow['role']]);
+                    if ((int)$stRoleAll->fetchColumn() === 1) {
+                        $actorCanAllBranches = true;
+                    }
+                } catch (Exception $eRa) {}
+            }
+
+            // Kumpulkan daftar cabang yang boleh diakses actor (jika bukan global)
+            $actorAllowedBranches = [];
+            if (!$actorCanAllBranches) {
+                if (!empty($actorRow['branch_id'])) {
+                    $actorAllowedBranches[] = (int)$actorRow['branch_id'];
+                }
+                try {
+                    $stUb = $pdo->prepare("SELECT branch_id FROM user_branches WHERE user_id = ?");
+                    $stUb->execute([(int)$actorRow['id']]);
+                    foreach ($stUb->fetchAll(PDO::FETCH_COLUMN) as $ubId) {
+                        $actorAllowedBranches[] = (int)$ubId;
+                    }
+                } catch (Exception $eUb) {}
+                if (!empty($actorRow['assigned_branch_ids']) && $actorRow['assigned_branch_ids'] !== 'ALL') {
+                    $decB = json_decode($actorRow['assigned_branch_ids'], true);
+                    if (is_array($decB)) {
+                        foreach ($decB as $dbId) $actorAllowedBranches[] = (int)$dbId;
+                    }
+                }
+                $actorAllowedBranches = array_values(array_unique(array_filter($actorAllowedBranches)));
+                if (empty($actorAllowedBranches)) {
+                    $actorAllowedBranches = [$sessionBranchId > 0 ? $sessionBranchId : 1];
+                }
+            }
+
+            // Helper pengecekan hak akses role_menu_permissions
+            $checkStockInPerm = function ($menuKey, $mode = 'view') use ($pdo, $actorRoleRaw, $actorRoleNorm) {
+                if ($actorRoleNorm === 'SUPERADMIN') return true;
+                $col = 'can_view';
+                if ($mode === 'create') $col = 'can_create';
+                elseif ($mode === 'update') $col = 'can_update';
+                elseif ($mode === 'delete') $col = 'can_delete';
+
+                try {
+                    $stP = $pdo->prepare("SELECT can_access, can_view, can_create, can_update, can_delete FROM role_menu_permissions WHERE (UPPER(REPLACE(role, '_', '')) = ? OR UPPER(role) = ?) AND menu_key = ? LIMIT 1");
+                    $stP->execute([$actorRoleNorm, $actorRoleRaw, $menuKey]);
+                    $pRow = $stP->fetch(PDO::FETCH_ASSOC);
+                    if ($pRow) {
+                        if ($mode === 'view') return ((int)($pRow['can_view'] ?? $pRow['can_access'] ?? 0) === 1);
+                        return ((int)($pRow[$col] ?? 0) === 1);
+                    }
+                    // Fallback ke parent key bila subtab belum tersimpan spesifik
+                    if (strpos($menuKey, ':') !== false) {
+                        $parentKey = explode(':', $menuKey)[0];
+                        $stP->execute([$actorRoleNorm, $actorRoleRaw, $parentKey]);
+                        $parentRow = $stP->fetch(PDO::FETCH_ASSOC);
+                        if ($parentRow) {
+                            if ($mode === 'view') return ((int)($parentRow['can_view'] ?? $parentRow['can_access'] ?? 0) === 1);
+                            return ((int)($parentRow[$col] ?? 0) === 1);
+                        }
+                    }
+                } catch (Exception $ePerm) {}
+
+                // Fallback aman berdasarkan role bawaan
+                if (in_array($actorRoleNorm, ['BRANCHMANAGER', 'MANAGER'])) return true;
+                if ($actorRoleNorm === 'STAFF') return in_array($mode, ['view', 'create']);
+                if (in_array($actorRoleNorm, ['CASHIER', 'KASIR']) && $menuKey === 'stock-in:manual') return in_array($mode, ['view', 'create']);
+                return false;
+            };
+
+            if ($action === 'get_stock_in_data') {
+                $canManualView = $checkStockInPerm('stock-in:manual', 'view');
+                $canTransferView = $checkStockInPerm('stock-in:transfer', 'view');
+                if (!$canManualView && !$canTransferView && !$checkStockInPerm('stock-in', 'view')) {
+                    echo json_encode(['success' => false, 'message' => 'Akses Ditolak: Role Anda tidak memiliki izin mengakses menu Input Penambahan Stok.']);
+                    break;
+                }
+
+                $filterBranchParam = isset($_GET['filter_branch_id']) ? trim($_GET['filter_branch_id']) : 'ALL';
+                if (!$actorCanAllBranches) {
+                    if ($filterBranchParam === 'ALL' || !in_array((int)$filterBranchParam, $actorAllowedBranches, true)) {
+                        $filterBranchParam = (string)$actorAllowedBranches[0];
+                    }
+                }
+
+                // 1. Daftar seluruh cabang aktif (diperlukan untuk tujuan transfer cabang)
+                $allBranches = $pdo->query("SELECT id, code, name, address FROM branches ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+
+                // 2. Katalog produk aktif & peta stok per cabang
+                $productsList = $pdo->query("
+                    SELECT p.id, p.sku, p.name, p.unit, p.product_type, p.category,
+                           COALESCE(p.image_emoji, '📦') as image_emoji,
+                           COALESCE(p.is_stockable, 1) as is_stockable,
+                           COALESCE(p.cogs, 0) as cogs
+                    FROM products p
+                    WHERE (p.is_active IS NULL OR p.is_active = 1)
+                    ORDER BY p.product_type ASC, p.name ASC
+                ")->fetchAll(PDO::FETCH_ASSOC);
+
+                $branchStocksMap = [];
+                $stBsAll = $pdo->query("SELECT branch_id, product_id, stock FROM branch_stocks");
+                while ($bsRow = $stBsAll->fetch(PDO::FETCH_ASSOC)) {
+                    $bKey = (int)$bsRow['branch_id'];
+                    $pKey = (int)$bsRow['product_id'];
+                    if (!isset($branchStocksMap[$bKey])) $branchStocksMap[$bKey] = [];
+                    $branchStocksMap[$bKey][$pKey] = (float)$bsRow['stock'];
+                }
+
+                // 3. Riwayat Penambahan Stok Manual terakhir (movement_type = PURCHASE)
+                $manualHistory = [];
+                if ($canManualView) {
+                    $sqlMh = "
+                        SELECT sm.*, p.name as product_name, p.sku as product_sku, p.unit, p.product_type,
+                               b.name as branch_name, u.name as user_name
+                        FROM stock_movements sm
+                        JOIN products p ON p.id = sm.product_id
+                        JOIN branches b ON b.id = sm.branch_id
+                        LEFT JOIN users u ON u.id = sm.user_id
+                        WHERE sm.movement_type = 'PURCHASE' AND sm.qty_change > 0
+                    ";
+                    $paramsMh = [];
+                    if ($filterBranchParam !== 'ALL' && (int)$filterBranchParam > 0) {
+                        $sqlMh .= " AND sm.branch_id = ?";
+                        $paramsMh[] = (int)$filterBranchParam;
+                    } elseif (!$actorCanAllBranches) {
+                        $inAllowed = implode(',', array_map('intval', $actorAllowedBranches));
+                        $sqlMh .= " AND sm.branch_id IN ({$inAllowed})";
+                    }
+                    $sqlMh .= " ORDER BY sm.id DESC LIMIT 60";
+                    $stMh = $pdo->prepare($sqlMh);
+                    $stMh->execute($paramsMh);
+                    $manualHistory = $stMh->fetchAll(PDO::FETCH_ASSOC);
+                }
+
+                // 4. Riwayat & Antrean Transfer Cabang
+                $transfersList = [];
+                if ($canTransferView) {
+                    try {
+                        $sqlTrf = "
+                            SELECT st.*,
+                                   bf.name as from_branch_name, bf.code as from_branch_code,
+                                   bt.name as to_branch_name, bt.code as to_branch_code,
+                                   uc.name as created_by_name,
+                                   ur.name as received_by_name,
+                                   ux.name as cancelled_by_name
+                            FROM stock_transfers st
+                            LEFT JOIN branches bf ON bf.id = st.from_branch_id
+                            LEFT JOIN branches bt ON bt.id = st.to_branch_id
+                            LEFT JOIN users uc ON uc.id = st.created_by
+                            LEFT JOIN users ur ON ur.id = st.received_by
+                            LEFT JOIN users ux ON ux.id = st.cancelled_by
+                        ";
+                        $paramsTrf = [];
+                        if (!$actorCanAllBranches) {
+                            $inAllowed = implode(',', array_map('intval', $actorAllowedBranches));
+                            $sqlTrf .= " WHERE (st.from_branch_id IN ({$inAllowed}) OR st.to_branch_id IN ({$inAllowed}))";
+                            if ($filterBranchParam !== 'ALL' && (int)$filterBranchParam > 0) {
+                                $sqlTrf .= " AND (st.from_branch_id = ? OR st.to_branch_id = ?)";
+                                $paramsTrf[] = (int)$filterBranchParam;
+                                $paramsTrf[] = (int)$filterBranchParam;
+                            }
+                        } elseif ($filterBranchParam !== 'ALL' && (int)$filterBranchParam > 0) {
+                            $sqlTrf .= " WHERE (st.from_branch_id = ? OR st.to_branch_id = ?)";
+                            $paramsTrf[] = (int)$filterBranchParam;
+                            $paramsTrf[] = (int)$filterBranchParam;
+                        }
+                        $sqlTrf .= " ORDER BY st.id DESC LIMIT 60";
+                        $stTrf = $pdo->prepare($sqlTrf);
+                        $stTrf->execute($paramsTrf);
+                        $transfersList = $stTrf->fetchAll(PDO::FETCH_ASSOC);
+
+                        if (!empty($transfersList)) {
+                            $trfIds = array_map(function ($r) { return (int)$r['id']; }, $transfersList);
+                            $inTrf = implode(',', array_fill(0, count($trfIds), '?'));
+                            $stItems = $pdo->prepare("
+                                SELECT sti.*, p.sku, p.name as product_name, p.unit, p.product_type
+                                FROM stock_transfer_items sti
+                                LEFT JOIN products p ON p.id = sti.product_id
+                                WHERE sti.transfer_id IN ({$inTrf})
+                                ORDER BY sti.id ASC
+                            ");
+                            $stItems->execute($trfIds);
+                            $itemsByTrf = [];
+                            foreach ($stItems->fetchAll(PDO::FETCH_ASSOC) as $itRow) {
+                                $tid = (int)$itRow['transfer_id'];
+                                if (!isset($itemsByTrf[$tid])) $itemsByTrf[$tid] = [];
+                                $itemsByTrf[$tid][] = $itRow;
+                            }
+                            foreach ($transfersList as &$tRow) {
+                                $tRow['items'] = $itemsByTrf[(int)$tRow['id']] ?? [];
+                            }
+                            unset($tRow);
+                        }
+                    } catch (Exception $eTrfRead) {}
+                }
+
+                echo json_encode([
+                    'success' => true,
+                    'can_access_all_branches' => $actorCanAllBranches,
+                    'allowed_branch_ids' => $actorAllowedBranches,
+                    'permissions' => [
+                        'manual_view' => $canManualView,
+                        'manual_create' => $checkStockInPerm('stock-in:manual', 'create'),
+                        'transfer_view' => $canTransferView,
+                        'transfer_create' => $checkStockInPerm('stock-in:transfer', 'create'),
+                        'transfer_delete' => $checkStockInPerm('stock-in:transfer', 'delete')
+                    ],
+                    'branches' => $allBranches,
+                    'products' => $productsList,
+                    'branch_stocks_map' => $branchStocksMap,
+                    'manual_history' => $manualHistory,
+                    'transfers' => $transfersList
+                ]);
+                break;
+            }
+
+            if ($action === 'submit_manual_stock_in') {
+                if (!$checkStockInPerm('stock-in:manual', 'create') && !$checkStockInPerm('stock-in:manual', 'view')) {
+                    echo json_encode(['success' => false, 'message' => 'Akses Ditolak: Role Anda tidak memiliki izin untuk menginput Penambahan Stok Manual.']);
+                    break;
+                }
+
+                $targetBranchId = (int)($input['target_branch_id'] ?? ($input['branch_id'] ?? 0));
+                if (!$actorCanAllBranches) {
+                    if ($targetBranchId <= 0 || !in_array($targetBranchId, $actorAllowedBranches, true)) {
+                        $targetBranchId = (int)$actorAllowedBranches[0];
+                    }
+                }
+                if ($targetBranchId <= 0) {
+                    echo json_encode(['success' => false, 'message' => 'Pilih cabang tujuan penambahan stok terlebih dahulu.']);
+                    break;
+                }
+
+                $stBr = $pdo->prepare("SELECT id, name FROM branches WHERE id = ?");
+                $stBr->execute([$targetBranchId]);
+                $brInfo = $stBr->fetch(PDO::FETCH_ASSOC);
+                if (!$brInfo) {
+                    echo json_encode(['success' => false, 'message' => 'Cabang tujuan tidak ditemukan.']);
+                    break;
+                }
+
+                $items = isset($input['items']) && is_array($input['items']) ? $input['items'] : [];
+                $validItems = [];
+                foreach ($items as $it) {
+                    $pId = (int)($it['product_id'] ?? 0);
+                    $qty = (float)($it['qty'] ?? 0);
+                    $rowNote = trim($it['notes'] ?? '');
+                    if ($pId > 0 && $qty > 0) {
+                        $validItems[] = ['product_id' => $pId, 'qty' => $qty, 'notes' => $rowNote];
+                    }
+                }
+
+                if (empty($validItems)) {
+                    echo json_encode(['success' => false, 'message' => 'Masukkan minimal 1 produk dengan jumlah penambahan stok lebih dari 0.']);
+                    break;
+                }
+
+                $now = date('Y-m-d H:i:s');
+                $refNoInput = trim($input['reference_no'] ?? '');
+                $refNo = $refNoInput !== '' ? $refNoInput : ('IN-' . date('Ymd-His'));
+                $generalNotes = trim($input['general_notes'] ?? '');
+
+                try {
+                    $pdo->beginTransaction();
+
+                    $stCur = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                    $stInsBs = $pdo->prepare("INSERT INTO branch_stocks (branch_id, product_id, stock, local_price, local_cogs, is_active, last_updated) VALUES (?, ?, ?, 0, 0, 1, ?)");
+                    $stUpdBs = $pdo->prepare("UPDATE branch_stocks SET stock = ?, last_updated = ? WHERE branch_id = ? AND product_id = ?");
+                    $stLog = $pdo->prepare("
+                        INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id, created_at)
+                        VALUES (?, ?, 'PURCHASE', ?, ?, ?, ?, ?, ?, ?)
+                    ");
+
+                    $totalLines = 0;
+                    foreach ($validItems as $vi) {
+                        $pId = $vi['product_id'];
+                        $qty = $vi['qty'];
+                        $stCur->execute([$targetBranchId, $pId]);
+                        $curVal = $stCur->fetchColumn();
+                        $stockBefore = ($curVal !== false) ? (float)$curVal : 0.0;
+                        $stockAfter = $stockBefore + $qty;
+
+                        if ($curVal === false) {
+                            $stInsBs->execute([$targetBranchId, $pId, $stockAfter, $now]);
+                        } else {
+                            $stUpdBs->execute([$stockAfter, $now, $targetBranchId, $pId]);
+                        }
+
+                        $combinedNote = 'Penambahan Stok Manual';
+                        if ($generalNotes !== '' && $vi['notes'] !== '') {
+                            $combinedNote = $generalNotes . ' — ' . $vi['notes'];
+                        } elseif ($generalNotes !== '') {
+                            $combinedNote = $generalNotes;
+                        } elseif ($vi['notes'] !== '') {
+                            $combinedNote = $vi['notes'];
+                        }
+
+                        $stLog->execute([$targetBranchId, $pId, $qty, $stockBefore, $stockAfter, $refNo, $combinedNote, (int)$actorRow['id'], $now]);
+                        $totalLines++;
+                    }
+
+                    $pdo->commit();
+                    echo json_encode([
+                        'success' => true,
+                        'reference_no' => $refNo,
+                        'message' => "Berhasil menambahkan stok masuk ({$totalLines} item produk) ke cabang {$brInfo['name']} dengan No. Referensi {$refNo}!"
+                    ]);
+                } catch (Exception $eMan) {
+                    if ($pdo->inTransaction()) $pdo->rollBack();
+                    echo json_encode(['success' => false, 'message' => 'Gagal menyimpan penambahan stok: ' . $eMan->getMessage()]);
+                }
+                break;
+            }
+
+            if ($action === 'create_stock_transfer') {
+                if (!$checkStockInPerm('stock-in:transfer', 'create')) {
+                    echo json_encode(['success' => false, 'message' => 'Akses Ditolak: Role Anda tidak memiliki izin untuk membuat Transfer Stok Cabang.']);
+                    break;
+                }
+
+                $fromBranchId = (int)($input['from_branch_id'] ?? 0);
+                $toBranchId = (int)($input['to_branch_id'] ?? 0);
+                $transferMode = strtoupper(trim($input['transfer_mode'] ?? 'DIRECT'));
+                if (!in_array($transferMode, ['DIRECT', 'IN_TRANSIT'], true)) {
+                    $transferMode = 'DIRECT';
+                }
+
+                if ($fromBranchId <= 0 || $toBranchId <= 0) {
+                    echo json_encode(['success' => false, 'message' => 'Pilih Cabang Asal dan Cabang Tujuan transfer terlebih dahulu.']);
+                    break;
+                }
+                if ($fromBranchId === $toBranchId) {
+                    echo json_encode(['success' => false, 'message' => 'Cabang Asal dan Cabang Tujuan tidak boleh sama.']);
+                    break;
+                }
+                if (!$actorCanAllBranches && !in_array($fromBranchId, $actorAllowedBranches, true)) {
+                    echo json_encode(['success' => false, 'message' => 'Akses Ditolak: Anda hanya diizinkan mengirim transfer dari cabang penugasan Anda sendiri.']);
+                    break;
+                }
+
+                $stBr = $pdo->prepare("SELECT id, name FROM branches WHERE id = ?");
+                $stBr->execute([$fromBranchId]);
+                $fromBranch = $stBr->fetch(PDO::FETCH_ASSOC);
+                $stBr->execute([$toBranchId]);
+                $toBranch = $stBr->fetch(PDO::FETCH_ASSOC);
+                if (!$fromBranch || !$toBranch) {
+                    echo json_encode(['success' => false, 'message' => 'Data cabang asal atau cabang tujuan tidak ditemukan.']);
+                    break;
+                }
+
+                $items = isset($input['items']) && is_array($input['items']) ? $input['items'] : [];
+                $mergedItems = [];
+                foreach ($items as $it) {
+                    $pId = (int)($it['product_id'] ?? 0);
+                    $qty = (float)($it['qty'] ?? 0);
+                    $rowNote = trim($it['notes'] ?? '');
+                    if ($pId > 0 && $qty > 0) {
+                        if (!isset($mergedItems[$pId])) {
+                            $mergedItems[$pId] = ['product_id' => $pId, 'qty' => $qty, 'notes' => $rowNote];
+                        } else {
+                            $mergedItems[$pId]['qty'] += $qty;
+                            if ($rowNote !== '') $mergedItems[$pId]['notes'] .= ($mergedItems[$pId]['notes'] ? '; ' : '') . $rowNote;
+                        }
+                    }
+                }
+                if (empty($mergedItems)) {
+                    echo json_encode(['success' => false, 'message' => 'Masukkan minimal 1 item produk dengan kuantitas transfer lebih dari 0.']);
+                    break;
+                }
+
+                $notes = trim($input['notes'] ?? '');
+                $now = date('Y-m-d H:i:s');
+                $randSuffix = strtoupper(substr(md5(uniqid((string)mt_rand(), true)), 0, 4));
+                $transferNo = 'TRF-' . date('Ymd-His') . '-' . $randSuffix;
+                $isDirect = ($transferMode === 'DIRECT');
+                $initStatus = $isDirect ? 'COMPLETED' : 'IN_TRANSIT';
+
+                try {
+                    $pdo->beginTransaction();
+
+                    // Validasi kecukupan stok di Cabang Asal terlebih dahulu
+                    $stProd = $pdo->prepare("SELECT name, sku, unit FROM products WHERE id = ?");
+                    $stCur = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                    foreach ($mergedItems as $pId => $mi) {
+                        $stProd->execute([$pId]);
+                        $pInfo = $stProd->fetch(PDO::FETCH_ASSOC);
+                        if (!$pInfo) {
+                            throw new Exception("Produk #{$pId} tidak ditemukan.");
+                        }
+                        $stCur->execute([$fromBranchId, $pId]);
+                        $avail = $stCur->fetchColumn();
+                        $availQty = ($avail !== false) ? (float)$avail : 0.0;
+                        if ($availQty < $mi['qty']) {
+                            throw new Exception("Stok {$pInfo['name']} ({$pInfo['sku']}) di {$fromBranch['name']} tidak mencukupi! Tersedia: {$availQty} {$pInfo['unit']}, Diminta: {$mi['qty']} {$pInfo['unit']}.");
+                        }
+                    }
+
+                    // Simpan header dokumen stock_transfers
+                    $stInsTrf = $pdo->prepare("
+                        INSERT INTO stock_transfers (transfer_no, from_branch_id, to_branch_id, transfer_mode, status, notes, created_by, received_by, created_at, received_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ");
+                    $stInsTrf->execute([
+                        $transferNo,
+                        $fromBranchId,
+                        $toBranchId,
+                        $transferMode,
+                        $initStatus,
+                        $notes,
+                        (int)$actorRow['id'],
+                        $isDirect ? (int)$actorRow['id'] : null,
+                        $now,
+                        $isDirect ? $now : null
+                    ]);
+                    $transferId = (int)$pdo->lastInsertId();
+
+                    $stInsItem = $pdo->prepare("INSERT INTO stock_transfer_items (transfer_id, product_id, qty_sent, qty_received, notes) VALUES (?, ?, ?, ?, ?)");
+                    $stUpdBs = $pdo->prepare("UPDATE branch_stocks SET stock = ?, last_updated = ? WHERE branch_id = ? AND product_id = ?");
+                    $stInsBs = $pdo->prepare("INSERT INTO branch_stocks (branch_id, product_id, stock, local_price, local_cogs, is_active, last_updated) VALUES (?, ?, ?, 0, 0, 1, ?)");
+                    $stLog = $pdo->prepare("
+                        INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ");
+
+                    $itemCount = 0;
+                    foreach ($mergedItems as $pId => $mi) {
+                        $qty = $mi['qty'];
+                        $stInsItem->execute([$transferId, $pId, $qty, $isDirect ? $qty : 0, $mi['notes']]);
+
+                        // 1. Potong stok Cabang Asal (TRANSFER_OUT)
+                        $stCur->execute([$fromBranchId, $pId]);
+                        $fromBefore = (float)$stCur->fetchColumn();
+                        $fromAfter = $fromBefore - $qty;
+                        $stUpdBs->execute([$fromAfter, $now, $fromBranchId, $pId]);
+
+                        $outNote = "Transfer keluar ke {$toBranch['name']}" . ($notes !== '' ? " ({$notes})" : '');
+                        $stLog->execute([$fromBranchId, $pId, 'TRANSFER_OUT', -$qty, $fromBefore, $fromAfter, $transferNo, $outNote, (int)$actorRow['id'], $now]);
+
+                        // 2. Jika mode DIRECT, langsung tambahkan ke Cabang Tujuan (TRANSFER_IN)
+                        if ($isDirect) {
+                            $stCur->execute([$toBranchId, $pId]);
+                            $toVal = $stCur->fetchColumn();
+                            $toBefore = ($toVal !== false) ? (float)$toVal : 0.0;
+                            $toAfter = $toBefore + $qty;
+                            if ($toVal === false) {
+                                $stInsBs->execute([$toBranchId, $pId, $toAfter, $now]);
+                            } else {
+                                $stUpdBs->execute([$toAfter, $now, $toBranchId, $pId]);
+                            }
+                            $inNote = "Transfer masuk dari {$fromBranch['name']}" . ($notes !== '' ? " ({$notes})" : '');
+                            $stLog->execute([$toBranchId, $pId, 'TRANSFER_IN', $qty, $toBefore, $toAfter, $transferNo, $inNote, (int)$actorRow['id'], $now]);
+                        }
+                        $itemCount++;
+                    }
+
+                    $pdo->commit();
+                    $modeMsg = $isDirect
+                        ? "Stok di {$fromBranch['name']} telah dikurangi dan otomatis ditambahkan ke {$toBranch['name']}."
+                        : "Stok di {$fromBranch['name']} telah dikurangi (Status: IN_TRANSIT) dan menunggu konfirmasi penerimaan di {$toBranch['name']}.";
+
+                    echo json_encode([
+                        'success' => true,
+                        'transfer_no' => $transferNo,
+                        'transfer_id' => $transferId,
+                        'status' => $initStatus,
+                        'message' => "Transfer Cabang {$transferNo} ({$itemCount} produk) berhasil diproses! {$modeMsg}"
+                    ]);
+                } catch (Exception $eTrf) {
+                    if ($pdo->inTransaction()) $pdo->rollBack();
+                    echo json_encode(['success' => false, 'message' => $eTrf->getMessage()]);
+                }
+                break;
+            }
+
+            if ($action === 'receive_stock_transfer') {
+                if (!$checkStockInPerm('stock-in:transfer', 'view') && !$checkStockInPerm('stock-in:transfer', 'create')) {
+                    echo json_encode(['success' => false, 'message' => 'Akses Ditolak: Role Anda tidak memiliki izin pada modul Transfer Cabang.']);
+                    break;
+                }
+
+                $transferId = (int)($input['transfer_id'] ?? 0);
+                $stTrf = $pdo->prepare("
+                    SELECT st.*, bf.name as from_branch_name, bt.name as to_branch_name
+                    FROM stock_transfers st
+                    LEFT JOIN branches bf ON bf.id = st.from_branch_id
+                    LEFT JOIN branches bt ON bt.id = st.to_branch_id
+                    WHERE st.id = ?
+                ");
+                $stTrf->execute([$transferId]);
+                $trf = $stTrf->fetch(PDO::FETCH_ASSOC);
+
+                if (!$trf) {
+                    echo json_encode(['success' => false, 'message' => 'Dokumen transfer cabang tidak ditemukan.']);
+                    break;
+                }
+                if ($trf['status'] !== 'IN_TRANSIT') {
+                    echo json_encode(['success' => false, 'message' => "Dokumen {$trf['transfer_no']} sudah berstatus {$trf['status']} dan tidak dapat diterima ulang."]);
+                    break;
+                }
+
+                $toBranchId = (int)$trf['to_branch_id'];
+                if (!$actorCanAllBranches && !in_array($toBranchId, $actorAllowedBranches, true)) {
+                    echo json_encode(['success' => false, 'message' => "Akses Ditolak: Hanya petugas cabang tujuan ({$trf['to_branch_name']}) atau Super Admin yang dapat mengonfirmasi penerimaan barang ini."]);
+                    break;
+                }
+
+                $now = date('Y-m-d H:i:s');
+                try {
+                    $pdo->beginTransaction();
+
+                    $stItems = $pdo->prepare("SELECT * FROM stock_transfer_items WHERE transfer_id = ?");
+                    $stItems->execute([$transferId]);
+                    $items = $stItems->fetchAll(PDO::FETCH_ASSOC);
+
+                    $stCur = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                    $stInsBs = $pdo->prepare("INSERT INTO branch_stocks (branch_id, product_id, stock, local_price, local_cogs, is_active, last_updated) VALUES (?, ?, ?, 0, 0, 1, ?)");
+                    $stUpdBs = $pdo->prepare("UPDATE branch_stocks SET stock = ?, last_updated = ? WHERE branch_id = ? AND product_id = ?");
+                    $stUpdItem = $pdo->prepare("UPDATE stock_transfer_items SET qty_received = ? WHERE id = ?");
+                    $stLog = $pdo->prepare("
+                        INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id, created_at)
+                        VALUES (?, ?, 'TRANSFER_IN', ?, ?, ?, ?, ?, ?, ?)
+                    ");
+
+                    foreach ($items as $it) {
+                        $pId = (int)$it['product_id'];
+                        $qty = (float)$it['qty_sent'];
+                        if ($qty <= 0) continue;
+
+                        $stCur->execute([$toBranchId, $pId]);
+                        $toVal = $stCur->fetchColumn();
+                        $toBefore = ($toVal !== false) ? (float)$toVal : 0.0;
+                        $toAfter = $toBefore + $qty;
+
+                        if ($toVal === false) {
+                            $stInsBs->execute([$toBranchId, $pId, $toAfter, $now]);
+                        } else {
+                            $stUpdBs->execute([$toAfter, $now, $toBranchId, $pId]);
+                        }
+
+                        $stUpdItem->execute([$qty, (int)$it['id']]);
+                        $inNote = "Penerimaan transfer masuk dari {$trf['from_branch_name']}" . (!empty($trf['notes']) ? " ({$trf['notes']})" : '');
+                        $stLog->execute([$toBranchId, $pId, $qty, $toBefore, $toAfter, $trf['transfer_no'], $inNote, (int)$actorRow['id'], $now]);
+                    }
+
+                    $pdo->prepare("UPDATE stock_transfers SET status = 'COMPLETED', received_by = ?, received_at = ? WHERE id = ?")
+                        ->execute([(int)$actorRow['id'], $now, $transferId]);
+
+                    $pdo->commit();
+                    echo json_encode([
+                        'success' => true,
+                        'message' => "Penerimaan Transfer {$trf['transfer_no']} berhasil dikonfirmasi! Stok cabang {$trf['to_branch_name']} telah bertambah."
+                    ]);
+                } catch (Exception $eRec) {
+                    if ($pdo->inTransaction()) $pdo->rollBack();
+                    echo json_encode(['success' => false, 'message' => 'Gagal menerima transfer: ' . $eRec->getMessage()]);
+                }
+                break;
+            }
+
+            if ($action === 'cancel_stock_transfer') {
+                if (!$checkStockInPerm('stock-in:transfer', 'delete') && $actorRoleNorm !== 'SUPERADMIN') {
+                    echo json_encode(['success' => false, 'message' => 'Akses Ditolak: Role Anda tidak memiliki izin membatalkan dokumen Transfer Cabang.']);
+                    break;
+                }
+
+                $transferId = (int)($input['transfer_id'] ?? 0);
+                $stTrf = $pdo->prepare("
+                    SELECT st.*, bf.name as from_branch_name, bt.name as to_branch_name
+                    FROM stock_transfers st
+                    LEFT JOIN branches bf ON bf.id = st.from_branch_id
+                    LEFT JOIN branches bt ON bt.id = st.to_branch_id
+                    WHERE st.id = ?
+                ");
+                $stTrf->execute([$transferId]);
+                $trf = $stTrf->fetch(PDO::FETCH_ASSOC);
+
+                if (!$trf) {
+                    echo json_encode(['success' => false, 'message' => 'Dokumen transfer tidak ditemukan.']);
+                    break;
+                }
+                if ($trf['status'] !== 'IN_TRANSIT') {
+                    echo json_encode(['success' => false, 'message' => "Hanya dokumen berstatus IN_TRANSIT yang dapat dibatalkan (Status saat ini: {$trf['status']})."]);
+                    break;
+                }
+
+                $fromBranchId = (int)$trf['from_branch_id'];
+                if (!$actorCanAllBranches && !in_array($fromBranchId, $actorAllowedBranches, true)) {
+                    echo json_encode(['success' => false, 'message' => 'Akses Ditolak: Anda hanya dapat membatalkan pengiriman dari cabang Anda sendiri.']);
+                    break;
+                }
+
+                $now = date('Y-m-d H:i:s');
+                try {
+                    $pdo->beginTransaction();
+
+                    $stItems = $pdo->prepare("SELECT * FROM stock_transfer_items WHERE transfer_id = ?");
+                    $stItems->execute([$transferId]);
+                    $items = $stItems->fetchAll(PDO::FETCH_ASSOC);
+
+                    $stCur = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                    $stInsBs = $pdo->prepare("INSERT INTO branch_stocks (branch_id, product_id, stock, local_price, local_cogs, is_active, last_updated) VALUES (?, ?, ?, 0, 0, 1, ?)");
+                    $stUpdBs = $pdo->prepare("UPDATE branch_stocks SET stock = ?, last_updated = ? WHERE branch_id = ? AND product_id = ?");
+                    $stLog = $pdo->prepare("
+                        INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id, created_at)
+                        VALUES (?, ?, 'TRANSFER_IN', ?, ?, ?, ?, ?, ?, ?)
+                    ");
+
+                    foreach ($items as $it) {
+                        $pId = (int)$it['product_id'];
+                        $qty = (float)$it['qty_sent'];
+                        if ($qty <= 0) continue;
+
+                        $stCur->execute([$fromBranchId, $pId]);
+                        $fromVal = $stCur->fetchColumn();
+                        $fromBefore = ($fromVal !== false) ? (float)$fromVal : 0.0;
+                        $fromAfter = $fromBefore + $qty;
+
+                        if ($fromVal === false) {
+                            $stInsBs->execute([$fromBranchId, $pId, $fromAfter, $now]);
+                        } else {
+                            $stUpdBs->execute([$fromAfter, $now, $fromBranchId, $pId]);
+                        }
+
+                        $revNote = "Pembatalan transfer {$trf['transfer_no']} ke {$trf['to_branch_name']} (Stok dikembalikan ke {$trf['from_branch_name']})";
+                        $stLog->execute([$fromBranchId, $pId, $qty, $fromBefore, $fromAfter, $trf['transfer_no'] . '-VOID', $revNote, (int)$actorRow['id'], $now]);
+                    }
+
+                    $pdo->prepare("UPDATE stock_transfers SET status = 'CANCELLED', cancelled_by = ?, cancelled_at = ? WHERE id = ?")
+                        ->execute([(int)$actorRow['id'], $now, $transferId]);
+
+                    $pdo->commit();
+                    echo json_encode([
+                        'success' => true,
+                        'message' => "Transfer {$trf['transfer_no']} berhasil dibatalkan dan stok telah dikembalikan utuh ke {$trf['from_branch_name']}."
+                    ]);
+                } catch (Exception $eCan) {
+                    if ($pdo->inTransaction()) $pdo->rollBack();
+                    echo json_encode(['success' => false, 'message' => 'Gagal membatalkan transfer: ' . $eCan->getMessage()]);
+                }
+                break;
+            }
             break;
 
         // ==========================================
@@ -15038,6 +15700,11 @@ try {
                             $stmtSm->execute([$targetBranchId]);
                             $countSm = $stmtSm->rowCount();
 
+                            try {
+                                $pdo->prepare("DELETE FROM stock_transfer_items WHERE transfer_id IN (SELECT id FROM stock_transfers WHERE from_branch_id = ? OR to_branch_id = ?)")->execute([$targetBranchId, $targetBranchId]);
+                                $pdo->prepare("DELETE FROM stock_transfers WHERE from_branch_id = ? OR to_branch_id = ?")->execute([$targetBranchId, $targetBranchId]);
+                            } catch (Exception $eClrTrfBr) {}
+
                             $stmtBName = $pdo->prepare("SELECT name FROM branches WHERE id = ?");
                             $stmtBName->execute([$targetBranchId]);
                             $tBName = $stmtBName->fetchColumn() ?: "Cabang #$targetBranchId";
@@ -15068,6 +15735,11 @@ try {
                             $stmtSm = $pdo->prepare("DELETE FROM stock_movements" . ($keepInitialStock ? " WHERE movement_type <> 'INITIAL_STOCK' AND (reference_no IS NULL OR reference_no NOT LIKE 'INIT-%')" : ""));
                             $stmtSm->execute();
                             $countSm = $stmtSm->rowCount();
+
+                            try {
+                                $pdo->exec("DELETE FROM stock_transfer_items");
+                                $pdo->exec("DELETE FROM stock_transfers");
+                            } catch (Exception $eClrTrf) {}
 
                             if ($keepInitialStock) {
                                 $countInit = $applyInitialStock(0);
@@ -15643,6 +16315,7 @@ try {
                     'products' => 'Master Produk & Varian',
                     'bom' => 'Resep / BOM Bahan',
                     'stocks' => 'Stok & Kartu Mutasi',
+                    'stock-in' => 'Input Penambahan Stok',
                     'pnl' => 'Laporan Laba Rugi',
                     'partner-sales' => 'Laporan Penjualan Mitra',
                     'expenses' => 'Beban Operasional Cabang',
@@ -15655,9 +16328,9 @@ try {
                 ];
 
                 $presetMap = [
-                    'CASHIER' => ['pos', 'reports', 'ess'],
-                    'STAFF' => ['ess', 'stocks', 'logistics'],
-                    'MANAGER' => ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
+                    'CASHIER' => ['pos', 'reports', 'ess', 'stock-in'],
+                    'STAFF' => ['ess', 'stocks', 'stock-in', 'logistics'],
+                    'MANAGER' => ['pos', 'reports', 'ess', 'employees', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
                     'EMPTY' => []
                 ];
                 $allowed = $presetMap[$templatePreset] ?? ['pos', 'reports', 'ess'];
@@ -15799,6 +16472,9 @@ try {
                 'products' => 'Master Produk & Varian',
                 'bom' => 'Resep / BOM Bahan',
                 'stocks' => 'Stok & Kartu Mutasi',
+                'stock-in' => 'Input Penambahan Stok',
+                'stock-in:manual' => '1. Penambahan Manual',
+                'stock-in:transfer' => '2. Transfer Cabang',
                 'pnl' => 'Laporan Laba Rugi',
                 'partner-sales' => 'Laporan Penjualan Mitra',
                 'expenses' => 'Beban Operasional Cabang',

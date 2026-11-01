@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.5.6",
-    "build": "20261101-82",
+    "version": "1.5.7",
+    "build": "20261101-83",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.5.7",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Menu Khusus Input Penambahan Stok (Penambahan Manual & Transfer Cabang) serta Pengaturan Hak Akses Role Granular (FR-STK-11, FR-SET-13)",
+            "description": "Menambahkan menu khusus 'Input Penambahan Stok' di dalam grup utama Katalog, BOM & Stok beserta kontrol hak akses role granular: (1) Sub-Menu 1. Penambahan Manual (stock-in:manual): Formulir penambahan stok masuk multi-item (barang jadi & bahan baku sekaligus) dengan kalkulasi estimasi stok akhir realtime, nomor referensi surat jalan/faktur otomatis, dan tabel riwayat penambahan stok masuk yang langsung tercatat ke Kartu Pergerakan Stok (PURCHASE); (2) Sub-Menu 2. Transfer Cabang (stock-in:transfer): Formulir pengiriman & distribusi stok antar cabang dengan validasi kecukupan stok cabang asal, pilihan metode Langsung Masuk Stok Tujuan (DIRECT / Instan) maupun Konfirmasi Terima di Tujuan (IN_TRANSIT), banner notifikasi kiriman menunggu diterima, konfirmasi terima cabang tujuan, serta pembatalan dokumen in-transit yang mengembalikan stok cabang asal secara utuh (TRANSFER_OUT & TRANSFER_IN); (3) Integrasi Penuh Pengaturan Role (role_menu_permissions): Menambahkan matriks hak akses View (V), Tambah (T), Update (U), dan Delete/Batal (D) untuk menu induk 'Input Penambahan Stok' serta sub-pilihan '1. Penambahan Manual' dan '2. Transfer Cabang' di halaman Konfigurasi Sistem -> Hak Akses Role; (4) Kompatibilitas Penuh SQLite, MariaDB/MySQL Hosting & Android 8.1: Migrasi otomatis tabel stock_transfers & stock_transfer_items serta 100% bebas token ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.5.6"
+        },
         {
             "version": "1.5.6",
             "commit": "HEAD",

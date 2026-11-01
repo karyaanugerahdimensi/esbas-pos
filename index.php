@@ -479,6 +479,10 @@ try {
                         <i data-lucide="layers" class="w-4 h-4 shrink-0"></i>
                         <span class="sidebar-label whitespace-nowrap">Stok & Kartu Mutasi</span>
                     </button>
+                    <button onclick="switchTab('stock-in')" id="tab-btn-stock-in" title="Input Penambahan Stok (Manual & Transfer Cabang)" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                        <i data-lucide="package-plus" class="w-4 h-4 shrink-0 text-emerald-400"></i>
+                        <span class="sidebar-label whitespace-nowrap">Input Penambahan Stok</span>
+                    </button>
                 </div>
 
                 <!-- Section 4: Laporan Keuangan & Akuntansi -->
@@ -3188,6 +3192,260 @@ try {
                             </thead>
                             <tbody id="stock-movements-table-body" class="divide-y divide-slate-100"></tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ---------------------------------------------------- -->
+            <!-- TAB 7B: INPUT PENAMBAHAN STOK (MANUAL & TRANSFER)    -->
+            <!-- ---------------------------------------------------- -->
+            <div id="tab-stock-in" class="hidden space-y-4">
+                <!-- Header Card -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
+                            <i data-lucide="package-plus" class="w-5 h-5 text-emerald-600"></i>
+                            <span>Input Penambahan Stok & Distribusi Antar Cabang</span>
+                        </h3>
+                        <p class="text-xs text-slate-500">Pusat pencatatan barang masuk manual (multi-item) dan pengiriman / penerimaan transfer stok antar cabang outlet.</p>
+                    </div>
+                    <div class="flex items-center flex-wrap gap-2">
+                        <div class="flex items-center space-x-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 text-xs">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                            <label for="stockin-filter-branch" class="font-bold text-slate-700 shrink-0">Filter Riwayat:</label>
+                            <select id="stockin-filter-branch" onchange="loadStockInModule()" class="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer">
+                                <option value="ALL">🌐 Semua Cabang</option>
+                            </select>
+                        </div>
+                        <button type="button" onclick="loadStockInModule()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                            <span>Segarkan Data</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sub-Tab Navigation: 1. Penambahan Manual | 2. Transfer Cabang -->
+                <div class="bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 shadow-2xs">
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <button type="button" onclick="switchStockInSubTab('manual')" id="stockin-subtab-btn-manual" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-2 bg-emerald-600 text-white shadow-2xs">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                            <span>1. Penambahan Manual</span>
+                        </button>
+                        <button type="button" onclick="switchStockInSubTab('transfer')" id="stockin-subtab-btn-transfer" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
+                            <span>2. Transfer Cabang</span>
+                            <span id="stockin-pending-badge" class="hidden px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white">0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ================================================== -->
+                <!-- SUB-VIEW 1: PENAMBAHAN MANUAL                      -->
+                <!-- ================================================== -->
+                <div id="stockin-view-manual" class="space-y-4">
+                    <div id="stockin-manual-form-card" class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                                    <span class="px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-black">+ IN</span>
+                                    <span>Formulir Penambahan Stok Masuk Manual</span>
+                                </h4>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Tambahkan stok barang jadi maupun bahan baku sekaligus dalam satu transaksi pencatatan.</p>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-xs">
+                                <span class="text-[11px] font-bold text-slate-500">Filter Produk:</span>
+                                <select id="stockin-manual-type-filter" onchange="onStockInManualTypeFilterChange()" class="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none">
+                                    <option value="ALL">Semua Jenis Item</option>
+                                    <option value="FINISHED_GOOD">📦 Barang Jadi</option>
+                                    <option value="RAW_MATERIAL">🧪 Bahan Baku</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">Cabang Tujuan Penambahan Stok <span class="text-rose-500">*</span></label>
+                                <select id="stockin-manual-branch" onchange="refreshStockInManualBalances()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">No. Referensi / Surat Jalan / Faktur (Opsional)</label>
+                                <input type="text" id="stockin-manual-ref" placeholder="Otomatis: IN-YYYYMMDD-HHMMSS" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">Sumber Pasokan / Keterangan Umum</label>
+                                <input type="text" id="stockin-manual-notes" placeholder="Contoh: Pasokan Supplier / Restock Pagi..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                                    <tr>
+                                        <th class="py-2.5 px-3 w-10 text-center">#</th>
+                                        <th class="py-2.5 px-3 min-w-[240px]">Produk / Bahan Baku</th>
+                                        <th class="py-2.5 px-3 text-right w-32">Stok Saat Ini</th>
+                                        <th class="py-2.5 px-3 text-center w-36">Jumlah Tambah (+)</th>
+                                        <th class="py-2.5 px-3 text-right w-36">Estimasi Stok Akhir</th>
+                                        <th class="py-2.5 px-3 min-w-[160px]">Catatan Item</th>
+                                        <th class="py-2.5 px-3 w-12 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stockin-manual-rows-body" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button type="button" onclick="addStockInManualRow()" class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors">
+                                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                    <span>Tambah Baris Item</span>
+                                </button>
+                                <button type="button" onclick="resetStockInManualForm()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-colors">
+                                    Reset Form
+                                </button>
+                            </div>
+                            <button type="button" id="btn-submit-manual-stockin" onclick="submitManualStockInForm()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md shadow-emerald-200 flex items-center space-x-2 transition-all">
+                                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                                <span>Simpan Penambahan Stok Masuk</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Riwayat Penambahan Manual -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm">Riwayat Penambahan Stok Masuk Manual Terakhir</h4>
+                                <p class="text-[11px] text-slate-500">Daftar pencatatan barang masuk manual yang langsung tercatat ke Kartu Pergerakan Stok.</p>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-500 font-bold border-b">
+                                    <tr>
+                                        <th class="py-3 px-3">Waktu</th>
+                                        <th class="py-3 px-3">Cabang</th>
+                                        <th class="py-3 px-3">Nama Produk / Bahan</th>
+                                        <th class="py-3 px-3 text-right">Qty Masuk (+)</th>
+                                        <th class="py-3 px-3 text-right">Sebelum</th>
+                                        <th class="py-3 px-3 text-right">Sesudah</th>
+                                        <th class="py-3 px-3">No. Referensi</th>
+                                        <th class="py-3 px-3">Keterangan</th>
+                                        <th class="py-3 px-3">Petugas</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stockin-manual-history-body" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================================================== -->
+                <!-- SUB-VIEW 2: TRANSFER CABANG                        -->
+                <!-- ================================================== -->
+                <div id="stockin-view-transfer" class="hidden space-y-4">
+                    <!-- Banner Kiriman Masuk Menunggu Konfirmasi -->
+                    <div id="stockin-incoming-banner" class="hidden p-4 rounded-2xl bg-amber-50 border border-amber-300 space-y-2.5"></div>
+
+                    <!-- Form Kirim Transfer Antar Cabang -->
+                    <div id="stockin-transfer-form-card" class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                                    <span class="px-2 py-0.5 rounded-lg bg-indigo-100 text-indigo-800 text-xs font-black">⇄ TRF</span>
+                                    <span>Formulir Pengiriman / Transfer Stok Antar Cabang</span>
+                                </h4>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Memotong stok dari Cabang Asal dan mendistribusikannya ke Cabang Tujuan secara teraudit.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">Cabang Asal (Pengirim) <span class="text-rose-500">*</span></label>
+                                <select id="stockin-trf-from-branch" onchange="onStockTransferBranchChange('from')" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"></select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">Cabang Tujuan (Penerima) <span class="text-rose-500">*</span></label>
+                                <select id="stockin-trf-to-branch" onchange="onStockTransferBranchChange('to')" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"></select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">Metode Penerimaan Stok</label>
+                                <select id="stockin-trf-mode" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                    <option value="DIRECT">⚡ Langsung Masuk Stok Tujuan (Instan)</option>
+                                    <option value="IN_TRANSIT">🚚 Konfirmasi Terima di Tujuan (In-Transit)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">Catatan Pengiriman / Kurir</label>
+                                <input type="text" id="stockin-trf-notes" placeholder="Contoh: Dikirim via Kurir Toko..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                                    <tr>
+                                        <th class="py-2.5 px-3 w-10 text-center">#</th>
+                                        <th class="py-2.5 px-3 min-w-[240px]">Produk / Bahan Baku</th>
+                                        <th class="py-2.5 px-3 text-right w-32">Stok Cabang Asal</th>
+                                        <th class="py-2.5 px-3 text-right w-32">Stok Cabang Tujuan</th>
+                                        <th class="py-2.5 px-3 text-center w-36">Qty Transfer</th>
+                                        <th class="py-2.5 px-3 min-w-[150px]">Catatan Item</th>
+                                        <th class="py-2.5 px-3 w-12 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stockin-trf-rows-body" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button type="button" onclick="addStockTransferRow()" class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors">
+                                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                    <span>Tambah Baris Item</span>
+                                </button>
+                                <button type="button" onclick="resetStockTransferForm()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-colors">
+                                    Reset Form
+                                </button>
+                            </div>
+                            <button type="button" id="btn-submit-stock-transfer" onclick="submitStockTransferForm()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black shadow-md shadow-indigo-200 flex items-center space-x-2 transition-all">
+                                <i data-lucide="send" class="w-4 h-4"></i>
+                                <span>Proses Transfer Cabang</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Riwayat Transfer Cabang -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm">Daftar Dokumen & Riwayat Transfer Stok Antar Cabang</h4>
+                                <p class="text-[11px] text-slate-500">Pantau status pengiriman in-transit, konfirmasi penerimaan cabang tujuan, dan jejak audit transfer.</p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-1.5 text-xs">
+                                <button type="button" onclick="setStockTransferStatusFilter('ALL')" id="trf-filter-pill-ALL" class="px-3 py-1.5 rounded-xl font-bold bg-indigo-600 text-white">Semua</button>
+                                <button type="button" onclick="setStockTransferStatusFilter('IN_TRANSIT')" id="trf-filter-pill-IN_TRANSIT" class="px-3 py-1.5 rounded-xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">🚚 Menunggu Diterima</button>
+                                <button type="button" onclick="setStockTransferStatusFilter('COMPLETED')" id="trf-filter-pill-COMPLETED" class="px-3 py-1.5 rounded-xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">✅ Selesai</button>
+                                <button type="button" onclick="setStockTransferStatusFilter('CANCELLED')" id="trf-filter-pill-CANCELLED" class="px-3 py-1.5 rounded-xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">❌ Dibatalkan</button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-500 font-bold border-b">
+                                    <tr>
+                                        <th class="py-3 px-3">Waktu</th>
+                                        <th class="py-3 px-3">No. Dokumen</th>
+                                        <th class="py-3 px-3">Rute Cabang</th>
+                                        <th class="py-3 px-3">Rincian Item & Kuantitas</th>
+                                        <th class="py-3 px-3">Status</th>
+                                        <th class="py-3 px-3">Catatan</th>
+                                        <th class="py-3 px-3">Petugas</th>
+                                        <th class="py-3 px-3 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stockin-trf-history-body" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -11694,6 +11952,7 @@ try {
             'products': { title: 'Master Produk, Kategori & Varian', sub: 'Katalog Barang Jadi (Finished Goods), Bahan Baku (Raw Material), dan Varian' },
             'bom': { title: 'Formula Resep & Bill of Materials (BOM)', sub: 'Penyusunan komposisi bahan baku dan kalkulasi HPP otomatis' },
             'stocks': { title: 'Manajemen Stok & Kartu Pergerakan', sub: 'Saldo stok cabang aktif & log audit kartu pergerakan stok (Movement Ledger)' },
+            'stock-in': { title: 'Input Penambahan Stok & Transfer Cabang', sub: 'Penambahan stok masuk manual multi-item & distribusi transfer stok antar cabang' },
             'pnl': { title: 'Laporan Laba Rugi (Income Statement)', sub: 'Ikhtisar pendapatan bersih, HPP, beban operasional, dan Laba Bersih Akhir' },
             'partner-sales': { title: 'Laporan Penjualan Mitra (B2B)', sub: 'Rekapitulasi penjualan mitra, detail pesanan per invoice, filter kurun waktu fleksibel, dan analisis profitabilitas' },
             'expenses': { title: 'Buku Catatan Beban Operasional Cabang', sub: 'Pencatatan pengeluaran operasional outlet &bull; Buku mutasi beban & CRUD master kategori beban' },
@@ -12637,7 +12896,7 @@ try {
 
         function switchTab(tab) {
             state.currentTab = tab;
-            const tabIds = ['dashboard', 'pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'partner-sales', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
+            const tabIds = ['dashboard', 'pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'partner-sales', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
             tabIds.forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 const btn = document.getElementById(`tab-btn-${t}`);
@@ -12708,6 +12967,14 @@ try {
             if (tab === 'products') loadAllProducts();
             if (tab === 'bom') loadBOMRecipes();
             if (tab === 'stocks') loadStockInventory();
+            if (tab === 'stock-in') {
+                if (!hasUserPerm('stock-in', 'view') && !hasUserPerm('stock-in:manual', 'view') && !hasUserPerm('stock-in:transfer', 'view')) {
+                    alert('Akses Ditolak: Role Anda tidak memiliki izin untuk mengakses menu Input Penambahan Stok.');
+                    switchTab('pos');
+                    return;
+                }
+                loadStockInModule();
+            }
             if (tab === 'pnl') loadProfitLoss();
             if (tab === 'partner-sales') loadPartnerSalesReport();
             if (tab === 'expenses') loadBranchExpensesModule();
@@ -23640,6 +23907,8 @@ Manager / Supervisor: __________________
                 else if (m.movement_type === 'INITIAL_STOCK') badgeClass = 'bg-indigo-100 text-indigo-800 font-black';
                 else if (m.movement_type === 'ADJUSTMENT_DAMAGE') badgeClass = 'bg-rose-100 text-rose-800 font-bold';
                 else if (m.movement_type === 'ADJUSTMENT_OPNAME') badgeClass = 'bg-amber-100 text-amber-800 font-bold';
+                else if (m.movement_type === 'TRANSFER_IN') badgeClass = 'bg-teal-100 text-teal-800 font-bold';
+                else if (m.movement_type === 'TRANSFER_OUT') badgeClass = 'bg-orange-100 text-orange-800 font-bold';
 
                 const qtyVal = parseFloat(m.qty_change);
                 return `
@@ -23957,6 +24226,909 @@ Manager / Supervisor: __________________
                 closeStockAdjustModal();
                 loadStockInventory();
                 loadStockMovements();
+            }
+        }
+
+        // ==========================================
+        // 7B. MODUL INPUT PENAMBAHAN STOK (MANUAL & TRANSFER CABANG)
+        // ==========================================
+        const stockInState = {
+            activeSubTab: 'manual',
+            canAccessAll: false,
+            allowedBranchIds: [],
+            permissions: {
+                manual_view: true,
+                manual_create: true,
+                transfer_view: true,
+                transfer_create: true,
+                transfer_delete: false
+            },
+            branches: [],
+            products: [],
+            branchStocksMap: {},
+            manualHistory: [],
+            transfers: [],
+            manualRows: [],
+            transferRows: [],
+            nextRowSeq: 1,
+            transferStatusFilter: 'ALL',
+            initialized: false
+        };
+
+        function isStockInRawMaterial(pType) {
+            return String(pType || '').toUpperCase().indexOf('RAW') !== -1;
+        }
+
+        function getStockInBranchBalance(branchId, productId) {
+            const bKey = String(parseInt(branchId, 10) || 0);
+            const pKey = String(parseInt(productId, 10) || 0);
+            const mapObj = stockInState.branchStocksMap || {};
+            const bMap = mapObj[bKey] || mapObj[parseInt(branchId, 10)] || null;
+            if (!bMap) return 0;
+            const rawVal = bMap[pKey] !== undefined ? bMap[pKey] : bMap[parseInt(productId, 10)];
+            const parsed = parseFloat(rawVal);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        function getStockInProductById(productId) {
+            const pid = parseInt(productId, 10) || 0;
+            const list = stockInState.products || [];
+            for (let i = 0; i < list.length; i++) {
+                if (parseInt(list[i].id, 10) === pid) return list[i];
+            }
+            return null;
+        }
+
+        function buildStockInProductOptionsHtml(selectedProductId, typeFilter, stockRefBranchId) {
+            const selId = parseInt(selectedProductId, 10) || 0;
+            const filterMode = String(typeFilter || 'ALL').toUpperCase();
+            const refBranch = parseInt(stockRefBranchId, 10) || 0;
+            let html = '<option value="0">-- Pilih Produk / Bahan Baku --</option>';
+            const list = stockInState.products || [];
+
+            for (let i = 0; i < list.length; i++) {
+                const p = list[i];
+                const isRaw = isStockInRawMaterial(p.product_type);
+                if (filterMode === 'FINISHED_GOOD' && isRaw) continue;
+                if (filterMode === 'RAW_MATERIAL' && !isRaw) continue;
+
+                const pId = parseInt(p.id, 10);
+                const icon = isRaw ? '🧪' : '📦';
+                const skuLabel = p.sku ? (' (' + escapeHtml(p.sku) + ')') : '';
+                const unitLabel = escapeHtml(p.unit || 'pcs');
+                let stockSuffix = '';
+                if (refBranch > 0) {
+                    const curBal = getStockInBranchBalance(refBranch, pId);
+                    stockSuffix = ' — Stok: ' + formatDecimal(curBal) + ' ' + unitLabel;
+                }
+                const selAttr = (pId === selId) ? ' selected' : '';
+                html += '<option value="' + pId + '"' + selAttr + '>' + icon + ' ' + escapeHtml(p.name) + skuLabel + stockSuffix + '</option>';
+            }
+            return html;
+        }
+
+        function switchStockInSubTab(subtab) {
+            const canManual = hasUserPerm('stock-in:manual', 'view') && (stockInState.permissions.manual_view !== false);
+            const canTransfer = hasUserPerm('stock-in:transfer', 'view') && (stockInState.permissions.transfer_view !== false);
+
+            let target = (subtab === 'transfer') ? 'transfer' : 'manual';
+            if (target === 'manual' && !canManual && canTransfer) {
+                target = 'transfer';
+            } else if (target === 'transfer' && !canTransfer && canManual) {
+                target = 'manual';
+            }
+            stockInState.activeSubTab = target;
+
+            const btnManual = document.getElementById('stockin-subtab-btn-manual');
+            const btnTransfer = document.getElementById('stockin-subtab-btn-transfer');
+            const viewManual = document.getElementById('stockin-view-manual');
+            const viewTransfer = document.getElementById('stockin-view-transfer');
+
+            const activeManualCls = 'px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-2 bg-emerald-600 text-white shadow-2xs';
+            const activeTransferCls = 'px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-2 bg-indigo-600 text-white shadow-2xs';
+            const inactiveCls = 'px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+
+            if (btnManual) {
+                btnManual.className = (target === 'manual') ? activeManualCls : inactiveCls;
+                if (!canManual) {
+                    btnManual.classList.add('hidden');
+                    btnManual.style.display = 'none';
+                } else {
+                    btnManual.classList.remove('hidden');
+                    btnManual.style.display = '';
+                }
+            }
+            if (btnTransfer) {
+                btnTransfer.className = (target === 'transfer') ? activeTransferCls : inactiveCls;
+                if (!canTransfer) {
+                    btnTransfer.classList.add('hidden');
+                    btnTransfer.style.display = 'none';
+                } else {
+                    btnTransfer.classList.remove('hidden');
+                    btnTransfer.style.display = '';
+                }
+            }
+
+            if (viewManual) {
+                if (target === 'manual' && canManual) viewManual.classList.remove('hidden');
+                else viewManual.classList.add('hidden');
+            }
+            if (viewTransfer) {
+                if (target === 'transfer' && canTransfer) viewTransfer.classList.remove('hidden');
+                else viewTransfer.classList.add('hidden');
+            }
+
+            lucide.createIcons();
+        }
+
+        async function loadStockInModule() {
+            const filterSel = document.getElementById('stockin-filter-branch');
+            const prevFilterVal = (stockInState.initialized && filterSel && filterSel.value) ? filterSel.value : 'ALL';
+            const prevManualBranch = _val('stockin-manual-branch');
+            const prevTrfFrom = _val('stockin-trf-from-branch');
+            const prevTrfTo = _val('stockin-trf-to-branch');
+
+            syncStockInManualRowsFromDOM();
+            syncStockTransferRowsFromDOM();
+
+            try {
+                const res = await fetch('api.php?action=get_stock_in_data&filter_branch_id=' + encodeURIComponent(prevFilterVal));
+                const data = await res.json();
+                if (!data.success) {
+                    showToast(data.message || 'Gagal memuat modul Input Penambahan Stok.', 'error');
+                    return;
+                }
+
+                stockInState.canAccessAll = !!data.can_access_all_branches;
+                stockInState.allowedBranchIds = Array.isArray(data.allowed_branch_ids)
+                    ? data.allowed_branch_ids.map(function(x) { return parseInt(x, 10); })
+                    : [];
+                stockInState.permissions = data.permissions || {
+                    manual_view: true,
+                    manual_create: true,
+                    transfer_view: true,
+                    transfer_create: true,
+                    transfer_delete: false
+                };
+                stockInState.branches = Array.isArray(data.branches) ? data.branches : [];
+                stockInState.products = Array.isArray(data.products) ? data.products : [];
+                stockInState.branchStocksMap = data.branch_stocks_map || {};
+                stockInState.manualHistory = Array.isArray(data.manual_history) ? data.manual_history : [];
+                stockInState.transfers = Array.isArray(data.transfers) ? data.transfers : [];
+
+                const allBranches = stockInState.branches;
+                const allowedBranches = stockInState.canAccessAll
+                    ? allBranches
+                    : allBranches.filter(function(b) {
+                        return stockInState.allowedBranchIds.indexOf(parseInt(b.id, 10)) !== -1;
+                    });
+                const effectiveAllowed = allowedBranches.length > 0 ? allowedBranches : allBranches;
+                const defaultOwnBranchId = state.currentBranch ? parseInt(state.currentBranch.id, 10) : (effectiveAllowed[0] ? parseInt(effectiveAllowed[0].id, 10) : 1);
+
+                // 1. Dropdown Filter Riwayat Header
+                if (filterSel) {
+                    if (stockInState.canAccessAll) {
+                        let fHtml = '<option value="ALL">🌐 Semua Cabang</option>';
+                        allBranches.forEach(function(b) {
+                            fHtml += '<option value="' + b.id + '">🏢 ' + escapeHtml(b.name) + '</option>';
+                        });
+                        filterSel.innerHTML = fHtml;
+                        filterSel.disabled = false;
+                        filterSel.value = prevFilterVal || 'ALL';
+                        if (!filterSel.value) filterSel.value = 'ALL';
+                    } else if (effectiveAllowed.length > 1) {
+                        let fHtml = '';
+                        effectiveAllowed.forEach(function(b) {
+                            fHtml += '<option value="' + b.id + '">🏢 ' + escapeHtml(b.name) + '</option>';
+                        });
+                        filterSel.innerHTML = fHtml;
+                        filterSel.disabled = false;
+                        if (prevFilterVal && prevFilterVal !== 'ALL') filterSel.value = prevFilterVal;
+                    } else if (effectiveAllowed[0]) {
+                        filterSel.innerHTML = '<option value="' + effectiveAllowed[0].id + '">🔒 ' + escapeHtml(effectiveAllowed[0].name) + '</option>';
+                        filterSel.disabled = true;
+                        filterSel.value = String(effectiveAllowed[0].id);
+                    }
+                }
+
+                // 2. Dropdown Cabang Tujuan Penambahan Manual
+                const manualBrSel = document.getElementById('stockin-manual-branch');
+                if (manualBrSel) {
+                    manualBrSel.innerHTML = effectiveAllowed.map(function(b) {
+                        const lockIcon = (!stockInState.canAccessAll && effectiveAllowed.length === 1) ? '🔒 ' : '📍 ';
+                        return '<option value="' + b.id + '">' + lockIcon + escapeHtml(b.name) + (b.code ? ' (' + escapeHtml(b.code) + ')' : '') + '</option>';
+                    }).join('');
+                    manualBrSel.disabled = (!stockInState.canAccessAll && effectiveAllowed.length <= 1);
+                    if (prevManualBranch && effectiveAllowed.some(function(b) { return String(b.id) === String(prevManualBranch); })) {
+                        manualBrSel.value = String(prevManualBranch);
+                    } else if (effectiveAllowed.some(function(b) { return parseInt(b.id, 10) === defaultOwnBranchId; })) {
+                        manualBrSel.value = String(defaultOwnBranchId);
+                    }
+                }
+
+                // 3. Dropdown Cabang Asal & Cabang Tujuan Transfer
+                const trfFromSel = document.getElementById('stockin-trf-from-branch');
+                const trfToSel = document.getElementById('stockin-trf-to-branch');
+                if (trfFromSel) {
+                    trfFromSel.innerHTML = effectiveAllowed.map(function(b) {
+                        const lockIcon = (!stockInState.canAccessAll && effectiveAllowed.length === 1) ? '🔒 ' : '📤 ';
+                        return '<option value="' + b.id + '">' + lockIcon + escapeHtml(b.name) + (b.code ? ' (' + escapeHtml(b.code) + ')' : '') + '</option>';
+                    }).join('');
+                    trfFromSel.disabled = (!stockInState.canAccessAll && effectiveAllowed.length <= 1);
+                    if (prevTrfFrom && effectiveAllowed.some(function(b) { return String(b.id) === String(prevTrfFrom); })) {
+                        trfFromSel.value = String(prevTrfFrom);
+                    } else if (effectiveAllowed.some(function(b) { return parseInt(b.id, 10) === defaultOwnBranchId; })) {
+                        trfFromSel.value = String(defaultOwnBranchId);
+                    }
+                }
+                if (trfToSel) {
+                    const curFromId = trfFromSel ? parseInt(trfFromSel.value, 10) : 0;
+                    trfToSel.innerHTML = allBranches.map(function(b) {
+                        return '<option value="' + b.id + '">📥 ' + escapeHtml(b.name) + (b.code ? ' (' + escapeHtml(b.code) + ')' : '') + '</option>';
+                    }).join('');
+                    if (prevTrfTo && parseInt(prevTrfTo, 10) !== curFromId && allBranches.some(function(b) { return String(b.id) === String(prevTrfTo); })) {
+                        trfToSel.value = String(prevTrfTo);
+                    } else {
+                        const otherBranch = allBranches.find(function(b) { return parseInt(b.id, 10) !== curFromId; });
+                        if (otherBranch) trfToSel.value = String(otherBranch.id);
+                    }
+                }
+
+                // 4. Visibilitas Kartu Form Berdasarkan Izin Create Role
+                const manualFormCard = document.getElementById('stockin-manual-form-card');
+                if (manualFormCard) {
+                    const allowManualCreate = hasUserPerm('stock-in:manual', 'create') && (stockInState.permissions.manual_create !== false);
+                    if (allowManualCreate) manualFormCard.classList.remove('hidden');
+                    else manualFormCard.classList.add('hidden');
+                }
+                const trfFormCard = document.getElementById('stockin-transfer-form-card');
+                if (trfFormCard) {
+                    const allowTrfCreate = hasUserPerm('stock-in:transfer', 'create') && (stockInState.permissions.transfer_create !== false);
+                    if (allowTrfCreate) trfFormCard.classList.remove('hidden');
+                    else trfFormCard.classList.add('hidden');
+                }
+
+                // 5. Badge Kiriman In-Transit
+                const pendingCount = stockInState.transfers.filter(function(t) {
+                    return t.status === 'IN_TRANSIT';
+                }).length;
+                const pendingBadge = document.getElementById('stockin-pending-badge');
+                if (pendingBadge) {
+                    if (pendingCount > 0) {
+                        pendingBadge.innerText = String(pendingCount);
+                        pendingBadge.classList.remove('hidden');
+                    } else {
+                        pendingBadge.classList.add('hidden');
+                    }
+                }
+
+                // 6. Baris Input Awal & Render Tabel
+                if (stockInState.manualRows.length === 0) {
+                    stockInState.manualRows.push({ rowId: stockInState.nextRowSeq++, productId: 0, qty: '', notes: '' });
+                }
+                if (stockInState.transferRows.length === 0) {
+                    stockInState.transferRows.push({ rowId: stockInState.nextRowSeq++, productId: 0, qty: '', notes: '' });
+                }
+
+                stockInState.initialized = true;
+                renderStockInManualRows();
+                renderStockInManualHistory();
+                renderIncomingTransfersBanner();
+                renderStockTransferRows();
+                renderStockTransferHistory();
+                switchStockInSubTab(stockInState.activeSubTab);
+            } catch (err) {
+                console.error('loadStockInModule error:', err);
+                showToast('Gagal menghubungi server saat memuat data penambahan stok.', 'error');
+            }
+        }
+
+        // ---------- 1. PENAMBAHAN MANUAL ----------
+        function syncStockInManualRowsFromDOM() {
+            stockInState.manualRows.forEach(function(r) {
+                const pEl = document.getElementById('stockin-man-prod-' + r.rowId);
+                const qEl = document.getElementById('stockin-man-qty-' + r.rowId);
+                const nEl = document.getElementById('stockin-man-note-' + r.rowId);
+                if (pEl) r.productId = parseInt(pEl.value, 10) || 0;
+                if (qEl) r.qty = qEl.value;
+                if (nEl) r.notes = nEl.value;
+            });
+        }
+
+        function renderStockInManualRows() {
+            const tbody = document.getElementById('stockin-manual-rows-body');
+            if (!tbody) return;
+            const branchId = parseInt(_val('stockin-manual-branch'), 10) || 0;
+            const typeFilter = _val('stockin-manual-type-filter') || 'ALL';
+
+            tbody.innerHTML = stockInState.manualRows.map(function(r, idx) {
+                const prodObj = getStockInProductById(r.productId);
+                const unitText = prodObj ? (prodObj.unit || 'pcs') : '-';
+                const curStock = (r.productId > 0 && branchId > 0) ? getStockInBranchBalance(branchId, r.productId) : 0;
+                const qtyNum = parseFloat(r.qty) || 0;
+                const estAfter = curStock + (qtyNum > 0 ? qtyNum : 0);
+                const optsHtml = buildStockInProductOptionsHtml(r.productId, typeFilter, branchId);
+                const disableDel = stockInState.manualRows.length <= 1;
+
+                return '<tr class="hover:bg-slate-50/70 transition-colors">' +
+                    '<td class="py-2.5 px-3 text-center font-mono text-slate-400 font-bold">' + (idx + 1) + '</td>' +
+                    '<td class="py-2.5 px-3">' +
+                        '<select id="stockin-man-prod-' + r.rowId + '" onchange="onManualRowProductChange(' + r.rowId + ')" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none">' +
+                            optsHtml +
+                        '</select>' +
+                    '</td>' +
+                    '<td class="py-2.5 px-3 text-right font-mono font-bold text-slate-600" id="stockin-man-cur-' + r.rowId + '">' +
+                        (r.productId > 0 ? (formatDecimal(curStock) + ' <span class="text-[10px] text-slate-400">' + escapeHtml(unitText) + '</span>') : '-') +
+                    '</td>' +
+                    '<td class="py-2.5 px-3">' +
+                        '<input type="number" step="any" min="0" id="stockin-man-qty-' + r.rowId + '" value="' + escapeHtml(r.qty) + '" oninput="onManualRowQtyInput(' + r.rowId + ')" placeholder="0" class="w-full p-2 text-center bg-emerald-50/60 border border-emerald-200 rounded-xl font-mono font-black text-emerald-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none">' +
+                    '</td>' +
+                    '<td class="py-2.5 px-3 text-right font-mono font-black text-emerald-700" id="stockin-man-after-' + r.rowId + '">' +
+                        (r.productId > 0 ? (formatDecimal(estAfter) + ' <span class="text-[10px] text-slate-400">' + escapeHtml(unitText) + '</span>') : '-') +
+                    '</td>' +
+                    '<td class="py-2.5 px-3">' +
+                        '<input type="text" id="stockin-man-note-' + r.rowId + '" value="' + escapeHtml(r.notes) + '" placeholder="Keterangan baris (opsional)" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none">' +
+                    '</td>' +
+                    '<td class="py-2.5 px-3 text-center">' +
+                        '<button type="button" onclick="removeStockInManualRow(' + r.rowId + ')" ' + (disableDel ? 'disabled' : '') + ' class="p-1.5 rounded-lg ' + (disableDel ? 'text-slate-300 cursor-not-allowed' : 'text-rose-500 hover:bg-rose-50') + '" title="Hapus Baris">' +
+                            '<i data-lucide="trash-2" class="w-4 h-4"></i>' +
+                        '</button>' +
+                    '</td>' +
+                '</tr>';
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function addStockInManualRow() {
+            syncStockInManualRowsFromDOM();
+            stockInState.manualRows.push({ rowId: stockInState.nextRowSeq++, productId: 0, qty: '', notes: '' });
+            renderStockInManualRows();
+        }
+
+        function removeStockInManualRow(rowId) {
+            syncStockInManualRowsFromDOM();
+            if (stockInState.manualRows.length <= 1) return;
+            stockInState.manualRows = stockInState.manualRows.filter(function(r) { return r.rowId !== rowId; });
+            renderStockInManualRows();
+        }
+
+        function resetStockInManualForm() {
+            stockInState.manualRows = [{ rowId: stockInState.nextRowSeq++, productId: 0, qty: '', notes: '' }];
+            const refEl = document.getElementById('stockin-manual-ref');
+            const notesEl = document.getElementById('stockin-manual-notes');
+            if (refEl) refEl.value = '';
+            if (notesEl) notesEl.value = '';
+            renderStockInManualRows();
+        }
+
+        function onStockInManualTypeFilterChange() {
+            syncStockInManualRowsFromDOM();
+            renderStockInManualRows();
+        }
+
+        function refreshStockInManualBalances() {
+            syncStockInManualRowsFromDOM();
+            renderStockInManualRows();
+        }
+
+        function onManualRowProductChange(rowId) {
+            syncStockInManualRowsFromDOM();
+            onManualRowQtyInput(rowId);
+        }
+
+        function onManualRowQtyInput(rowId) {
+            const pEl = document.getElementById('stockin-man-prod-' + rowId);
+            const qEl = document.getElementById('stockin-man-qty-' + rowId);
+            const curCell = document.getElementById('stockin-man-cur-' + rowId);
+            const afterCell = document.getElementById('stockin-man-after-' + rowId);
+            const branchId = parseInt(_val('stockin-manual-branch'), 10) || 0;
+            const pId = pEl ? (parseInt(pEl.value, 10) || 0) : 0;
+            const qtyVal = qEl ? (parseFloat(qEl.value) || 0) : 0;
+
+            const rowObj = stockInState.manualRows.find(function(r) { return r.rowId === rowId; });
+            if (rowObj) {
+                rowObj.productId = pId;
+                rowObj.qty = qEl ? qEl.value : '';
+            }
+
+            if (pId <= 0) {
+                if (curCell) curCell.innerHTML = '-';
+                if (afterCell) afterCell.innerHTML = '-';
+                return;
+            }
+            const prodObj = getStockInProductById(pId);
+            const unitText = prodObj ? (prodObj.unit || 'pcs') : 'pcs';
+            const curStock = getStockInBranchBalance(branchId, pId);
+            const estAfter = curStock + (qtyVal > 0 ? qtyVal : 0);
+            if (curCell) curCell.innerHTML = formatDecimal(curStock) + ' <span class="text-[10px] text-slate-400">' + escapeHtml(unitText) + '</span>';
+            if (afterCell) afterCell.innerHTML = formatDecimal(estAfter) + ' <span class="text-[10px] text-slate-400">' + escapeHtml(unitText) + '</span>';
+        }
+
+        async function submitManualStockInForm() {
+            syncStockInManualRowsFromDOM();
+            const targetBranchId = parseInt(_val('stockin-manual-branch'), 10) || 0;
+            const refNo = (_val('stockin-manual-ref') || '').trim();
+            const generalNotes = (_val('stockin-manual-notes') || '').trim();
+
+            if (targetBranchId <= 0) {
+                alert('Pilih cabang tujuan penambahan stok terlebih dahulu.');
+                return;
+            }
+
+            const validItems = [];
+            for (let i = 0; i < stockInState.manualRows.length; i++) {
+                const r = stockInState.manualRows[i];
+                const pId = parseInt(r.productId, 10) || 0;
+                const qty = parseFloat(r.qty) || 0;
+                if (pId > 0 && qty > 0) {
+                    validItems.push({
+                        product_id: pId,
+                        qty: qty,
+                        notes: (r.notes || '').trim()
+                    });
+                } else if (pId > 0 && qty <= 0) {
+                    const pObj = getStockInProductById(pId);
+                    alert('Masukkan jumlah tambah (+) lebih dari 0 untuk produk "' + (pObj ? pObj.name : ('#' + pId)) + '".');
+                    return;
+                }
+            }
+
+            if (validItems.length === 0) {
+                alert('Pilih minimal 1 produk/bahan baku dan isi jumlah penambahan stok lebih dari 0.');
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit-manual-stockin');
+            if (btn) btn.disabled = true;
+            try {
+                const res = await fetch('api.php?action=submit_manual_stock_in', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target_branch_id: targetBranchId,
+                        reference_no: refNo,
+                        general_notes: generalNotes,
+                        items: validItems
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message || 'Penambahan stok manual berhasil disimpan!', 'success');
+                    resetStockInManualForm();
+                    await loadStockInModule();
+                    if (typeof loadStockInventory === 'function') loadStockInventory();
+                } else {
+                    alert(data.message || 'Gagal menyimpan penambahan stok manual.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi gangguan koneksi saat menyimpan penambahan stok.');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function renderStockInManualHistory() {
+            const tbody = document.getElementById('stockin-manual-history-body');
+            if (!tbody) return;
+            const list = stockInState.manualHistory || [];
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-slate-400">Belum ada riwayat penambahan stok masuk manual pada filter cabang terpilih.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = list.map(function(m) {
+                const isRaw = isStockInRawMaterial(m.product_type);
+                const icon = isRaw ? '🧪' : '📦';
+                return '<tr class="hover:bg-slate-50 transition-colors">' +
+                    '<td class="py-2.5 px-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">' + escapeHtml(m.created_at || '-') + '</td>' +
+                    '<td class="py-2.5 px-3 whitespace-nowrap"><span class="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded-md font-bold text-[11px] text-slate-700">' + escapeHtml(m.branch_name || '-') + '</span></td>' +
+                    '<td class="py-2.5 px-3 font-bold text-slate-800">' + icon + ' ' + escapeHtml(m.product_name || '-') + ' <span class="text-[10px] font-mono text-slate-400">(' + escapeHtml(m.product_sku || '') + ')</span></td>' +
+                    '<td class="py-2.5 px-3 text-right font-mono font-black text-emerald-600">+' + formatDecimal(m.qty_change) + ' <span class="text-[10px] font-normal text-slate-400">' + escapeHtml(m.unit || '') + '</span></td>' +
+                    '<td class="py-2.5 px-3 text-right font-mono text-slate-400">' + formatDecimal(m.stock_before) + '</td>' +
+                    '<td class="py-2.5 px-3 text-right font-mono font-bold text-slate-800">' + formatDecimal(m.stock_after) + '</td>' +
+                    '<td class="py-2.5 px-3 font-mono text-[11px] font-bold text-emerald-700">' + escapeHtml(m.reference_no || '-') + '</td>' +
+                    '<td class="py-2.5 px-3 text-slate-600 text-[11px]">' + escapeHtml(m.notes || '-') + '</td>' +
+                    '<td class="py-2.5 px-3 text-slate-500 text-[11px]">' + escapeHtml(m.user_name || 'Admin') + '</td>' +
+                '</tr>';
+            }).join('');
+        }
+
+        // ---------- 2. TRANSFER CABANG ----------
+        function syncStockTransferRowsFromDOM() {
+            stockInState.transferRows.forEach(function(r) {
+                const pEl = document.getElementById('stockin-trf-prod-' + r.rowId);
+                const qEl = document.getElementById('stockin-trf-qty-' + r.rowId);
+                const nEl = document.getElementById('stockin-trf-note-' + r.rowId);
+                if (pEl) r.productId = parseInt(pEl.value, 10) || 0;
+                if (qEl) r.qty = qEl.value;
+                if (nEl) r.notes = nEl.value;
+            });
+        }
+
+        function onStockTransferBranchChange(which) {
+            syncStockTransferRowsFromDOM();
+            const fromSel = document.getElementById('stockin-trf-from-branch');
+            const toSel = document.getElementById('stockin-trf-to-branch');
+            if (fromSel && toSel && fromSel.value === toSel.value && stockInState.branches.length > 1) {
+                if (which === 'from') {
+                    const alt = stockInState.branches.find(function(b) { return String(b.id) !== String(fromSel.value); });
+                    if (alt) toSel.value = String(alt.id);
+                } else {
+                    showToast('Cabang Tujuan tidak boleh sama dengan Cabang Asal.', 'warning');
+                }
+            }
+            renderStockTransferRows();
+        }
+
+        function renderStockTransferRows() {
+            const tbody = document.getElementById('stockin-trf-rows-body');
+            if (!tbody) return;
+            const fromBranchId = parseInt(_val('stockin-trf-from-branch'), 10) || 0;
+            const toBranchId = parseInt(_val('stockin-trf-to-branch'), 10) || 0;
+
+            tbody.innerHTML = stockInState.transferRows.map(function(r, idx) {
+                const prodObj = getStockInProductById(r.productId);
+                const unitText = prodObj ? (prodObj.unit || 'pcs') : '-';
+                const fromStock = (r.productId > 0 && fromBranchId > 0) ? getStockInBranchBalance(fromBranchId, r.productId) : 0;
+                const toStock = (r.productId > 0 && toBranchId > 0) ? getStockInBranchBalance(toBranchId, r.productId) : 0;
+                const qtyNum = parseFloat(r.qty) || 0;
+                const isInsufficient = (r.productId > 0 && qtyNum > fromStock);
+                const optsHtml = buildStockInProductOptionsHtml(r.productId, 'ALL', fromBranchId);
+                const disableDel = stockInState.transferRows.length <= 1;
+
+                return '<tr class="hover:bg-slate-50/70 transition-colors">' +
+                    '<td class="py-2.5 px-3 text-center font-mono text-slate-400 font-bold">' + (idx + 1) + '</td>' +
+                    '<td class="py-2.5 px-3">' +
+                        '<select id="stockin-trf-prod-' + r.rowId + '" onchange="onTransferRowProductChange(' + r.rowId + ')" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none">' +
+                            optsHtml +
+                        '</select>' +
+                    '</td>' +
+                    '<td class="py-2.5 px-3 text-right font-mono font-bold ' + (isInsufficient ? 'text-rose-600' : 'text-slate-700') + '" id="stockin-trf-frombal-' + r.rowId + '">' +
+                        (r.productId > 0 ? (formatDecimal(fromStock) + ' <span class="text-[10px] text-slate-400">' + escapeHtml(unitText) + '</span>') : '-') +
+                    '</td>' +
+                    '<td class="py-2.5 px-3 text-right font-mono font-semibold text-indigo-700" id="stockin-trf-tobal-' + r.rowId + '">' +
+                        (r.productId > 0 ? (formatDecimal(toStock) + ' <span class="text-[10px] text-slate-400">' + escapeHtml(unitText) + '</span>') : '-') +
+                    '</td>' +
+                    '<td class="py-2.5 px-3">' +
+                        '<input type="number" step="any" min="0" id="stockin-trf-qty-' + r.rowId + '" value="' + escapeHtml(r.qty) + '" oninput="onTransferRowQtyInput(' + r.rowId + ')" placeholder="0" class="w-full p-2 text-center bg-indigo-50/60 border ' + (isInsufficient ? 'border-rose-400 text-rose-700' : 'border-indigo-200 text-indigo-900') + ' rounded-xl font-mono font-black focus:ring-2 focus:ring-indigo-500 focus:outline-none">' +
+                    '</td>' +
+                    '<td class="py-2.5 px-3">' +
+                        '<input type="text" id="stockin-trf-note-' + r.rowId + '" value="' + escapeHtml(r.notes) + '" placeholder="Catatan item (opsional)" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none">' +
+                    '</td>' +
+                    '<td class="py-2.5 px-3 text-center">' +
+                        '<button type="button" onclick="removeStockTransferRow(' + r.rowId + ')" ' + (disableDel ? 'disabled' : '') + ' class="p-1.5 rounded-lg ' + (disableDel ? 'text-slate-300 cursor-not-allowed' : 'text-rose-500 hover:bg-rose-50') + '" title="Hapus Baris">' +
+                            '<i data-lucide="trash-2" class="w-4 h-4"></i>' +
+                        '</button>' +
+                    '</td>' +
+                '</tr>';
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function addStockTransferRow() {
+            syncStockTransferRowsFromDOM();
+            stockInState.transferRows.push({ rowId: stockInState.nextRowSeq++, productId: 0, qty: '', notes: '' });
+            renderStockTransferRows();
+        }
+
+        function removeStockTransferRow(rowId) {
+            syncStockTransferRowsFromDOM();
+            if (stockInState.transferRows.length <= 1) return;
+            stockInState.transferRows = stockInState.transferRows.filter(function(r) { return r.rowId !== rowId; });
+            renderStockTransferRows();
+        }
+
+        function resetStockTransferForm() {
+            stockInState.transferRows = [{ rowId: stockInState.nextRowSeq++, productId: 0, qty: '', notes: '' }];
+            const notesEl = document.getElementById('stockin-trf-notes');
+            if (notesEl) notesEl.value = '';
+            renderStockTransferRows();
+        }
+
+        function onTransferRowProductChange(rowId) {
+            syncStockTransferRowsFromDOM();
+            onTransferRowQtyInput(rowId);
+        }
+
+        function onTransferRowQtyInput(rowId) {
+            const pEl = document.getElementById('stockin-trf-prod-' + rowId);
+            const qEl = document.getElementById('stockin-trf-qty-' + rowId);
+            const fromCell = document.getElementById('stockin-trf-frombal-' + rowId);
+            const toCell = document.getElementById('stockin-trf-tobal-' + rowId);
+            const fromBranchId = parseInt(_val('stockin-trf-from-branch'), 10) || 0;
+            const toBranchId = parseInt(_val('stockin-trf-to-branch'), 10) || 0;
+            const pId = pEl ? (parseInt(pEl.value, 10) || 0) : 0;
+            const qtyVal = qEl ? (parseFloat(qEl.value) || 0) : 0;
+
+            const rowObj = stockInState.transferRows.find(function(r) { return r.rowId === rowId; });
+            if (rowObj) {
+                rowObj.productId = pId;
+                rowObj.qty = qEl ? qEl.value : '';
+            }
+
+            if (pId <= 0) {
+                if (fromCell) fromCell.innerHTML = '-';
+                if (toCell) toCell.innerHTML = '-';
+                return;
+            }
+            const prodObj = getStockInProductById(pId);
+            const unitText = prodObj ? (prodObj.unit || 'pcs') : 'pcs';
+            const fromStock = getStockInBranchBalance(fromBranchId, pId);
+            const toStock = getStockInBranchBalance(toBranchId, pId);
+            if (fromCell) {
+                fromCell.className = 'py-2.5 px-3 text-right font-mono font-bold ' + (qtyVal > fromStock ? 'text-rose-600' : 'text-slate-700');
+                fromCell.innerHTML = formatDecimal(fromStock) + ' <span class="text-[10px] text-slate-400">' + escapeHtml(unitText) + '</span>';
+            }
+            if (toCell) {
+                toCell.innerHTML = formatDecimal(toStock) + ' <span class="text-[10px] text-slate-400">' + escapeHtml(unitText) + '</span>';
+            }
+        }
+
+        async function submitStockTransferForm() {
+            syncStockTransferRowsFromDOM();
+            if ((stockInState.branches || []).length < 2) {
+                alert('Dibutuhkan minimal 2 cabang aktif untuk melakukan Transfer Cabang. Silakan tambahkan cabang terlebih dahulu di menu Kelola Cabang.');
+                return;
+            }
+
+            const fromBranchId = parseInt(_val('stockin-trf-from-branch'), 10) || 0;
+            const toBranchId = parseInt(_val('stockin-trf-to-branch'), 10) || 0;
+            const transferMode = _val('stockin-trf-mode') || 'DIRECT';
+            const notes = (_val('stockin-trf-notes') || '').trim();
+
+            if (fromBranchId <= 0 || toBranchId <= 0) {
+                alert('Pilih Cabang Asal dan Cabang Tujuan transfer terlebih dahulu.');
+                return;
+            }
+            if (fromBranchId === toBranchId) {
+                alert('Cabang Asal dan Cabang Tujuan tidak boleh sama!');
+                return;
+            }
+
+            const validItems = [];
+            const qtyByProd = {};
+            for (let i = 0; i < stockInState.transferRows.length; i++) {
+                const r = stockInState.transferRows[i];
+                const pId = parseInt(r.productId, 10) || 0;
+                const qty = parseFloat(r.qty) || 0;
+                if (pId > 0 && qty > 0) {
+                    qtyByProd[pId] = (qtyByProd[pId] || 0) + qty;
+                    validItems.push({
+                        product_id: pId,
+                        qty: qty,
+                        notes: (r.notes || '').trim()
+                    });
+                } else if (pId > 0 && qty <= 0) {
+                    const pObj = getStockInProductById(pId);
+                    alert('Masukkan kuantitas transfer lebih dari 0 untuk produk "' + (pObj ? pObj.name : ('#' + pId)) + '".');
+                    return;
+                }
+            }
+
+            if (validItems.length === 0) {
+                alert('Pilih minimal 1 produk/bahan baku dan isi kuantitas transfer lebih dari 0.');
+                return;
+            }
+
+            const prodIds = Object.keys(qtyByProd);
+            for (let k = 0; k < prodIds.length; k++) {
+                const pid = parseInt(prodIds[k], 10);
+                const reqQty = qtyByProd[pid];
+                const avail = getStockInBranchBalance(fromBranchId, pid);
+                if (reqQty > avail) {
+                    const pObj = getStockInProductById(pid);
+                    const pName = pObj ? pObj.name : ('#' + pid);
+                    const pUnit = pObj ? (pObj.unit || 'pcs') : 'pcs';
+                    alert('Stok "' + pName + '" di Cabang Asal tidak mencukupi! Tersedia: ' + formatDecimal(avail) + ' ' + pUnit + ', Diminta: ' + formatDecimal(reqQty) + ' ' + pUnit + '.');
+                    return;
+                }
+            }
+
+            const btn = document.getElementById('btn-submit-stock-transfer');
+            if (btn) btn.disabled = true;
+            try {
+                const res = await fetch('api.php?action=create_stock_transfer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        from_branch_id: fromBranchId,
+                        to_branch_id: toBranchId,
+                        transfer_mode: transferMode,
+                        notes: notes,
+                        items: validItems
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message || 'Transfer stok antar cabang berhasil diproses!', 'success');
+                    resetStockTransferForm();
+                    await loadStockInModule();
+                    if (typeof loadStockInventory === 'function') loadStockInventory();
+                } else {
+                    alert(data.message || 'Gagal memproses transfer stok cabang.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi gangguan koneksi saat mengirim data transfer cabang.');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function renderIncomingTransfersBanner() {
+            const banner = document.getElementById('stockin-incoming-banner');
+            if (!banner) return;
+
+            const incoming = (stockInState.transfers || []).filter(function(t) {
+                if (t.status !== 'IN_TRANSIT') return false;
+                if (stockInState.canAccessAll) return true;
+                return stockInState.allowedBranchIds.indexOf(parseInt(t.to_branch_id, 10)) !== -1;
+            });
+
+            if (incoming.length === 0) {
+                banner.classList.add('hidden');
+                banner.innerHTML = '';
+                return;
+            }
+
+            const cardsHtml = incoming.map(function(t) {
+                const itemsSummary = (t.items || []).map(function(it) {
+                    return escapeHtml(it.product_name || ('#' + it.product_id)) + ' (' + formatDecimal(it.qty_sent) + ' ' + escapeHtml(it.unit || 'pcs') + ')';
+                }).join(', ');
+                return '<div class="p-3 bg-white rounded-xl border border-amber-200 flex flex-wrap items-center justify-between gap-2">' +
+                    '<div class="text-xs">' +
+                        '<div class="font-black text-slate-800">' + escapeHtml(t.transfer_no) + ' — <span class="text-indigo-700">' + escapeHtml(t.from_branch_name || '-') + ' ➔ ' + escapeHtml(t.to_branch_name || '-') + '</span></div>' +
+                        '<div class="text-[11px] text-slate-600 mt-0.5">' + (itemsSummary || '-') + '</div>' +
+                    '</div>' +
+                    '<button type="button" onclick="receiveStockTransferAction(' + parseInt(t.id, 10) + ', \'' + escapeHtml(t.transfer_no) + '\')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-xs flex items-center space-x-1.5">' +
+                        '<i data-lucide="package-check" class="w-4 h-4"></i>' +
+                        '<span>Terima Barang Masuk</span>' +
+                    '</button>' +
+                '</div>';
+            }).join('');
+
+            banner.innerHTML =
+                '<div class="flex items-center space-x-2 text-amber-900 font-black text-xs">' +
+                    '<i data-lucide="truck" class="w-4 h-4 text-amber-600"></i>' +
+                    '<span>🚚 Terdapat ' + incoming.length + ' Pengiriman Transfer Cabang Menunggu Konfirmasi Penerimaan:</span>' +
+                '</div>' +
+                '<div class="space-y-2">' + cardsHtml + '</div>';
+            banner.classList.remove('hidden');
+        }
+
+        function setStockTransferStatusFilter(status) {
+            stockInState.transferStatusFilter = status || 'ALL';
+            const statuses = ['ALL', 'IN_TRANSIT', 'COMPLETED', 'CANCELLED'];
+            statuses.forEach(function(st) {
+                const pill = document.getElementById('trf-filter-pill-' + st);
+                if (!pill) return;
+                if (st === stockInState.transferStatusFilter) {
+                    pill.className = 'px-3 py-1.5 rounded-xl font-bold bg-indigo-600 text-white';
+                } else {
+                    pill.className = 'px-3 py-1.5 rounded-xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200';
+                }
+            });
+            renderStockTransferHistory();
+        }
+
+        function renderStockTransferHistory() {
+            const tbody = document.getElementById('stockin-trf-history-body');
+            if (!tbody) return;
+            const filterSt = stockInState.transferStatusFilter || 'ALL';
+            const filtered = (stockInState.transfers || []).filter(function(t) {
+                if (filterSt === 'ALL') return true;
+                return t.status === filterSt;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-400">Belum ada dokumen transfer stok antar cabang pada filter ini.</td></tr>';
+                return;
+            }
+
+            const canCancelPerm = hasUserPerm('stock-in:transfer', 'delete') || stockInState.permissions.transfer_delete;
+
+            tbody.innerHTML = filtered.map(function(t) {
+                let statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">✅ SELESAI</span>';
+                if (t.status === 'IN_TRANSIT') {
+                    statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-100 text-amber-800">🚚 IN-TRANSIT</span>';
+                } else if (t.status === 'CANCELLED') {
+                    statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-100 text-rose-800">❌ DIBATALKAN</span>';
+                }
+
+                const modeBadge = (t.transfer_mode === 'IN_TRANSIT')
+                    ? '<span class="block text-[10px] text-amber-700 font-semibold mt-0.5">Konfirmasi Tujuan</span>'
+                    : '<span class="block text-[10px] text-indigo-600 font-semibold mt-0.5">⚡ Langsung (Instan)</span>';
+
+                const itemsHtml = (t.items || []).map(function(it) {
+                    const icon = isStockInRawMaterial(it.product_type) ? '🧪' : '📦';
+                    return '<div class="inline-flex items-center px-2 py-0.5 mr-1 mb-1 rounded-lg bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-800">' +
+                        icon + ' ' + escapeHtml(it.product_name || ('#' + it.product_id)) + ': <b class="ml-1 font-mono text-indigo-700">' + formatDecimal(it.qty_sent) + ' ' + escapeHtml(it.unit || 'pcs') + '</b>' +
+                    '</div>';
+                }).join('');
+
+                const canReceiveThis = (t.status === 'IN_TRANSIT') && (stockInState.canAccessAll || stockInState.allowedBranchIds.indexOf(parseInt(t.to_branch_id, 10)) !== -1);
+                const canCancelThis = (t.status === 'IN_TRANSIT') && canCancelPerm && (stockInState.canAccessAll || stockInState.allowedBranchIds.indexOf(parseInt(t.from_branch_id, 10)) !== -1);
+
+                let actionsHtml = '<span class="text-slate-300 text-[11px]">—</span>';
+                if (canReceiveThis || canCancelThis) {
+                    actionsHtml = '<div class="flex flex-wrap items-center justify-center gap-1.5">';
+                    if (canReceiveThis) {
+                        actionsHtml += '<button type="button" onclick="receiveStockTransferAction(' + parseInt(t.id, 10) + ', \'' + escapeHtml(t.transfer_no) + '\')" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold">Terima</button>';
+                    }
+                    if (canCancelThis) {
+                        actionsHtml += '<button type="button" onclick="cancelStockTransferAction(' + parseInt(t.id, 10) + ', \'' + escapeHtml(t.transfer_no) + '\')" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[11px] font-bold">Batal</button>';
+                    }
+                    actionsHtml += '</div>';
+                }
+
+                let actorInfo = 'Kirim: ' + escapeHtml(t.created_by_name || 'Admin');
+                if (t.status === 'COMPLETED' && t.received_by_name) {
+                    actorInfo += '<span class="block text-[10px] text-emerald-700">Terima: ' + escapeHtml(t.received_by_name) + '</span>';
+                } else if (t.status === 'CANCELLED' && t.cancelled_by_name) {
+                    actorInfo += '<span class="block text-[10px] text-rose-600">Batal: ' + escapeHtml(t.cancelled_by_name) + '</span>';
+                }
+
+                return '<tr class="hover:bg-slate-50 transition-colors">' +
+                    '<td class="py-3 px-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">' + escapeHtml(t.created_at || '-') + '</td>' +
+                    '<td class="py-3 px-3 font-mono text-[11px] font-black text-indigo-800 whitespace-nowrap">' + escapeHtml(t.transfer_no) + modeBadge + '</td>' +
+                    '<td class="py-3 px-3 whitespace-nowrap">' +
+                        '<div class="text-xs font-bold text-slate-800">📤 ' + escapeHtml(t.from_branch_name || '-') + '</div>' +
+                        '<div class="text-xs font-bold text-teal-700 mt-0.5">📥 ' + escapeHtml(t.to_branch_name || '-') + '</div>' +
+                    '</td>' +
+                    '<td class="py-3 px-3">' + (itemsHtml || '-') + '</td>' +
+                    '<td class="py-3 px-3 whitespace-nowrap">' + statusBadge + '</td>' +
+                    '<td class="py-3 px-3 text-[11px] text-slate-600">' + escapeHtml(t.notes || '-') + '</td>' +
+                    '<td class="py-3 px-3 text-[11px] text-slate-600 whitespace-nowrap">' + actorInfo + '</td>' +
+                    '<td class="py-3 px-3 text-center whitespace-nowrap">' + actionsHtml + '</td>' +
+                '</tr>';
+            }).join('');
+            lucide.createIcons();
+        }
+
+        async function receiveStockTransferAction(transferId, transferNo) {
+            if (!confirm('Konfirmasi penerimaan barang masuk untuk dokumen ' + transferNo + '?\nStok akan langsung ditambahkan ke Cabang Tujuan.')) {
+                return;
+            }
+            try {
+                const res = await fetch('api.php?action=receive_stock_transfer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ transfer_id: transferId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message || 'Barang transfer berhasil diterima!', 'success');
+                    await loadStockInModule();
+                    if (typeof loadStockInventory === 'function') loadStockInventory();
+                } else {
+                    alert(data.message || 'Gagal mengonfirmasi penerimaan transfer.');
+                }
+            } catch (err) {
+                alert('Terjadi kesalahan koneksi saat mengonfirmasi penerimaan transfer.');
+            }
+        }
+
+        async function cancelStockTransferAction(transferId, transferNo) {
+            if (!confirm('Batalkan dokumen transfer ' + transferNo + '?\nSeluruh stok yang telah dipotong akan dikembalikan utuh ke Cabang Asal.')) {
+                return;
+            }
+            try {
+                const res = await fetch('api.php?action=cancel_stock_transfer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ transfer_id: transferId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message || 'Dokumen transfer dibatalkan & stok dikembalikan.', 'info');
+                    await loadStockInModule();
+                    if (typeof loadStockInventory === 'function') loadStockInventory();
+                } else {
+                    alert(data.message || 'Gagal membatalkan dokumen transfer.');
+                }
+            } catch (err) {
+                alert('Terjadi kesalahan koneksi saat membatalkan transfer.');
             }
         }
 
@@ -31919,6 +33091,10 @@ Manager / Supervisor: __________________
                 { id: 'subtab-btn-balance', key: 'stocks:balance' },
                 { id: 'subtab-btn-movements', key: 'stocks:movements' },
 
+                // Input Penambahan Stok
+                { id: 'stockin-subtab-btn-manual', key: 'stock-in:manual' },
+                { id: 'stockin-subtab-btn-transfer', key: 'stock-in:transfer' },
+
                 // Expenses
                 { id: 'subtab-btn-exp-ledger', key: 'expenses:ledger' },
                 { id: 'subtab-btn-exp-category', key: 'expenses:category' },
@@ -31972,7 +33148,7 @@ Manager / Supervisor: __________________
             const isSuperAdmin = (role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'SUPER ADMIN');
 
             // Ambil izin menu role
-            const allMenus = ['dashboard', 'pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
+            const allMenus = ['dashboard', 'pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
 
             allMenus.forEach(mKey => {
                 const btn = document.getElementById(`tab-btn-${mKey}`);
@@ -31983,6 +33159,8 @@ Manager / Supervisor: __________________
                 if (!isSuperAdmin) {
                     if (mKey === 'dashboard') {
                         canAccess = (role === 'MANAGER' || role === 'BRANCH_MANAGER');
+                    } else if (mKey === 'stock-in') {
+                        canAccess = hasUserPerm('stock-in', 'view') || hasUserPerm('stock-in:manual', 'view') || hasUserPerm('stock-in:transfer', 'view');
                     } else {
                         canAccess = hasUserPerm(mKey, 'view');
                     }
@@ -32398,6 +33576,15 @@ Manager / Supervisor: __________________
                 ]
             },
             {
+                key: 'stock-in',
+                title: 'Input Penambahan Stok',
+                icon: 'package-plus',
+                subtabs: [
+                    { key: 'stock-in:manual', title: '1. Penambahan Manual', desc: 'Input penambahan stok masuk barang jadi & bahan baku secara manual' },
+                    { key: 'stock-in:transfer', title: '2. Transfer Cabang', desc: 'Pengiriman & penerimaan transfer stok barang antar cabang outlet' }
+                ]
+            },
+            {
                 key: 'pnl',
                 title: 'Laporan Laba Rugi',
                 icon: 'line-chart',
@@ -32508,9 +33695,13 @@ Manager / Supervisor: __________________
                 if (role === 'BRANCHMANAGER' || role === 'MANAGER') {
                     return (key !== 'sale-cancellations');
                 }
+                if (role === 'STAFF') {
+                    if (key === 'stock-in' || key.indexOf('stock-in:') === 0) return (mode === 'view' || mode === 'create');
+                }
                 if (role === 'CASHIER' || role === 'KASIR') {
                     if (key === 'pos' || key.startsWith('pos:')) return true;
                     if (key === 'customers' || key.startsWith('customers:')) return (mode === 'view' || mode === 'create');
+                    if (key === 'stock-in' || key === 'stock-in:manual') return (mode === 'view' || mode === 'create');
                 }
                 return false;
             }
@@ -32579,6 +33770,19 @@ Manager / Supervisor: __________________
                         if (subCb && !subCb.disabled) subCb.checked = checked;
                     });
                 });
+            }
+        }
+
+        function onSubtabPermToggle(roleCode, parentKey, subKey, mode, checked) {
+            if (checked) {
+                const subViewCb = document.getElementById(`perm-${roleCode}-${subKey}-view`);
+                if (subViewCb && !subViewCb.disabled) subViewCb.checked = true;
+                const parentViewCb = document.getElementById(`perm-${roleCode}-${parentKey}-view`);
+                if (parentViewCb && !parentViewCb.disabled) parentViewCb.checked = true;
+                if (mode !== 'view') {
+                    const parentModeCb = document.getElementById(`perm-${roleCode}-${parentKey}-${mode}`);
+                    if (parentModeCb && !parentModeCb.disabled) parentModeCb.checked = true;
+                }
             }
         }
 
@@ -32726,19 +33930,19 @@ Manager / Supervisor: __________________
                                 <td class="py-2.5 px-2 text-center border-l border-slate-200 dark:border-slate-700/60">
                                     <div class="inline-flex items-center gap-1.5 p-1 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/80">
                                         <label title="Lihat Sub-Tab (${sub.title})" class="flex items-center space-x-0.5 cursor-pointer px-1 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700">
-                                            <input type="checkbox" id="perm-${rCode}-${sub.key}-view" ${vals.view ? 'checked' : ''} ${isSuper ? 'disabled' : ''} class="w-3.5 h-3.5 text-blue-600 rounded">
+                                            <input type="checkbox" id="perm-${rCode}-${sub.key}-view" ${vals.view ? 'checked' : ''} ${isSuper ? 'disabled' : ''} onchange="onSubtabPermToggle('${rCode}', '${m.key}', '${sub.key}', 'view', this.checked)" class="w-3.5 h-3.5 text-blue-600 rounded">
                                             <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400">V</span>
                                         </label>
                                         <label title="Tambah Data di ${sub.title}" class="flex items-center space-x-0.5 cursor-pointer px-1 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700">
-                                            <input type="checkbox" id="perm-${rCode}-${sub.key}-create" ${vals.create ? 'checked' : ''} ${isSuper ? 'disabled' : ''} class="w-3.5 h-3.5 text-emerald-600 rounded">
+                                            <input type="checkbox" id="perm-${rCode}-${sub.key}-create" ${vals.create ? 'checked' : ''} ${isSuper ? 'disabled' : ''} onchange="onSubtabPermToggle('${rCode}', '${m.key}', '${sub.key}', 'create', this.checked)" class="w-3.5 h-3.5 text-emerald-600 rounded">
                                             <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">T</span>
                                         </label>
                                         <label title="Ubah Data di ${sub.title}" class="flex items-center space-x-0.5 cursor-pointer px-1 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700">
-                                            <input type="checkbox" id="perm-${rCode}-${sub.key}-update" ${vals.update ? 'checked' : ''} ${isSuper ? 'disabled' : ''} class="w-3.5 h-3.5 text-amber-600 rounded">
+                                            <input type="checkbox" id="perm-${rCode}-${sub.key}-update" ${vals.update ? 'checked' : ''} ${isSuper ? 'disabled' : ''} onchange="onSubtabPermToggle('${rCode}', '${m.key}', '${sub.key}', 'update', this.checked)" class="w-3.5 h-3.5 text-amber-600 rounded">
                                             <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400">U</span>
                                         </label>
                                         <label title="Hapus Data di ${sub.title}" class="flex items-center space-x-0.5 cursor-pointer px-1 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700">
-                                            <input type="checkbox" id="perm-${rCode}-${sub.key}-delete" ${vals.delete ? 'checked' : ''} ${isSuper ? 'disabled' : ''} class="w-3.5 h-3.5 text-rose-600 rounded">
+                                            <input type="checkbox" id="perm-${rCode}-${sub.key}-delete" ${vals.delete ? 'checked' : ''} ${isSuper ? 'disabled' : ''} onchange="onSubtabPermToggle('${rCode}', '${m.key}', '${sub.key}', 'delete', this.checked)" class="w-3.5 h-3.5 text-rose-600 rounded">
                                             <span class="text-[10px] font-bold text-rose-600 dark:text-rose-400">D</span>
                                         </label>
                                     </div>
