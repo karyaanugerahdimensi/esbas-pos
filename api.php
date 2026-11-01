@@ -14539,8 +14539,14 @@ try {
                 $logoEmoji = $sMap['app_logo_emoji'] ?? '🛍️';
                 $storeTitle = $sMap['receipt_header_title'] ?? ($sMap['app_name'] ?? 'ESBAS RETAIL TOKO');
                 $storeSubtitle = $sMap['receipt_header_subtitle'] ?? ($sMap['app_subtitle'] ?? 'Pusat Belanja & Grosir Terpadu');
-                $branchName = $sale['branch_name'] ?? ($sMap['company_name'] ?? 'Cabang Utama');
-                $branchAddress = $sale['branch_address'] ?? ($sMap['company_address'] ?? '');
+                $branchRow = null;
+                if ($targetBranchId > 0) {
+                    $stmtB = $pdo->prepare("SELECT name, address FROM branches WHERE id = ?");
+                    $stmtB->execute([$targetBranchId]);
+                    $branchRow = $stmtB->fetch();
+                }
+                $branchName = $sale['branch_name'] ?? ($branchRow['name'] ?? ($sMap['company_name'] ?? 'Cabang Utama'));
+                $branchAddress = $sale['branch_address'] ?? ($branchRow['address'] ?? ($sMap['company_address'] ?? ''));
                 $customLegal = $sMap['receipt_header_custom_text'] ?? '';
 
                 $headerParts = [];
@@ -14560,19 +14566,17 @@ try {
                     $headerParts[] = trim($customLegal);
                 }
 
-                // 2. Metadata Transaksi
+                // 2. Metadata Transaksi (Persis sesuai Pratinjau Struk)
                 $invoiceNo = $sale['invoice_number'] ?? $invoiceNumber;
                 $dateStr = $sale ? $sale['created_at'] : date('d/m/Y H:i');
                 $cashierName = $sale['cashier_name'] ?? 'Kasir';
                 $custName = $sale['customer_name'] ?? 'Pelanggan Umum';
-                $salesType = $sale['customer_category'] ?? ($sale['sales_type'] ?? 'REGULER');
 
                 $metaParts = [
-                    "No. Faktur      : *{$invoiceNo}*",
-                    "Waktu           : {$dateStr}",
-                    "Kasir           : {$cashierName}",
-                    "Pelanggan       : {$custName}",
-                    "Jenis Transaksi : {$salesType}"
+                    "No:         *{$invoiceNo}*",
+                    "Waktu:      {$dateStr}",
+                    "Kasir:      {$cashierName}",
+                    "Pelanggan:  {$custName}"
                 ];
 
                 // 3. Body Item & Kurir
@@ -14589,7 +14593,7 @@ try {
                         $qty = (float)($it['qty'] ?? 1);
                         $uPrice = (float)($it['unit_price'] ?? 0);
                         $sub = (float)($it['subtotal_price'] ?? ($qty * $uPrice));
-                        $itemParts[] = "{$pName}{$skuTxt}{$vName}\n  {$qty}x @ Rp " . number_format($uPrice, 0, ',', '.') . " = *Rp " . number_format($sub, 0, ',', '.') . "*";
+                        $itemParts[] = "{$pName}{$skuTxt}{$vName} x{$qty} : Rp " . number_format($sub, 0, ',', '.');
                     }
                     // Kurir
                     $driver = $sale['driver_name'] ?? '';
@@ -14599,65 +14603,63 @@ try {
                     if ($delFee > 0) {
                         $distTxt = $delDist > 0 ? " ({$delDist} km)" : "";
                         $drvTxt = !empty($driver) && $driver !== '-' ? " • Kurir: {$driver}" : "";
-                        $itemParts[] = "🛵 Biaya Kirim Kurir{$distTxt}{$drvTxt}\n  *Rp " . number_format($delFee, 0, ',', '.') . "*";
+                        $itemParts[] = "🛵 Biaya Kirim Kurir{$distTxt}{$drvTxt} : Rp " . number_format($delFee, 0, ',', '.');
                     } elseif ($delStatus !== 'NONE') {
                         $distTxt = $delDist > 0 ? " ({$delDist} km)" : "";
                         $drvTxt = !empty($driver) && $driver !== '-' ? " • Kurir: {$driver}" : "";
-                        $itemParts[] = "🛵 Layanan Antar{$distTxt}: Termasuk Biaya Kirim{$drvTxt}\n  *Rp 0*";
+                        $itemParts[] = "🛵 Layanan Antar Kurir{$distTxt}{$drvTxt} : Rp 0 (Termasuk Ongkir)";
                     }
                 } else {
                     $sku1 = $showSku ? " (PRD-001)" : "";
                     $sku2 = $showSku ? " (PRD-002)" : "";
-                    $itemParts[] = "Air Galon RO 19L{$sku1}\n  2x @ Rp 19.000 = *Rp 38.000*";
-                    $itemParts[] = "Kopi Arabika 250g{$sku2}\n  1x @ Rp 35.000 = *Rp 35.000*";
+                    $itemParts[] = "Air Galon RO 19L{$sku1} x2 : Rp 38.000";
+                    $itemParts[] = "Kopi Arabika 250g{$sku2} x1 : Rp 35.000";
                 }
 
-                // 4. Totals
+                // 4. Totals (Persis sesuai Pratinjau Struk)
                 $subtotal = $sale ? (float)$sale['subtotal'] : 73000;
                 $discount = $sale ? (float)$sale['discount'] : 0;
                 $tax = $sale ? (float)$sale['tax'] : 0;
                 $grandTotalVal = $sale ? (float)$sale['grand_total'] : 73000;
-                $payMethod = $sale['payment_method'] ?? 'TUNAI (CASH)';
+                $payMethod = $sale['payment_method'] ?? 'TUNAI';
+                $payLabel = (stripos($payMethod, 'CASH') !== false || strtoupper($payMethod) === 'TUNAI') ? 'TUNAI (CASH)' : $payMethod;
                 $cashReceived = $sale ? (float)$sale['cash_received'] : 100000;
                 $cashChange = $sale ? (float)$sale['cash_change'] : 27000;
 
                 $totalParts = [];
-                $totalParts[] = "Subtotal        : Rp " . number_format($subtotal, 0, ',', '.');
-                if ($discount > 0) {
-                    $totalParts[] = "Diskon          : - Rp " . number_format($discount, 0, ',', '.');
-                }
+                $totalParts[] = "Subtotal:    Rp " . number_format($subtotal, 0, ',', '.');
+                $totalParts[] = "Diskon:      " . ($discount > 0 ? "- Rp " . number_format($discount, 0, ',', '.') : "Rp 0");
                 if ($tax > 0) {
-                    $totalParts[] = "Pajak (Tax)     : Rp " . number_format($tax, 0, ',', '.');
+                    $totalParts[] = "Pajak (Tax): Rp " . number_format($tax, 0, ',', '.');
                 }
-                $totalParts[] = "*TOTAL           : Rp " . number_format($grandTotalVal, 0, ',', '.') . "*";
+                $totalParts[] = "*TOTAL:       Rp " . number_format($grandTotalVal, 0, ',', '.') . "*";
                 if ($cashReceived > 0) {
-                    $totalParts[] = "Bayar ({$payMethod}) : Rp " . number_format($cashReceived, 0, ',', '.');
-                    $totalParts[] = "Kembalian       : Rp " . number_format($cashChange, 0, ',', '.');
+                    $totalParts[] = "{$payLabel}: Rp " . number_format($cashReceived, 0, ',', '.');
+                    $totalParts[] = "Kembalian:   Rp " . number_format($cashChange, 0, ',', '.');
                 } else {
-                    $totalParts[] = "Bayar ({$payMethod}) : Rp " . number_format($grandTotalVal, 0, ',', '.');
+                    $totalParts[] = "{$payLabel}: Rp " . number_format($grandTotalVal, 0, ',', '.');
                 }
 
                 // 5. Footers
                 $footerParts = [];
                 $f1 = $sMap['receipt_footer_line1'] ?? 'Terima Kasih Atas Kunjungan Anda!';
-                $f2 = $sMap['receipt_footer_line2'] ?? 'Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.';
-                $f3 = $sMap['receipt_footer_line3'] ?? 'Simpan struk ini sebagai bukti pembayaran yang sah.';
-                if (!empty(trim($f1))) $footerParts[] = "*" . trim($f1) . "*";
+                $f2 = $sMap['receipt_footer_line2'] ?? '';
+                $f3 = $sMap['receipt_footer_line3'] ?? '';
+                if (!empty(trim($f1))) $footerParts[] = trim($f1);
                 if (!empty(trim($f2))) $footerParts[] = trim($f2);
-                if (!empty(trim($f3))) $footerParts[] = "_" . trim($f3) . "_";
+                if (!empty(trim($f3))) $footerParts[] = trim($f3);
 
-                $sepDouble = "========================================";
-                $sepSingle = "----------------------------------------";
+                $sepLine = "--------------------------------";
 
                 $layoutReceiptMsg = implode("\n", [
                     implode("\n", $headerParts),
-                    $sepDouble,
+                    $sepLine,
                     implode("\n", $metaParts),
-                    $sepSingle,
+                    $sepLine,
                     implode("\n", $itemParts),
-                    $sepSingle,
+                    $sepLine,
                     implode("\n", $totalParts),
-                    $sepDouble,
+                    $sepLine,
                     implode("\n", $footerParts)
                 ]);
             }

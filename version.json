@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.3.4",
-    "build": "20261101-59",
+    "version": "1.3.5",
+    "build": "20261101-60",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.3.5",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Perbaikan Total Penyelarasan Isi Nota Elektronik WhatsApp 100% Identik dengan Pratinjau Layout Nota Struk (FR-POS-45)",
+            "description": "Menyempurnakan mesin pembuat nota elektronik WhatsApp agar 100% identik dan persis sama dengan hasil Pratinjau Struk Langsung (Live Preview Layout Nota Struk): (1) Eliminasi Masalah Penimpaan Pesan Greeting Legacy: Memperbaiki deteksi wa_template_message agar template pesan singkat legasi tidak lagi menimpa format nota layout struk, serta menyetel default wa_template_message ke {receipt_layout} di tingkat database app_settings dan branch_settings. (2) Format Struktur Nota Kasir Terpadu 100% Identik: (a) Header: Toko STARQUA (bold), Subjudul alamat jalan/RT/RW, Identitas cabang & alamat (Cabang Pusat Cimahi • Jl. Raya No. 1), Custom teks/WA Order, serta penegakan sakelar logo (tidak memunculkan logo jika receipt_show_logo = 0); (b) Metadata: No faktur, Waktu, Kasir, dan Pelanggan yang bersih tanpa baris redundan; (c) Body: Daftar produk satu baris rapi (Nama produk xQty : Subtotal) disertai opsi SKU dan biaya kurir/antar; (d) Rincian Total: Subtotal, Diskon, TOTAL bold, TUNAI (CASH), dan Kembalian; (e) Footer: Seluruh 3 baris catatan penutup footer persis seperti konfigurasi pengguna. (3) Penyelarasan Sisi Klien & Server: Memastikan fungsi buildReceiptTextFromLayout di index.php dan endpoint backend test_send_electronic_receipt di api.php menghasilkan teks nota yang seragam dan presisi.",
+            "rollback_command": "git checkout v1.3.4"
+        },
         {
             "version": "1.3.4",
             "commit": "HEAD",

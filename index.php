@@ -31019,7 +31019,7 @@ Manager / Supervisor: __________________
             const s = state.appSettings || {};
 
             // 1. BAGIAN HEADER (BAGIAN ATAS NOTA)
-            const showLogo = s.receipt_show_logo !== '0';
+            const showLogo = (s.receipt_show_logo === '1' || s.receipt_show_logo === 1 || s.receipt_show_logo === true);
             const logoEmoji = s.app_logo_emoji || '🛍️';
             const storeTitle = s.receipt_header_title || (s.app_name || 'ESBAS RETAIL TOKO');
             const storeSubtitle = s.receipt_header_subtitle || (s.app_subtitle || 'Pusat Belanja & Grosir Terpadu');
@@ -31044,32 +31044,30 @@ Manager / Supervisor: __________________
                 headerParts.push(customLegalText.trim());
             }
 
-            // 2. METADATA TRANSAKSI
+            // 2. METADATA TRANSAKSI (Persis sesuai Pratinjau Struk)
             const invoiceNo = sale.invoice_number || '-';
             const dateStr = sale.created_at || (new Date().toLocaleString('id-ID'));
             const cashierName = sale.cashier_name || state.currentUser?.name || 'Kasir';
             const custName = sale.customer_name || 'Pelanggan Umum';
-            const salesType = sale.customer_category || sale.sales_type || (state.selectedCustomerCategory ? state.selectedCustomerCategory.toUpperCase() : 'REGULER');
 
             let metaParts = [
-                `No. Faktur      : *${invoiceNo}*`,
-                `Waktu           : ${dateStr}`,
-                `Kasir           : ${cashierName}`,
-                `Pelanggan       : ${custName}`,
-                `Jenis Transaksi : ${salesType}`
+                `No:         *${invoiceNo}*`,
+                `Waktu:      ${dateStr}`,
+                `Kasir:      ${cashierName}`,
+                `Pelanggan:  ${custName}`
             ];
 
             // 3. BAGIAN BODY (DAFTAR ITEM & RINCIAN)
-            const showSku = s.receipt_body_show_sku === '1';
+            const showSku = (s.receipt_body_show_sku === '1' || s.receipt_body_show_sku === 1);
             const items = sale.items || [];
             let itemParts = items.map(it => {
                 const prodName = it.product_name || it.name || 'Produk';
                 const skuText = (showSku && it.sku) ? ` (${it.sku})` : '';
                 const vName = (it.variant_name && !prodName.includes(it.variant_name)) ? ` [${it.variant_name}]` : '';
                 const qty = it.qty || it.quantity || 1;
-                const unitPrice = it.unit_price || (it.subtotal_price ? Math.round(it.subtotal_price / qty) : 0);
-                const sub = it.subtotal_price || (unitPrice * qty);
-                return `${prodName}${skuText}${vName}\n  ${qty}x @ ${formatRupiah(unitPrice)} = *${formatRupiah(sub)}*`;
+                const unitPrice = it.unit_price || (it.subtotal_price ? Math.round(it.subtotal_price / qty) : (it.price || 0));
+                const sub = it.subtotal_price || it.subtotal || (unitPrice * qty);
+                return `${prodName}${skuText}${vName} x${qty} : ${formatRupiah(sub)}`;
             });
 
             // Biaya Kirim Kurir / Layanan Antar
@@ -31077,65 +31075,64 @@ Manager / Supervisor: __________________
             if (sale.delivery_fee && Number(sale.delivery_fee) > 0) {
                 const dist = (sale.delivery_distance_km && Number(sale.delivery_distance_km) > 0) ? ` (${formatDecimal(sale.delivery_distance_km)} km)` : '';
                 const driverInfo = effectiveDriver ? ` • Kurir: ${effectiveDriver}` : '';
-                itemParts.push(`🛵 Biaya Kirim Kurir${dist}${driverInfo}\n  *${formatRupiah(sale.delivery_fee)}*`);
+                itemParts.push(`🛵 Biaya Kirim Kurir${dist}${driverInfo} : ${formatRupiah(sale.delivery_fee)}`);
             } else if (sale.delivery_status && sale.delivery_status !== 'NONE') {
                 const dist = (sale.delivery_distance_km && Number(sale.delivery_distance_km) > 0) ? ` (${formatDecimal(sale.delivery_distance_km)} km)` : '';
                 const driverInfo = effectiveDriver ? ` • Kurir: ${effectiveDriver}` : '';
-                itemParts.push(`🛵 Layanan Antar${dist}: Termasuk Biaya Kirim${driverInfo}\n  *Rp 0*`);
+                itemParts.push(`🛵 Layanan Antar Kurir${dist}${driverInfo} : Rp 0 (Termasuk Ongkir)`);
             }
 
-            // 4. RINGKASAN TOTAL
+            // 4. RINGKASAN TOTAL (Persis sesuai Pratinjau Struk)
             let totalParts = [];
-            totalParts.push(`Subtotal        : ${formatRupiah(sale.subtotal || 0)}`);
-            if (Number(sale.discount) > 0) {
-                totalParts.push(`Diskon          : - ${formatRupiah(sale.discount)}`);
-            }
+            totalParts.push(`Subtotal:    ${formatRupiah(sale.subtotal || 0)}`);
+            const discVal = Number(sale.discount) || 0;
+            totalParts.push(`Diskon:      ${discVal > 0 ? '- ' + formatRupiah(discVal) : 'Rp 0'}`);
             if (sale.tax && Number(sale.tax) > 0) {
-                totalParts.push(`Pajak (Tax)     : ${formatRupiah(sale.tax)}`);
+                totalParts.push(`Pajak (Tax): ${formatRupiah(sale.tax)}`);
             }
-            totalParts.push(`*TOTAL           : ${formatRupiah(sale.grand_total || 0)}*`);
+            totalParts.push(`*TOTAL:       ${formatRupiah(sale.grand_total || 0)}*`);
 
             const payMethod = sale.payment_method || 'TUNAI';
+            const payLabel = (payMethod.toUpperCase().includes('CASH') || payMethod.toUpperCase() === 'TUNAI') ? 'TUNAI (CASH)' : payMethod;
             if (Number(sale.cash_received) > 0) {
-                totalParts.push(`Bayar (${payMethod}) : ${formatRupiah(sale.cash_received)}`);
-                totalParts.push(`Kembalian       : ${formatRupiah(sale.cash_change || 0)}`);
+                totalParts.push(`${payLabel}: ${formatRupiah(sale.cash_received)}`);
+                totalParts.push(`Kembalian:   ${formatRupiah(sale.cash_change || 0)}`);
             } else {
-                totalParts.push(`Bayar (${payMethod}) : ${formatRupiah(sale.grand_total || 0)}`);
+                totalParts.push(`${payLabel}: ${formatRupiah(sale.grand_total || 0)}`);
             }
 
             // 5. BAGIAN FOOTER (CATATAN BAWAH NOTA)
             let footerParts = [];
             const f1 = s.receipt_footer_line1 || 'Terima Kasih Atas Kunjungan Anda!';
-            const f2 = s.receipt_footer_line2 || 'Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.';
-            const f3 = s.receipt_footer_line3 || 'Simpan struk ini sebagai bukti pembayaran yang sah.';
-            if (f1 && f1.trim()) footerParts.push(`*${f1.trim()}*`);
+            const f2 = s.receipt_footer_line2 || '';
+            const f3 = s.receipt_footer_line3 || '';
+            if (f1 && f1.trim()) footerParts.push(f1.trim());
             if (f2 && f2.trim()) footerParts.push(f2.trim());
-            if (f3 && f3.trim()) footerParts.push(`_${f3.trim()}_`);
+            if (f3 && f3.trim()) footerParts.push(f3.trim());
 
-            const sepDouble = '========================================';
-            const sepSingle = '----------------------------------------';
+            const sepLine = '--------------------------------';
 
             return [
                 headerParts.join('\n'),
-                sepDouble,
+                sepLine,
                 metaParts.join('\n'),
-                sepSingle,
+                sepLine,
                 itemParts.join('\n'),
-                sepSingle,
+                sepLine,
                 totalParts.join('\n'),
-                sepDouble,
+                sepLine,
                 footerParts.join('\n')
             ].join('\n');
         }
 
         function buildWhatsAppReceiptText(sale) {
             if (!sale) return '';
-            const s = state.appSettings || {};
             const layoutReceipt = buildReceiptTextFromLayout(sale);
+            const s = state.appSettings || {};
 
-            const tpl = s.wa_template_message ? s.wa_template_message.trim() : '';
-            // Jika template kosong atau placeholder khusus layout
-            if (!tpl || tpl === '{receipt_layout}') {
+            const tpl = (s.wa_template_message || '').trim();
+            // Jika template kosong, default {receipt_layout}, atau greeting bawaan lama yang tidak memiliki layout nota
+            if (!tpl || tpl === '{receipt_layout}' || tpl.toLowerCase().startsWith('halo {customer_name}') || !tpl.includes('{')) {
                 return layoutReceipt;
             }
 
@@ -31146,83 +31143,9 @@ Manager / Supervisor: __________________
                     .replace(/{invoice_number}/g, sale.invoice_number || '-');
             }
 
-            // Jika template di database berupa legacy default greeting lama yang tidak memiliki rincian layout nota struk
-            if (tpl.startsWith('Halo {customer_name},\nTerima kasih telah berbelanja di {store_name}')) {
-                return layoutReceipt;
-            }
-
-            // Jika user membuat template kustom sendiri yang bukan legacy seeder:
-            const storeTitle = s.receipt_header_title || (s.app_name || 'ESBAS RETAIL TOKO');
-            const storeSubtitle = s.receipt_header_subtitle || (s.app_subtitle || 'Pusat Belanja & Grosir Terpadu');
-            const branchName = sale.branch_name || state.currentBranch?.name || s.company_name || 'Cabang Utama';
-            const branchAddress = sale.branch_address || state.currentBranch?.address || '';
-            const customLegal = s.receipt_header_custom_text || '';
-            const custName = sale.customer_name || 'Pelanggan Umum';
-            const cashierName = sale.cashier_name || state.currentUser?.name || 'Kasir';
-            const invoiceNo = sale.invoice_number || '-';
-            const dateStr = sale.created_at || (new Date().toLocaleString('id-ID'));
-            const salesType = sale.customer_category || sale.sales_type || (state.selectedCustomerCategory ? state.selectedCustomerCategory.toUpperCase() : 'REGULER');
-            const grandTotalStr = formatRupiah(sale.grand_total || 0);
-            const subtotalStr = formatRupiah(sale.subtotal || 0);
-            const discountStr = (Number(sale.discount) > 0) ? `- ${formatRupiah(sale.discount)}` : 'Rp 0';
-            const taxStr = formatRupiah(sale.tax || 0);
-            const payMethod = sale.payment_method || 'TUNAI';
-            const cashReceivedStr = formatRupiah(sale.cash_received || 0);
-            const cashChangeStr = formatRupiah(sale.cash_change || 0);
-
-            const showSku = s.receipt_body_show_sku === '1';
-            const items = sale.items || [];
-            let itemLines = items.map(it => {
-                const prodName = it.product_name || it.name || 'Produk';
-                const skuText = (showSku && it.sku) ? ` (${it.sku})` : '';
-                const vName = (it.variant_name && !prodName.includes(it.variant_name)) ? ` [${it.variant_name}]` : '';
-                const qty = it.qty || it.quantity || 1;
-                const unitPrice = it.unit_price || (it.subtotal_price ? Math.round(it.subtotal_price / qty) : 0);
-                const sub = it.subtotal_price || (unitPrice * qty);
-                return `${prodName}${skuText}${vName}\n  ${qty}x @ ${formatRupiah(unitPrice)} = *${formatRupiah(sub)}*`;
-            });
-            const effectiveDriver = sale.driver_name || (sale.effective_driver_name ? sale.effective_driver_name : '');
-            if (sale.delivery_fee && Number(sale.delivery_fee) > 0) {
-                const dist = (sale.delivery_distance_km && Number(sale.delivery_distance_km) > 0) ? ` (${formatDecimal(sale.delivery_distance_km)} km)` : '';
-                const driverInfo = effectiveDriver ? ` • Kurir: ${effectiveDriver}` : '';
-                itemLines.push(`🛵 Biaya Kirim Kurir${dist}${driverInfo}\n  *${formatRupiah(sale.delivery_fee)}*`);
-            } else if (sale.delivery_status && sale.delivery_status !== 'NONE') {
-                const dist = (sale.delivery_distance_km && Number(sale.delivery_distance_km) > 0) ? ` (${formatDecimal(sale.delivery_distance_km)} km)` : '';
-                const driverInfo = effectiveDriver ? ` • Kurir: ${effectiveDriver}` : '';
-                itemLines.push(`🛵 Layanan Antar${dist}: Termasuk Biaya Kirim${driverInfo}\n  *Rp 0*`);
-            }
-
-            const f1 = s.receipt_footer_line1 || 'Terima Kasih Atas Kunjungan Anda!';
-            const f2 = s.receipt_footer_line2 || '';
-            const f3 = s.receipt_footer_line3 || '';
-
-            return tpl
-                .replace(/{receipt_layout}/g, layoutReceipt)
-                .replace(/{customer_name}/g, custName)
-                .replace(/{store_name}/g, storeTitle)
-                .replace(/{store_title}/g, storeTitle)
-                .replace(/{store_subtitle}/g, storeSubtitle)
-                .replace(/{branch_name}/g, branchName)
-                .replace(/{branch_address}/g, branchAddress)
-                .replace(/{custom_legal}/g, customLegal)
-                .replace(/{cashier_name}/g, cashierName)
-                .replace(/{invoice_number}/g, invoiceNo)
-                .replace(/{date}/g, dateStr)
-                .replace(/{sales_type}/g, salesType)
-                .replace(/{customer_category}/g, salesType)
-                .replace(/{grand_total}/g, grandTotalStr)
-                .replace(/{subtotal}/g, subtotalStr)
-                .replace(/{discount}/g, discountStr)
-                .replace(/{tax}/g, taxStr)
-                .replace(/{delivery_fee}/g, formatRupiah(sale.delivery_fee || 0))
-                .replace(/{payment_method}/g, payMethod)
-                .replace(/{cash_received}/g, cashReceivedStr)
-                .replace(/{cash_change}/g, cashChangeStr)
-                .replace(/{items_summary}/g, itemLines.join('\n'))
-                .replace(/{footer_note}/g, f1)
-                .replace(/{footer_1}/g, f1)
-                .replace(/{footer_2}/g, f2)
-                .replace(/{footer_3}/g, f3);
+            // Jika ada template kustom lain tanpa {receipt_layout}, gabungkan dengan layout nota utuh di bawahnya
+            return tpl + '\n\n' + layoutReceipt;
+        }
         }
 
         function launchWhatsAppDirect(cleanPhone, message) {
