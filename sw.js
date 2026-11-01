@@ -4,7 +4,7 @@
  * Menyediakan kapabilitas offline-first caching, launch standalone, dan background sync.
  */
 
-const CACHE_NAME = 'kad-tech-v1.4.5';
+const CACHE_NAME = 'kad-tech-v1.4.6';
 const STATIC_ASSETS = [
     './',
     './index.php',

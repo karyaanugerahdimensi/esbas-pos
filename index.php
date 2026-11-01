@@ -73,7 +73,7 @@ try {
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="KAD Tech">
     <meta name="application-name" content="KAD Tech Retail">
-    <link rel="manifest" href="manifest.json?v=1.4.5">
+    <link rel="manifest" href="manifest.json?v=1.4.6">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
     <title>KAD Tech Retail - POS Multi-Cabang v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</title>
@@ -31908,17 +31908,21 @@ Manager / Supervisor: __________________
             }
 
             // Ambil nomor telepon pelanggan dari data transaksi atau pelanggan aktif
-            let defaultPhone = (sale.customer_phone && sale.customer_phone !== '-') 
+            let rawPhone = (sale.customer_phone && sale.customer_phone !== '-') 
                 ? sale.customer_phone 
                 : (state.selectedCustomer && state.selectedCustomer.phone && state.selectedCustomer.phone !== '-' ? state.selectedCustomer.phone : '');
 
-            const phone = prompt('Kirim Struk WhatsApp ke nomor pelanggan:', defaultPhone || '08');
-            if (!phone) return;
+            let cleanPhone = cleanWhatsAppNumber(rawPhone);
 
-            const cleanPhone = cleanWhatsAppNumber(phone);
+            // Jika transaksi/pelanggan belum memiliki nomor telepon yang valid, baru mintakan nomor tujuan
             if (!cleanPhone || cleanPhone.length < 7) {
-                alert('Nomor WhatsApp tidak valid. Pastikan nomor diawali dengan 08 atau 62 (minimal 7 digit).');
-                return;
+                const phoneInput = prompt('Pelanggan ini belum memiliki nomor telepon. Masukkan nomor WhatsApp tujuan:', '08');
+                if (!phoneInput) return;
+                cleanPhone = cleanWhatsAppNumber(phoneInput);
+                if (!cleanPhone || cleanPhone.length < 7) {
+                    alert('Nomor WhatsApp tidak valid. Pastikan nomor diawali dengan 08 atau 62 (minimal 7 digit).');
+                    return;
+                }
             }
 
             // 1. Susun pesan nota elektronik WhatsApp lengkap

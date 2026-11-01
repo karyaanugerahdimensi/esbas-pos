@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.4.5",
-    "build": "20261101-71",
+    "version": "1.4.6",
+    "build": "20261101-72",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.4.6",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Eliminasi Konfirmasi Prompt Nomor HP pada Pengiriman Nota WhatsApp Kasir (FR-POS-51)",
+            "description": "Menghilangkan dialog popup konfirmasi nomor telepon (prompt) saat kasir menekan tombol 'Kirim WA' sehingga nota elektronik langsung terkirim seketika (1-click direct launch) ke aplikasi WhatsApp pelanggan yang terdaftar pada transaksi, mempercepat alur kerja kasir dan menghilangkan interupsi yang tidak diperlukan.",
+            "rollback_command": "git checkout v1.4.5"
+        },
         {
             "version": "1.4.5",
             "commit": "HEAD",
