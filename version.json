@@ -1,11 +1,19 @@
 {
     "app_name": "ESBAS POS Multicabang",
-    "version": "1.3.7",
-    "build": "20261101-62",
+    "version": "1.3.8",
+    "build": "20261101-63",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.3.8",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Perbaikan Total Sinkronisasi Offline-Online & Persistensi Menu Produk Kasir (FR-POS-46)",
+            "description": "Menyelesaikan tuntas kegagalan tombol sinkronisasi transaksi offline dan hilangnya data katalog produk/menu saat perangkat beralih ke mode offline: (1) Perbaikan Probe Server & Kompatibilitas Payload Sinkronisasi: Memperbaiki endpoint ping di api.php untuk mengembalikan online: true secara eksplisit, serta memperkuat logika triggerAutoSync di index.php agar mengevaluasi keberadaan status online/success secara fleksibel sehingga ketukan pada tombol pill topbar langsung memicu pengunggahan data secara responsif. Menyelaraskan payload sinkronisasi transaksi offline antara offline_sales dan sales, memetakan offline_ref sebagai fallback invoice_number, serta menjamin pencatatan stok dan piutang berjalan idempotent tanpa duplikasi; (2) Redundansi Tripel Caching Menu & Master Data POS: Meningkatkan versi IndexedDB ke versi 2 (OfflineDB dbVersion: 2) dengan pengecekan aman seluruh object stores (master_cache, offline_users, offline_sales, offline_shifts), mengintegrasikan penyimpanan ganda sinkron instan ke localStorage (esbas_master_bootstrap), memperbarui sw.js agar mencache respons bootstrap, serta mengamankan pemuatan awal katalog produk dan renderCategoryPills agar tidak terhapus saat koneksi internet terputus.",
+            "rollback_command": "git checkout v1.3.7"
+        },
         {
             "version": "1.3.7",
             "commit": "HEAD",

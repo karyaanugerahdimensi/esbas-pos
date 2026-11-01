@@ -4,7 +4,7 @@
  * Menyediakan kapabilitas offline-first caching, launch standalone, dan background sync.
  */
 
-const CACHE_NAME = 'esbas-pos-v1.3.6';
+const CACHE_NAME = 'esbas-pos-v1.3.8';
 const STATIC_ASSETS = [
     './',
     './index.php',
@@ -128,20 +128,31 @@ self.addEventListener('fetch', function(event) {
 
     // Untuk API GET: Coba jaringan terlebih dahulu, jika gagal offline coba cache
     if (url.pathname.indexOf('api.php') !== -1) {
-        event.respondWith(
-            fetch(request).catch(function() {
-                return caches.match(request).then(function(cached) {
-                    if (cached) return cached;
-                    return new Response(JSON.stringify({ 
-                        success: false, 
-                        is_offline: true, 
-                        message: 'Koneksi jaringan terputus. Menggunakan data cache lokal.' 
-                    }), {
-                        headers: { 'Content-Type': 'application/json' }
+        if (request.method === 'GET') {
+            event.respondWith(
+                fetch(request).then(function(networkResponse) {
+                    if (networkResponse && networkResponse.status === 200 && url.search.indexOf('action=bootstrap') !== -1) {
+                        var clone = networkResponse.clone();
+                        caches.open(CACHE_NAME).then(function(cache) {
+                            cache.put(request, clone);
+                        });
+                    }
+                    return networkResponse;
+                }).catch(function() {
+                    return caches.match(request).then(function(cached) {
+                        if (cached) return cached;
+                        return new Response(JSON.stringify({ 
+                            success: false, 
+                            is_offline: true, 
+                            message: 'Koneksi jaringan terputus. Menggunakan data cache lokal.' 
+                        }), {
+                            headers: { 'Content-Type': 'application/json' }
+                        });
                     });
-                });
-            })
-        );
+                })
+            );
+            return;
+        }
     }
 });
 

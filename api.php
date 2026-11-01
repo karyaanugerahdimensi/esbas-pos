@@ -441,6 +441,7 @@ try {
             echo json_encode([
                 'success' => true,
                 'status' => 'online',
+                'online' => true,
                 'timestamp' => time(),
                 'server_time' => date('Y-m-d H:i:s'),
                 'app_name' => 'ESBAS POS Multicabang'
@@ -451,7 +452,7 @@ try {
         // 0.02 SINKRONISASI PENJUALAN OFFLINE (BACKGROUND SYNC)
         // ==========================================
         case 'sync_offline_sales':
-            $batch = $input['offline_sales'] ?? [];
+            $batch = $input['offline_sales'] ?? ($input['sales'] ?? []);
             if (!is_array($batch) || empty($batch)) {
                 echo json_encode(['success' => true, 'synced_count' => 0, 'message' => 'Tidak ada antrean transaksi offline untuk disinkronkan.']);
                 break;
@@ -462,10 +463,13 @@ try {
             $syncedResults = [];
 
             foreach ($batch as $saleItem) {
-                $offlineRefId = trim($saleItem['offline_id'] ?? '');
+                $offlineRefId = trim($saleItem['offline_id'] ?? ($saleItem['offline_ref'] ?? ''));
                 $invoiceNumber = trim($saleItem['invoice_number'] ?? '');
                 if (empty($invoiceNumber) && !empty($offlineRefId)) {
                     $invoiceNumber = $offlineRefId;
+                }
+                if (empty($offlineRefId) && !empty($invoiceNumber)) {
+                    $offlineRefId = $invoiceNumber;
                 }
 
                 // Cek idempotensi: apakah faktur sudah pernah masuk sebelumnya?
@@ -487,7 +491,17 @@ try {
                 try {
                     $branchId = (int)($saleItem['branch_id'] ?? ($currentBranch['id'] ?? 1));
                     $userId = (int)($saleItem['user_id'] ?? ($_SESSION['user_id'] ?? 1));
-                    $shiftId = !empty($saleItem['shift_id']) ? (int)$saleItem['shift_id'] : null;
+                    $shiftId = null;
+                    if (!empty($saleItem['shift_id']) && is_numeric($saleItem['shift_id']) && (int)$saleItem['shift_id'] > 0) {
+                        $shiftId = (int)$saleItem['shift_id'];
+                    } else {
+                        $stmtCurShift = $pdo->prepare("SELECT id FROM cashier_shifts WHERE branch_id = ? AND user_id = ? AND status = 'OPEN' ORDER BY id DESC LIMIT 1");
+                        $stmtCurShift->execute([$branchId, $userId]);
+                        $openShiftId = $stmtCurShift->fetchColumn();
+                        if ($openShiftId) {
+                            $shiftId = (int)$openShiftId;
+                        }
+                    }
                     $customerId = !empty($saleItem['customer_id']) ? (int)$saleItem['customer_id'] : null;
                     $customerName = trim($saleItem['customer_name'] ?? 'Pelanggan Umum');
                     $customerCategory = trim($saleItem['customer_category'] ?? 'REGULER');
@@ -505,7 +519,14 @@ try {
                     $paymentStatus = ($paymentMethod === 'PIUTANG') ? 'UNPAID' : 'PAID';
                     $cashReceived = (float)($saleItem['cash_received'] ?? ($paymentMethod === 'CASH' ? $grandTotal : 0));
                     $cashChange = (float)($saleItem['cash_change'] ?? 0);
-                    $createdAt = !empty($saleItem['created_at']) ? $saleItem['created_at'] : date('Y-m-d H:i:s');
+                    $rawCreated = $saleItem['created_at'] ?? '';
+                    $createdAt = date('Y-m-d H:i:s');
+                    if (!empty($rawCreated)) {
+                        $ts = strtotime($rawCreated);
+                        if ($ts && $ts > 0) {
+                            $createdAt = date('Y-m-d H:i:s', $ts);
+                        }
+                    }
 
                     $totalCogs = 0;
                     $items = $saleItem['items'] ?? [];
@@ -536,8 +557,8 @@ try {
                         $vName = $it['variant_name'] ?? '';
                         $pName = $it['product_name'] ?? 'Produk';
                         $qty = (float)($it['qty'] ?? 1);
-                        $uPrice = (float)($it['unit_price'] ?? 0);
-                        $subPrice = (float)($it['subtotal_price'] ?? ($qty * $uPrice));
+                        $uPrice = (float)($it['unit_price'] ?? ($it['price'] ?? 0));
+                        $subPrice = (float)($it['subtotal_price'] ?? ($it['subtotal'] ?? ($qty * $uPrice)));
 
                         $cogsVal = 0;
                         if ($pId > 0) {
@@ -619,7 +640,7 @@ try {
         // 0.03 SINKRONISASI SHIFT KASIR OFFLINE
         // ==========================================
         case 'sync_offline_shift':
-            $shiftData = $input['shift_data'] ?? [];
+            $shiftData = $input['shift_data'] ?? $input;
             $branchId = (int)($shiftData['branch_id'] ?? ($currentBranch['id'] ?? 1));
             $userId = (int)($shiftData['user_id'] ?? ($_SESSION['user_id'] ?? 1));
             $startTime = !empty($shiftData['start_time']) ? $shiftData['start_time'] : date('Y-m-d H:i:s');

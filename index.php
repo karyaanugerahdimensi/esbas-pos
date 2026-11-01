@@ -10703,14 +10703,20 @@ try {
         // ========================================================
         // CLIENT-SIDE INDEXEDDB OFFLINE STORAGE ENGINE (OfflineDB)
         // ========================================================
+        // OFFLINE INDEXEDDB & STORAGE PERSISTENCE ENGINE
+        // ========================================================
         const OfflineDB = {
             dbName: 'EsbasRetailPosOfflineDB',
-            dbVersion: 1,
+            dbVersion: 2,
             dbInstance: null,
 
             async init() {
                 if (this.dbInstance) return this.dbInstance;
                 return new Promise((resolve, reject) => {
+                    if (!window.indexedDB) {
+                        reject(new Error('IndexedDB tidak didukung pada peramban ini'));
+                        return;
+                    }
                     const req = indexedDB.open(this.dbName, this.dbVersion);
                     req.onupgradeneeded = (e) => {
                         const db = e.target.result;
@@ -10739,66 +10745,111 @@ try {
             },
 
             async setItem(storeName, item) {
-                const db = await this.init();
-                return new Promise((resolve, reject) => {
-                    const tx = db.transaction([storeName], 'readwrite');
-                    const store = tx.objectStore(storeName);
-                    const req = store.put(item);
-                    req.onsuccess = () => resolve(true);
-                    req.onerror = (err) => reject(err);
-                });
+                try {
+                    const db = await this.init();
+                    if (!db.objectStoreNames.contains(storeName)) return false;
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction([storeName], 'readwrite');
+                        const store = tx.objectStore(storeName);
+                        const req = store.put(item);
+                        req.onsuccess = () => resolve(true);
+                        req.onerror = (err) => reject(err);
+                    });
+                } catch (e) {
+                    console.warn('OfflineDB setItem error (' + storeName + '):', e);
+                    return false;
+                }
             },
 
             async getItem(storeName, key) {
-                const db = await this.init();
-                return new Promise((resolve, reject) => {
-                    const tx = db.transaction([storeName], 'readonly');
-                    const store = tx.objectStore(storeName);
-                    const req = store.get(key);
-                    req.onsuccess = () => resolve(req.result || null);
-                    req.onerror = (err) => reject(err);
-                });
+                try {
+                    const db = await this.init();
+                    if (!db.objectStoreNames.contains(storeName)) return null;
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction([storeName], 'readonly');
+                        const store = tx.objectStore(storeName);
+                        const req = store.get(key);
+                        req.onsuccess = () => resolve(req.result || null);
+                        req.onerror = (err) => reject(err);
+                    });
+                } catch (e) {
+                    console.warn('OfflineDB getItem error (' + storeName + '):', e);
+                    return null;
+                }
             },
 
             async getAll(storeName) {
-                const db = await this.init();
-                return new Promise((resolve, reject) => {
-                    const tx = db.transaction([storeName], 'readonly');
-                    const store = tx.objectStore(storeName);
-                    const req = store.getAll();
-                    req.onsuccess = () => resolve(req.result || []);
-                    req.onerror = (err) => reject(err);
-                });
+                try {
+                    const db = await this.init();
+                    if (!db.objectStoreNames.contains(storeName)) return [];
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction([storeName], 'readonly');
+                        const store = tx.objectStore(storeName);
+                        const req = store.getAll();
+                        req.onsuccess = () => resolve(req.result || []);
+                        req.onerror = (err) => reject(err);
+                    });
+                } catch (e) {
+                    console.warn('OfflineDB getAll error (' + storeName + '):', e);
+                    return [];
+                }
             },
 
             async removeItem(storeName, key) {
-                const db = await this.init();
-                return new Promise((resolve, reject) => {
-                    const tx = db.transaction([storeName], 'readwrite');
-                    const store = tx.objectStore(storeName);
-                    const req = store.delete(key);
-                    req.onsuccess = () => resolve(true);
-                    req.onerror = (err) => reject(err);
-                });
+                try {
+                    const db = await this.init();
+                    if (!db.objectStoreNames.contains(storeName)) return true;
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction([storeName], 'readwrite');
+                        const store = tx.objectStore(storeName);
+                        const req = store.delete(key);
+                        req.onsuccess = () => resolve(true);
+                        req.onerror = (err) => reject(err);
+                    });
+                } catch (e) {
+                    console.warn('OfflineDB removeItem error (' + storeName + '):', e);
+                    return true;
+                }
             },
 
             async saveMasterBootstrap(data) {
                 if (!data) return;
                 try {
                     await this.setItem('master_cache', { key: 'bootstrap_data', data: data, cached_at: Date.now() });
-                    if (data.offline_auth_pack && Array.isArray(data.offline_auth_pack)) {
-                        for (const u of data.offline_auth_pack) {
-                            await this.setItem('offline_users', u);
-                        }
-                    }
                 } catch(e) {
                     console.warn('Gagal menyimpan master bootstrap ke IndexedDB:', e);
+                }
+                try {
+                    localStorage.setItem('esbas_master_bootstrap', JSON.stringify(data));
+                } catch(e) {
+                    console.warn('Gagal menyimpan master bootstrap ke localStorage:', e);
+                }
+                if (data.offline_auth_pack && Array.isArray(data.offline_auth_pack)) {
+                    for (const u of data.offline_auth_pack) {
+                        try {
+                            await this.setItem('offline_users', u);
+                        } catch(e){}
+                    }
                 }
             },
 
             async getMasterBootstrap() {
-                const row = await this.getItem('master_cache', 'bootstrap_data');
-                return row ? row.data : null;
+                try {
+                    const row = await this.getItem('master_cache', 'bootstrap_data');
+                    if (row && row.data) return row.data;
+                } catch(e) {
+                    console.warn('Gagal mengambil master bootstrap dari IndexedDB:', e);
+                }
+                try {
+                    const cachedStr = localStorage.getItem('esbas_master_bootstrap');
+                    if (cachedStr) {
+                        const parsed = JSON.parse(cachedStr);
+                        if (parsed && typeof parsed === 'object') return parsed;
+                    }
+                } catch(e) {
+                    console.warn('Gagal mengambil master bootstrap dari localStorage:', e);
+                }
+                return null;
             }
         };
 
@@ -10957,6 +11008,7 @@ try {
             if (isSyncingData) return;
             if (!navigator.onLine) {
                 if (!silent) alert('Tidak ada sambungan internet. Pastikan perangkat Anda terhubung ke jaringan Wi-Fi atau seluler.');
+                await updateOfflineSyncStatusUI();
                 return;
             }
 
@@ -10965,11 +11017,24 @@ try {
                 const textEl = document.getElementById('topbar-offline-sync-text');
                 if (textEl) textEl.innerText = '⚡ Memeriksa Server...';
 
-                // 1. Ping Server Probe
-                const pingRes = await fetch('api.php?action=ping', { cache: 'no-store' });
-                const pingData = await pingRes.json();
-                if (!pingData || !pingData.online) {
+                // 1. Ping Server Probe (Pemeriksaan respons server tangguh)
+                let isServerOnline = false;
+                try {
+                    const pingRes = await fetch('api.php?action=ping', { cache: 'no-store' });
+                    const pingData = await pingRes.json();
+                    if (pingData && (pingData.online === true || pingData.status === 'online' || pingData.success === true)) {
+                        isServerOnline = true;
+                    }
+                } catch (pe) {
+                    console.warn('Ping probe server gagal:', pe);
+                    isServerOnline = false;
+                }
+
+                if (!isServerOnline) {
                     isSyncingData = false;
+                    if (!silent) {
+                        alert('Server pusat belum dapat dihubungi. Periksa sambungan internet Anda atau coba sesaat lagi.');
+                    }
                     await updateOfflineSyncStatusUI();
                     return;
                 }
@@ -10987,35 +11052,48 @@ try {
                             body: JSON.stringify(shift)
                         });
                         const sData = await sRes.json();
-                        if (sData.success) {
+                        if (sData && sData.success) {
                             await OfflineDB.removeItem('offline_shifts', shift.offline_ref);
                         }
-                    } catch(e) {
+                    } catch (e) {
                         console.warn('Gagal menyinkronkan shift offline:', e);
                     }
                 }
 
                 // 3. Sinkronkan Antrean Transaksi Penjualan Offline
                 const pendingSales = await OfflineDB.getAll('offline_sales');
-                const unsyncedSales = pendingSales.filter(s => !s.synced);
+                const unsyncedSales = (pendingSales || []).filter(s => !s.synced);
 
                 if (unsyncedSales.length > 0) {
-                    if (textEl) textEl.innerText = `⚡ Menyinkronkan (${unsyncedSales.length})...`;
+                    if (textEl) textEl.innerText = '⚡ Menyinkronkan (' + unsyncedSales.length + ')...';
 
                     const res = await fetch('api.php?action=sync_offline_sales', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ sales: unsyncedSales })
+                        body: JSON.stringify({ offline_sales: unsyncedSales, sales: unsyncedSales })
                     });
                     const data = await res.json();
 
-                    if (data.success) {
-                        for (const s of unsyncedSales) {
-                            await OfflineDB.removeItem('offline_sales', s.offline_ref);
+                    if (data && data.success) {
+                        const successRefs = new Set();
+                        if (Array.isArray(data.results)) {
+                            data.results.forEach(r => {
+                                if (r.status === 'SYNCED_SUCCESS' || r.status === 'ALREADY_EXISTS') {
+                                    if (r.offline_id) successRefs.add(r.offline_id);
+                                    if (r.invoice_number) successRefs.add(r.invoice_number);
+                                }
+                            });
                         }
+
+                        for (const s of unsyncedSales) {
+                            if (successRefs.size === 0 || successRefs.has(s.offline_ref) || successRefs.has(s.invoice_number)) {
+                                await OfflineDB.removeItem('offline_sales', s.offline_ref);
+                            }
+                        }
+
                         const count = unsyncedSales.length;
                         if (!silent) {
-                            alert(`✅ Sinkronisasi Berhasil: ${count} transaksi penjualan offline telah sukses diunggah ke server pusat! Stok dan laporan telah diperbarui.`);
+                            alert('✅ Sinkronisasi Berhasil: ' + count + ' transaksi penjualan offline telah sukses diunggah ke server pusat! Stok dan laporan telah diperbarui.');
                         }
                         // Muat ulang data terbaru dari server
                         try {
@@ -11025,14 +11103,15 @@ try {
                             }
                         } catch(e){}
                     } else {
-                        if (!silent) alert('Sinkronisasi sebagian atau gagal: ' + (data.message || data.error));
+                        const errMsg = (data && (data.message || data.error)) || 'Respon tidak valid dari server.';
+                        if (!silent) alert('Sinkronisasi sebagian atau gagal: ' + errMsg);
                     }
                 } else {
                     if (!silent) alert('Semua data sudah tersinkronkan dengan server (0 transaksi tertunda).');
                 }
             } catch (err) {
                 console.warn('Gagal proses sinkronisasi:', err);
-                if (!silent) alert('Gagal menyinkronkan data: ' + err.message);
+                if (!silent) alert('Gagal menyinkronkan data: ' + (err && err.message ? err.message : 'Kesalahan jaringan'));
             } finally {
                 isSyncingData = false;
                 await updateOfflineSyncStatusUI();
@@ -11040,6 +11119,8 @@ try {
         }
 
         window.triggerManualSync = async function() {
+            const textEl = document.getElementById('topbar-offline-sync-text');
+            if (textEl) textEl.innerText = '⚡ Menghubungkan...';
             await triggerAutoSync(false);
         };
 
@@ -11861,8 +11942,9 @@ try {
                 if (!isOffline) {
                     try {
                         const res = await fetch(`api.php?action=bootstrap&branch_id=${bId}&user_id=${uId}`);
-                        data = await res.json();
-                        if (data && data.success) {
+                        const resData = await res.json();
+                        if (resData && resData.success) {
+                            data = resData;
                             state.isOfflineMode = false;
                             await OfflineDB.saveMasterBootstrap(data);
                         } else {
@@ -11879,7 +11961,14 @@ try {
                     state.isOfflineMode = true;
                     data = await OfflineDB.getMasterBootstrap();
                     if (!data) {
-                        alert('Aplikasi sedang dalam Mode Offline dan belum memiliki cache master data. Silakan hubungkan internet minimal 1 kali.');
+                        if (state.products && state.products.length > 0) {
+                            console.log('Mempertahankan katalog produk dan menu yang sudah aktif di memori.');
+                            renderProducts();
+                            renderCategoryPills();
+                            await updateOfflineSyncStatusUI();
+                            return;
+                        }
+                        alert('Aplikasi sedang dalam Mode Offline dan belum memiliki cache master data menu/produk. Silakan hubungkan internet minimal 1 kali.');
                         return;
                     }
                 }
@@ -11913,7 +12002,7 @@ try {
                     seenPids.add(p.id);
                     return true;
                 });
-                state.categories = data.categories;
+                state.categories = Array.isArray(data.categories) ? data.categories : (state.categories || []);
                 state.productTypes = data.product_types || [];
                 state.productUnits = data.product_units || [];
                 state.taxes = data.taxes || [];
@@ -12199,8 +12288,10 @@ try {
         // ==========================================
         function renderCategoryPills() {
             const container = document.getElementById('category-pills');
-            const pillsHtml = state.categories.map(cat => 
-                `<button onclick="setCategoryFilter('${cat.name}')" class="cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors">${cat.icon_emoji || ''} ${cat.name}</button>`
+            if (!container) return;
+            const cats = Array.isArray(state.categories) ? state.categories : [];
+            const pillsHtml = cats.map(cat => 
+                `<button onclick="setCategoryFilter('${escapeHtml(cat.name)}')" class="cat-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors">${cat.icon_emoji || ''} ${cat.name}</button>`
             ).join('');
             container.innerHTML = `<button onclick="setCategoryFilter('ALL')" class="cat-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition-colors">Semua</button>` + pillsHtml;
         }
@@ -13495,7 +13586,7 @@ try {
                     payment_status: (state.paymentMethod === 'PIUTANG') ? 'UNPAID' : 'PAID',
                     cash_received: (state.paymentMethod === 'PIUTANG') ? 0 : state.cashReceived,
                     cash_change: (state.paymentMethod === 'CASH') ? Math.max(0, state.cashReceived - grandTotal) : 0,
-                    created_at: new Date().toLocaleString('id-ID'),
+                    created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),
                     is_offline: 1,
                     synced: 0,
                     items: state.cart.map(c => ({
@@ -13505,7 +13596,9 @@ try {
                         variant_name: c.variant_name || null,
                         qty: c.qty,
                         price: c.price,
-                        subtotal: c.price * c.qty
+                        unit_price: c.price,
+                        subtotal: c.price * c.qty,
+                        subtotal_price: c.price * c.qty
                     }))
                 };
 
