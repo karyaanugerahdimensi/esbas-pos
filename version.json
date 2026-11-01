@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.4.3",
-    "build": "20261101-68",
+    "version": "1.4.4",
+    "build": "20261101-69",
     "release_date": "2026-11-01",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.4.4",
+            "commit": "HEAD",
+            "date": "2026-11-01",
+            "title": "Optimalisasi Kecepatan Proses & Kelancaran Browser Tablet Android RAM 2GB (FR-PERF-01)",
+            "description": "Mengoptimalkan performa rendering browser agar responsif dan 60fps mulus pada perangkat Android entry-level berkapasitas RAM 2GB: (1) High-Performance RAF-Debounced Lucide Icons Engine: Menghilangkan bottleneck layout thrashing dari 135+ pemanggilan sinkron lucide.createIcons() dengan membungkusnya dalam satu siklus requestAnimationFrame per-frame; (2) Akselerasi Hardware GPU & CSS Layout Containment: Menerapkan 'contain: content' dan 'transform: translateZ(0)' pada grid produk, daftar keranjang, dan tabel pencarian guna mengisolasi reflow DOM; (3) Asynchronous Deferred Map CDN: Menunda pemuatan modul Leaflet.js dengan atribut 'defer' agar startup aplikasi kasir seketika tanpa jeda; (4) Debounced Keystroke Handlers: Menerapkan debounce 120ms pada pencarian produk kasir dan pencarian pelanggan POS untuk menghilangkan lag pengetikan keyboard virtual Android; (5) DOM Virtualization & Lazy Slicing: Merender instan 48 produk unggulan pertama dan menyediakan ekspansi terkontrol untuk mencegah pemborosan memori heap.",
+            "rollback_command": "git checkout v1.4.3"
+        },
         {
             "version": "1.4.3",
             "commit": "HEAD",

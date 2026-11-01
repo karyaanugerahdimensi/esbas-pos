@@ -73,10 +73,10 @@ try {
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="KAD Tech">
     <meta name="application-name" content="KAD Tech Retail">
-    <link rel="manifest" href="manifest.json?v=1.4.3">
+    <link rel="manifest" href="manifest.json?v=1.4.4">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
-    <title>ESBAS Retail - POS Multi-Cabang v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</title>
+    <title>KAD Tech Retail - POS Multi-Cabang v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</title>
     <!-- Dark Mode Initializer (Prevents Theme Flickering) -->
     <script>
         (function() {
@@ -93,17 +93,65 @@ try {
     </script>
     <!-- Production Compiled Tailwind CSS -->
     <link rel="stylesheet" href="assets/css/tailwind.min.css">
-    <!-- Lucide Icons with Safe Fallback Stub -->
+    <!-- Lucide Icons with Safe Fallback Stub & High-Performance Debounce Engine -->
     <script>
         if (typeof window.lucide === 'undefined') {
             window.lucide = { createIcons: function() {} };
         }
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Leaflet.js Interactive Map CDN -->
+    <script>
+        // High-Performance Batched & RAF-Debounced Lucide Engine (Optimized for 2GB RAM Mobile/Tablet)
+        (function() {
+            var _lucideRaf = null;
+            function wrapLucide() {
+                if (!window.lucide || window.lucide._isOptimized) return;
+                var rawCreateIcons = window.lucide.createIcons;
+                window.lucide.createIcons = function(options) {
+                    if (options && options.root) {
+                        try { rawCreateIcons(options); } catch(e) {}
+                        return;
+                    }
+                    if (_lucideRaf) return;
+                    if (window.requestAnimationFrame) {
+                        _lucideRaf = window.requestAnimationFrame(function() {
+                            _lucideRaf = null;
+                            try { rawCreateIcons(); } catch(e) {}
+                        });
+                    } else {
+                        _lucideRaf = setTimeout(function() {
+                            _lucideRaf = null;
+                            try { rawCreateIcons(); } catch(e) {}
+                        }, 16);
+                    }
+                };
+                window.lucide._isOptimized = true;
+            }
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                wrapLucide();
+            } else {
+                window.addEventListener('load', wrapLucide);
+            }
+        })();
+    </script>
+    <!-- Leaflet.js Interactive Map CDN (Deferred for Instant Startup) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <style>
+        /* High-Performance Hardware Acceleration & Layout Containment (RAM 2GB Smoothness) */
+        body {
+            text-rendering: optimizeSpeed;
+            -webkit-font-smoothing: antialiased;
+        }
+        #products-grid, #cart-items, .table-container, #pos-customer-search-results {
+            contain: content;
+            -webkit-overflow-scrolling: touch;
+            transform: translateZ(0);
+        }
+        @media (max-width: 1024px) {
+            .hover\:shadow-md:hover { box-shadow: none !important; }
+            .hover\:shadow-lg:hover { box-shadow: none !important; }
+        }
         .leaflet-container { z-index: 10 !important; border-radius: 1rem; }
         @media print {
             body.printing-payslip * { visibility: hidden !important; }
@@ -12437,13 +12485,19 @@ try {
             renderProducts();
         }
 
+        var _filterProductsTimer = null;
         function filterProducts() {
-            state.searchKeyword = document.getElementById('product-search').value.toLowerCase();
-            renderProducts();
+            if (_filterProductsTimer) clearTimeout(_filterProductsTimer);
+            _filterProductsTimer = setTimeout(function() {
+                var searchInput = document.getElementById('product-search');
+                state.searchKeyword = searchInput ? searchInput.value.toLowerCase().trim() : '';
+                renderProducts();
+            }, 120);
         }
 
         function renderProducts() {
             const grid = document.getElementById('products-grid');
+            if (!grid) return;
             const activeCust = state.selectedCustomer;
             const activeCat = state.selectedCustomerCategory || (activeCust ? activeCust.category : 'REGULER');
 
@@ -12462,7 +12516,12 @@ try {
                 return;
             }
 
-            grid.innerHTML = filtered.map(p => {
+            // Performa Tinggi untuk Android RAM 2GB: Lazy slicing jika produk sangat banyak tanpa filter
+            const maxInitial = 48;
+            const needSlice = (!state.showAllProducts && !state.searchKeyword && state.selectedCategory === 'ALL' && filtered.length > maxInitial);
+            const displayList = needSlice ? filtered.slice(0, maxInitial) : filtered;
+
+            let html = displayList.map(p => {
                 const priceInfo = getEffectiveProductPrice(p);
                 const hasVariants = (p.variants && p.variants.length > 0);
                 return `
@@ -12491,6 +12550,19 @@ try {
                     </div>
                 `;
             }).join('');
+
+            if (needSlice) {
+                html += `
+                    <div class="col-span-full text-center py-2">
+                        <button type="button" onclick="state.showAllProducts=true; renderProducts();" class="w-full py-2.5 px-4 bg-indigo-50 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-slate-700 text-indigo-700 dark:text-indigo-300 font-bold text-xs rounded-xl border border-indigo-200 dark:border-slate-700 transition-colors cursor-pointer shadow-2xs">
+                            Muat Seluruh Produk (+${filtered.length - maxInitial} produk lagi)
+                        </button>
+                    </div>
+                `;
+            }
+
+            grid.innerHTML = html;
+        }
         }
 
         function onProductClick(productId) {
@@ -24270,12 +24342,9 @@ Manager / Supervisor: __________________
         // FITUR PENCARIAN PELANGGAN POS BERBASIS KATA KUNCI (KEYWORD SEARCH)
         // ========================================================
 
+        var _custSearchDebounceTimer = null;
         function onPosCustomerSearchInput(query) {
-            const q = (query || '').trim().toLowerCase();
-            const resultsContainer = document.getElementById('pos-customer-search-results');
             const clearBtn = document.getElementById('pos-customer-search-clear');
-            if (!resultsContainer) return;
-
             if (clearBtn) {
                 if (query && query.trim().length > 0) {
                     clearBtn.classList.remove('hidden');
@@ -24283,6 +24352,17 @@ Manager / Supervisor: __________________
                     clearBtn.classList.add('hidden');
                 }
             }
+
+            if (_custSearchDebounceTimer) clearTimeout(_custSearchDebounceTimer);
+            _custSearchDebounceTimer = setTimeout(function() {
+                _executePosCustomerSearch(query);
+            }, 120);
+        }
+
+        function _executePosCustomerSearch(query) {
+            const q = (query || '').trim().toLowerCase();
+            const resultsContainer = document.getElementById('pos-customer-search-results');
+            if (!resultsContainer) return;
 
             // Jika kata kunci kosong, sembunyikan dropdown hasil pencarian
             if (q.length === 0) {
