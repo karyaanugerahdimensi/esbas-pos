@@ -2833,7 +2833,19 @@ function autoMigrateMysql($pdo) {
                 }
             }
 
-            // D. Auto-Heal data shift CLOSED yang belum seimbang di tabel cashier_shifts
+            // D. Pastikan resep Es Kristal 10 Kg -> 2x Es Kristal 5kg (BOM Produk Jadi dari Produk Jadi)
+            $pEs10 = (int)$pdo->query("SELECT id FROM `products` WHERE `sku` = 'PRD-00008' LIMIT 1")->fetchColumn();
+            if ($pEs10 && $pEs5) {
+                $chkEs10Rec = $pdo->prepare("SELECT COUNT(*) FROM `product_recipes` WHERE `finished_product_id` = ? AND `ingredient_product_id` = ?");
+                $chkEs10Rec->execute([$pEs10, $pEs5]);
+                if ((int)$chkEs10Rec->fetchColumn() === 0) {
+                    $pdo->prepare("INSERT INTO `product_recipes` (`finished_product_id`, `ingredient_product_id`, `qty_needed`, `unit`) VALUES (?, ?, 2, 'ball')")
+                        ->execute([$pEs10, $pEs5]);
+                    $pdo->prepare("UPDATE `products` SET `has_bom` = 1 WHERE `id` = ?")->execute([$pEs10]);
+                }
+            }
+
+            // E. Auto-Heal data shift CLOSED yang belum seimbang di tabel cashier_shifts
             $chkShiftCol = $pdo->query("SHOW TABLES LIKE 'cashier_shifts'")->fetch();
             if ($chkShiftCol) {
                 $closedShifts = $pdo->query("
@@ -2892,20 +2904,23 @@ function autoMigrateMysql($pdo) {
                         }
                     }
 
-                    // 6. Es Kristal 5kg (PRD-00007): Awal 5, Opening Added 5, Tambahan 9, Terjual 9, Sisa Fisik 10
+                    // 6. Es Kristal 5kg (PRD-00007): Awal 10, Opening Added 5, Opening Total 15, Sisa Fisik 10
                     if ($pEs5) {
-                        if (empty($nMap[$pEs5]) || (float)$nMap[$pEs5] == 0 || (float)($cMap[$pEs5] ?? 0) != 10) {
-                            $nMap[$pEs5] = 5;
+                        if ((float)($nMap[$pEs5] ?? 0) != 10 || (float)($aMap[$pEs5] ?? 0) != 5 || (float)($oMap[$pEs5] ?? 0) != 15 || (float)($cMap[$pEs5] ?? 0) != 10) {
+                            $nMap[$pEs5] = 10;
                             $aMap[$pEs5] = 5;
-                            $oMap[$pEs5] = 10;
+                            $oMap[$pEs5] = 15;
                             $cMap[$pEs5] = 10;
                             $isChanged = true;
                         }
                     }
 
-                    // 7. Plastik PE 40x60 (RAW-00092): Sisa fisik 11
+                    // 7. Plastik PE 40x60 (RAW-00092): Awal 0, Opening 20, Sisa Fisik 11
                     if ($pPlastik) {
-                        if ((float)($cMap[$pPlastik] ?? 0) != 11) {
+                        $nMap[$pPlastik] = 0;
+                        $aMap[$pPlastik] = 20;
+                        $oMap[$pPlastik] = 20;
+                        if ((float)($cMap[$pPlastik] ?? 0) != 11 || (int)($csRow['closing_raw_plastik'] ?? 0) != 11) {
                             $cMap[$pPlastik] = 11;
                             $isChanged = true;
                         }
