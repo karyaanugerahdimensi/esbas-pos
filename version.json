@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.7.4",
-    "build": "20261102-100",
+    "version": "1.7.5",
+    "build": "20261102-101",
     "release_date": "2026-11-02",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.7.5",
+            "commit": "HEAD",
+            "date": "2026-11-02",
+            "title": "Perbaikan Presisi Input Group Addon Satuan KM Odometer Beban BBM (FR-UI-06)",
+            "description": "Menyelesaikan masalah visual tumpang tindih teks 'KM' dengan angka odometer pada kotak input modal Tutup Toko: (1) Mengubah struktur input absolute overlay menjadi input-group addon flex (flex items-stretch) dengan border-radius 10px menyatu rapi; (2) Menghilangkan ketergantungan pada utilitas CSS .right-0 yang tidak tersedia pada stylesheet prebuilt; (3) Menstandarkan tinggi ketiga komponen rincian BBM (Dropdown armada, Input group odometer, dan Badge KM sebelumnya) tepat h-9 (36px) dengan perataan baseline presisi; (4) Kompatibilitas Android 8.1 Oreo: 100% bebas token modern ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.7.4"
+        },
         {
             "version": "1.7.4",
             "commit": "HEAD",

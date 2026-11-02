@@ -17125,55 +17125,59 @@ try {
                 <!-- Baris Input Utama Beban Kasir -->
                 <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
                     <div class="sm:col-span-4">
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Kategori Beban</label>
-                        <select class="expense-category-input w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:ring-1 focus:ring-rose-500" onchange="onClosingExpenseCategoryChange(this)">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Kategori Beban</label>
+                        <select class="expense-category-input w-full h-9 px-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:ring-1 focus:ring-rose-500" onchange="onClosingExpenseCategoryChange(this)">
                             ${catOptions}
                         </select>
                     </div>
                     <div class="sm:col-span-3">
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Nominal (Rp)</label>
-                        <input type="number" min="0" placeholder="0" oninput="updateClosingCashSummary()" class="expense-amount-input w-full p-2 bg-white border border-rose-200 rounded-xl text-xs font-black text-rose-900 text-right font-mono focus:ring-1 focus:ring-rose-500">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nominal (Rp)</label>
+                        <input type="number" min="0" placeholder="0" oninput="updateClosingCashSummary()" class="expense-amount-input w-full h-9 px-2.5 bg-white border border-rose-200 rounded-xl text-xs font-black text-rose-900 text-right font-mono focus:ring-1 focus:ring-rose-500">
                     </div>
                     <div class="sm:col-span-4">
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Keterangan / Keperluan</label>
-                        <input type="text" placeholder="Contoh: Bensin delivery kurir, nota SPBU..." class="expense-notes-input w-full p-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-1 focus:ring-rose-500">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Keterangan / Keperluan</label>
+                        <input type="text" placeholder="Contoh: Bensin delivery kurir, nota SPBU..." class="expense-notes-input w-full h-9 px-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-1 focus:ring-rose-500">
                     </div>
                     <div class="sm:col-span-1 text-center">
-                        <button type="button" onclick="this.closest('.closing-expense-row').remove(); updateClosingCashSummary();" class="w-full py-2 text-rose-500 hover:text-rose-700 hover:bg-rose-100/70 border border-rose-200 rounded-xl text-xs font-bold transition-colors flex items-center justify-center" title="Hapus">✕</button>
+                        <button type="button" onclick="this.closest('.closing-expense-row').remove(); updateClosingCashSummary();" class="w-full h-9 text-rose-500 hover:text-rose-700 hover:bg-rose-100/70 border border-rose-200 rounded-xl text-xs font-bold transition-colors flex items-center justify-center" title="Hapus">✕</button>
                     </div>
                 </div>
 
                 <!-- Input Khusus Beban BBM: Pilihan Kendaraan & Input Odometer Mandatory (Full Width) -->
-                <div class="expense-bbm-details bg-amber-50/90 p-3 rounded-xl border border-amber-200 space-y-2 hidden">
+                <div class="expense-bbm-details bg-amber-50/90 p-3 rounded-2xl border border-amber-200/90 space-y-2.5 hidden">
                     <div class="flex items-center justify-between text-xs border-b border-amber-200/70 pb-1.5">
-                        <span class="font-black text-amber-950 flex items-center space-x-1.5 text-[11px]">
-                            <span>🛵</span><span>Rincian Armada & Odometer Bensin (BBM Kurir)</span>
+                        <span class="font-bold text-amber-950 flex items-center space-x-1.5 text-xs">
+                            <span class="text-sm">🛵</span><span>Rincian Armada & Log Bensin (BBM Kurir)</span>
                         </span>
-                        <span class="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
-                            Wajib Diisi
+                        <span class="text-[10px] font-bold text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
+                            Wajib Catat KM Odometer
                         </span>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
                         <div class="sm:col-span-5">
-                            <label class="block text-[9px] font-black text-amber-900 uppercase mb-1">
+                            <label class="block text-[10px] font-bold text-amber-900 uppercase tracking-wider mb-1">
                                 Pilih Armada Kendaraan Kurir:
                             </label>
-                            <select class="expense-vehicle-select w-full p-2 bg-white border border-amber-300 rounded-xl text-xs font-bold text-slate-800" onchange="onClosingExpenseVehicleChange(this)">
+                            <select class="expense-vehicle-select w-full h-9 px-2 bg-white border border-amber-300 rounded-xl text-xs font-bold text-slate-800 focus:ring-1 focus:ring-amber-500" onchange="onClosingExpenseVehicleChange(this)">
                                 ${vehOptions}
                             </select>
                         </div>
                         <div class="sm:col-span-4">
-                            <label class="block text-[9px] font-black text-rose-900 uppercase mb-1 flex items-center space-x-1">
-                                <span>⏱️</span><span>KM Odometer Saat Ini: <span class="text-rose-600 font-extrabold">* (Wajib)</span></span>
+                            <label class="block text-[10px] font-bold text-rose-900 uppercase tracking-wider mb-1">
+                                KM Odometer Terkini: <span class="text-rose-600 font-extrabold">* (Wajib)</span>
                             </label>
-                            <div class="relative">
-                                <input type="number" step="any" min="0" placeholder="Input KM odometer..." class="expense-odometer-input w-full p-2 pr-9 bg-white border-2 border-rose-300 rounded-xl text-xs font-black text-rose-950 font-mono focus:ring-1 focus:ring-rose-500" data-last-odometer="${firstVehOdo}">
-                                <span class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-[10px] font-bold text-slate-400 pointer-events-none">KM</span>
+                            <div class="flex items-stretch">
+                                <input type="number" step="any" min="0" placeholder="Input angka KM..." class="expense-odometer-input flex-1 h-9 px-3 bg-white border-2 border-rose-400 text-xs font-black text-rose-950 font-mono focus:outline-none focus:ring-1 focus:ring-rose-500" style="border-radius: 10px 0 0 10px;" data-last-odometer="${firstVehOdo}">
+                                <span class="h-9 px-3 bg-rose-100 border-2 border-l-0 border-rose-400 text-xs font-black text-rose-800 font-mono flex items-center justify-center select-none" style="border-radius: 0 10px 10px 0;">KM</span>
                             </div>
                         </div>
-                        <div class="sm:col-span-3 bg-amber-100/80 p-2 rounded-xl border border-amber-300/80 text-center">
-                            <span class="text-[9px] text-amber-800 block font-bold uppercase tracking-wider">KM Sebelumnya</span>
-                            <span class="expense-last-odo-badge font-mono font-black text-xs text-amber-950 block mt-0.5">${formatDecimal(firstVehOdo)} KM</span>
+                        <div class="sm:col-span-3">
+                            <label class="block text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-1 text-center sm:text-right">
+                                KM Sebelumnya:
+                            </label>
+                            <div class="h-9 px-3 bg-amber-100 border border-amber-300 rounded-xl flex items-center justify-center sm:justify-end">
+                                <span class="expense-last-odo-badge font-mono font-black text-xs text-amber-950">${formatDecimal(firstVehOdo)} KM</span>
+                            </div>
                         </div>
                     </div>
                 </div>
