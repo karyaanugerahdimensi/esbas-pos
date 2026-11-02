@@ -31948,7 +31948,70 @@ Manager / Supervisor: __________________
         // --- SUBTAB 1: ARMADA KENDARAAN KURIR ---
         async function loadVehicles() {
             try {
-                const res = await fetch('api.php?action=get_courier_vehicles');
+                const curUser = state.currentUser || state.loggedInUser || {};
+                const rawRole = ((curUser.role || 'CASHIER') + '').toUpperCase().replace(/_/g, '').trim();
+                const isSuperAdmin = (rawRole === 'SUPERADMIN' || rawRole === 'SUPER ADMIN');
+                const isManager = isSuperAdmin || rawRole === 'BRANCHMANAGER' || rawRole === 'MANAGER';
+                const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
+
+                // Populate Branch Filter for Vehicles
+                const branchFilter = document.getElementById('vehicle-branch-filter');
+                if (branchFilter) {
+                    if (!isSuperAdmin && !isManager) {
+                        const myBranch = (state.branches || []).find(b => b.id == userBranchId) || state.currentBranch || { id: userBranchId, name: 'Cabang Penugasan' };
+                        branchFilter.innerHTML = `<option value="${userBranchId}">📍 ${escapeHtml(myBranch.name)} (Terkunci)</option>`;
+                        branchFilter.value = userBranchId;
+                        branchFilter.disabled = true;
+                        branchFilter.classList.add('opacity-75', 'cursor-not-allowed', 'bg-slate-100');
+                    } else if (isManager) {
+                        let myBranches = [];
+                        if (curUser.assigned_branch_ids) {
+                            try {
+                                const parsed = typeof curUser.assigned_branch_ids === 'string' ? JSON.parse(curUser.assigned_branch_ids) : curUser.assigned_branch_ids;
+                                if (Array.isArray(parsed) && parsed.length > 0) {
+                                    myBranches = (state.branches || []).filter(b => parsed.indexOf(parseInt(b.id, 10)) !== -1);
+                                }
+                            } catch(e) {}
+                        }
+                        if (myBranches.length === 0) {
+                            myBranches = (state.branches || []).filter(b => b.id == userBranchId);
+                        }
+                        if (myBranches.length > 1) {
+                            const curVal = branchFilter.value || 'ALL';
+                            branchFilter.innerHTML = '<option value="ALL">Semua Cabang Ditugaskan</option>' + 
+                                myBranches.map(b => `<option value="${b.id}" ${curVal == b.id ? 'selected' : ''}>${escapeHtml(b.name)}</option>`).join('');
+                            branchFilter.disabled = false;
+                            branchFilter.classList.remove('opacity-75', 'cursor-not-allowed', 'bg-slate-100');
+                        } else {
+                            const bObj = myBranches[0] || (state.branches || []).find(b => b.id == userBranchId) || state.currentBranch || { id: userBranchId, name: 'Cabang Penugasan' };
+                            branchFilter.innerHTML = `<option value="${bObj.id}">📍 ${escapeHtml(bObj.name)}</option>`;
+                            branchFilter.value = userBranchId;
+                            branchFilter.disabled = true;
+                            branchFilter.classList.add('opacity-75', 'cursor-not-allowed', 'bg-slate-100');
+                        }
+                    } else {
+                        // Super Admin
+                        const curBranchVal = branchFilter.value || 'ALL';
+                        let bOpts = '<option value="ALL">Semua Cabang</option>';
+                        (state.branches || []).forEach(b => {
+                            bOpts += `<option value="${b.id}" ${curBranchVal == b.id ? 'selected' : ''}>${escapeHtml(b.name)}</option>`;
+                        });
+                        branchFilter.innerHTML = bOpts;
+                        branchFilter.disabled = false;
+                        branchFilter.classList.remove('opacity-75', 'cursor-not-allowed', 'bg-slate-100');
+                    }
+                }
+
+                let reqBranchId = branchFilter ? branchFilter.value : 'ALL';
+                if (!isSuperAdmin && !isManager) {
+                    reqBranchId = userBranchId;
+                }
+
+                let url = 'api.php?action=get_courier_vehicles';
+                if (curUser && curUser.id) url += '&user_id=' + encodeURIComponent(curUser.id);
+                if (reqBranchId) url += '&branch_id=' + encodeURIComponent(reqBranchId);
+
+                const res = await fetch(url);
                 const data = await res.json();
                 if (!data.success) {
                     console.error('Bootstrap failed:', data.error || 'Unknown error');
@@ -31956,6 +32019,10 @@ Manager / Supervisor: __________________
                 }
 
                 state.vehicles = data.vehicles || [];
+
+                if (!isSuperAdmin && !isManager) {
+                    state.vehicles = state.vehicles.filter(v => v.branch_id == userBranchId);
+                }
 
                 // Update KPIs
                 const totalVehicles = state.vehicles.length;
@@ -31966,14 +32033,6 @@ Manager / Supervisor: __________________
                 const kpiActive = document.getElementById('logistics-kpi-active');
                 if (kpiTotal) kpiTotal.innerText = totalVehicles;
                 if (kpiActive) kpiActive.innerText = `${activeBikes} Motor / ${activeCars} Mobil`;
-
-                // Populate Branch Filter for Vehicles if empty or changed
-                const branchFilter = document.getElementById('vehicle-branch-filter');
-                if (branchFilter && state.branches && state.branches.length > 0) {
-                    const curBranchVal = branchFilter.value || 'ALL';
-                    branchFilter.innerHTML = '<option value="ALL">Semua Cabang</option>' + 
-                        state.branches.map(b => `<option value="${b.id}" ${curBranchVal == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
-                }
 
                 renderVehiclesTable();
                 renderPosCourierSelect();
@@ -31990,8 +32049,17 @@ Manager / Supervisor: __________________
             const searchInput = document.getElementById('vehicle-search');
             const searchVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
+            const curUser = state.currentUser || state.loggedInUser || {};
+            const rawRole = ((curUser.role || 'CASHIER') + '').toUpperCase().replace(/_/g, '').trim();
+            const isSuperAdmin = (rawRole === 'SUPERADMIN' || rawRole === 'SUPER ADMIN');
+            const isManager = isSuperAdmin || rawRole === 'BRANCHMANAGER' || rawRole === 'MANAGER';
+            const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
+
             const branchFilter = document.getElementById('vehicle-branch-filter');
-            const branchVal = branchFilter ? branchFilter.value : 'ALL';
+            let branchVal = branchFilter ? branchFilter.value : 'ALL';
+            if (!isSuperAdmin && !isManager) {
+                branchVal = userBranchId;
+            }
 
             let filtered = state.vehicles || [];
             if (branchVal !== 'ALL') {
@@ -32112,8 +32180,22 @@ Manager / Supervisor: __________________
             const title = document.getElementById('vehicle-modal-title');
             const branchSelect = document.getElementById('vehicle-branch');
 
-            branchSelect.innerHTML = '<option value="">Semua Cabang (Global)</option>' + 
-                state.branches.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            const curUser = state.currentUser || state.loggedInUser || {};
+            const rawRole = ((curUser.role || 'CASHIER') + '').toUpperCase().replace(/_/g, '').trim();
+            const isSuperAdmin = (rawRole === 'SUPERADMIN' || rawRole === 'SUPER ADMIN');
+            const isManager = isSuperAdmin || rawRole === 'BRANCHMANAGER' || rawRole === 'MANAGER';
+            const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
+
+            if (!isSuperAdmin && !isManager) {
+                const myBranch = (state.branches || []).find(b => b.id == userBranchId) || state.currentBranch || { id: userBranchId, name: 'Cabang Penugasan' };
+                branchSelect.innerHTML = `<option value="${userBranchId}">${escapeHtml(myBranch.name)}</option>`;
+                branchSelect.value = userBranchId;
+                branchSelect.disabled = true;
+            } else {
+                branchSelect.disabled = false;
+                branchSelect.innerHTML = '<option value="">Semua Cabang (Global)</option>' + 
+                    state.branches.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
+            }
 
             if (veh) {
                 title.innerText = 'Edit Data Armada Kendaraan Kurir';
@@ -32171,7 +32253,9 @@ Manager / Supervisor: __________________
                 return;
             }
 
+            const curU = state.currentUser || state.loggedInUser || {};
             const payload = {
+                actor_id: curU.id || 1,
                 id: id ? parseInt(id) : null,
                 branch_id: document.getElementById('vehicle-branch').value ? parseInt(document.getElementById('vehicle-branch').value) : null,
                 plate_number: document.getElementById('vehicle-plate').value.trim().toUpperCase(),
@@ -32219,7 +32303,19 @@ Manager / Supervisor: __________________
         // --- SUBTAB 2: CATATAN BENSIN BBM & ODOMETER MOTOR ---
         async function loadFuelLogs() {
             try {
-                const res = await fetch('api.php?action=get_fuel_logs');
+                const curUser = state.currentUser || state.loggedInUser || {};
+                const rawRole = ((curUser.role || 'CASHIER') + '').toUpperCase().replace(/_/g, '').trim();
+                const isSuperAdmin = (rawRole === 'SUPERADMIN' || rawRole === 'SUPER ADMIN');
+                const isManager = isSuperAdmin || rawRole === 'BRANCHMANAGER' || rawRole === 'MANAGER';
+                const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
+
+                let url = 'api.php?action=get_fuel_logs';
+                if (curUser && curUser.id) url += '&user_id=' + encodeURIComponent(curUser.id);
+                if (!isSuperAdmin && !isManager) {
+                    url += '&branch_id=' + encodeURIComponent(userBranchId);
+                }
+
+                const res = await fetch(url);
                 const data = await res.json();
                 if (!data.success) {
                     console.error('Bootstrap failed:', data.error || 'Unknown error');
@@ -32227,6 +32323,9 @@ Manager / Supervisor: __________________
                 }
 
                 state.fuelLogs = data.fuel_logs || data.logs || [];
+                if (!isSuperAdmin && !isManager) {
+                    state.fuelLogs = state.fuelLogs.filter(fl => fl.branch_id == userBranchId);
+                }
 
                 // Filter options
                 const filterSelect = document.getElementById('fuel-vehicle-filter');
@@ -32402,7 +32501,19 @@ Manager / Supervisor: __________________
         // --- SUBTAB 3: SERVIS ARMADA KURIR (BEBAN BIAYA LABA RUGI) ---
         async function loadServiceLogs() {
             try {
-                const res = await fetch('api.php?action=get_service_logs');
+                const curUser = state.currentUser || state.loggedInUser || {};
+                const rawRole = ((curUser.role || 'CASHIER') + '').toUpperCase().replace(/_/g, '').trim();
+                const isSuperAdmin = (rawRole === 'SUPERADMIN' || rawRole === 'SUPER ADMIN');
+                const isManager = isSuperAdmin || rawRole === 'BRANCHMANAGER' || rawRole === 'MANAGER';
+                const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
+
+                let url = 'api.php?action=get_service_logs';
+                if (curUser && curUser.id) url += '&user_id=' + encodeURIComponent(curUser.id);
+                if (!isSuperAdmin && !isManager) {
+                    url += '&branch_id=' + encodeURIComponent(userBranchId);
+                }
+
+                const res = await fetch(url);
                 const data = await res.json();
                 if (!data.success) {
                     console.error('Bootstrap failed:', data.error || 'Unknown error');
@@ -32410,6 +32521,9 @@ Manager / Supervisor: __________________
                 }
 
                 state.serviceLogs = data.service_logs || data.logs || [];
+                if (!isSuperAdmin && !isManager) {
+                    state.serviceLogs = state.serviceLogs.filter(sl => sl.branch_id == userBranchId);
+                }
 
                 const filterSelect = document.getElementById('service-vehicle-filter');
                 if (filterSelect) {

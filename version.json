@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.7.0",
-    "build": "20261102-96",
+    "version": "1.7.1",
+    "build": "20261102-97",
     "release_date": "2026-11-02",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.7.1",
+            "commit": "HEAD",
+            "date": "2026-11-02",
+            "title": "Isolasi Multi-Cabang Modul Kurir, Armada Logistik & Biaya Kirim (FR-LOG-06)",
+            "description": "Memperketat isolasi cabang operasional pada modul Kurir, Armada & Biaya Kirim (FR-LOG-06): (1) Akses Kasir/Staf secara mutlak dikunci hanya pada cabang di mana pengguna ditugaskan: dropdown filter cabang dikunci otomatis dan opsi Semua Cabang ditiadakan; (2) Pendaftaran & edit armada motor/mobil kurir terkunci pada cabang penugasan kasir; (3) Pemuatan log pembelian bensin BBM, riwayat servis kendaraan, dan pengaturan biaya kirim dinamis secara eksklusif hanya menampilkan data cabang kasir; (4) Penegakan otorisasi di sisi backend api.php pada get_courier_vehicles, get_fuel_logs, get_service_logs, get_delivery_settings, dan save_courier_vehicle; (5) Kompatibilitas Penuh Android 8.1 Oreo: 100% bebas token modern ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.7.0"
+        },
         {
             "version": "1.7.0",
             "commit": "HEAD",

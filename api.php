@@ -16742,7 +16742,33 @@ try {
         // 11. MODUL LOGISTIK, PENGIRIMAN & BIAYA KIRIM DINAMIS
         // ==========================================
         case 'get_delivery_settings':
-            $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : null;
+            $actorId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : (int)($_SESSION['user_id'] ?? 0);
+            $uRole = '';
+            $uBranchId = 0;
+            if ($actorId > 0) {
+                $stmtU = $pdo->prepare("SELECT role, branch_id FROM users WHERE id = ?");
+                $stmtU->execute([$actorId]);
+                $uRow = $stmtU->fetch(PDO::FETCH_ASSOC);
+                if ($uRow) {
+                    $uRole = strtoupper(str_replace('_', '', $uRow['role'] ?? ''));
+                    $uBranchId = (int)($uRow['branch_id'] ?? 0);
+                }
+            }
+            if (!$uRole && !empty($_SESSION['role'])) {
+                $uRole = strtoupper(str_replace('_', '', $_SESSION['role']));
+                $uBranchId = (int)($_SESSION['branch_id'] ?? 0);
+            }
+            $isSuperAdmin = in_array($uRole, ['SUPERADMIN', 'SUPER ADMIN']);
+            $isBranchManager = in_array($uRole, ['BRANCHMANAGER', 'MANAGER']);
+
+            $requestedBranch = !empty($_GET['branch_id']) && $_GET['branch_id'] !== 'ALL' ? (int)$_GET['branch_id'] : null;
+
+            if (!$isSuperAdmin && !$isBranchManager) {
+                $branchId = $uBranchId > 0 ? $uBranchId : 1;
+            } else {
+                $branchId = $requestedBranch;
+            }
+
             if ($branchId) {
                 $stmt = $pdo->prepare("SELECT ds.*, b.name as branch_name, b.latitude as branch_latitude, b.longitude as branch_longitude FROM delivery_settings ds JOIN branches b ON ds.branch_id = b.id WHERE ds.branch_id = ?");
                 $stmt->execute([$branchId]);
@@ -16916,7 +16942,31 @@ try {
         // 12. ARMADA KENDARAAN KURIR (FLEET MANAGEMENT)
         // ==========================================
         case 'get_courier_vehicles':
-            $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : null;
+            $actorId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : (int)($_SESSION['user_id'] ?? 0);
+            $uRole = '';
+            $uBranchId = 0;
+            $uAssigned = '';
+
+            if ($actorId > 0) {
+                $stmtU = $pdo->prepare("SELECT id, role, branch_id, assigned_branch_ids FROM users WHERE id = ?");
+                $stmtU->execute([$actorId]);
+                $uRow = $stmtU->fetch(PDO::FETCH_ASSOC);
+                if ($uRow) {
+                    $uRole = strtoupper(str_replace('_', '', $uRow['role'] ?? ''));
+                    $uBranchId = (int)($uRow['branch_id'] ?? 0);
+                    $uAssigned = $uRow['assigned_branch_ids'] ?? '';
+                }
+            }
+            if (!$uRole && !empty($_SESSION['role'])) {
+                $uRole = strtoupper(str_replace('_', '', $_SESSION['role']));
+                $uBranchId = (int)($_SESSION['branch_id'] ?? 0);
+            }
+
+            $isSuperAdmin = in_array($uRole, ['SUPERADMIN', 'SUPER ADMIN']) || $uAssigned === 'ALL';
+            $isBranchManager = in_array($uRole, ['BRANCHMANAGER', 'MANAGER']);
+
+            $requestedBranch = !empty($_GET['branch_id']) && $_GET['branch_id'] !== 'ALL' ? (int)$_GET['branch_id'] : null;
+
             $sql = "
                 SELECT cv.*, b.name as branch_name,
                        u.name as employee_driver_name, u.role as driver_role, u.phone as driver_phone
@@ -16926,10 +16976,39 @@ try {
                 WHERE cv.is_active = 1
             ";
             $params = [];
-            if ($branchId) {
+
+            if (!$isSuperAdmin && !$isBranchManager) {
+                // KASIR / STAFF / KARYAWAN: HANYA BISA MELIHAT CABANG DI MANA DIA DIPOSISIKAN
+                $branchId = $uBranchId > 0 ? $uBranchId : 1;
                 $sql .= " AND cv.branch_id = ?";
                 $params[] = $branchId;
+            } else if ($isBranchManager && !$isSuperAdmin) {
+                $assignedIds = [];
+                if (!empty($uAssigned)) {
+                    $dec = json_decode($uAssigned, true);
+                    if (is_array($dec)) $assignedIds = array_map('intval', $dec);
+                }
+                if (empty($assignedIds) && $uBranchId > 0) {
+                    $assignedIds = [$uBranchId];
+                }
+                if ($requestedBranch && in_array($requestedBranch, $assignedIds)) {
+                    $sql .= " AND cv.branch_id = ?";
+                    $params[] = $requestedBranch;
+                } else if (!empty($assignedIds)) {
+                    $inPlaceholders = implode(',', array_fill(0, count($assignedIds), '?'));
+                    $sql .= " AND cv.branch_id IN ($inPlaceholders)";
+                    foreach ($assignedIds as $bId) $params[] = $bId;
+                } else if ($uBranchId > 0) {
+                    $sql .= " AND cv.branch_id = ?";
+                    $params[] = $uBranchId;
+                }
+            } else {
+                if ($requestedBranch) {
+                    $sql .= " AND cv.branch_id = ?";
+                    $params[] = $requestedBranch;
+                }
             }
+
             $sql .= " ORDER BY cv.branch_id ASC, cv.id ASC";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
@@ -16942,8 +17021,30 @@ try {
             break;
 
         case 'save_courier_vehicle':
+            $actorId = !empty($input['actor_id']) ? (int)$input['actor_id'] : (int)($_SESSION['user_id'] ?? 0);
+            $uRole = '';
+            $uBranchId = 0;
+            if ($actorId > 0) {
+                $stmtU = $pdo->prepare("SELECT role, branch_id FROM users WHERE id = ?");
+                $stmtU->execute([$actorId]);
+                $uRow = $stmtU->fetch(PDO::FETCH_ASSOC);
+                if ($uRow) {
+                    $uRole = strtoupper(str_replace('_', '', $uRow['role'] ?? ''));
+                    $uBranchId = (int)($uRow['branch_id'] ?? 0);
+                }
+            }
+            if (!$uRole && !empty($_SESSION['role'])) {
+                $uRole = strtoupper(str_replace('_', '', $_SESSION['role']));
+                $uBranchId = (int)($_SESSION['branch_id'] ?? 0);
+            }
+            $isSuperAdmin = in_array($uRole, ['SUPERADMIN', 'SUPER ADMIN']);
+            $isBranchManager = in_array($uRole, ['BRANCHMANAGER', 'MANAGER']);
+
             $id = !empty($input['id']) ? (int)$input['id'] : null;
             $branchId = (int)($input['branch_id'] ?? 1);
+            if (!$isSuperAdmin && !$isBranchManager && $uBranchId > 0) {
+                $branchId = $uBranchId;
+            }
             $plateNumber = strtoupper(trim($input['plate_number'] ?? ''));
             $vehicleName = trim($input['vehicle_name'] ?? '');
             $vehicleType = trim($input['vehicle_type'] ?? 'MOTOR');
@@ -17014,8 +17115,32 @@ try {
         // 13. PENCATATAN PEMBELIAN BENSIN & EFISIENSI KM (FUEL LOGS)
         // ==========================================
         case 'get_fuel_logs':
-            $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : null;
-            $vehicleId = !empty($_GET['vehicle_id']) ? (int)$_GET['vehicle_id'] : null;
+            $actorId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : (int)($_SESSION['user_id'] ?? 0);
+            $uRole = '';
+            $uBranchId = 0;
+            $uAssigned = '';
+
+            if ($actorId > 0) {
+                $stmtU = $pdo->prepare("SELECT id, role, branch_id, assigned_branch_ids FROM users WHERE id = ?");
+                $stmtU->execute([$actorId]);
+                $uRow = $stmtU->fetch(PDO::FETCH_ASSOC);
+                if ($uRow) {
+                    $uRole = strtoupper(str_replace('_', '', $uRow['role'] ?? ''));
+                    $uBranchId = (int)($uRow['branch_id'] ?? 0);
+                    $uAssigned = $uRow['assigned_branch_ids'] ?? '';
+                }
+            }
+            if (!$uRole && !empty($_SESSION['role'])) {
+                $uRole = strtoupper(str_replace('_', '', $_SESSION['role']));
+                $uBranchId = (int)($_SESSION['branch_id'] ?? 0);
+            }
+
+            $isSuperAdmin = in_array($uRole, ['SUPERADMIN', 'SUPER ADMIN']) || $uAssigned === 'ALL';
+            $isBranchManager = in_array($uRole, ['BRANCHMANAGER', 'MANAGER']);
+
+            $requestedBranch = !empty($_GET['branch_id']) && $_GET['branch_id'] !== 'ALL' ? (int)$_GET['branch_id'] : null;
+            $vehicleId = !empty($_GET['vehicle_id']) && $_GET['vehicle_id'] !== 'ALL' ? (int)$_GET['vehicle_id'] : null;
+
             $sql = "
                 SELECT fl.*, cv.plate_number, cv.vehicle_name, cv.vehicle_type, cv.fuel_ratio as vehicle_default_ratio,
                        b.name as branch_name, be.id as expense_id
@@ -17026,10 +17151,39 @@ try {
                 WHERE 1=1
             ";
             $params = [];
-            if ($branchId) {
+
+            if (!$isSuperAdmin && !$isBranchManager) {
+                // KASIR / STAFF: HANYA CABANG PENUGASAN
+                $branchId = $uBranchId > 0 ? $uBranchId : 1;
                 $sql .= " AND fl.branch_id = ?";
                 $params[] = $branchId;
+            } else if ($isBranchManager && !$isSuperAdmin) {
+                $assignedIds = [];
+                if (!empty($uAssigned)) {
+                    $dec = json_decode($uAssigned, true);
+                    if (is_array($dec)) $assignedIds = array_map('intval', $dec);
+                }
+                if (empty($assignedIds) && $uBranchId > 0) {
+                    $assignedIds = [$uBranchId];
+                }
+                if ($requestedBranch && in_array($requestedBranch, $assignedIds)) {
+                    $sql .= " AND fl.branch_id = ?";
+                    $params[] = $requestedBranch;
+                } else if (!empty($assignedIds)) {
+                    $inPlaceholders = implode(',', array_fill(0, count($assignedIds), '?'));
+                    $sql .= " AND fl.branch_id IN ($inPlaceholders)";
+                    foreach ($assignedIds as $bId) $params[] = $bId;
+                } else if ($uBranchId > 0) {
+                    $sql .= " AND fl.branch_id = ?";
+                    $params[] = $uBranchId;
+                }
+            } else {
+                if ($requestedBranch) {
+                    $sql .= " AND fl.branch_id = ?";
+                    $params[] = $requestedBranch;
+                }
             }
+
             if ($vehicleId) {
                 $sql .= " AND fl.vehicle_id = ?";
                 $params[] = $vehicleId;
@@ -17161,8 +17315,32 @@ try {
         // 14. CATATAN SERVIS KENDARAAN & BEBAN LABA RUGI (MAINTENANCE LOGS)
         // ==========================================
         case 'get_service_logs':
-            $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : null;
-            $vehicleId = !empty($_GET['vehicle_id']) ? (int)$_GET['vehicle_id'] : null;
+            $actorId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : (int)($_SESSION['user_id'] ?? 0);
+            $uRole = '';
+            $uBranchId = 0;
+            $uAssigned = '';
+
+            if ($actorId > 0) {
+                $stmtU = $pdo->prepare("SELECT id, role, branch_id, assigned_branch_ids FROM users WHERE id = ?");
+                $stmtU->execute([$actorId]);
+                $uRow = $stmtU->fetch(PDO::FETCH_ASSOC);
+                if ($uRow) {
+                    $uRole = strtoupper(str_replace('_', '', $uRow['role'] ?? ''));
+                    $uBranchId = (int)($uRow['branch_id'] ?? 0);
+                    $uAssigned = $uRow['assigned_branch_ids'] ?? '';
+                }
+            }
+            if (!$uRole && !empty($_SESSION['role'])) {
+                $uRole = strtoupper(str_replace('_', '', $_SESSION['role']));
+                $uBranchId = (int)($_SESSION['branch_id'] ?? 0);
+            }
+
+            $isSuperAdmin = in_array($uRole, ['SUPERADMIN', 'SUPER ADMIN']) || $uAssigned === 'ALL';
+            $isBranchManager = in_array($uRole, ['BRANCHMANAGER', 'MANAGER']);
+
+            $requestedBranch = !empty($_GET['branch_id']) && $_GET['branch_id'] !== 'ALL' ? (int)$_GET['branch_id'] : null;
+            $vehicleId = !empty($_GET['vehicle_id']) && $_GET['vehicle_id'] !== 'ALL' ? (int)$_GET['vehicle_id'] : null;
+
             $sql = "
                 SELECT sl.*, cv.plate_number, cv.vehicle_name, cv.vehicle_type, b.name as branch_name, be.id as expense_id
                 FROM vehicle_service_logs sl
@@ -17172,10 +17350,39 @@ try {
                 WHERE 1=1
             ";
             $params = [];
-            if ($branchId) {
+
+            if (!$isSuperAdmin && !$isBranchManager) {
+                // KASIR / STAFF: HANYA CABANG PENUGASAN
+                $branchId = $uBranchId > 0 ? $uBranchId : 1;
                 $sql .= " AND sl.branch_id = ?";
                 $params[] = $branchId;
+            } else if ($isBranchManager && !$isSuperAdmin) {
+                $assignedIds = [];
+                if (!empty($uAssigned)) {
+                    $dec = json_decode($uAssigned, true);
+                    if (is_array($dec)) $assignedIds = array_map('intval', $dec);
+                }
+                if (empty($assignedIds) && $uBranchId > 0) {
+                    $assignedIds = [$uBranchId];
+                }
+                if ($requestedBranch && in_array($requestedBranch, $assignedIds)) {
+                    $sql .= " AND sl.branch_id = ?";
+                    $params[] = $requestedBranch;
+                } else if (!empty($assignedIds)) {
+                    $inPlaceholders = implode(',', array_fill(0, count($assignedIds), '?'));
+                    $sql .= " AND sl.branch_id IN ($inPlaceholders)";
+                    foreach ($assignedIds as $bId) $params[] = $bId;
+                } else if ($uBranchId > 0) {
+                    $sql .= " AND sl.branch_id = ?";
+                    $params[] = $uBranchId;
+                }
+            } else {
+                if ($requestedBranch) {
+                    $sql .= " AND sl.branch_id = ?";
+                    $params[] = $requestedBranch;
+                }
             }
+
             if ($vehicleId) {
                 $sql .= " AND sl.vehicle_id = ?";
                 $params[] = $vehicleId;
