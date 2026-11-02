@@ -8353,6 +8353,8 @@ try {
             $paymentMethod = $input['payment_method'] ?? 'CASH';
             $cashReceived = (float)($input['cash_received'] ?? 0);
             $discountNominal = (float)($input['discount'] ?? 0);
+            $discountRuleId = !empty($input['discount_rule_id']) ? (int)$input['discount_rule_id'] : null;
+            $discountName = !empty($input['discount_name']) ? trim($input['discount_name']) : ($discountNominal > 0 ? 'Diskon Manual Kasir' : null);
 
             // ATURAN BISNIS MUTLAK: Jika tidak buka opening sales / shift kasir, maka transaksi penjualan tidak bisa dilakukan!
             if (empty($shiftId)) {
@@ -8840,13 +8842,13 @@ try {
 
             // Insert Sale with Customer, Tier, Delivery & Payment Status Info
             $stmtSale = $pdo->prepare("
-                INSERT INTO sales (invoice_number, branch_id, user_id, shift_id, customer_id, customer_name, customer_category, sales_type, subtotal, discount, tax, delivery_fee, delivery_distance_km, courier_vehicle_id, driver_user_id, driver_name, is_delivery_included, delivery_status, grand_total, total_cogs, payment_method, payment_status, cash_received, cash_change, created_at)
+                INSERT INTO sales (invoice_number, branch_id, user_id, shift_id, customer_id, customer_name, customer_category, sales_type, subtotal, discount, discount_rule_id, discount_name, tax, delivery_fee, delivery_distance_km, courier_vehicle_id, driver_user_id, driver_name, is_delivery_included, delivery_status, grand_total, total_cogs, payment_method, payment_status, cash_received, cash_change, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
             ");
             $stmtSale->execute([
                 $invoiceNumber, $branchId, $userId, $shiftId,
                 $customerId, $customerName, $customerCategory, $salesType,
-                $subtotal, $discountNominal, $tax, $deliveryFee, $deliveryDistanceKm,
+                $subtotal, $discountNominal, $discountRuleId, $discountName, $tax, $deliveryFee, $deliveryDistanceKm,
                 $courierVehicleId, $driverUserId, $driverName, $isDeliveryIncluded, $deliveryStatus,
                 $grandTotal, $totalCogs, $paymentMethod, $paymentStatus, $cashReceived, $cashChange
             ]);
@@ -9602,6 +9604,10 @@ try {
             $stRows = $pdo->prepare("
                 SELECT 
                     s.id, s.invoice_number, s.created_at,
+                    COALESCE(s.discount_name, 'Diskon Manual Kasir') as discount_name,
+                    s.discount_rule_id,
+                    dr.code as discount_rule_code,
+                    COALESCE(dr.trigger_mode, 'MANUAL') as discount_trigger_mode,
                     COALESCE(s.customer_name, 'Pelanggan Umum') as customer_name,
                     COALESCE(s.customer_category, 'REGULER') as customer_category,
                     COALESCE(c.address, '') as customer_address,
@@ -9726,6 +9732,41 @@ try {
                     </table>
 
                     <div class="sec-title">B. DAFTAR RINCIAN FAKTUR KIRIMAN</div>
+                    <p class="sec-title">REKAPITULASI PEMAKAIAN ATURAN DISKON & PROMOSI</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Promo / Aturan Diskon</th>
+                                <th>Kode Promo</th>
+                                <th>Mode Penerapan</th>
+                                <th>Jumlah Nota</th>
+                                <th>Subtotal Kotor (Rp)</th>
+                                <th>Total Diskon (Rp)</th>
+                                <th>Penjualan Bersih (Rp)</th>
+                                <th>Laba Kotor (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($ruleSummary)): ?>
+                                <tr><td colspan="9" class="center">Tidak ada pemakaian aturan diskon pada periode ini.</td></tr>
+                            <?php else: foreach ($ruleSummary as $ri => $rs): ?>
+                                <tr>
+                                    <td class="center"><?= $ri + 1 ?></td>
+                                    <td class="bold"><?= htmlspecialchars($rs['rule_name']) ?></td>
+                                    <td class="center txt"><?= htmlspecialchars($rs['rule_code']) ?></td>
+                                    <td class="center"><?= htmlspecialchars($rs['trigger_mode']) ?></td>
+                                    <td class="center bold"><?= (int)$rs['discount_orders'] ?></td>
+                                    <td class="num"><?= (float)$rs['gross_subtotal'] ?></td>
+                                    <td class="num bold"><?= (float)$rs['total_discount'] ?></td>
+                                    <td class="num"><?= (float)$rs['net_sales'] ?></td>
+                                    <td class="num"><?= (float)$rs['gross_profit'] ?></td>
+                                </tr>
+                            <?php endforeach; endif; ?>
+                        </tbody>
+                    </table>
+
+                    <p class="sec-title">DAFTAR RINCIAN FAKTUR BERDISKON (AUDIT DISKON)</p>
                     <table>
                         <thead>
                             <tr>
@@ -9806,6 +9847,7 @@ try {
             $customerCategory = strtoupper(trim($_GET['customer_category'] ?? 'ALL'));
             $paymentMethod = strtoupper(trim($_GET['payment_method'] ?? 'ALL'));
             $cashierFilter = trim($_GET['cashier_filter'] ?? 'ALL');
+            $ruleFilter = trim($_GET['rule_filter'] ?? 'ALL');
 
             // Hitung total seluruh transaksi toko pada periode/cabang untuk rasio pembanding
             $storeWhere = "WHERE date(s.created_at) BETWEEN ? AND ? AND (s.status IS NULL OR s.status != 'CANCELLED')";
@@ -9848,6 +9890,18 @@ try {
                 $filterWhere .= " AND u.name = ?";
                 $filterParams[] = $cashierFilter;
             }
+            if ($ruleFilter !== 'ALL' && $ruleFilter !== '') {
+                if ($ruleFilter === 'MANUAL_ONLY') {
+                    $filterWhere .= " AND (s.discount_rule_id IS NULL OR s.discount_name = 'Diskon Manual Kasir')";
+                } elseif (is_numeric($ruleFilter)) {
+                    $filterWhere .= " AND s.discount_rule_id = ?";
+                    $filterParams[] = (int)$ruleFilter;
+                } else {
+                    $filterWhere .= " AND (s.discount_name = ? OR dr.code = ?)";
+                    $filterParams[] = $ruleFilter;
+                    $filterParams[] = $ruleFilter;
+                }
+            }
 
             // 1. KPI Summary Diskon
             $stDiscKpi = $pdo->prepare("
@@ -9862,6 +9916,7 @@ try {
                     COALESCE(SUM(s.grand_total), 0) as discounted_grand_total
                 FROM sales s
                 JOIN users u ON u.id = s.user_id
+                LEFT JOIN discount_rules dr ON dr.id = s.discount_rule_id
                 {$filterWhere}
             ");
             $stDiscKpi->execute($filterParams);
@@ -9890,6 +9945,7 @@ try {
                     COALESCE(SUM((s.subtotal - COALESCE(s.discount, 0)) - s.total_cogs), 0) as gross_profit
                 FROM sales s
                 JOIN users u ON u.id = s.user_id
+                LEFT JOIN discount_rules dr ON dr.id = s.discount_rule_id
                 {$filterWhere}
                 GROUP BY u.name
                 ORDER BY total_discount DESC, discount_orders DESC
@@ -9908,18 +9964,46 @@ try {
                     COALESCE(SUM(s.subtotal - COALESCE(s.discount, 0)), 0) as net_sales
                 FROM sales s
                 JOIN users u ON u.id = s.user_id
+                LEFT JOIN discount_rules dr ON dr.id = s.discount_rule_id
                 {$filterWhere}
                 GROUP BY COALESCE(s.customer_name, 'Pelanggan Umum'), COALESCE(s.customer_category, 'REGULER')
                 ORDER BY total_discount DESC, discount_orders DESC
             ");
             $stByCustomer->execute($filterParams);
             $customerSummary = $stByCustomer->fetchAll(PDO::FETCH_ASSOC);
+            // 3b. Rekapitulasi Pemakaian Aturan Diskon & Promosi
+            $stByRule = $pdo->prepare("
+                SELECT 
+                    COALESCE(s.discount_name, 'Diskon Manual Kasir') as rule_name,
+                    COALESCE(dr.code, 'MANUAL') as rule_code,
+                    COALESCE(dr.trigger_mode, 'MANUAL') as trigger_mode,
+                    COALESCE(dr.discount_amount, 0) as configured_amount,
+                    COUNT(s.id) as discount_orders,
+                    COALESCE(SUM(s.subtotal), 0) as gross_subtotal,
+                    COALESCE(SUM(s.discount), 0) as total_discount,
+                    COALESCE(SUM(s.subtotal - COALESCE(s.discount, 0)), 0) as net_sales,
+                    COALESCE(SUM((s.subtotal - COALESCE(s.discount, 0)) - s.total_cogs), 0) as gross_profit
+                FROM sales s
+                JOIN users u ON u.id = s.user_id
+                LEFT JOIN discount_rules dr ON dr.id = s.discount_rule_id
+                {$filterWhere}
+                GROUP BY COALESCE(s.discount_name, 'Diskon Manual Kasir'), COALESCE(dr.code, 'MANUAL'), COALESCE(dr.trigger_mode, 'MANUAL'), COALESCE(dr.discount_amount, 0)
+                ORDER BY total_discount DESC, discount_orders DESC
+            ");
+            $stByRule->execute($filterParams);
+            $ruleSummary = $stByRule->fetchAll(PDO::FETCH_ASSOC);
+
+
 
             // 4. Daftar Rincian Faktur Berdiskon
             $limitClause = ($action === 'export_discount_excel') ? '' : 'LIMIT 2000';
             $stDiscRows = $pdo->prepare("
                 SELECT 
                     s.id, s.invoice_number, s.created_at,
+                    COALESCE(s.discount_name, 'Diskon Manual Kasir') as discount_name,
+                    s.discount_rule_id,
+                    dr.code as discount_rule_code,
+                    COALESCE(dr.trigger_mode, 'MANUAL') as discount_trigger_mode,
                     COALESCE(s.customer_name, 'Pelanggan Umum') as customer_name,
                     COALESCE(s.customer_category, 'REGULER') as customer_category,
                     s.subtotal,
@@ -10029,6 +10113,41 @@ try {
                     </table>
 
                     <div class="sec-title">B. DAFTAR RINCIAN FAKTUR BERDISKON</div>
+                    <p class="sec-title">REKAPITULASI PEMAKAIAN ATURAN DISKON & PROMOSI</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Promo / Aturan Diskon</th>
+                                <th>Kode Promo</th>
+                                <th>Mode Penerapan</th>
+                                <th>Jumlah Nota</th>
+                                <th>Subtotal Kotor (Rp)</th>
+                                <th>Total Diskon (Rp)</th>
+                                <th>Penjualan Bersih (Rp)</th>
+                                <th>Laba Kotor (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($ruleSummary)): ?>
+                                <tr><td colspan="9" class="center">Tidak ada pemakaian aturan diskon pada periode ini.</td></tr>
+                            <?php else: foreach ($ruleSummary as $ri => $rs): ?>
+                                <tr>
+                                    <td class="center"><?= $ri + 1 ?></td>
+                                    <td class="bold"><?= htmlspecialchars($rs['rule_name']) ?></td>
+                                    <td class="center txt"><?= htmlspecialchars($rs['rule_code']) ?></td>
+                                    <td class="center"><?= htmlspecialchars($rs['trigger_mode']) ?></td>
+                                    <td class="center bold"><?= (int)$rs['discount_orders'] ?></td>
+                                    <td class="num"><?= (float)$rs['gross_subtotal'] ?></td>
+                                    <td class="num bold"><?= (float)$rs['total_discount'] ?></td>
+                                    <td class="num"><?= (float)$rs['net_sales'] ?></td>
+                                    <td class="num"><?= (float)$rs['gross_profit'] ?></td>
+                                </tr>
+                            <?php endforeach; endif; ?>
+                        </tbody>
+                    </table>
+
+                    <p class="sec-title">DAFTAR RINCIAN FAKTUR BERDISKON (AUDIT DISKON)</p>
                     <table>
                         <thead>
                             <tr>
@@ -10051,7 +10170,7 @@ try {
                         </thead>
                         <tbody>
                             <?php if (empty($discountRows)): ?>
-                                <tr><td colspan="15" class="center">Tidak ada rincian faktur berdiskon.</td></tr>
+                                <tr><td colspan="17" class="center">Tidak ada rincian faktur berdiskon.</td></tr>
                             <?php else: foreach ($discountRows as $i => $dr): ?>
                                 <tr>
                                     <td class="center"><?= $i + 1 ?></td>
@@ -10061,6 +10180,8 @@ try {
                                     <td><?= htmlspecialchars($dr['cashier_name']) ?></td>
                                     <td><?= htmlspecialchars($dr['customer_name']) ?></td>
                                     <td class="center"><?= htmlspecialchars($dr['customer_category']) ?></td>
+                                    <td class="bold"><?= htmlspecialchars($dr['discount_name'] ?: 'Diskon Manual Kasir') ?></td>
+                                    <td class="center"><?= htmlspecialchars($dr['discount_trigger_mode'] ?: 'MANUAL') ?></td>
                                     <td><?= htmlspecialchars($dr['items_summary']) ?></td>
                                     <td class="num"><?= (float)$dr['subtotal'] ?></td>
                                     <td class="num bold"><?= (float)$dr['discount'] ?></td>
@@ -10072,7 +10193,7 @@ try {
                                 </tr>
                             <?php endforeach; ?>
                                 <tr class="bg-total">
-                                    <td colspan="8" class="center">GRAND TOTAL DISKON PERIODE INI</td>
+                                    <td colspan="10" class="center">GRAND TOTAL DISKON PERIODE INI</td>
                                     <td class="num"><?= $discGrossSub ?></td>
                                     <td class="num"><?= $totDiscAmt ?></td>
                                     <td class="dec"><?= $discPctOfDiscountedSales ?></td>
@@ -10109,6 +10230,7 @@ try {
                 'cashiers_list' => $cashiersList,
                 'cashier_summary' => $cashierSummary,
                 'customer_summary' => $customerSummary,
+                'rules_summary' => $ruleSummary,
                 'discounts' => $discountRows
             ]);
             break;
@@ -14460,6 +14582,373 @@ try {
             echo json_encode([
                 'success' => true,
                 'message' => "Kategori pelanggan '{$category['name']}' berhasil dihapus."
+            ]);
+            break;
+        // ========================================================
+        // CRUD ATURAN DISKON & PROMOSI NOMINAL (discount_rules)
+        // ========================================================
+        case 'get_discount_rules':
+            $status = strtoupper(trim($_GET['status'] ?? 'ALL')); // ALL, ACTIVE, INACTIVE
+            $triggerMode = strtoupper(trim($_GET['trigger_mode'] ?? 'ALL')); // ALL, AUTO, MANUAL
+            $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : null;
+            $search = trim($_GET['search'] ?? '');
+
+            $where = ["1=1"];
+            $params = [];
+            if ($status === 'ACTIVE') {
+                $where[] = "dr.is_active = 1";
+            } elseif ($status === 'INACTIVE') {
+                $where[] = "dr.is_active = 0";
+            }
+            if ($triggerMode === 'AUTO') {
+                $where[] = "dr.trigger_mode = 'AUTO'";
+            } elseif ($triggerMode === 'MANUAL') {
+                $where[] = "dr.trigger_mode = 'MANUAL'";
+            }
+            if ($branchId) {
+                $where[] = "(dr.branch_id IS NULL OR dr.branch_id = ?)";
+                $params[] = $branchId;
+            }
+            if (!empty($search)) {
+                $where[] = "(dr.name LIKE ? OR dr.code LIKE ? OR dr.description LIKE ?)";
+                $params[] = "%{$search}%";
+                $params[] = "%{$search}%";
+                $params[] = "%{$search}%";
+            }
+
+            $whereSql = implode(' AND ', $where);
+
+            $stmtRules = $pdo->prepare("
+                SELECT 
+                    dr.*,
+                    COALESCE(b.name, 'Semua Cabang') as branch_name,
+                    (SELECT COUNT(s.id) FROM sales s WHERE s.discount_rule_id = dr.id AND (s.status IS NULL OR s.status != 'CANCELLED')) as usage_count,
+                    (SELECT COALESCE(SUM(s.discount), 0) FROM sales s WHERE s.discount_rule_id = dr.id AND (s.status IS NULL OR s.status != 'CANCELLED')) as total_discount_given
+                FROM discount_rules dr
+                LEFT JOIN branches b ON b.id = dr.branch_id
+                WHERE {$whereSql}
+                ORDER BY dr.is_active DESC, dr.id DESC
+            ");
+            $stmtRules->execute($params);
+            $rules = $stmtRules->fetchAll(PDO::FETCH_ASSOC);
+
+            // Decode JSON array & enrich customer names for specific customer IDs
+            foreach ($rules as &$r) {
+                $r['customer_ids_arr'] = !empty($r['customer_ids']) ? json_decode($r['customer_ids'], true) : [];
+                $r['customer_categories_arr'] = !empty($r['customer_categories']) ? json_decode($r['customer_categories'], true) : [];
+                $r['days_of_week_arr'] = !empty($r['days_of_week']) ? json_decode($r['days_of_week'], true) : [];
+                $r['payment_methods_arr'] = !empty($r['payment_methods']) ? json_decode($r['payment_methods'], true) : [];
+
+                if (!empty($r['customer_ids_arr']) && is_array($r['customer_ids_arr'])) {
+                    $inCust = implode(',', array_map('intval', $r['customer_ids_arr']));
+                    if (!empty($inCust)) {
+                        $stCustNames = $pdo->query("SELECT id, name, category FROM customers WHERE id IN ({$inCust})");
+                        $r['customer_details'] = $stCustNames->fetchAll(PDO::FETCH_ASSOC);
+                    } else {
+                        $r['customer_details'] = [];
+                    }
+                } else {
+                    $r['customer_details'] = [];
+                }
+            }
+            unset($r);
+
+            echo json_encode([
+                'success' => true,
+                'discount_rules' => $rules
+            ]);
+            break;
+
+        case 'save_discount_rule':
+            $id = !empty($input['id']) ? (int)$input['id'] : null;
+            $code = strtoupper(trim($input['code'] ?? ''));
+            $name = trim($input['name'] ?? '');
+            $discountAmount = (float)($input['discount_amount'] ?? 0);
+            $minPurchase = (float)($input['min_purchase'] ?? 0);
+            $triggerMode = strtoupper(trim($input['trigger_mode'] ?? 'AUTO')); // AUTO or MANUAL
+            if (!in_array($triggerMode, ['AUTO', 'MANUAL'])) $triggerMode = 'AUTO';
+
+            $scopeCustType = strtoupper(trim($input['scope_customer_type'] ?? 'ALL'));
+            $customerIds = (!empty($input['customer_ids']) && is_array($input['customer_ids'])) ? json_encode(array_values(array_map('intval', $input['customer_ids']))) : null;
+            if ($scopeCustType === 'ALL') $customerIds = null;
+
+            $scopeCatType = strtoupper(trim($input['scope_category_type'] ?? 'ALL'));
+            $custCategories = (!empty($input['customer_categories']) && is_array($input['customer_categories'])) ? json_encode(array_values($input['customer_categories'])) : null;
+            if ($scopeCatType === 'ALL') $custCategories = null;
+
+            $scopeDayType = strtoupper(trim($input['scope_day_type'] ?? 'ALL'));
+            $daysOfWeek = (!empty($input['days_of_week']) && is_array($input['days_of_week'])) ? json_encode(array_values($input['days_of_week'])) : null;
+            if ($scopeDayType === 'ALL') $daysOfWeek = null;
+
+            $scopePayType = strtoupper(trim($input['scope_payment_type'] ?? 'ALL'));
+            $paymentMethods = (!empty($input['payment_methods']) && is_array($input['payment_methods'])) ? json_encode(array_values($input['payment_methods'])) : null;
+            if ($scopePayType === 'ALL') $paymentMethods = null;
+
+            $branchId = !empty($input['branch_id']) ? (int)$input['branch_id'] : null;
+            $startDate = !empty($input['start_date']) ? $input['start_date'] : null;
+            $endDate = !empty($input['end_date']) ? $input['end_date'] : null;
+            $description = trim($input['description'] ?? '');
+            $isActive = isset($input['is_active']) ? (int)$input['is_active'] : 1;
+
+            if (empty($name)) {
+                echo json_encode(['success' => false, 'message' => 'Nama aturan diskon / promosi wajib diisi.']);
+                exit;
+            }
+            if ($discountAmount <= 0) {
+                echo json_encode(['success' => false, 'message' => 'Nominal potongan diskon harus lebih besar dari Rp 0.']);
+                exit;
+            }
+            if ($minPurchase < 0) $minPurchase = 0;
+
+            if (empty($code)) {
+                $code = 'DISC-' . strtoupper(substr(uniqid(), -5));
+            }
+
+            // Check code uniqueness
+            if ($id) {
+                $stmtChk = $pdo->prepare("SELECT COUNT(*) FROM discount_rules WHERE code = ? AND id != ?");
+                $stmtChk->execute([$code, $id]);
+            } else {
+                $stmtChk = $pdo->prepare("SELECT COUNT(*) FROM discount_rules WHERE code = ?");
+                $stmtChk->execute([$code]);
+            }
+            if ($stmtChk->fetchColumn() > 0) {
+                echo json_encode(['success' => false, 'message' => "Kode diskon '{$code}' sudah digunakan oleh promo lain."]);
+                exit;
+            }
+
+            if ($id) {
+                $stmtSave = $pdo->prepare("
+                    UPDATE discount_rules SET
+                        code = ?, name = ?, discount_amount = ?, min_purchase = ?,
+                        scope_customer_type = ?, customer_ids = ?,
+                        scope_category_type = ?, customer_categories = ?,
+                        scope_day_type = ?, days_of_week = ?,
+                        scope_payment_type = ?, payment_methods = ?,
+                        trigger_mode = ?, is_active = ?, branch_id = ?,
+                        start_date = ?, end_date = ?, description = ?,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                ");
+                $stmtSave->execute([
+                    $code, $name, $discountAmount, $minPurchase,
+                    $scopeCustType, $customerIds,
+                    $scopeCatType, $custCategories,
+                    $scopeDayType, $daysOfWeek,
+                    $scopePayType, $paymentMethods,
+                    $triggerMode, $isActive, $branchId,
+                    $startDate, $endDate, $description,
+                    $id
+                ]);
+                $msg = "Aturan diskon '{$name}' berhasil diperbarui.";
+            } else {
+                $stmtSave = $pdo->prepare("
+                    INSERT INTO discount_rules (
+                        code, name, discount_amount, min_purchase,
+                        scope_customer_type, customer_ids,
+                        scope_category_type, customer_categories,
+                        scope_day_type, days_of_week,
+                        scope_payment_type, payment_methods,
+                        trigger_mode, is_active, branch_id,
+                        start_date, end_date, description
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ");
+                $stmtSave->execute([
+                    $code, $name, $discountAmount, $minPurchase,
+                    $scopeCustType, $customerIds,
+                    $scopeCatType, $custCategories,
+                    $scopeDayType, $daysOfWeek,
+                    $scopePayType, $paymentMethods,
+                    $triggerMode, $isActive, $branchId,
+                    $startDate, $endDate, $description
+                ]);
+                $id = (int)$pdo->lastInsertId();
+                $msg = "Aturan diskon baru '{$name}' berhasil ditambahkan.";
+            }
+
+            echo json_encode([
+                'success' => true,
+                'message' => $msg,
+                'rule_id' => $id
+            ]);
+            break;
+
+        case 'toggle_discount_rule_status':
+            $id = (int)($input['id'] ?? 0);
+            $isActive = isset($input['is_active']) ? (int)$input['is_active'] : null;
+
+            if (!$id) {
+                echo json_encode(['success' => false, 'message' => 'ID aturan diskon tidak valid.']);
+                exit;
+            }
+
+            if ($isActive === null) {
+                $cur = $pdo->query("SELECT is_active FROM discount_rules WHERE id = {$id}")->fetchColumn();
+                $isActive = ($cur == 1) ? 0 : 1;
+            }
+
+            $pdo->prepare("UPDATE discount_rules SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")->execute([$isActive, $id]);
+            $lbl = $isActive ? 'diaktifkan' : 'dinonaktifkan';
+
+            echo json_encode([
+                'success' => true,
+                'message' => "Aturan diskon berhasil {$lbl}.",
+                'is_active' => $isActive
+            ]);
+            break;
+
+        case 'delete_discount_rule':
+            $id = (int)($input['id'] ?? 0);
+            if (!$id) {
+                echo json_encode(['success' => false, 'message' => 'ID aturan diskon tidak valid.']);
+                exit;
+            }
+
+            $stmtRule = $pdo->prepare("SELECT * FROM discount_rules WHERE id = ?");
+            $stmtRule->execute([$id]);
+            $rule = $stmtRule->fetch(PDO::FETCH_ASSOC);
+
+            if (!$rule) {
+                echo json_encode(['success' => false, 'message' => 'Aturan diskon tidak ditemukan.']);
+                exit;
+            }
+
+            // Check if rule is used in sales transactions
+            $stmtUsed = $pdo->prepare("SELECT COUNT(*) FROM sales WHERE discount_rule_id = ?");
+            $stmtUsed->execute([$id]);
+            $usedCount = (int)$stmtUsed->fetchColumn();
+
+            if ($usedCount > 0) {
+                // Soft deactivate instead of hard delete to preserve sales audit integrity
+                $pdo->prepare("UPDATE discount_rules SET is_active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?")->execute([$id]);
+                echo json_encode([
+                    'success' => true,
+                    'message' => "Aturan diskon '{$rule['name']}' telah digunakan pada {$usedCount} transaksi penjualan. Statusnya otomatis diubah menjadi NONAKTIF demi menjaga integritas data riwayat keuangan.",
+                    'action_taken' => 'deactivated'
+                ]);
+                exit;
+            }
+
+            $pdo->prepare("DELETE FROM discount_rules WHERE id = ?")->execute([$id]);
+            echo json_encode([
+                'success' => true,
+                'message' => "Aturan diskon '{$rule['name']}' berhasil dihapus permanen.",
+                'action_taken' => 'deleted'
+            ]);
+            break;
+
+        case 'get_applicable_discounts':
+            // Evaluator promo pintar untuk POS Kasir
+            $branchId = !empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : null;
+            $customerId = !empty($_GET['customer_id']) ? (int)$_GET['customer_id'] : null;
+            $customerCategory = strtoupper(trim($_GET['customer_category'] ?? 'REGULER'));
+            $subtotal = (float)($_GET['subtotal'] ?? 0);
+            $paymentMethod = strtoupper(trim($_GET['payment_method'] ?? 'ALL'));
+            $todayDate = date('Y-m-d');
+            $indoDays = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+            $currentDay = $indoDays[(int)date('w')];
+
+            $stmtAllActive = $pdo->prepare("
+                SELECT * FROM discount_rules 
+                WHERE is_active = 1
+                  AND (branch_id IS NULL OR branch_id = ?)
+                  AND (start_date IS NULL OR start_date <= ?)
+                  AND (end_date IS NULL OR end_date >= ?)
+                ORDER BY discount_amount DESC, id DESC
+            ");
+            $stmtAllActive->execute([$branchId, $todayDate, $todayDate]);
+            $allRules = $stmtAllActive->fetchAll(PDO::FETCH_ASSOC);
+
+            $autoRules = [];
+            $manualRules = [];
+            $bestAutoDiscount = null;
+
+            foreach ($allRules as $rule) {
+                $isEligible = true;
+                $ineligibleReasons = [];
+
+                // 1. Check Subtotal vs Min Purchase
+                $minP = (float)$rule['min_purchase'];
+                if ($subtotal < $minP) {
+                    $isEligible = false;
+                    $shortfall = $minP - $subtotal;
+                    $ineligibleReasons[] = "Min. belanja Rp " . number_format($minP, 0, ',', '.') . " (kurang Rp " . number_format($shortfall, 0, ',', '.') . ")";
+                }
+
+                // 2. Check Customer Scope
+                if ($rule['scope_customer_type'] === 'SPECIFIC') {
+                    $custIds = !empty($rule['customer_ids']) ? json_decode($rule['customer_ids'], true) : [];
+                    if (empty($customerId) || !in_array($customerId, $custIds)) {
+                        $isEligible = false;
+                        $ineligibleReasons[] = "Hanya berlaku untuk pelanggan tertentu";
+                    }
+                }
+
+                // 3. Check Category Scope
+                if ($rule['scope_category_type'] === 'SPECIFIC') {
+                    $catArr = !empty($rule['customer_categories']) ? json_decode($rule['customer_categories'], true) : [];
+                    if (!in_array($customerCategory, $catArr)) {
+                        $isEligible = false;
+                        $ineligibleReasons[] = "Khusus kategori " . implode(', ', $catArr);
+                    }
+                }
+
+                // 4. Check Day of Week Scope
+                if ($rule['scope_day_type'] === 'SPECIFIC') {
+                    $dayArr = !empty($rule['days_of_week']) ? json_decode($rule['days_of_week'], true) : [];
+                    if (!in_array($currentDay, $dayArr)) {
+                        $isEligible = false;
+                        $ineligibleReasons[] = "Hanya berlaku pada hari " . implode(', ', $dayArr);
+                    }
+                }
+
+                // 5. Check Payment Method Scope
+                if ($rule['scope_payment_type'] === 'SPECIFIC') {
+                    $payArr = !empty($rule['payment_methods']) ? json_decode($rule['payment_methods'], true) : [];
+                    if ($paymentMethod !== 'ALL' && !in_array($paymentMethod, $payArr)) {
+                        $isEligible = false;
+                        $ineligibleReasons[] = "Khusus pembayaran " . implode(', ', $payArr);
+                    }
+                }
+
+                $ruleItem = [
+                    'id' => (int)$rule['id'],
+                    'code' => $rule['code'],
+                    'name' => $rule['name'],
+                    'discount_amount' => (float)$rule['discount_amount'],
+                    'min_purchase' => (float)$rule['min_purchase'],
+                    'trigger_mode' => $rule['trigger_mode'],
+                    'scope_customer_type' => $rule['scope_customer_type'],
+                    'scope_category_type' => $rule['scope_category_type'],
+                    'customer_categories' => !empty($rule['customer_categories']) ? json_decode($rule['customer_categories'], true) : [],
+                    'scope_day_type' => $rule['scope_day_type'],
+                    'days_of_week' => !empty($rule['days_of_week']) ? json_decode($rule['days_of_week'], true) : [],
+                    'scope_payment_type' => $rule['scope_payment_type'],
+                    'payment_methods' => !empty($rule['payment_methods']) ? json_decode($rule['payment_methods'], true) : [],
+                    'is_eligible' => $isEligible,
+                    'ineligible_reasons' => $ineligibleReasons,
+                    'description' => $rule['description']
+                ];
+
+                if ($rule['trigger_mode'] === 'AUTO') {
+                    $autoRules[] = $ruleItem;
+                    if ($isEligible) {
+                        if ($bestAutoDiscount === null || $ruleItem['discount_amount'] > $bestAutoDiscount['discount_amount']) {
+                            $bestAutoDiscount = $ruleItem;
+                        }
+                    }
+                } else {
+                    $manualRules[] = $ruleItem;
+                }
+            }
+
+            echo json_encode([
+                'success' => true,
+                'today_day' => $currentDay,
+                'current_subtotal' => $subtotal,
+                'best_auto_discount' => $bestAutoDiscount,
+                'auto_rules' => $autoRules,
+                'manual_rules' => $manualRules
             ]);
             break;
 

@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.6.8",
-    "build": "20261102-94",
+    "version": "1.6.9",
+    "build": "20261102-95",
     "release_date": "2026-11-02",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.6.9",
+            "commit": "HEAD",
+            "date": "2026-11-02",
+            "title": "CRUD Aturan Diskon Nominal Multi-Dimensi & Integrasi Kasir POS (FR-DISC-01)",
+            "description": "Menghadirkan modul manajemen aturan diskon nominal yang fleksibel dan terintegrasi menyeluruh mulai dari konfigurasi target, operasional kasir POS (autoset & tombol manual), hingga pembukuan laporan diskon: (1) CRUD Aturan Diskon Nominal Multi-Dimensi: Mengelola nama, kode voucher, nominal potongan Rupiah, dan min. belanja dengan 4 kriteria target fleksibel: Pelanggan (semua/spesifik), Kategori Pelanggan (semua/pilihan REGULER/MEMBER/RESELLER/MITRA), Hari Berlaku (semua/pilihan SENIN-MINGGU termasuk Promo Jumat Berkah), dan Metode Pembayaran (semua/pilihan CASH/QRIS/TRANSFER/DEBIT/PIUTANG); (2) Mode Penerapan AUTO & MANUAL: Mendukung autoset (otomatis terpasang saat keranjang belanja memenuhi kriteria promo) serta mode manual (kasir memilih dan menekan tombol promo di POS); (3) Integrasi POS Kasir & Pemilih Promo Pintar: Modal pemilih promo modal-pos-promo-picker memisahkan promo yang eligible dengan alasan jika belum memenuhi syarat belanja, banner aktif interaktif, dan pencatatan discount_rule_id serta discount_name pada tabel sales; (4) Laporan Diskon & Ekspor Excel Terpadu: Menambahkan tabel Rekap Pemakaian Aturan Diskon & Promosi (frekuensi nota, subtotal, potongan diskon, laba kotor), tombol pintas 'Kelola Aturan Diskon', filter dropdown aturan promo, dan kolom Nama Promo pada rincian faktur serta file Excel; (5) Kompatibilitas Penuh Android 8.1 Oreo: 100% bebas operator modern ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.6.8"
+        },
         {
             "version": "1.6.8",
             "commit": "HEAD",

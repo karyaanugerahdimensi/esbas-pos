@@ -1064,8 +1064,28 @@ try {
                                 <span id="summary-subtotal" class="font-semibold text-slate-800 dark:text-slate-200">Rp 0</span>
                             </div>
                             <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
-                                <span>Diskon Faktur (Rp):</span>
-                                <input type="number" id="input-discount" value="0" min="0" oninput="calculateCartTotals()" class="w-24 text-right py-1 px-2 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg focus:outline-none">
+                                <div class="flex items-center space-x-1.5">
+                                    <span>Diskon Faktur (Rp):</span>
+                                    <button type="button" onclick="openPosPromoPicker()" id="btn-pos-pick-promo" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 flex items-center space-x-1 transition-colors cursor-pointer" title="Pilih Promo / Aturan Diskon Kasir">
+                                        <i data-lucide="tag" class="w-3 h-3"></i>
+                                        <span>🏷️ Promo</span>
+                                    </button>
+                                </div>
+                                <input type="number" id="input-discount" value="0" min="0" oninput="onPosManualDiscountInput()" class="w-24 text-right py-1 px-2 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg focus:outline-none">
+                            </div>
+                            <!-- Banner Promo Aktif di Keranjang Kasir POS -->
+                            <div id="pos-active-promo-banner" class="hidden px-2.5 py-1.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-xl flex items-center justify-between text-xs">
+                                <div class="flex items-center space-x-1.5 min-w-0">
+                                    <span class="text-rose-600 dark:text-rose-400 text-sm shrink-0">🏷️</span>
+                                    <div class="truncate">
+                                        <div class="flex items-center space-x-1">
+                                            <span id="pos-active-promo-name" class="font-bold text-rose-900 dark:text-rose-200 truncate block text-[11px]">Promo Aktif</span>
+                                            <span id="pos-active-promo-mode-badge" class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-rose-200 text-rose-800">AUTO</span>
+                                        </div>
+                                        <span id="pos-active-promo-sub" class="text-[10px] text-rose-700 dark:text-rose-300">Potongan Rp 0</span>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="clearAppliedPromo()" class="text-rose-400 hover:text-rose-700 dark:hover:text-rose-200 p-1 rounded-md hover:bg-rose-100 dark:hover:bg-rose-900 text-xs shrink-0 cursor-pointer" title="Lepas Promo">✕</button>
                             </div>
                             <div id="row-summary-tax" class="hidden flex justify-between text-xs text-slate-600 dark:text-slate-400">
                                 <span id="summary-tax-label">Pajak (PPN):</span>
@@ -1850,11 +1870,22 @@ try {
                                     <option value="PIUTANG">Piutang Cust</option>
                                 </select>
                             </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">Aturan Promo / Diskon:</label>
+                                <select id="disc-report-rule-filter" onchange="loadDiscountReports()" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium">
+                                    <option value="ALL">Semua Promo / Diskon</option>
+                                    <option value="MANUAL_ONLY">Diskon Manual Kasir Saja</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="flex items-center gap-2">
                             <button type="button" onclick="loadDiscountReports()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-2">
                                 <i data-lucide="filter" class="w-4 h-4"></i>
                                 <span>Terapkan Filter</span>
+                            </button>
+                            <button type="button" onclick="switchTab('customers'); setCustomerSubtab('discounts');" class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl border border-indigo-200 shadow-2xs flex items-center space-x-1.5 transition-colors cursor-pointer" title="Buka CRUD Manajemen Aturan Diskon & Promo">
+                                <i data-lucide="settings" class="w-4 h-4 text-indigo-600"></i>
+                                <span>Kelola Aturan Diskon</span>
                             </button>
                             <button type="button" onclick="exportDiscountReportExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-2">
                                 <i data-lucide="download" class="w-4 h-4"></i>
@@ -1904,6 +1935,45 @@ try {
                             </div>
                             <h3 id="disc-kpi-profit" class="text-lg font-black text-emerald-700 mt-1">Rp 0</h3>
                             <p id="disc-kpi-margin-sub" class="text-[11px] text-emerald-600 font-semibold mt-0.5">Margin Pasca-Diskon: 0%</p>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Rekapitulasi Pemakaian Aturan Diskon & Promosi -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                                    <i data-lucide="tag" class="w-4 h-4 text-rose-600"></i>
+                                    <span>Rekap Pemakaian Aturan Diskon & Promosi</span>
+                                </h3>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Analisis performa program promosi, frekuensi penggunaan voucher, dan nilai potongan diskon.</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span id="disc-rules-count-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">0 Promo</span>
+                                <button type="button" onclick="switchTab('customers'); setCustomerSubtab('discounts');" class="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center space-x-1 hover:underline cursor-pointer">
+                                    <span>+ Kelola Promo</span>
+                                    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-600 font-bold border-b">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Nama Promo / Aturan Diskon</th>
+                                        <th class="py-2.5 px-3 text-center">Kode Promo</th>
+                                        <th class="py-2.5 px-3 text-center">Mode Penerapan</th>
+                                        <th class="py-2.5 px-3 text-center">Frekuensi Nota</th>
+                                        <th class="py-2.5 px-3 text-right">Subtotal Belanja</th>
+                                        <th class="py-2.5 px-3 text-right">Total Diskon</th>
+                                        <th class="py-2.5 px-3 text-right">Penjualan Bersih</th>
+                                        <th class="py-2.5 px-3 text-right">Sisa Laba Kotor</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="disc-rules-summary-tbody" class="divide-y divide-slate-100">
+                                    <tr><td colspan="8" class="text-center py-6 text-slate-400">Memuat rekapitulasi aturan diskon...</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
@@ -1984,6 +2054,7 @@ try {
                                         <th class="py-3 px-3">Waktu</th>
                                         <th class="py-3 px-3">Kasir</th>
                                         <th class="py-3 px-3">Pelanggan</th>
+                                        <th class="py-3 px-3">Nama Promo / Aturan Diskon</th>
                                         <th class="py-3 px-3">Item Produk Dibeli</th>
                                         <th class="py-3 px-3 text-right">Subtotal Kotor</th>
                                         <th class="py-3 px-3 text-right">Potongan Diskon</th>
@@ -4445,6 +4516,10 @@ try {
                             <i data-lucide="tags" class="w-4 h-4"></i>
                             <span>Kategori Pelanggan</span>
                         </button>
+                        <button type="button" onclick="setCustomerSubtab('discounts')" id="subtab-btn-cust-discounts" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
+                            <i data-lucide="badge-percent" class="w-4 h-4 text-rose-600"></i>
+                            <span>🏷️ Aturan Diskon & Promo</span>
+                        </button>
                         <button type="button" onclick="setCustomerSubtab('maps')" id="subtab-btn-cust-maps" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="map" class="w-4 h-4"></i>
                             <span>Peta Geospasial Pelanggan</span>
@@ -4794,6 +4869,85 @@ try {
                 </div>
             </div>
 
+                <!-- SUBTAB 6: ATURAN DISKON & PROMOSI NOMINAL (CRUD) -->
+                <div id="subview-cust-discounts" class="space-y-4 hidden">
+                    <!-- Top Bar: Filter, Pencarian & Tombol Tambah Aturan Diskon -->
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-3 items-center justify-between">
+                        <div class="relative flex-1 min-w-[240px]">
+                            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
+                            <input type="text" id="disc-rule-search-keyword" oninput="renderDiscountRulesTable()" placeholder="Cari nama promo, kode voucher, atau deskripsi aturan..." class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400">
+                        </div>
+                        <div class="flex gap-2 items-center flex-wrap">
+                            <!-- Filter Mode Penerapan -->
+                            <div class="flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs">
+                                <button type="button" onclick="setDiscRuleModeFilter('ALL')" id="filter-disc-mode-all" class="disc-mode-filter-btn px-2.5 py-1 rounded-lg font-bold bg-rose-600 text-white shadow-2xs">Semua Mode</button>
+                                <button type="button" onclick="setDiscRuleModeFilter('AUTO')" id="filter-disc-mode-auto" class="disc-mode-filter-btn px-2.5 py-1 rounded-lg font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">⚡ Otomatis</button>
+                                <button type="button" onclick="setDiscRuleModeFilter('MANUAL')" id="filter-disc-mode-manual" class="disc-mode-filter-btn px-2.5 py-1 rounded-lg font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">🔘 Manual Kasir</button>
+                            </div>
+                            <!-- Filter Status -->
+                            <select id="filter-disc-rule-status" onchange="renderDiscountRulesTable()" class="px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-700 dark:text-slate-200 focus:outline-none">
+                                <option value="ALL">Semua Status</option>
+                                <option value="ACTIVE" selected>Aktif Saja</option>
+                                <option value="INACTIVE">Nonaktif Saja</option>
+                            </select>
+                            <button type="button" onclick="openDiscountRuleModal()" class="shrink-0 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow transition-colors flex items-center space-x-1.5 cursor-pointer">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                                <span>+ Tambah Aturan Diskon Baru</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mini KPI Row for Discounts -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                            <span class="text-[10px] font-bold uppercase text-slate-400 block">Total Aturan Promo</span>
+                            <h4 id="disc-rule-stat-total" class="text-lg font-black text-slate-800 dark:text-slate-100 mt-0.5">0</h4>
+                            <span class="text-[10px] text-slate-500">Tersimpan di sistem</span>
+                        </div>
+                        <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 shadow-2xs bg-gradient-to-br from-emerald-50/50 to-transparent">
+                            <span class="text-[10px] font-bold uppercase text-emerald-700 block">⚡ Promo Otomatis</span>
+                            <h4 id="disc-rule-stat-auto" class="text-lg font-black text-emerald-700 mt-0.5">0</h4>
+                            <span class="text-[10px] text-emerald-600">Autoset saat syarat terpenuhi</span>
+                        </div>
+                        <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-indigo-200 dark:border-indigo-800/60 shadow-2xs bg-gradient-to-br from-indigo-50/50 to-transparent">
+                            <span class="text-[10px] font-bold uppercase text-indigo-700 block">🔘 Promo Tombol Manual</span>
+                            <h4 id="disc-rule-stat-manual" class="text-lg font-black text-indigo-700 mt-0.5">0</h4>
+                            <span class="text-[10px] text-indigo-600">Dipilih kasir di kasir POS</span>
+                        </div>
+                        <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-rose-200 dark:border-rose-800/60 shadow-2xs bg-gradient-to-br from-rose-50/50 to-transparent">
+                            <span class="text-[10px] font-bold uppercase text-rose-700 block">Total Diskon Diberikan</span>
+                            <h4 id="disc-rule-stat-given" class="text-lg font-black text-rose-600 mt-0.5">Rp 0</h4>
+                            <span id="disc-rule-stat-orders" class="text-[10px] text-rose-600">0 Transaksi penjualan</span>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Daftar Aturan Diskon -->
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-100 dark:border-slate-800 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+                                    <tr>
+                                        <th class="py-3 px-4">Nama & Kode Promo</th>
+                                        <th class="py-3 px-3 text-right">Potongan Diskon</th>
+                                        <th class="py-3 px-3 text-right">Min. Belanja</th>
+                                        <th class="py-3 px-3">Target Kategori & Pelanggan</th>
+                                        <th class="py-3 px-3">Hari Berlaku</th>
+                                        <th class="py-3 px-3">Metode Bayar</th>
+                                        <th class="py-3 px-3 text-center">Mode</th>
+                                        <th class="py-3 px-3 text-center">Pemakaian</th>
+                                        <th class="py-3 px-3 text-center">Status</th>
+                                        <th class="py-3 px-4 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cust-discounts-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    <tr>
+                                        <td colspan="10" class="text-center py-8 text-slate-400">Memuat data aturan diskon & promo...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             <!-- ---------------------------------------------------- -->
             <!-- TAB 10: MODUL LOGISTIK, ARMADA KURIR & BIAYA KIRIM   -->
             <!-- ---------------------------------------------------- -->
@@ -9733,6 +9887,309 @@ try {
         </div>
     </div>
 
+        <!-- ======================================================== -->
+    <!-- MODAL CRUD ATURAN DISKON NOMINAL (modal-discount-rule)    -->
+    <!-- ======================================================== -->
+    <div id="modal-discount-rule" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden overflow-y-auto">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl space-y-4 my-auto max-h-[92vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between border-b pb-3 border-slate-100 dark:border-slate-800">
+                <div class="flex items-center space-x-2.5">
+                    <span id="disc-rule-modal-badge" class="p-2.5 bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 rounded-2xl text-xl font-bold">🏷️</span>
+                    <div>
+                        <h3 id="disc-rule-modal-title" class="font-extrabold text-slate-800 dark:text-slate-100 text-base">Tambah Aturan Diskon Baru</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Atur potongan nominal per pelanggan, kategori, hari, & metode bayar</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeDiscountRuleModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Form Body -->
+            <form id="form-discount-rule" onsubmit="saveDiscountRuleForm(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="disc-rule-id">
+
+                <!-- Baris 1: Nama & Kode Promo -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Nama Aturan Diskon / Promo <span class="text-rose-500">*</span></label>
+                        <input type="text" id="disc-rule-name" required placeholder="Contoh: Promo Berkah Jumat" class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Kode Promo / Voucher</label>
+                        <input type="text" id="disc-rule-code" placeholder="Otomatis jika kosong (cth: DISC-JUMAT)" class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl font-mono font-bold uppercase text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500">
+                    </div>
+                </div>
+
+                <!-- Baris 2: Nilai Potongan Diskon & Min. Belanja -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="p-3 bg-rose-50/70 dark:bg-rose-950/30 rounded-2xl border border-rose-200 dark:border-rose-900/50">
+                        <label class="block font-black text-rose-800 dark:text-rose-300 mb-1">Potongan Diskon Nominal (Rp) <span class="text-rose-500">*</span></label>
+                        <input type="number" id="disc-rule-amount" min="1" required placeholder="5000" class="w-full p-2.5 bg-white dark:bg-slate-800 border border-rose-300 dark:border-rose-700 rounded-xl font-mono font-black text-rose-700 dark:text-rose-300 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500">
+                        <span class="text-[10px] text-rose-600 dark:text-rose-400 mt-1 block">Potongan langsung dalam satuan Rupiah (bukan persentase).</span>
+                    </div>
+                    <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Syarat Minimum Belanja (Rp)</label>
+                        <input type="number" id="disc-rule-min-purchase" min="0" value="0" placeholder="0" class="w-full p-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl font-mono font-bold text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500">
+                        <span class="text-[10px] text-slate-500 mt-1 block">Isi 0 jika tanpa syarat minimum pembelian keranjang.</span>
+                    </div>
+                </div>
+
+                <!-- Baris 3: Mode Penerapan (AUTO vs MANUAL) -->
+                <div class="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+                    <label class="block font-bold text-slate-700 dark:text-slate-300">Mode Penerapan Promo:</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <label class="flex items-start space-x-2.5 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer hover:border-emerald-500 transition-colors">
+                            <input type="radio" name="disc-rule-trigger-mode" value="AUTO" checked class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
+                            <div>
+                                <span class="font-extrabold text-slate-800 dark:text-slate-100 block">⚡ AUTO (Otomatis Terpasang)</span>
+                                <span class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight block mt-0.5">Sistem kasir otomatis mendeteksi dan memasang diskon jika pelanggan, hari, & metode bayar sesuai syarat.</span>
+                            </div>
+                        </label>
+                        <label class="flex items-start space-x-2.5 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer hover:border-indigo-500 transition-colors">
+                            <input type="radio" name="disc-rule-trigger-mode" value="MANUAL" class="mt-0.5 text-indigo-600 focus:ring-indigo-500">
+                            <div>
+                                <span class="font-extrabold text-slate-800 dark:text-slate-100 block">🔘 MANUAL (Pilihan Kasir)</span>
+                                <span class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight block mt-0.5">Kasir harus menekan tombol promo di kasir POS untuk memilih dan menerapkan voucher promo ini.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SEKSI: 4 KRITERIA PENYESUAIAN DISKON -->
+                <div class="space-y-3 pt-1">
+                    <h4 class="font-extrabold text-xs uppercase tracking-wider text-rose-600 dark:text-rose-400 flex items-center space-x-1.5">
+                        <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                        <span>Kriteria Target Penyesuaian (Multi-Dimensi)</span>
+                    </h4>
+
+                    <!-- 1. Kriteria Pelanggan -->
+                    <div class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-slate-700 dark:text-slate-200">1. Target Pelanggan:</span>
+                            <div class="flex items-center space-x-3 text-xs">
+                                <label class="flex items-center space-x-1 cursor-pointer">
+                                    <input type="radio" name="disc-scope-cust-type" value="ALL" checked onchange="onDiscScopeCustChange()" class="text-rose-600">
+                                    <span>Semua Pelanggan</span>
+                                </label>
+                                <label class="flex items-center space-x-1 cursor-pointer">
+                                    <input type="radio" name="disc-scope-cust-type" value="SPECIFIC" onchange="onDiscScopeCustChange()" class="text-rose-600">
+                                    <span>Pelanggan Tertentu</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="disc-cust-specific-container" class="hidden pt-2 border-t border-slate-100 dark:border-slate-700 space-y-1.5">
+                            <input type="text" id="disc-cust-filter-search" oninput="filterDiscCustomerCheckboxList()" placeholder="Ketik nama atau no. telepon pelanggan..." class="w-full p-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none">
+                            <div id="disc-cust-checkboxes-list" class="max-h-32 overflow-y-auto space-y-1 p-1 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-800 text-[11px]">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Kriteria Kategori Pelanggan -->
+                    <div class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-slate-700 dark:text-slate-200">2. Target Kategori Pelanggan:</span>
+                            <div class="flex items-center space-x-3 text-xs">
+                                <label class="flex items-center space-x-1 cursor-pointer">
+                                    <input type="radio" name="disc-scope-cat-type" value="ALL" checked onchange="onDiscScopeCatChange()" class="text-rose-600">
+                                    <span>Semua Kategori</span>
+                                </label>
+                                <label class="flex items-center space-x-1 cursor-pointer">
+                                    <input type="radio" name="disc-scope-cat-type" value="SPECIFIC" onchange="onDiscScopeCatChange()" class="text-rose-600">
+                                    <span>Pilih Kategori</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="disc-cat-specific-container" class="hidden pt-2 border-t border-slate-100 dark:border-slate-700 flex flex-wrap gap-2">
+                            <label class="flex items-center space-x-1.5 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer">
+                                <input type="checkbox" name="disc-cat-checkbox" value="REGULER" class="text-rose-600 rounded">
+                                <span class="font-bold text-slate-700 dark:text-slate-300">REGULER</span>
+                            </label>
+                            <label class="flex items-center space-x-1.5 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer">
+                                <input type="checkbox" name="disc-cat-checkbox" value="MEMBER" class="text-rose-600 rounded">
+                                <span class="font-bold text-indigo-700 dark:text-indigo-400">MEMBER VIP</span>
+                            </label>
+                            <label class="flex items-center space-x-1.5 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer">
+                                <input type="checkbox" name="disc-cat-checkbox" value="RESELLER" class="text-rose-600 rounded">
+                                <span class="font-bold text-amber-700 dark:text-amber-400">RESELLER</span>
+                            </label>
+                            <label class="flex items-center space-x-1.5 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer">
+                                <input type="checkbox" name="disc-cat-checkbox" value="MITRA" class="text-rose-600 rounded">
+                                <span class="font-bold text-emerald-700 dark:text-emerald-400">MITRA B2B</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 3. Kriteria Hari Berlaku -->
+                    <div class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-slate-700 dark:text-slate-200">3. Target Hari Berlaku:</span>
+                            <div class="flex items-center space-x-3 text-xs">
+                                <label class="flex items-center space-x-1 cursor-pointer">
+                                    <input type="radio" name="disc-scope-day-type" value="ALL" checked onchange="onDiscScopeDayChange()" class="text-rose-600">
+                                    <span>Semua Hari (Setiap Hari)</span>
+                                </label>
+                                <label class="flex items-center space-x-1 cursor-pointer">
+                                    <input type="radio" name="disc-scope-day-type" value="SPECIFIC" onchange="onDiscScopeDayChange()" class="text-rose-600">
+                                    <span>Hari Tertentu</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="disc-day-specific-container" class="hidden pt-2 border-t border-slate-100 dark:border-slate-700 flex flex-wrap gap-1.5">
+                            <label class="flex items-center space-x-1 px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer text-xs">
+                                <input type="checkbox" name="disc-day-checkbox" value="SENIN" class="text-rose-600 rounded">
+                                <span>Senin</span>
+                            </label>
+                            <label class="flex items-center space-x-1 px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer text-xs">
+                                <input type="checkbox" name="disc-day-checkbox" value="SELASA" class="text-rose-600 rounded">
+                                <span>Selasa</span>
+                            </label>
+                            <label class="flex items-center space-x-1 px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer text-xs">
+                                <input type="checkbox" name="disc-day-checkbox" value="RABU" class="text-rose-600 rounded">
+                                <span>Rabu</span>
+                            </label>
+                            <label class="flex items-center space-x-1 px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer text-xs">
+                                <input type="checkbox" name="disc-day-checkbox" value="KAMIS" class="text-rose-600 rounded">
+                                <span>Kamis</span>
+                            </label>
+                            <label class="flex items-center space-x-1 px-2 py-1 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 rounded-lg cursor-pointer text-xs font-bold text-rose-800 dark:text-rose-300">
+                                <input type="checkbox" name="disc-day-checkbox" value="JUMAT" class="text-rose-600 rounded">
+                                <span>Jumat (Berkah)</span>
+                            </label>
+                            <label class="flex items-center space-x-1 px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer text-xs">
+                                <input type="checkbox" name="disc-day-checkbox" value="SABTU" class="text-rose-600 rounded">
+                                <span>Sabtu</span>
+                            </label>
+                            <label class="flex items-center space-x-1 px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer text-xs">
+                                <input type="checkbox" name="disc-day-checkbox" value="MINGGU" class="text-rose-600 rounded">
+                                <span>Minggu</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 4. Kriteria Metode Pembayaran -->
+                    <div class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-slate-700 dark:text-slate-200">4. Target Metode Pembayaran:</span>
+                            <div class="flex items-center space-x-3 text-xs">
+                                <label class="flex items-center space-x-1 cursor-pointer">
+                                    <input type="radio" name="disc-scope-pay-type" value="ALL" checked onchange="onDiscScopePayChange()" class="text-rose-600">
+                                    <span>Semua Metode</span>
+                                </label>
+                                <label class="flex items-center space-x-1 cursor-pointer">
+                                    <input type="radio" name="disc-scope-pay-type" value="SPECIFIC" onchange="onDiscScopePayChange()" class="text-rose-600">
+                                    <span>Metode Tertentu</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="disc-pay-specific-container" class="hidden pt-2 border-t border-slate-100 dark:border-slate-700 flex flex-wrap gap-2">
+                            <label class="flex items-center space-x-1.5 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer">
+                                <input type="checkbox" name="disc-pay-checkbox" value="CASH" class="text-rose-600 rounded">
+                                <span>Tunai (Cash)</span>
+                            </label>
+                            <label class="flex items-center space-x-1.5 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer">
+                                <input type="checkbox" name="disc-pay-checkbox" value="QRIS" class="text-rose-600 rounded">
+                                <span class="font-bold text-indigo-700 dark:text-indigo-400">QRIS</span>
+                            </label>
+                            <label class="flex items-center space-x-1.5 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer">
+                                <input type="checkbox" name="disc-pay-checkbox" value="TRANSFER" class="text-rose-600 rounded">
+                                <span>Transfer Bank</span>
+                            </label>
+                            <label class="flex items-center space-x-1.5 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer">
+                                <input type="checkbox" name="disc-pay-checkbox" value="DEBIT" class="text-rose-600 rounded">
+                                <span>Kartu Debit</span>
+                            </label>
+                            <label class="flex items-center space-x-1.5 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer">
+                                <input type="checkbox" name="disc-pay-checkbox" value="PIUTANG" class="text-rose-600 rounded">
+                                <span>Piutang Cust</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Baris Tambahan: Periode Berlaku, Cabang, Deskripsi, Status -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Masa Berlaku Promo (Mulai):</label>
+                        <input type="date" id="disc-rule-start-date" class="w-full p-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Masa Berlaku Promo (Selesai):</label>
+                        <input type="date" id="disc-rule-end-date" class="w-full p-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Berlaku di Outlet Cabang:</label>
+                        <select id="disc-rule-branch-id" class="w-full p-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl font-bold text-slate-800 dark:text-slate-200">
+                            <option value="">Semua Cabang (Global)</option>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Status Aturan Diskon:</label>
+                        <div class="flex items-center space-x-2 pt-1">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="disc-rule-is-active" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                            </label>
+                            <span class="font-bold text-slate-700 dark:text-slate-300">Aktif & Siap Digunakan</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Deskripsi / Keterangan Promo:</label>
+                    <textarea id="disc-rule-description" rows="2" placeholder="Catatan internal peruntukan promo atau keterangan voucher..." class="w-full p-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500"></textarea>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" onclick="closeDiscountRuleModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl font-bold text-slate-700 dark:text-slate-300">Batal</button>
+                    <button type="submit" class="py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow cursor-pointer">Simpan Aturan Diskon</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL PEMILIH PROMO KASIR POS (modal-pos-promo-picker)    -->
+    <!-- ======================================================== -->
+    <div id="modal-pos-promo-picker" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden overflow-y-auto">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4 my-auto max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
+            <!-- Header -->
+            <div class="flex items-center justify-between border-b pb-3 border-slate-100 dark:border-slate-800">
+                <div class="flex items-center space-x-2.5">
+                    <span class="p-2.5 bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 rounded-2xl text-xl font-bold">🏷️</span>
+                    <div>
+                        <h3 class="font-extrabold text-slate-800 dark:text-slate-100 text-base">Pilih Promo Diskon Transaksi</h3>
+                        <p id="pos-promo-picker-subtitle" class="text-xs text-slate-500 dark:text-slate-400">Keranjang: Rp 0 • Pelanggan: -</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closePosPromoPicker()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- List of Applicable Promos -->
+            <div id="pos-promo-picker-list" class="space-y-2.5 max-h-[55vh] overflow-y-auto pr-1">
+                <p class="text-center py-6 text-slate-400 text-xs">Memuat daftar promo yang tersedia...</p>
+            </div>
+
+            <!-- Bottom Actions -->
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                <button type="button" onclick="clearAppliedPromo(); closePosPromoPicker();" class="py-2.5 px-4 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 dark:bg-slate-800 dark:hover:bg-rose-950/50 dark:text-slate-300 rounded-xl text-xs font-bold transition-colors">
+                    Lepas / Tanpa Promo
+                </button>
+                <button type="button" onclick="closePosPromoPicker()" class="py-2.5 px-5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
     <!-- Modal 8: Set Harga Kontrak Khusus Mitra (Per Produk) -->
     <div id="mitra-price-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
@@ -11775,6 +12232,10 @@ try {
             custCategoryFilter: 'ALL',
             custSearchKeyword: '',
             customerActiveSubtab: 'list',
+            appliedDiscount: null,
+            manualPromoSelected: false,
+            discountRulesCache: [],
+            discountRuleModeFilter: 'ALL',
             // Expenses & Operating Costs Properties
             expenseSubtab: 'ledger',
             expenseCategories: [],
@@ -14272,6 +14733,10 @@ try {
             resetPosDelivery(true);
             const discEl = document.getElementById('input-discount');
             if (discEl) discEl.value = 0;
+            state.appliedDiscount = null;
+            state.manualPromoSelected = false;
+            const apb = document.getElementById('pos-active-promo-banner');
+            if (apb) apb.classList.add('hidden');
             const cashEl = document.getElementById('input-cash-received');
             if (cashEl) cashEl.value = '';
             renderCart();
@@ -14707,6 +15172,9 @@ try {
             document.getElementById('summary-tax').innerText = formatRupiah(tax);
             document.getElementById('summary-grand-total').innerText = formatRupiah(grandTotal);
             calculateChange();
+            if (typeof debouncedEvaluatePosDiscounts === 'function') {
+                debouncedEvaluatePosDiscounts();
+            }
         }
 
         function renderPosPaymentButtons() {
@@ -14909,6 +15377,9 @@ try {
                 document.getElementById('pos-modal-subtotal').innerText = formatRupiah(subtotal);
             }
             if (document.getElementById('pos-modal-discount')) {
+                const discLbl = document.getElementById('pos-modal-discount-label');
+                const promoLbl = (state.appliedDiscount && state.appliedDiscount.name) ? ` (${state.appliedDiscount.name})` : '';
+                if (discLbl) discLbl.innerText = `Diskon Faktur${promoLbl}:`;
                 document.getElementById('pos-modal-discount').innerText = discount > 0 ? `- ${formatRupiah(discount)}` : 'Rp 0';
             }
 
@@ -15166,6 +15637,8 @@ try {
                 payment_method: state.paymentMethod,
                 cash_received: (state.paymentMethod === 'PIUTANG') ? 0 : state.cashReceived,
                 discount: discount,
+                discount_rule_id: (state.appliedDiscount && state.appliedDiscount.id) ? state.appliedDiscount.id : null,
+                discount_name: (state.appliedDiscount && state.appliedDiscount.name) ? state.appliedDiscount.name : (discount > 0 ? 'Diskon Manual Kasir' : null),
                 delivery_fee: deliveryFee,
                 delivery_distance_km: deliveryDistance,
                 courier_vehicle_id: courierVehicleId,
@@ -17887,7 +18360,9 @@ try {
             const branchId = state.currentBranch ? state.currentBranch.id : '';
 
             try {
-                const url = `api.php?action=discount_reports&branch_id=${branchId}&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&customer_category=${encodeURIComponent(customerCategory)}&cashier_filter=${encodeURIComponent(prevCashier)}&payment_method=${encodeURIComponent(paymentMethod)}`;
+                const ruleEl = document.getElementById('disc-report-rule-filter');
+            const prevRule = ruleEl ? ruleEl.value : 'ALL';
+            const url = `api.php?action=discount_reports&branch_id=${branchId}&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&customer_category=${encodeURIComponent(customerCategory)}&cashier_filter=${encodeURIComponent(prevCashier)}&payment_method=${encodeURIComponent(paymentMethod)}&rule_filter=${encodeURIComponent(prevRule)}`;
                 const res = await fetch(url);
                 const data = await res.json();
                 if (!data.success) {
@@ -17905,6 +18380,46 @@ try {
                         optsHtml += '<option value="' + safeVal + '"' + selAttr + '>' + safeVal + '</option>';
                     });
                     cshEl.innerHTML = optsHtml;
+                }
+
+                // Populate dropdown Aturan Promo & Tabel Rekap Pemakaian Aturan Diskon
+                const rulesList = Array.isArray(data.rules_summary) ? data.rules_summary : [];
+                const ruleEl = document.getElementById('disc-report-rule-filter');
+                if (ruleEl) {
+                    const prevRuleVal = ruleEl.value || 'ALL';
+                    let rOpts = '<option value="ALL">Semua Promo / Diskon</option><option value="MANUAL_ONLY"' + (prevRuleVal === 'MANUAL_ONLY' ? ' selected' : '') + '>Diskon Manual Kasir Saja</option>';
+                    rulesList.forEach(function(r) {
+                        if (r.rule_name && r.rule_name !== 'Diskon Manual Kasir') {
+                            const rSafe = escapeHtml(r.rule_name);
+                            const isSel = (prevRuleVal === r.rule_name) ? ' selected' : '';
+                            rOpts += '<option value="' + rSafe + '"' + isSel + '>' + rSafe + ' (' + (r.trigger_mode || 'AUTO') + ')</option>';
+                        }
+                    });
+                    ruleEl.innerHTML = rOpts;
+                }
+
+                const rulesBadge = document.getElementById('disc-rules-count-badge');
+                if (rulesBadge) rulesBadge.innerText = rulesList.length + ' Promo';
+                const rulesTbody = document.getElementById('disc-rules-summary-tbody');
+                if (rulesTbody) {
+                    if (rulesList.length === 0) {
+                        rulesTbody.innerHTML = '<tr><td colspan="8" class="text-center py-6 text-slate-400">Tidak ada pemakaian aturan diskon pada filter ini.</td></tr>';
+                    } else {
+                        rulesTbody.innerHTML = rulesList.map(function(rs) {
+                            const isAuto = (rs.trigger_mode === 'AUTO');
+                            const modeBadge = isAuto ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">⚡ AUTO</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">🔘 MANUAL</span>';
+                            return '<tr class="hover:bg-slate-50 transition-colors">' +
+                                '<td class="py-2.5 px-3 font-bold text-slate-800">' + escapeHtml(rs.rule_name || 'Diskon Manual Kasir') + '</td>' +
+                                '<td class="py-2.5 px-3 text-center font-mono text-[11px] text-slate-500">' + escapeHtml(rs.rule_code || '-') + '</td>' +
+                                '<td class="py-2.5 px-3 text-center">' + modeBadge + '</td>' +
+                                '<td class="py-2.5 px-3 text-center font-extrabold text-rose-700">' + (Number(rs.discount_orders) || 0) + ' Nota</td>' +
+                                '<td class="py-2.5 px-3 text-right text-slate-600">' + formatRupiah(rs.gross_subtotal || 0) + '</td>' +
+                                '<td class="py-2.5 px-3 text-right font-black text-rose-600">- ' + formatRupiah(rs.total_discount || 0) + '</td>' +
+                                '<td class="py-2.5 px-3 text-right font-bold text-indigo-900">' + formatRupiah(rs.net_sales || 0) + '</td>' +
+                                '<td class="py-2.5 px-3 text-right font-bold text-emerald-700">' + formatRupiah(rs.gross_profit || 0) + '</td>' +
+                            '</tr>';
+                        }).join('');
+                    }
                 }
 
                 const kpi = data.kpi || {};
@@ -18012,6 +18527,7 @@ try {
                                 '<td class="py-2.5 px-3 text-slate-500 whitespace-nowrap">' + escapeHtml(dr.created_at || '') + '</td>' +
                                 '<td class="py-2.5 px-3 text-slate-700 font-medium">' + escapeHtml(dr.cashier_name || '-') + '<p class="text-[10px] text-slate-400">' + escapeHtml(dr.branch_name || '') + '</p></td>' +
                                 '<td class="py-2.5 px-3"><span class="font-semibold text-slate-800">' + cust + '</span> <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">' + cat + '</span></td>' +
+                                '<td class="py-2.5 px-3 whitespace-nowrap"><span class="font-bold text-slate-800 block text-xs">' + escapeHtml(dr.discount_name || 'Diskon Manual Kasir') + '</span><span class="text-[10px] ' + (dr.discount_trigger_mode === 'AUTO' ? 'text-emerald-700 font-bold' : 'text-indigo-600 font-medium') + '">' + (dr.discount_trigger_mode === 'AUTO' ? '⚡ Otomatis (AUTO)' : '🔘 Manual Kasir') + '</span></td>' +
                                 '<td class="py-2.5 px-3 text-slate-700 max-w-[240px]"><span class="line-clamp-2" title="' + itemsSum + '">' + itemsSum + '</span></td>' +
                                 '<td class="py-2.5 px-3 text-right text-slate-600 whitespace-nowrap">' + formatRupiah(dr.subtotal || 0) + '</td>' +
                                 '<td class="py-2.5 px-3 text-right whitespace-nowrap"><span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-700">🏷️ -' + formatRupiah(discNum) + ' (' + discPct + '%)</span></td>' +
@@ -18052,7 +18568,9 @@ try {
             const paymentMethod = payEl ? payEl.value : 'ALL';
             const branchId = state.currentBranch ? state.currentBranch.id : '';
 
-            const url = `api.php?action=export_discount_excel&branch_id=${branchId}&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&customer_category=${encodeURIComponent(customerCategory)}&cashier_filter=${encodeURIComponent(cashierFilter)}&payment_method=${encodeURIComponent(paymentMethod)}`;
+            const ruleEl = document.getElementById('disc-report-rule-filter');
+            const ruleFilter = ruleEl ? ruleEl.value : 'ALL';
+            const url = `api.php?action=export_discount_excel&branch_id=${branchId}&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&customer_category=${encodeURIComponent(customerCategory)}&cashier_filter=${encodeURIComponent(cashierFilter)}&payment_method=${encodeURIComponent(paymentMethod)}&rule_filter=${encodeURIComponent(ruleFilter)}`;
             window.open(url, '_blank');
         }
 
@@ -28390,7 +28908,8 @@ Manager / Supervisor: __________________
                 { key: 'mitra-pricing', elId: 'subview-cust-mitra', btnId: 'subtab-btn-cust-mitra' },
                 { key: 'branch-pricing', elId: 'subview-cust-branch', btnId: 'subtab-btn-cust-branch' },
                 { key: 'category', elId: 'subview-cust-category', btnId: 'subtab-btn-cust-category' },
-                { key: 'maps', elId: 'subview-cust-maps', btnId: 'subtab-btn-cust-maps' }
+                { key: 'maps', elId: 'subview-cust-maps', btnId: 'subtab-btn-cust-maps' },
+                { key: 'discounts', elId: 'subview-cust-discounts', btnId: 'subtab-btn-cust-discounts' }
             ];
 
             const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
@@ -28418,6 +28937,7 @@ Manager / Supervisor: __________________
             if (subtab === 'mitra-pricing') loadMitraPricing();
             if (subtab === 'branch-pricing') loadBranchPricing();
             if (subtab === 'category') loadCustomerCategories();
+            if (subtab === 'discounts') loadDiscountRulesTable();
             lucide.createIcons();
         }
 
@@ -34465,6 +34985,7 @@ Manager / Supervisor: __________________
                 { id: 'subtab-btn-cust-branch', key: 'customers:category' },
                 { id: 'subtab-btn-cust-category', key: 'customers:category' },
                 { id: 'subtab-btn-cust-maps', key: 'customers:maps' },
+                { id: 'subtab-btn-cust-discounts', key: 'customers:discounts' },
 
                 // Logistics
                 { id: 'subtab-btn-vehicles', key: 'logistics:couriers' },

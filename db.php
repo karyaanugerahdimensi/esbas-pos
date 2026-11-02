@@ -821,6 +821,40 @@ function initDatabaseSchema($pdo) {
         cancelled_at DATETIME DEFAULT NULL
     )");
 
+        // 33. Discount Rules & Promotions (CRUD Diskon Nominal Multi-Dimensi)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS discount_rules (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        discount_amount REAL NOT NULL DEFAULT 0,
+        min_purchase REAL NOT NULL DEFAULT 0,
+        scope_customer_type TEXT DEFAULT 'ALL',
+        customer_ids TEXT DEFAULT NULL,
+        scope_category_type TEXT DEFAULT 'ALL',
+        customer_categories TEXT DEFAULT NULL,
+        scope_day_type TEXT DEFAULT 'ALL',
+        days_of_week TEXT DEFAULT NULL,
+        scope_payment_type TEXT DEFAULT 'ALL',
+        payment_methods TEXT DEFAULT NULL,
+        trigger_mode TEXT DEFAULT 'AUTO',
+        is_active INTEGER DEFAULT 1,
+        branch_id INTEGER DEFAULT NULL,
+        start_date TEXT DEFAULT NULL,
+        end_date TEXT DEFAULT NULL,
+        description TEXT DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );");
+
+    // Pastikan kolom discount_rule_id & discount_name di tabel sales
+    try {
+        $sCols = getDbTableColumns($pdo, 'sales');
+        if (!empty($sCols)) {
+            if (!in_array('discount_rule_id', $sCols)) $pdo->exec("ALTER TABLE sales ADD COLUMN discount_rule_id INTEGER DEFAULT NULL");
+            if (!in_array('discount_name', $sCols)) $pdo->exec("ALTER TABLE sales ADD COLUMN discount_name TEXT DEFAULT NULL");
+        }
+    } catch (Exception $e) {}
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS stock_transfer_items (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         transfer_id INTEGER NOT NULL,
@@ -837,6 +871,52 @@ function initDatabaseSchema($pdo) {
  */
 if (!function_exists('autoMigrateAndSync')) {
 function autoMigrateAndSync($pdo) {
+    // Migrasi discount_rules & kolom promo sales di SQLite
+    try {
+        $sCols = getDbTableColumns($pdo, 'sales');
+        if (!in_array('discount_rule_id', $sCols)) {
+            $pdo->exec("ALTER TABLE sales ADD COLUMN discount_rule_id INTEGER DEFAULT NULL");
+        }
+        if (!in_array('discount_name', $sCols)) {
+            $pdo->exec("ALTER TABLE sales ADD COLUMN discount_name TEXT DEFAULT NULL");
+        }
+    } catch (Exception $e) {}
+
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS discount_rules (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            discount_amount REAL NOT NULL DEFAULT 0,
+            min_purchase REAL NOT NULL DEFAULT 0,
+            scope_customer_type TEXT DEFAULT 'ALL',
+            customer_ids TEXT DEFAULT NULL,
+            scope_category_type TEXT DEFAULT 'ALL',
+            customer_categories TEXT DEFAULT NULL,
+            scope_day_type TEXT DEFAULT 'ALL',
+            days_of_week TEXT DEFAULT NULL,
+            scope_payment_type TEXT DEFAULT 'ALL',
+            payment_methods TEXT DEFAULT NULL,
+            trigger_mode TEXT DEFAULT 'AUTO',
+            is_active INTEGER DEFAULT 1,
+            branch_id INTEGER DEFAULT NULL,
+            start_date TEXT DEFAULT NULL,
+            end_date TEXT DEFAULT NULL,
+            description TEXT DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+
+        $drCount = $pdo->query("SELECT COUNT(*) FROM discount_rules")->fetchColumn();
+        if ($drCount == 0) {
+            $pdo->exec("INSERT INTO discount_rules (code, name, discount_amount, min_purchase, scope_customer_type, customer_ids, scope_category_type, customer_categories, scope_day_type, days_of_week, scope_payment_type, payment_methods, trigger_mode, is_active, description) VALUES
+                ('DISC-JUMAT', 'Promo Berkah Jumat', 5000, 50000, 'ALL', NULL, 'ALL', NULL, 'SPECIFIC', '[\"JUMAT\"]', 'ALL', NULL, 'AUTO', 1, 'Potongan Rp 5.000 belanja minimal Rp 50.000 otomatis setiap hari Jumat'),
+                ('DISC-MEMBER', 'Diskon Loyalitas Member & Reseller', 2000, 20000, 'ALL', NULL, 'SPECIFIC', '[\"MEMBER\",\"RESELLER\"]', 'ALL', NULL, 'ALL', NULL, 'AUTO', 1, 'Potongan Rp 2.000 untuk pelanggan kategori Member atau Reseller min. belanja Rp 20.000'),
+                ('DISC-QRIS', 'Promo Semarak QRIS Cashless', 3000, 25000, 'ALL', NULL, 'ALL', NULL, 'ALL', NULL, 'SPECIFIC', '[\"QRIS\"]', 'AUTO', 1, 'Cashback langsung Rp 3.000 untuk pembayaran QRIS min. belanja Rp 25.000'),
+                ('DISC-MANUAL-01', 'Voucher Potongan Kasir', 5000, 0, 'ALL', NULL, 'ALL', NULL, 'ALL', NULL, 'ALL', NULL, 'MANUAL', 1, 'Diskon voucher manual Rp 5.000 yang dapat dipilih kasir di kasir POS')
+            ");
+        }
+    } catch (Exception $e) {}
     // 1. Ensure `users` columns exist
     $userCols = getDbTableColumns($pdo, 'users');
     try {
@@ -2089,7 +2169,41 @@ function autoMigrateAndSync($pdo) {
             received_at DATETIME DEFAULT NULL,
             cancelled_at DATETIME DEFAULT NULL
         )");
-        $pdo->exec("CREATE TABLE IF NOT EXISTS stock_transfer_items (
+            // 33. Discount Rules & Promotions (CRUD Diskon Nominal Multi-Dimensi)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS discount_rules (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        discount_amount REAL NOT NULL DEFAULT 0,
+        min_purchase REAL NOT NULL DEFAULT 0,
+        scope_customer_type TEXT DEFAULT 'ALL',
+        customer_ids TEXT DEFAULT NULL,
+        scope_category_type TEXT DEFAULT 'ALL',
+        customer_categories TEXT DEFAULT NULL,
+        scope_day_type TEXT DEFAULT 'ALL',
+        days_of_week TEXT DEFAULT NULL,
+        scope_payment_type TEXT DEFAULT 'ALL',
+        payment_methods TEXT DEFAULT NULL,
+        trigger_mode TEXT DEFAULT 'AUTO',
+        is_active INTEGER DEFAULT 1,
+        branch_id INTEGER DEFAULT NULL,
+        start_date TEXT DEFAULT NULL,
+        end_date TEXT DEFAULT NULL,
+        description TEXT DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );");
+
+    // Pastikan kolom discount_rule_id & discount_name di tabel sales
+    try {
+        $sCols = getDbTableColumns($pdo, 'sales');
+        if (!empty($sCols)) {
+            if (!in_array('discount_rule_id', $sCols)) $pdo->exec("ALTER TABLE sales ADD COLUMN discount_rule_id INTEGER DEFAULT NULL");
+            if (!in_array('discount_name', $sCols)) $pdo->exec("ALTER TABLE sales ADD COLUMN discount_name TEXT DEFAULT NULL");
+        }
+    } catch (Exception $e) {}
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS stock_transfer_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             transfer_id INTEGER NOT NULL,
             product_id INTEGER NOT NULL,
@@ -2607,7 +2721,8 @@ function autoMigrateMysql($pdo) {
                     ['stock-in:manual', '1. Penambahan Manual', 1, 1, 1, $ud, $ud, 'stock-in', 1],
                     ['stock-in:transfer', '2. Transfer Cabang', $canTrf, $canTrf, $canTrf, $ud, $ud, 'stock-in', 1],
                     ['reports:deliveries', 'Laporan Kiriman & Kurir', $canRepMy, $canRepMy, $ud, $ud, $ud, 'reports', 1],
-                    ['reports:discounts', 'Laporan Diskon & Promo', $canRepMy, $canRepMy, $ud, $ud, $ud, 'reports', 1]
+                    ['reports:discounts', 'Laporan Diskon & Promo', $canRepMy, $canRepMy, $ud, $ud, $ud, 'reports', 1],
+                    ['customers:discounts', 'Aturan Diskon & Promo', $ud, $ud, $ud, $ud, $ud, 'customers', 1]
                 ];
 
                 foreach ($seedItems as $si) {
@@ -2618,6 +2733,51 @@ function autoMigrateMysql($pdo) {
                 }
             }
         }
+
+            // Migrasi discount_rules & kolom promo sales di MySQL Hosting
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `discount_rules` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `code` VARCHAR(50) UNIQUE NOT NULL,
+            `name` VARCHAR(150) NOT NULL,
+            `discount_amount` DECIMAL(15,2) NOT NULL DEFAULT 0,
+            `min_purchase` DECIMAL(15,2) NOT NULL DEFAULT 0,
+            `scope_customer_type` VARCHAR(20) DEFAULT 'ALL',
+            `customer_ids` TEXT DEFAULT NULL,
+            `scope_category_type` VARCHAR(20) DEFAULT 'ALL',
+            `customer_categories` TEXT DEFAULT NULL,
+            `scope_day_type` VARCHAR(20) DEFAULT 'ALL',
+            `days_of_week` TEXT DEFAULT NULL,
+            `scope_payment_type` VARCHAR(20) DEFAULT 'ALL',
+            `payment_methods` TEXT DEFAULT NULL,
+            `trigger_mode` VARCHAR(20) DEFAULT 'AUTO',
+            `is_active` TINYINT(1) DEFAULT 1,
+            `branch_id` INT DEFAULT NULL,
+            `start_date` DATE DEFAULT NULL,
+            `end_date` DATE DEFAULT NULL,
+            `description` TEXT DEFAULT NULL,
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX `idx_dr_active` (`is_active`),
+            INDEX `idx_dr_trigger` (`trigger_mode`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $drMyCount = $pdo->query("SELECT COUNT(*) FROM `discount_rules`")->fetchColumn();
+        if ($drMyCount == 0) {
+            $pdo->exec("INSERT INTO `discount_rules` (`code`, `name`, `discount_amount`, `min_purchase`, `scope_customer_type`, `customer_ids`, `scope_category_type`, `customer_categories`, `scope_day_type`, `days_of_week`, `scope_payment_type`, `payment_methods`, `trigger_mode`, `is_active`, `description`) VALUES
+                ('DISC-JUMAT', 'Promo Berkah Jumat', 5000, 50000, 'ALL', NULL, 'ALL', NULL, 'SPECIFIC', '[\"JUMAT\"]', 'ALL', NULL, 'AUTO', 1, 'Potongan Rp 5.000 belanja minimal Rp 50.000 otomatis setiap hari Jumat'),
+                ('DISC-MEMBER', 'Diskon Loyalitas Member & Reseller', 2000, 20000, 'ALL', NULL, 'SPECIFIC', '[\"MEMBER\",\"RESELLER\"]', 'ALL', NULL, 'ALL', NULL, 'AUTO', 1, 'Potongan Rp 2.000 untuk pelanggan kategori Member atau Reseller min. belanja Rp 20.000'),
+                ('DISC-QRIS', 'Promo Semarak QRIS Cashless', 3000, 25000, 'ALL', NULL, 'ALL', NULL, 'ALL', NULL, 'SPECIFIC', '[\"QRIS\"]', 'AUTO', 1, 'Cashback langsung Rp 3.000 untuk pembayaran QRIS min. belanja Rp 25.000'),
+                ('DISC-MANUAL-01', 'Voucher Potongan Kasir', 5000, 0, 'ALL', NULL, 'ALL', NULL, 'ALL', NULL, 'ALL', NULL, 'MANUAL', 1, 'Diskon voucher manual Rp 5.000 yang dapat dipilih kasir di kasir POS')
+            ");
+        }
+
+        $salesMysqlCols = getDbTableColumns($pdo, 'sales');
+        if (!empty($salesMysqlCols)) {
+            if (!in_array('discount_rule_id', $salesMysqlCols)) $pdo->exec("ALTER TABLE `sales` ADD COLUMN `discount_rule_id` INT DEFAULT NULL");
+            if (!in_array('discount_name', $salesMysqlCols)) $pdo->exec("ALTER TABLE `sales` ADD COLUMN `discount_name` VARCHAR(150) DEFAULT NULL");
+        }
+    } catch (Exception $e) {}
 
         // Pastikan kolom pengiriman & diskon pada tabel sales tersedia lengkap di MySQL hosting
         $salesMysqlCols = getDbTableColumns($pdo, 'sales');
