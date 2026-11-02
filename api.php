@@ -6639,6 +6639,11 @@ try {
                 $galonSoldBySku[(int)$gs['product_id']] = $q;
             }
 
+            // Ambil armada kurir / kendaraan cabang aktif
+            $stmtVeh = $pdo->prepare("SELECT * FROM courier_vehicles WHERE branch_id = ? AND (is_active IS NULL OR is_active = 1) ORDER BY plate_number ASC");
+            $stmtVeh->execute([$shift['branch_id']]);
+            $branchVehicles = $stmtVeh->fetchAll(PDO::FETCH_ASSOC);
+
             echo json_encode([
                 'success' => true,
                 'shift' => $shift,
@@ -6652,6 +6657,7 @@ try {
                 'items' => $closingItems,
                 'expense_categories' => $expenseCategories,
                 'branch_employees' => $branchEmployees,
+                'branch_vehicles' => $branchVehicles,
                 'water_meter' => [
                     'meter_yesterday' => $meterYesterday,
                     'last_log_date' => $meterYesterdayDate,
@@ -6755,10 +6761,14 @@ try {
                     if ($amt > 0) {
                         $cat = trim($exp['category'] ?? 'Biaya Operasional Toko') ?: 'Biaya Operasional Toko';
                         $notes = trim($exp['notes'] ?? '');
+                        $vehId = !empty($exp['vehicle_id']) ? (int)$exp['vehicle_id'] : null;
+                        $odo = (isset($exp['odometer']) && $exp['odometer'] !== null && $exp['odometer'] !== '') ? (float)$exp['odometer'] : null;
                         $expensesList[] = [
                             'category' => $cat,
                             'amount' => $amt,
-                            'notes' => $notes
+                            'notes' => $notes,
+                            'vehicle_id' => $vehId,
+                            'odometer' => $odo
                         ];
                         $totalExpenses += $amt;
                     }
@@ -6829,11 +6839,48 @@ try {
 
                 // A. Catat Biaya Beban Toko ke branch_expenses (Menu Beban Operasional / Laba Rugi)
                 foreach ($expensesList as $exp) {
+                    $expNote = "Pengeluaran Kasir Shift #{$shift['shift_number']} ({$shift['shift_name']}) - " . ($exp['notes'] ?: $exp['category']);
+                    
+                    // Integrasi BBM: Catat Odometer, sinkronkan ke courier_vehicles & vehicle_fuel_logs
+                    if (!empty($exp['vehicle_id']) && isset($exp['odometer']) && $exp['odometer'] !== null && $exp['odometer'] !== '') {
+                        try {
+                            $stmtV = $pdo->prepare("SELECT plate_number, vehicle_name, current_odometer FROM courier_vehicles WHERE id = ?");
+                            $stmtV->execute([$exp['vehicle_id']]);
+                            $vehInfo = $stmtV->fetch(PDO::FETCH_ASSOC);
+                            if ($vehInfo) {
+                                $lastOdo = (float)($vehInfo['current_odometer'] ?? 0);
+                                $newOdo = (float)$exp['odometer'];
+                                $expNote .= " [Armada: {$vehInfo['plate_number']} ({$vehInfo['vehicle_name']}) | KM Odo: {$newOdo} (Sebelumnya: {$lastOdo})]";
+
+                                // Update current_odometer di courier_vehicles
+                                $stmtUpdV = $pdo->prepare("UPDATE courier_vehicles SET current_odometer = ? WHERE id = ?");
+                                $stmtUpdV->execute([$newOdo, $exp['vehicle_id']]);
+
+                                // Catat ke vehicle_fuel_logs jika tabel tersedia
+                                $dist = max(0, $newOdo - $lastOdo);
+                                $stmtFLog = $pdo->prepare("
+                                    INSERT INTO vehicle_fuel_logs (
+                                        vehicle_id, branch_id, log_date, last_odometer, current_odometer,
+                                        distance_traveled, liters_bought, cost_per_liter, total_cost,
+                                        configured_ratio, expected_liters, efficiency_percent, notes, created_at
+                                    ) VALUES (
+                                        ?, ?, ?, ?, ?,
+                                        ?, 0, 0, ?,
+                                        35.0, 0, 100, ?, datetime('now', 'localtime')
+                                    )
+                                ");
+                                $stmtFLog->execute([
+                                    $exp['vehicle_id'], $shift['branch_id'], $shiftDate, $lastOdo, $newOdo,
+                                    $dist, $exp['amount'], "BBM Closing Shift #{$shiftId} ({$shift['shift_name']})"
+                                ]);
+                            }
+                        } catch (Exception $eBbmSync) {}
+                    }
+
                     $stmtExp = $pdo->prepare("
                         INSERT INTO branch_expenses (branch_id, category, amount, expense_date, source, shift_id, notes)
                         VALUES (?, ?, ?, ?, 'SHIFT_EXPENSE', ?, ?)
                     ");
-                    $expNote = "Pengeluaran Kasir Shift #{$shift['shift_number']} ({$shift['shift_name']}) - " . ($exp['notes'] ?: $exp['category']);
                     $stmtExp->execute([$shift['branch_id'], $exp['category'], $exp['amount'], $shiftDate, $shiftId, $expNote]);
                 }
 

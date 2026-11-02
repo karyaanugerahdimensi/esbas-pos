@@ -16224,6 +16224,7 @@ try {
                         expectedCash: expectedCash,
                         categories: (closingData ? closingData.expense_categories : []) || [],
                         employees: (closingData ? closingData.branch_employees : []) || [],
+                        vehicles: (closingData && Array.isArray(closingData.branch_vehicles) && closingData.branch_vehicles.length > 0) ? closingData.branch_vehicles : ((state.vehicles || []).filter(v => (!v.branch_id || v.branch_id == branchId))),
                         waterMeter: waterMeter,
                         totalGalonSold: (closingData ? closingData.total_galon_sold : 0) || 0
                     };
@@ -17060,6 +17061,45 @@ try {
             calculateClosingCashDifference(expectedCash);
         }
 
+        function isBbmCategory(catName) {
+            if (!catName) return false;
+            const s = String(catName).toUpperCase();
+            return s.indexOf('BBM') !== -1 || s.indexOf('BAHAN BAKAR') !== -1 || s.indexOf('BENSIN') !== -1 || s.indexOf('SOLAR') !== -1 || s.indexOf('PERTALITE') !== -1;
+        }
+
+        function onClosingExpenseCategoryChange(selectEl) {
+            if (!selectEl) return;
+            const row = selectEl.closest('.closing-expense-row');
+            if (!row) return;
+            const isBbm = isBbmCategory(selectEl.value);
+            const bbmBox = row.querySelector('.expense-bbm-details');
+            if (bbmBox) {
+                if (isBbm) {
+                    bbmBox.classList.remove('hidden');
+                    const vehSelect = row.querySelector('.expense-vehicle-select');
+                    if (vehSelect) onClosingExpenseVehicleChange(vehSelect);
+                } else {
+                    bbmBox.classList.add('hidden');
+                }
+            }
+        }
+
+        function onClosingExpenseVehicleChange(selectEl) {
+            if (!selectEl) return;
+            const row = selectEl.closest('.closing-expense-row');
+            if (!row) return;
+            const opt = selectEl.options[selectEl.selectedIndex];
+            const lastOdo = opt ? (parseFloat(opt.getAttribute('data-current-odometer')) || 0) : 0;
+            const odoInput = row.querySelector('.expense-odometer-input');
+            const badge = row.querySelector('.expense-last-odo-badge');
+            if (odoInput) {
+                odoInput.setAttribute('data-last-odometer', lastOdo);
+            }
+            if (badge) {
+                badge.innerText = formatDecimal(lastOdo) + ' KM';
+            }
+        }
+
         function addShiftExpenseRow() {
             const list = document.getElementById('closing-expenses-list');
             if (!list) return;
@@ -17069,12 +17109,22 @@ try {
             const categories = (window.closingShiftState ? window.closingShiftState.categories : []) || [];
             const catOptions = categories.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('') || '<option value="Biaya Operasional Toko">Biaya Operasional Toko</option>';
 
+            const curBranchId = (state.currentBranch ? state.currentBranch.id : 1);
+            const vehicles = (window.closingShiftState && Array.isArray(window.closingShiftState.vehicles) && window.closingShiftState.vehicles.length > 0)
+                ? window.closingShiftState.vehicles
+                : ((state.vehicles || []).filter(v => (!v.branch_id || v.branch_id == curBranchId)));
+
+            const vehOptions = vehicles.length > 0
+                ? vehicles.map(v => `<option value="${v.id}" data-current-odometer="${v.current_odometer || 0}" data-plate="${escapeHtml(v.plate_number)}">${escapeHtml(v.plate_number)} - ${escapeHtml(v.vehicle_name)} (${escapeHtml(v.driver_name || 'Driver')})</option>`).join('')
+                : '<option value="">(Belum ada data armada di cabang ini)</option>';
+            const firstVehOdo = (vehicles.length > 0) ? (vehicles[0].current_odometer || 0) : 0;
+
             const div = document.createElement('div');
             div.className = 'closing-expense-row bg-slate-50/90 p-2 sm:p-2.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center';
             div.innerHTML = `
                 <div class="sm:col-span-4">
                     <label class="block text-[9px] font-bold text-slate-500 uppercase">Kategori Beban</label>
-                    <select class="expense-category-input w-full p-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-1 focus:ring-rose-500">
+                    <select class="expense-category-input w-full p-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-1 focus:ring-rose-500" onchange="onClosingExpenseCategoryChange(this)">
                         ${catOptions}
                     </select>
                 </div>
@@ -17084,13 +17134,43 @@ try {
                 </div>
                 <div class="sm:col-span-4">
                     <label class="block text-[9px] font-bold text-slate-500 uppercase">Keterangan / Keperluan</label>
-                    <input type="text" placeholder="Contoh: Lakban, sapu, token..." class="expense-notes-input w-full p-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:ring-1 focus:ring-rose-500">
+                    <input type="text" placeholder="Contoh: Bensin delivery kurir, nota SPBU..." class="expense-notes-input w-full p-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:ring-1 focus:ring-rose-500">
                 </div>
                 <div class="sm:col-span-1 text-center pt-1 sm:pt-4">
                     <button type="button" onclick="this.closest('.closing-expense-row').remove(); updateClosingCashSummary();" class="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-100 rounded text-xs transition-colors" title="Hapus">✕</button>
                 </div>
+
+                <!-- Input Khusus Beban BBM: Pilihan Kendaraan & Input Odometer Mandatory -->
+                <div class="expense-bbm-details sm:col-span-12 bg-amber-50/80 p-2.5 rounded-xl border border-amber-200 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center hidden mt-1">
+                    <div class="sm:col-span-5">
+                        <label class="block text-[9px] font-black text-amber-900 uppercase flex items-center space-x-1">
+                            <span>🛵</span><span>Pilih Armada / Kendaraan Kurir:</span>
+                        </label>
+                        <select class="expense-vehicle-select w-full p-1.5 bg-white border border-amber-300 rounded-lg text-xs font-bold text-slate-800" onchange="onClosingExpenseVehicleChange(this)">
+                            ${vehOptions}
+                        </select>
+                    </div>
+                    <div class="sm:col-span-4">
+                        <label class="block text-[9px] font-black text-rose-900 uppercase flex items-center space-x-1">
+                            <span>⏱️</span><span>KM Odometer Saat Ini: <span class="text-rose-600 font-extrabold">* (Wajib)</span></span>
+                        </label>
+                        <div class="relative">
+                            <input type="number" step="any" min="0" placeholder="Input KM odometer..." class="expense-odometer-input w-full p-1.5 bg-white border-2 border-rose-300 rounded-lg text-xs font-black text-rose-950 font-mono" data-last-odometer="${firstVehOdo}">
+                            <span class="absolute inset-y-0 right-0 pr-2 flex items-center text-[10px] font-bold text-slate-400">KM</span>
+                        </div>
+                    </div>
+                    <div class="sm:col-span-3 text-left sm:text-right pt-1 sm:pt-3">
+                        <span class="text-[10px] text-amber-800 block font-semibold">KM Sebelumnya:</span>
+                        <span class="expense-last-odo-badge font-mono font-black text-xs text-amber-950 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300">${formatDecimal(firstVehOdo)} KM</span>
+                    </div>
+                </div>
             `;
             list.appendChild(div);
+            
+            // Cek langsung kategori terpilih pertama
+            const catSel = div.querySelector('.expense-category-input');
+            if (catSel) onClosingExpenseCategoryChange(catSel);
+
             updateClosingCashSummary();
         }
 
@@ -17469,9 +17549,66 @@ try {
             document.getElementById('shift-modal').classList.add('hidden');
         }
 
-        async function executeShiftAction() {
+                async function executeShiftAction() {
             const isShiftOpen = state.activeShift && state.activeShift.status === 'OPEN';
             if (isShiftOpen) {
+                const btn = document.getElementById('shift-modal-action-btn');
+                const originalBtnHtml = btn ? btn.innerHTML : '';
+
+                // Validasi Beban Operasional BBM: Odometer Mandatory & Cek Odometer Sama
+                const expenseRows = document.querySelectorAll('.closing-expense-row');
+                for (let i = 0; i < expenseRows.length; i++) {
+                    const row = expenseRows[i];
+                    const cat = (row.querySelector('.expense-category-input') ? row.querySelector('.expense-category-input').value : '') || '';
+                    const amt = parseFloat((row.querySelector('.expense-amount-input') ? row.querySelector('.expense-amount-input').value : '')) || 0;
+                    if (typeof isBbmCategory === 'function' && isBbmCategory(cat) && amt > 0) {
+                        const odoInput = row.querySelector('.expense-odometer-input');
+                        const vehSelect = row.querySelector('.expense-vehicle-select');
+                        const vehName = (vehSelect && vehSelect.options[vehSelect.selectedIndex]) ? vehSelect.options[vehSelect.selectedIndex].text : 'Kendaraan';
+                        const odoValStr = odoInput ? odoInput.value.trim() : '';
+
+                        if (odoValStr === '' || isNaN(parseFloat(odoValStr))) {
+                            alert("PERINGATAN BEBAN BBM (MANDATORY):\n\nAnda memasukkan pengeluaran \"" + cat + "\" sebesar " + formatRupiah(amt) + ".\nUntuk pencatatan BBM, input KM Odometer kendaraan WAJIB diisi (mandatory).\n\nSilakan isi angka odometer fisik terkini dari armada " + vehName + ".");
+                            if (typeof switchDisbursementTab === 'function') switchDisbursementTab('expense');
+                            if (odoInput) {
+                                odoInput.focus();
+                                odoInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.innerHTML = originalBtnHtml;
+                            }
+                            return;
+                        }
+
+                        const newOdo = parseFloat(odoValStr);
+                        const lastOdo = parseFloat(odoInput.getAttribute('data-last-odometer') || 0);
+
+                        if (newOdo === lastOdo) {
+                            const proceedSame = confirm("⚠️ PERINGATAN ODOMETER KENDARAAN:\n\nAngka odometer yang Anda masukkan (" + formatDecimal(newOdo) + " KM) SAMA DENGAN odometer sebelumnya (" + formatDecimal(lastOdo) + " KM) untuk armada " + vehName + ".\n\nHal ini menandakan odometer/spedometer tidak jalan atau kendaraan tidak bergerak.\n\nApakah Anda yakin ingin tetap melanjutkan penutupan shift?");
+                            if (!proceedSame) {
+                                if (typeof switchDisbursementTab === 'function') switchDisbursementTab('expense');
+                                if (odoInput) odoInput.focus();
+                                if (btn) {
+                                    btn.disabled = false;
+                                    btn.innerHTML = originalBtnHtml;
+                                }
+                                return;
+                            }
+                        } else if (newOdo < lastOdo) {
+                            const proceedLess = confirm("⚠️ PERHATIAN ODOMETER KENDARAAN:\n\nAngka odometer yang Anda masukkan (" + formatDecimal(newOdo) + " KM) LEBIH KECIL dari odometer sebelumnya (" + formatDecimal(lastOdo) + " KM) untuk armada " + vehName + ".\n\nApakah Anda yakin ingin tetap melanjutkan penutupan shift?");
+                            if (!proceedLess) {
+                                if (typeof switchDisbursementTab === 'function') switchDisbursementTab('expense');
+                                if (odoInput) odoInput.focus();
+                                if (btn) {
+                                    btn.disabled = false;
+                                    btn.innerHTML = originalBtnHtml;
+                                }
+                                return;
+                            }
+                        }
+                    }
+                }
                 const actual = parseFloat(document.getElementById('shift-input-actual-cash').value) || 0;
                 const elCloseMin = document.getElementById('closing-raw-mineral');
                 const elCloseRo = document.getElementById('closing-raw-ro');
@@ -17502,8 +17639,20 @@ try {
                     const cat = (row.querySelector('.expense-category-input') ? row.querySelector('.expense-category-input').value : '') || 'Biaya Operasional Toko';
                     const amt = parseFloat((row.querySelector('.expense-amount-input') ? row.querySelector('.expense-amount-input').value : '')) || 0;
                     const nts = (row.querySelector('.expense-notes-input') ? row.querySelector('.expense-notes-input').value : '') || '';
+                    const isBbm = (typeof isBbmCategory === 'function') ? isBbmCategory(cat) : false;
+                    const vSelect = row.querySelector('.expense-vehicle-select');
+                    const odoInput = row.querySelector('.expense-odometer-input');
+                    const vehId = (isBbm && vSelect) ? parseInt(vSelect.value) : null;
+                    const odoVal = (isBbm && odoInput && odoInput.value.trim() !== '') ? parseFloat(odoInput.value) : null;
                     if (amt > 0) {
-                        expenses.push({ category: cat, amount: amt, notes: nts });
+                        expenses.push({
+                            category: cat,
+                            amount: amt,
+                            notes: nts,
+                            is_bbm: isBbm ? 1 : 0,
+                            vehicle_id: vehId,
+                            odometer: odoVal
+                        });
                     }
                 });
 
