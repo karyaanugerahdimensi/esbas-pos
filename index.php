@@ -35168,18 +35168,27 @@ Manager / Supervisor: __________________
                 { code: 'SUPER_ADMIN' }, { code: 'BRANCH_MANAGER' }, { code: 'CASHIER' }, { code: 'STAFF' }
             ];
 
+            const grouped = state.groupedRolePermissions || {};
             const payloadPerms = {};
             roles.forEach(r => {
                 const rCode = r.code;
+                const rData = grouped[rCode] || grouped[rCode.replace(/_/g, '')] || {};
                 payloadPerms[rCode] = {};
 
                 allPermissionsStructure.forEach(m => {
                     const isSuper = (rCode === 'SUPER_ADMIN' || rCode === 'SUPERADMIN');
-                    // Parent menu
-                    const v = isSuper ? 1 : (_chk(`perm-${rCode}-${m.key}-view`) ? 1 : 0);
-                    const c = isSuper ? 1 : (_chk(`perm-${rCode}-${m.key}-create`) ? 1 : 0);
-                    const u = isSuper ? 1 : (_chk(`perm-${rCode}-${m.key}-update`) ? 1 : 0);
-                    const d = isSuper ? 1 : (_chk(`perm-${rCode}-${m.key}-delete`) ? 1 : 0);
+                    const existingParent = rData[m.key] || {};
+
+                    const elV = document.getElementById(`perm-${rCode}-${m.key}-view`);
+                    const elC = document.getElementById(`perm-${rCode}-${m.key}-create`);
+                    const elU = document.getElementById(`perm-${rCode}-${m.key}-update`);
+                    const elD = document.getElementById(`perm-${rCode}-${m.key}-delete`);
+
+                    // Parent menu: jika checkbox ada di DOM ambil checked-nya, jika tidak ada (misal tertutup/filter) pakai data existing
+                    const v = isSuper ? 1 : (elV ? (elV.checked ? 1 : 0) : _nn(existingParent.view, _nn(existingParent.access, 0)));
+                    const c = isSuper ? 1 : (elC ? (elC.checked ? 1 : 0) : _nn(existingParent.create, 0));
+                    const u = isSuper ? 1 : (elU ? (elU.checked ? 1 : 0) : _nn(existingParent.update, 0));
+                    const d = isSuper ? 1 : (elD ? (elD.checked ? 1 : 0) : _nn(existingParent.delete, 0));
 
                     payloadPerms[rCode][m.key] = {
                         view: v,
@@ -35194,10 +35203,17 @@ Manager / Supervisor: __________________
                     // Sub-tabs
                     if (m.subtabs) {
                         m.subtabs.forEach(sub => {
-                            const subV = isSuper ? 1 : (_chk(`perm-${rCode}-${sub.key}-view`) ? 1 : 0);
-                            const subC = isSuper ? 1 : (_chk(`perm-${rCode}-${sub.key}-create`) ? 1 : 0);
-                            const subU = isSuper ? 1 : (_chk(`perm-${rCode}-${sub.key}-update`) ? 1 : 0);
-                            const subD = isSuper ? 1 : (_chk(`perm-${rCode}-${sub.key}-delete`) ? 1 : 0);
+                            const existingSub = rData[sub.key] || {};
+
+                            const subElV = document.getElementById(`perm-${rCode}-${sub.key}-view`);
+                            const subElC = document.getElementById(`perm-${rCode}-${sub.key}-create`);
+                            const subElU = document.getElementById(`perm-${rCode}-${sub.key}-update`);
+                            const subElD = document.getElementById(`perm-${rCode}-${sub.key}-delete`);
+
+                            const subV = isSuper ? 1 : (subElV ? (subElV.checked ? 1 : 0) : _nn(existingSub.view, _nn(existingSub.access, 0)));
+                            const subC = isSuper ? 1 : (subElC ? (subElC.checked ? 1 : 0) : _nn(existingSub.create, 0));
+                            const subU = isSuper ? 1 : (subElU ? (subElU.checked ? 1 : 0) : _nn(existingSub.update, 0));
+                            const subD = isSuper ? 1 : (subElD ? (subElD.checked ? 1 : 0) : _nn(existingSub.delete, 0));
 
                             payloadPerms[rCode][sub.key] = {
                                 view: subV,
@@ -35222,8 +35238,30 @@ Manager / Supervisor: __________________
                 const data = await res.json();
                 alert(data.message || 'Matriks hak akses role & sub-tab berhasil disimpan!');
                 if (data.success) {
+                    if (data.grouped) {
+                        state.groupedRolePermissions = data.grouped;
+                    }
+                    if (data.permissions) {
+                        state.rolePermissions = data.permissions;
+                    }
+                    if (data.roles) {
+                        state.userRoles = data.roles;
+                    }
+                    const curUser = state.currentUser || state.loggedInUser;
+                    if (curUser && data.grouped) {
+                        const curR = (curUser.role || '').toUpperCase().trim();
+                        const curRNorm = curR.replace(/_/g, '');
+                        if (data.grouped[curR]) {
+                            state.userPermissions = data.grouped[curR];
+                        } else if (data.grouped[curRNorm]) {
+                            state.userPermissions = data.grouped[curRNorm];
+                        }
+                    }
                     await initApp();
                     await loadAppSettingsModule();
+                    if (typeof applySubTabPermissions === 'function') {
+                        applySubTabPermissions();
+                    }
                 }
             } catch (err) {
                 console.error(err);

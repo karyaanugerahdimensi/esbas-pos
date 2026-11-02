@@ -1975,6 +1975,17 @@ function autoMigrateAndSync($pdo) {
         UNIQUE(role, menu_key)
     )");
 
+    try {
+        // Bersihkan duplikat di SQLite jika ada
+        $pdo->exec("
+            DELETE FROM role_menu_permissions 
+            WHERE id NOT IN (
+                SELECT MIN(id) FROM role_menu_permissions GROUP BY role, menu_key
+            )
+        ");
+        $pdo->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_rmp_role_menu ON role_menu_permissions(role, menu_key)");
+    } catch (Exception $eSqUniq) {}
+
     $allMenus = [
         ['pos', '1. POS Penjualan Kasir'],
         ['reports', '2. Laporan Penjualan & Piutang'],
@@ -2004,13 +2015,16 @@ function autoMigrateAndSync($pdo) {
         'STAFF'          => ['ess', 'stocks', 'stock-in', 'logistics']
     ];
 
-    $stmtRolePerm = $pdo->prepare("INSERT OR IGNORE INTO role_menu_permissions (role, menu_key, menu_title, can_access, can_view, can_create, can_update, can_delete) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stExistSq = $pdo->prepare("SELECT id FROM role_menu_permissions WHERE role = ? AND menu_key = ? LIMIT 1");
+    $stmtRolePerm = $pdo->prepare("INSERT INTO role_menu_permissions (role, menu_key, menu_title, can_access, can_view, can_create, can_update, can_delete) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     foreach ($roleAccessRules as $role => $allowedMenus) {
         $isSuper = in_array($role, ['SUPERADMIN', 'SUPER_ADMIN']);
         $isMgr = in_array($role, ['BRANCH_MANAGER', 'MANAGER']);
         foreach ($allMenus as $menu) {
             $mKey = $menu[0];
             $mTitle = $menu[1];
+            $stExistSq->execute([$role, $mKey]);
+            if ($stExistSq->fetchColumn()) continue;
             $can = in_array($mKey, $allowedMenus) ? 1 : 0;
             $canCreate = ($can && ($isSuper || $isMgr || in_array($mKey, ['pos', 'ess', 'customers', 'stock-in']))) ? 1 : 0;
             $canUpdate = ($can && ($isSuper || $isMgr || in_array($mKey, ['pos', 'ess']))) ? 1 : 0;
@@ -2021,28 +2035,40 @@ function autoMigrateAndSync($pdo) {
 
     // Seed sub-tab permissions untuk Input Penambahan Stok (1. Penambahan Manual & 2. Transfer Cabang)
     try {
-        $stmtSubPerm = $pdo->prepare("INSERT OR IGNORE INTO role_menu_permissions (role, menu_key, menu_title, can_access, can_view, can_create, can_update, can_delete, parent_key, is_subtab) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'stock-in', 1)");
+        $stmtSubPerm = $pdo->prepare("INSERT INTO role_menu_permissions (role, menu_key, menu_title, can_access, can_view, can_create, can_update, can_delete, parent_key, is_subtab) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'stock-in', 1)");
         foreach (array_keys($roleAccessRules) as $role) {
             $isSuper = in_array($role, ['SUPERADMIN', 'SUPER_ADMIN']);
             $isMgr = in_array($role, ['BRANCH_MANAGER', 'MANAGER']);
             $isStaff = ($role === 'STAFF');
             // 1. Penambahan Manual: aktif default untuk Superadmin, Manager, Staff, dan Kasir
-            $stmtSubPerm->execute([$role, 'stock-in:manual', '1. Penambahan Manual', 1, 1, 1, ($isSuper || $isMgr) ? 1 : 0, ($isSuper || $isMgr) ? 1 : 0]);
+            $stExistSq->execute([$role, 'stock-in:manual']);
+            if (!$stExistSq->fetchColumn()) {
+                $stmtSubPerm->execute([$role, 'stock-in:manual', '1. Penambahan Manual', 1, 1, 1, ($isSuper || $isMgr) ? 1 : 0, ($isSuper || $isMgr) ? 1 : 0]);
+            }
             // 2. Transfer Cabang: aktif default untuk Superadmin, Manager, dan Staff (Kasir default 0, dapat diatur via Pengaturan Role)
-            $canTrf = ($isSuper || $isMgr || $isStaff) ? 1 : 0;
-            $stmtSubPerm->execute([$role, 'stock-in:transfer', '2. Transfer Cabang', $canTrf, $canTrf, $canTrf, ($isSuper || $isMgr) ? 1 : 0, ($isSuper || $isMgr) ? 1 : 0]);
+            $stExistSq->execute([$role, 'stock-in:transfer']);
+            if (!$stExistSq->fetchColumn()) {
+                $canTrf = ($isSuper || $isMgr || $isStaff) ? 1 : 0;
+                $stmtSubPerm->execute([$role, 'stock-in:transfer', '2. Transfer Cabang', $canTrf, $canTrf, $canTrf, ($isSuper || $isMgr) ? 1 : 0, ($isSuper || $isMgr) ? 1 : 0]);
+            }
         }
 
         // Seed sub-tab Laporan Kiriman & Kurir (reports:deliveries) dan Laporan Diskon & Promo (reports:discounts)
-        $stmtRepDelivPerm = $pdo->prepare("INSERT OR IGNORE INTO role_menu_permissions (role, menu_key, menu_title, can_access, can_view, can_create, can_update, can_delete, parent_key, is_subtab) VALUES (?, 'reports:deliveries', 'Laporan Kiriman & Kurir', ?, ?, ?, ?, ?, 'reports', 1)");
-        $stmtRepDiscPerm = $pdo->prepare("INSERT OR IGNORE INTO role_menu_permissions (role, menu_key, menu_title, can_access, can_view, can_create, can_update, can_delete, parent_key, is_subtab) VALUES (?, 'reports:discounts', 'Laporan Diskon & Promo', ?, ?, ?, ?, ?, 'reports', 1)");
+        $stmtRepDelivPerm = $pdo->prepare("INSERT INTO role_menu_permissions (role, menu_key, menu_title, can_access, can_view, can_create, can_update, can_delete, parent_key, is_subtab) VALUES (?, 'reports:deliveries', 'Laporan Kiriman & Kurir', ?, ?, ?, ?, ?, 'reports', 1)");
+        $stmtRepDiscPerm = $pdo->prepare("INSERT INTO role_menu_permissions (role, menu_key, menu_title, can_access, can_view, can_create, can_update, can_delete, parent_key, is_subtab) VALUES (?, 'reports:discounts', 'Laporan Diskon & Promo', ?, ?, ?, ?, ?, 'reports', 1)");
         foreach ($roleAccessRules as $role => $allowedMenus) {
             $isSuper = in_array($role, ['SUPERADMIN', 'SUPER_ADMIN']);
             $isMgr = in_array($role, ['BRANCH_MANAGER', 'MANAGER']);
             $canRep = in_array('reports', $allowedMenus) ? 1 : 0;
             $udRep = ($canRep && ($isSuper || $isMgr)) ? 1 : 0;
-            $stmtRepDelivPerm->execute([$role, $canRep, $canRep, $udRep, $udRep, $udRep]);
-            $stmtRepDiscPerm->execute([$role, $canRep, $canRep, $udRep, $udRep, $udRep]);
+            $stExistSq->execute([$role, 'reports:deliveries']);
+            if (!$stExistSq->fetchColumn()) {
+                $stmtRepDelivPerm->execute([$role, $canRep, $canRep, $udRep, $udRep, $udRep]);
+            }
+            $stExistSq->execute([$role, 'reports:discounts']);
+            if (!$stExistSq->fetchColumn()) {
+                $stmtRepDiscPerm->execute([$role, $canRep, $canRep, $udRep, $udRep, $udRep]);
+            }
         }
     } catch (Exception $eSubPerm) {}
 
@@ -2534,19 +2560,46 @@ function autoMigrateMysql($pdo) {
             if (!in_array('parent_key', $rmpMysqlCols)) $pdo->exec("ALTER TABLE `role_menu_permissions` ADD COLUMN `parent_key` VARCHAR(100) DEFAULT NULL");
             if (!in_array('is_subtab', $rmpMysqlCols)) $pdo->exec("ALTER TABLE `role_menu_permissions` ADD COLUMN `is_subtab` TINYINT(1) DEFAULT 0");
 
-            $stmtMyPerm = $pdo->prepare("INSERT IGNORE INTO `role_menu_permissions` (`role`, `menu_key`, `menu_title`, `can_access`, `can_view`, `can_create`, `can_update`, `can_delete`, `parent_key`, `is_subtab`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            // 1. Bersihkan duplikat role_menu_permissions di MySQL (pertahankan row yang bernilai can_view=1 atau id terkecil)
+            try {
+                $pdo->exec("
+                    DELETE r1 FROM role_menu_permissions r1
+                    INNER JOIN role_menu_permissions r2 
+                    WHERE r1.role = r2.role AND r1.menu_key = r2.menu_key 
+                      AND (r1.can_view < r2.can_view OR (r1.can_view = r2.can_view AND r1.id > r2.id))
+                ");
+            } catch (Exception $eCleanDups) {}
+
+            // 2. Tambahkan UNIQUE KEY agar tidak ada duplikasi data di MySQL hosting
+            try {
+                $pdo->exec("ALTER TABLE `role_menu_permissions` ADD UNIQUE KEY `uniq_role_menu` (`role`, `menu_key`)");
+            } catch (Exception $eAddUniq) {}
+
+            // 3. Hanya seed data awal jika belum pernah ada record untuk (role, menu_key)
+            $stExistMy = $pdo->prepare("SELECT id FROM `role_menu_permissions` WHERE `role` = ? AND `menu_key` = ? LIMIT 1");
+            $stmtMyPerm = $pdo->prepare("INSERT INTO `role_menu_permissions` (`role`, `menu_key`, `menu_title`, `can_access`, `can_view`, `can_create`, `can_update`, `can_delete`, `parent_key`, `is_subtab`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             foreach (['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER', 'STAFF', 'CASHIER'] as $rCode) {
                 $isSup = in_array($rCode, ['SUPER_ADMIN', 'SUPERADMIN']);
                 $isMgr = in_array($rCode, ['BRANCH_MANAGER', 'MANAGER']);
                 $isStf = ($rCode === 'STAFF');
                 $ud = ($isSup || $isMgr) ? 1 : 0;
                 $canTrf = ($isSup || $isMgr || $isStf) ? 1 : 0;
-                $stmtMyPerm->execute([$rCode, 'stock-in', 'Input Penambahan Stok', 1, 1, 1, $ud, $ud, null, 0]);
-                $stmtMyPerm->execute([$rCode, 'stock-in:manual', '1. Penambahan Manual', 1, 1, 1, $ud, $ud, 'stock-in', 1]);
-                $stmtMyPerm->execute([$rCode, 'stock-in:transfer', '2. Transfer Cabang', $canTrf, $canTrf, $canTrf, $ud, $ud, 'stock-in', 1]);
                 $canRepMy = ($rCode !== 'STAFF') ? 1 : 0;
-                $stmtMyPerm->execute([$rCode, 'reports:deliveries', 'Laporan Kiriman & Kurir', $canRepMy, $canRepMy, $ud, $ud, $ud, 'reports', 1]);
-                $stmtMyPerm->execute([$rCode, 'reports:discounts', 'Laporan Diskon & Promo', $canRepMy, $canRepMy, $ud, $ud, $ud, 'reports', 1]);
+
+                $seedItems = [
+                    ['stock-in', 'Input Penambahan Stok', 1, 1, 1, $ud, $ud, null, 0],
+                    ['stock-in:manual', '1. Penambahan Manual', 1, 1, 1, $ud, $ud, 'stock-in', 1],
+                    ['stock-in:transfer', '2. Transfer Cabang', $canTrf, $canTrf, $canTrf, $ud, $ud, 'stock-in', 1],
+                    ['reports:deliveries', 'Laporan Kiriman & Kurir', $canRepMy, $canRepMy, $ud, $ud, $ud, 'reports', 1],
+                    ['reports:discounts', 'Laporan Diskon & Promo', $canRepMy, $canRepMy, $ud, $ud, $ud, 'reports', 1]
+                ];
+
+                foreach ($seedItems as $si) {
+                    $stExistMy->execute([$rCode, $si[0]]);
+                    if (!$stExistMy->fetchColumn()) {
+                        $stmtMyPerm->execute([$rCode, $si[0], $si[1], $si[2], $si[3], $si[4], $si[5], $si[6], $si[7], $si[8]]);
+                    }
+                }
             }
         }
 

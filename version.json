@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.6.4",
-    "build": "20261102-90",
+    "version": "1.6.5",
+    "build": "20261102-91",
     "release_date": "2026-11-02",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.6.5",
+            "commit": "HEAD",
+            "date": "2026-11-02",
+            "title": "Perbaikan Persistensi Hak Akses Role, Deduplikasi Matriks Hak Akses & Aktivasi Form Transfer Cabang Kasir (FR-POS-63)",
+            "description": "Menyelesaikan isu perizinan role kasir (CASHIER) pada form Transfer Antar Cabang (stock-in:transfer) di mana status alert sukses tersimpan namun tampilan checkbox kembali tidak tercentang dan sub-tab/form transfer tetap nonaktif di sisi kasir: (1) Penegasan Konsistensi Database & Indeks Unik: Menghentikan duplikasi baris role_menu_permissions pada MySQL hosting akibat INSERT berulang tanpa indeks unik, membersihkan record duplikat, dan menambahkan UNIQUE KEY uniq_role_menu (role, menu_key); (2) Sinkronisasi Lengkap Alias Role (CASHIER <-> KASIR, dll): Memperluas pemetaan alias role sistem pada endpoint save_role_permissions, get_role_permissions, bootstrap, dan get_stock_in_data agar hak akses yang disimpan berlaku seragam untuk seluruh varian nama role; (3) Refleksi Respons Instan di Frontend: Memperbarui endpoint save_role_permissions agar langsung mengembalikan data grouped & permissions terkini dan index.php memperbarui state.groupedRolePermissions, state.userPermissions, dan matriks seketika tanpa tertimpa data usang; (4) Penyelarasan UI Sub-Tab & Form Transfer: Memastikan tombol sub-tab '2. Transfer Cabang' dan kartu form pengiriman transfer terbuka aktif untuk kasir saat diberikan izin create/view; (5) Kompatibilitas Penuh Android 8.1: Bebas operator ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.6.4"
+        },
         {
             "version": "1.6.4",
             "commit": "HEAD",

@@ -1797,13 +1797,30 @@ try {
                 }
             }
 
+            $isCashierRole = ($normCurRole === 'CASHIER' || $normCurRole === 'KASIR');
+            $isStaffRole = ($normCurRole === 'STAFF' || $normCurRole === 'STAF');
+            $isManagerRole = ($normCurRole === 'BRANCHMANAGER' || $normCurRole === 'MANAGER');
+            $isSuperAdminRole = ($normCurRole === 'SUPERADMIN');
+
             foreach ($rolePerms as $rp) {
                 $normRpRole = str_replace('_', '', strtoupper($rp['role']));
-                if ($normRpRole === $normCurRole || strtoupper($rp['role']) === strtoupper($curRole)) {
+                $matchesRole = ($normRpRole === $normCurRole || strtoupper($rp['role']) === strtoupper($curRole))
+                    || ($isCashierRole && ($normRpRole === 'CASHIER' || $normRpRole === 'KASIR'))
+                    || ($isStaffRole && ($normRpRole === 'STAFF' || $normRpRole === 'STAF'))
+                    || ($isManagerRole && ($normRpRole === 'BRANCHMANAGER' || $normRpRole === 'MANAGER'))
+                    || ($isSuperAdminRole && ($normRpRole === 'SUPERADMIN'));
+
+                if ($matchesRole) {
                     $cView = isset($rp['can_view']) ? (int)$rp['can_view'] : (int)($rp['can_access'] ?? 1);
                     $cCreate = isset($rp['can_create']) ? (int)$rp['can_create'] : 0;
                     $cUpdate = isset($rp['can_update']) ? (int)$rp['can_update'] : 0;
                     $cDelete = isset($rp['can_delete']) ? (int)$rp['can_delete'] : 0;
+
+                    // Bila ada duplikasi row, prioritaskan row yang memiliki izin aktif (1)
+                    if (isset($userPerms[$rp['menu_key']]) && $userPerms[$rp['menu_key']]['view'] == 1 && $cView == 0) {
+                        continue;
+                    }
+
                     $userPerms[$rp['menu_key']] = [
                         'access' => $cView,
                         'view' => $cView,
@@ -4905,9 +4922,25 @@ try {
                 elseif ($mode === 'update') $col = 'can_update';
                 elseif ($mode === 'delete') $col = 'can_delete';
 
+                $rolesToCheck = [$actorRoleRaw, $actorRoleNorm];
+                if (in_array($actorRoleNorm, ['CASHIER', 'KASIR'])) {
+                    $rolesToCheck = array_merge($rolesToCheck, ['CASHIER', 'KASIR']);
+                } elseif (in_array($actorRoleNorm, ['BRANCHMANAGER', 'MANAGER'])) {
+                    $rolesToCheck = array_merge($rolesToCheck, ['BRANCH_MANAGER', 'BRANCHMANAGER', 'MANAGER']);
+                } elseif (in_array($actorRoleNorm, ['STAFF', 'STAF'])) {
+                    $rolesToCheck = array_merge($rolesToCheck, ['STAFF', 'STAF']);
+                }
+                $rolesToCheck = array_values(array_unique($rolesToCheck));
+                $inQ = implode(',', array_fill(0, count($rolesToCheck), '?'));
+
                 try {
-                    $stP = $pdo->prepare("SELECT can_access, can_view, can_create, can_update, can_delete FROM role_menu_permissions WHERE (UPPER(REPLACE(role, '_', '')) = ? OR UPPER(role) = ?) AND menu_key = ? LIMIT 1");
-                    $stP->execute([$actorRoleNorm, $actorRoleRaw, $menuKey]);
+                    $stP = $pdo->prepare("
+                        SELECT can_access, can_view, can_create, can_update, can_delete 
+                        FROM role_menu_permissions 
+                        WHERE role IN ($inQ) AND menu_key = ? 
+                        ORDER BY can_view DESC, id DESC LIMIT 1
+                    ");
+                    $stP->execute(array_merge($rolesToCheck, [$menuKey]));
                     $pRow = $stP->fetch(PDO::FETCH_ASSOC);
                     if ($pRow) {
                         if ($mode === 'view') return ((int)($pRow['can_view'] ?? $pRow['can_access'] ?? 0) === 1);
@@ -4916,7 +4949,7 @@ try {
                     // Fallback ke parent key bila subtab belum tersimpan spesifik
                     if (strpos($menuKey, ':') !== false) {
                         $parentKey = explode(':', $menuKey)[0];
-                        $stP->execute([$actorRoleNorm, $actorRoleRaw, $parentKey]);
+                        $stP->execute(array_merge($rolesToCheck, [$parentKey]));
                         $parentRow = $stP->fetch(PDO::FETCH_ASSOC);
                         if ($parentRow) {
                             if ($mode === 'view') return ((int)($parentRow['can_view'] ?? $parentRow['can_access'] ?? 0) === 1);
@@ -4927,7 +4960,7 @@ try {
 
                 // Fallback aman berdasarkan role bawaan
                 if (in_array($actorRoleNorm, ['BRANCHMANAGER', 'MANAGER'])) return true;
-                if ($actorRoleNorm === 'STAFF') return in_array($mode, ['view', 'create']);
+                if (in_array($actorRoleNorm, ['STAFF', 'STAF'])) return in_array($mode, ['view', 'create']);
                 if (in_array($actorRoleNorm, ['CASHIER', 'KASIR']) && $menuKey === 'stock-in:manual') return in_array($mode, ['view', 'create']);
                 return false;
             };
@@ -17665,6 +17698,21 @@ try {
                 $grouped[$p['role']][$p['menu_key']] = $pData;
                 $normRole = str_replace('_', '', strtoupper($p['role']));
                 $grouped[$normRole][$p['menu_key']] = $pData;
+                if ($normRole === 'CASHIER') $grouped['KASIR'][$p['menu_key']] = $pData;
+                if ($normRole === 'KASIR') $grouped['CASHIER'][$p['menu_key']] = $pData;
+                if ($normRole === 'BRANCHMANAGER' || $normRole === 'MANAGER') {
+                    $grouped['BRANCH_MANAGER'][$p['menu_key']] = $pData;
+                    $grouped['BRANCHMANAGER'][$p['menu_key']] = $pData;
+                    $grouped['MANAGER'][$p['menu_key']] = $pData;
+                }
+                if ($normRole === 'SUPERADMIN') {
+                    $grouped['SUPER_ADMIN'][$p['menu_key']] = $pData;
+                    $grouped['SUPERADMIN'][$p['menu_key']] = $pData;
+                }
+                if ($normRole === 'STAFF' || $normRole === 'STAF') {
+                    $grouped['STAFF'][$p['menu_key']] = $pData;
+                    $grouped['STAF'][$p['menu_key']] = $pData;
+                }
             }
 
             echo json_encode([
@@ -17725,10 +17773,15 @@ try {
                 if (!is_array($items)) continue;
                 // Sinkronkan alias nama role sistem agar kompatibel mundur
                 $aliases = [$role];
-                if ($role === 'SUPER_ADMIN') $aliases[] = 'SUPERADMIN';
-                if ($role === 'SUPERADMIN') $aliases[] = 'SUPER_ADMIN';
-                if ($role === 'BRANCH_MANAGER') $aliases[] = 'MANAGER';
-                if ($role === 'MANAGER') $aliases[] = 'BRANCH_MANAGER';
+                if ($role === 'SUPER_ADMIN' || $role === 'SUPERADMIN') {
+                    $aliases = ['SUPER_ADMIN', 'SUPERADMIN'];
+                } elseif ($role === 'BRANCH_MANAGER' || $role === 'BRANCHMANAGER' || $role === 'MANAGER') {
+                    $aliases = ['BRANCH_MANAGER', 'BRANCHMANAGER', 'MANAGER'];
+                } elseif ($role === 'CASHIER' || $role === 'KASIR') {
+                    $aliases = ['CASHIER', 'KASIR'];
+                } elseif ($role === 'STAFF' || $role === 'STAF') {
+                    $aliases = ['STAFF', 'STAF'];
+                }
 
                 foreach ($aliases as $targetRole) {
                     foreach ($items as $mKey => $val) {
@@ -17762,9 +17815,52 @@ try {
             }
             $pdo->commit();
 
+            // Refresh dan kembalikan state hak akses terbaru agar frontend langsung sinkron
+            $stmtRef = $pdo->query("SELECT * FROM role_menu_permissions ORDER BY role ASC, id ASC");
+            $allPermsRef = $stmtRef->fetchAll(PDO::FETCH_ASSOC);
+
+            $groupedRef = [];
+            foreach ($allPermsRef as $p) {
+                $cView = isset($p['can_view']) ? (int)$p['can_view'] : (int)($p['can_access'] ?? 1);
+                $cCreate = isset($p['can_create']) ? (int)$p['can_create'] : 0;
+                $cUpdate = isset($p['can_update']) ? (int)$p['can_update'] : 0;
+                $cDelete = isset($p['can_delete']) ? (int)$p['can_delete'] : 0;
+
+                $pData = [
+                    'access' => $cView,
+                    'view' => $cView,
+                    'create' => $cCreate,
+                    'update' => $cUpdate,
+                    'delete' => $cDelete,
+                    'parent_key' => $p['parent_key'] ?? null,
+                    'is_subtab' => (int)($p['is_subtab'] ?? 0)
+                ];
+
+                $groupedRef[$p['role']][$p['menu_key']] = $pData;
+                $normRole = str_replace('_', '', strtoupper($p['role']));
+                $groupedRef[$normRole][$p['menu_key']] = $pData;
+                if ($normRole === 'CASHIER') $groupedRef['KASIR'][$p['menu_key']] = $pData;
+                if ($normRole === 'KASIR') $groupedRef['CASHIER'][$p['menu_key']] = $pData;
+                if ($normRole === 'BRANCHMANAGER' || $normRole === 'MANAGER') {
+                    $groupedRef['BRANCH_MANAGER'][$p['menu_key']] = $pData;
+                    $groupedRef['BRANCHMANAGER'][$p['menu_key']] = $pData;
+                    $groupedRef['MANAGER'][$p['menu_key']] = $pData;
+                }
+                if ($normRole === 'SUPERADMIN') {
+                    $groupedRef['SUPER_ADMIN'][$p['menu_key']] = $pData;
+                    $groupedRef['SUPERADMIN'][$p['menu_key']] = $pData;
+                }
+                if ($normRole === 'STAFF' || $normRole === 'STAF') {
+                    $groupedRef['STAFF'][$p['menu_key']] = $pData;
+                    $groupedRef['STAF'][$p['menu_key']] = $pData;
+                }
+            }
+
             echo json_encode([
                 'success' => true,
-                'message' => 'Matriks hak akses role, sub-tab, dan mode aksi (View, Tambah, Update, Delete) berhasil diperbarui!'
+                'message' => 'Matriks hak akses role, sub-tab, dan mode aksi (View, Tambah, Update, Delete) berhasil diperbarui!',
+                'permissions' => $allPermsRef,
+                'grouped' => $groupedRef
             ]);
             break;
 
