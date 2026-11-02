@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.7.8",
-    "build": "20261102-104",
+    "version": "1.7.9",
+    "build": "20261102-105",
     "release_date": "2026-11-02",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.7.9",
+            "commit": "HEAD",
+            "date": "2026-11-02",
+            "title": "Perbaikan SyntaxError JavaScript pada Blok Script Utama & Pemulihan Fungsi Login Akun",
+            "description": "Menghapus duplikasi penutup baris template tabel riwayat penjualan (stray }).join('') token) yang menyebabkan SyntaxError: Unexpected token ')' pada parser JavaScript peramban, sehingga fungsi login cepat (selectQuickAccount) dan inisialisasi aplikasi kembali berjalan normal 100%.",
+            "rollback_command": "git checkout v1.7.8"
+        },
         {
             "version": "1.7.8",
             "commit": "HEAD",

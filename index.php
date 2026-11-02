@@ -18272,7 +18272,6 @@ try {
                 </tr>
             `;
             }).join('') || `<tr><td colspan="10" class="text-center py-6 text-slate-400">Belum ada riwayat transaksi</td></tr>`;
-            }).join('') || `<tr><td colspan="10" class="text-center py-6 text-slate-400">Belum ada riwayat transaksi</td></tr>`;
             lucide.createIcons();
         }
 
