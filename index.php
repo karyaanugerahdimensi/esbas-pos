@@ -18384,9 +18384,8 @@ try {
 
                 // Populate dropdown Aturan Promo & Tabel Rekap Pemakaian Aturan Diskon
                 const rulesList = Array.isArray(data.rules_summary) ? data.rules_summary : [];
-                const ruleEl = document.getElementById('disc-report-rule-filter');
                 if (ruleEl) {
-                    const prevRuleVal = ruleEl.value || 'ALL';
+                    const prevRuleVal = prevRule || 'ALL';
                     let rOpts = '<option value="ALL">Semua Promo / Diskon</option><option value="MANUAL_ONLY"' + (prevRuleVal === 'MANUAL_ONLY' ? ' selected' : '') + '>Diskon Manual Kasir Saja</option>';
                     rulesList.forEach(function(r) {
                         if (r.rule_name && r.rule_name !== 'Diskon Manual Kasir') {

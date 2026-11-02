@@ -137,6 +137,60 @@ foreach ($matches[1] as $idx => $m) {
     }
 }
 
+// 4. Verifikasi Tidak Ada Deklarasi Ganda let / const dalam Scope yang Sama
+$scopeDeclarations = [[]];
+$duplicateDeclarations = [];
+
+foreach ($scriptLines as $lineIdx => $sLine) {
+    $sLineNum = $lineIdx + 1;
+    $sLen = strlen($sLine);
+    $inStr = false;
+    $strChar = '';
+
+    for ($sc = 0; $sc < $sLen; $sc++) {
+        $ch = $sLine[$sc];
+        if ($inStr) {
+            if ($ch === '\\') { $sc++; continue; }
+            if ($ch === $strChar) { $inStr = false; }
+            continue;
+        }
+        if ($ch === '"' || $ch === "'" || $ch === '`') {
+            $inStr = true;
+            $strChar = $ch;
+            continue;
+        }
+        if ($ch === '/' && $sc + 1 < $sLen && $sLine[$sc+1] === '/') {
+            break;
+        }
+        if ($ch === '{') {
+            $scopeDeclarations[] = [];
+        } elseif ($ch === '}') {
+            if (count($scopeDeclarations) > 1) {
+                array_pop($scopeDeclarations);
+            }
+        }
+    }
+
+    if (preg_match_all('/\b(let|const)\s+([a-zA-Z0-9_$]+)\b/', $sLine, $sm)) {
+        $currScopeIdx = count($scopeDeclarations) - 1;
+        foreach ($sm[2] as $var) {
+            if (isset($scopeDeclarations[$currScopeIdx][$var])) {
+                $duplicateDeclarations[] = "JS Line {$sLineNum}: Identifier '{$var}' has already been declared in this scope (previous at line {$scopeDeclarations[$currScopeIdx][$var]})";
+            } else {
+                $scopeDeclarations[$currScopeIdx][$var] = $sLineNum;
+            }
+        }
+    }
+}
+
+if (!empty($duplicateDeclarations)) {
+    echo "FATAL: Ditemukan SyntaxError redeklarasi identifier let/const:\n";
+    foreach ($duplicateDeclarations as $dd) {
+        echo " - $dd\n";
+    }
+    exit(1);
+}
+
 if (!empty($illegalTokens)) {
     echo "FATAL: Ditemukan token ilegal atau sintaks yang tidak kompatibel:\n";
     foreach ($illegalTokens as $t) {
@@ -146,6 +200,7 @@ if (!empty($illegalTokens)) {
 }
 
 echo "   -> Total baris JavaScript: " . count($scriptLines) . " baris.\n";
+echo "   -> 0 redeklarasi variabel let/const ditemukan.\n";
 echo "   -> 0 token ilegal / ES2020 blockers ditemukan.\n";
 echo "   -> Verifikasi integritas JavaScript BERHASIL 100%!\n";
 exit(0);
