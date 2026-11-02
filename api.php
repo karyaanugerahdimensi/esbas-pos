@@ -1911,6 +1911,32 @@ try {
                 ];
             }
 
+            // Discount Rules
+            try {
+                $stmtRules = $pdo->prepare("
+                    SELECT 
+                        dr.*,
+                        COALESCE(b.name, 'Semua Cabang') as branch_name,
+                        (SELECT COUNT(s.id) FROM sales s WHERE s.discount_rule_id = dr.id AND (s.status IS NULL OR s.status != 'CANCELLED')) as usage_count,
+                        (SELECT COALESCE(SUM(s.discount), 0) FROM sales s WHERE s.discount_rule_id = dr.id AND (s.status IS NULL OR s.status != 'CANCELLED')) as total_discount_given
+                    FROM discount_rules dr
+                    LEFT JOIN branches b ON b.id = dr.branch_id
+                    WHERE (dr.branch_id IS NULL OR dr.branch_id = ?)
+                    ORDER BY dr.is_active DESC, dr.id DESC
+                ");
+                $stmtRules->execute([$currentBranch['id']]);
+                $bootstrapDiscountRules = $stmtRules->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($bootstrapDiscountRules as &$r) {
+                    $r['customer_ids_arr'] = !empty($r['customer_ids']) ? json_decode($r['customer_ids'], true) : [];
+                    $r['customer_categories_arr'] = !empty($r['customer_categories']) ? json_decode($r['customer_categories'], true) : [];
+                    $r['days_of_week_arr'] = !empty($r['days_of_week']) ? json_decode($r['days_of_week'], true) : [];
+                    $r['payment_methods_arr'] = !empty($r['payment_methods']) ? json_decode($r['payment_methods'], true) : [];
+                }
+                unset($r);
+            } catch (Exception $e) {
+                $bootstrapDiscountRules = [];
+            }
+
             echo json_encode([
                 'success' => true,
                 'branches' => $branches,
@@ -1944,6 +1970,7 @@ try {
                 'role_permissions' => $rolePerms,
                 'user_permissions' => $userPerms,
                 'offline_auth_pack' => $offlineAuthPack,
+                'discount_rules' => $bootstrapDiscountRules,
                 'app_version' => getAppVersionData()
             ]);
             break;

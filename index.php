@@ -1069,13 +1069,16 @@ try {
                             </div>
                             <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
                                 <div class="flex items-center space-x-1.5">
-                                    <span>Diskon Faktur (Rp):</span>
+                                    <span>Diskon Faktur:</span>
                                     <button type="button" onclick="openPosPromoPicker()" id="btn-pos-pick-promo" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 flex items-center space-x-1 transition-colors cursor-pointer" title="Pilih Promo / Aturan Diskon Kasir">
                                         <i data-lucide="tag" class="w-3 h-3"></i>
                                         <span>🏷️ Promo</span>
                                     </button>
                                 </div>
-                                <input type="number" id="input-discount" value="0" min="0" oninput="onPosManualDiscountInput()" class="w-24 text-right py-1 px-2 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg focus:outline-none">
+                                <div class="flex items-center space-x-1.5">
+                                    <span id="pos-discount-display" class="font-bold font-mono text-xs text-slate-400 dark:text-slate-500">Rp 0</span>
+                                    <input type="hidden" id="input-discount" value="0">
+                                </div>
                             </div>
                             <!-- Banner Promo Aktif di Keranjang Kasir POS -->
                             <div id="pos-active-promo-banner" class="hidden px-2.5 py-1.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-xl flex items-center justify-between text-xs">
@@ -1089,7 +1092,7 @@ try {
                                         <span id="pos-active-promo-sub" class="text-[10px] text-rose-700 dark:text-rose-300">Potongan Rp 0</span>
                                     </div>
                                 </div>
-                                <button type="button" onclick="clearAppliedPromo()" class="text-rose-400 hover:text-rose-700 dark:hover:text-rose-200 p-1 rounded-md hover:bg-rose-100 dark:hover:bg-rose-900 text-xs shrink-0 cursor-pointer" title="Lepas Promo">✕</button>
+                                <button type="button" onclick="removeAppliedPosPromo()" class="text-rose-400 hover:text-rose-700 dark:hover:text-rose-200 p-1 rounded-md hover:bg-rose-100 dark:hover:bg-rose-900 text-xs shrink-0 cursor-pointer" title="Lepas Promo">✕</button>
                             </div>
                             <div id="row-summary-tax" class="hidden flex justify-between text-xs text-slate-600 dark:text-slate-400">
                                 <span id="summary-tax-label">Pajak (PPN):</span>
@@ -13977,6 +13980,10 @@ try {
                 state.vehicles = data.all_vehicles || [];
                 state.expenseCategories = data.expense_categories || [];
                 populateReimburseCategoryDropdown(state.expenseCategories);
+                state.discountRules = Array.isArray(data.discount_rules) ? data.discount_rules : (state.discountRules || []);
+                if (!state.discountRules || state.discountRules.length === 0) {
+                    loadDiscountRules();
+                }
 
                 // Pastikan tier yang aktif terpilih adalah kategori yang berstatus aktif
                 const activeCats = (state.customerCategories || []).filter(c => c.is_active == 1);
@@ -15159,16 +15166,32 @@ try {
             calculateCartTotals();
         }
 
-        function calculateCartTotals() {
-            const subtotal = state.cart.reduce((acc, c) => acc + (c.price * c.qty), 0);
-            const discountInput = parseFloat(document.getElementById('input-discount').value) || 0;
+        function calculateCartTotals(skipDiscountEval) {
+            if (!skipDiscountEval && typeof evaluatePosAutoDiscounts === 'function') {
+                evaluatePosAutoDiscounts(true);
+            }
+
+            const subtotal = (state.cart || []).reduce(function(acc, c) { return acc + (c.price * c.qty); }, 0);
+            const discountInput = parseFloat(document.getElementById('input-discount') ? document.getElementById('input-discount').value : 0) || 0;
             const discount = Math.min(subtotal, Math.max(0, discountInput));
+
+            // Sinkronkan tampilan nominal diskon di keranjang POS kasir
+            const discDisplayEl = document.getElementById('pos-discount-display');
+            if (discDisplayEl) {
+                if (discount > 0) {
+                    discDisplayEl.innerText = '- ' + formatRupiah(discount);
+                    discDisplayEl.className = 'font-bold font-mono text-xs text-rose-600 dark:text-rose-400';
+                } else {
+                    discDisplayEl.innerText = 'Rp 0';
+                    discDisplayEl.className = 'font-bold font-mono text-xs text-slate-400 dark:text-slate-500';
+                }
+            }
             
             // Hitung Pajak per Item Produk
             let totalTax = 0;
             let hasTaxableItem = false;
 
-            state.cart.forEach(item => {
+            (state.cart || []).forEach(item => {
                 const isTaxable = (item.is_taxable !== undefined) ? Number(item.is_taxable) : 1;
                 const taxRate = (item.tax_percent !== undefined) ? Number(item.tax_percent) : 11.0;
                 if (isTaxable === 1 && taxRate > 0) {
@@ -15199,9 +15222,6 @@ try {
             document.getElementById('summary-tax').innerText = formatRupiah(tax);
             document.getElementById('summary-grand-total').innerText = formatRupiah(grandTotal);
             calculateChange();
-            if (typeof debouncedEvaluatePosDiscounts === 'function') {
-                debouncedEvaluatePosDiscounts();
-            }
         }
 
         function renderPosPaymentButtons() {
@@ -15518,6 +15538,9 @@ try {
                     btnCheckout.className = 'flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-xs sm:text-sm active:scale-[0.99] cursor-pointer';
                 }
                 lucide.createIcons();
+            }
+            if (typeof evaluatePosAutoDiscounts === 'function') {
+                evaluatePosAutoDiscounts();
             }
         }
 
@@ -19731,6 +19754,10 @@ Manager / Supervisor: __________________
                 state.expenseCategories = data.expense_categories;
             }
             populateReimburseCategoryDropdown(state.expenseCategories);
+                state.discountRules = Array.isArray(data.discount_rules) ? data.discount_rules : (state.discountRules || []);
+                if (!state.discountRules || state.discountRules.length === 0) {
+                    loadDiscountRules();
+                }
             initRosterControls();
             populateSwapPeerDropdown();
 
@@ -27912,6 +27939,10 @@ Manager / Supervisor: __________________
 
                 populateExpenseCategoryFilterDropdown();
                 populateReimburseCategoryDropdown(state.expenseCategories);
+                state.discountRules = Array.isArray(data.discount_rules) ? data.discount_rules : (state.discountRules || []);
+                if (!state.discountRules || state.discountRules.length === 0) {
+                    loadDiscountRules();
+                }
 
                 if (render) {
                     renderExpenseCategoriesTable();
@@ -28559,6 +28590,7 @@ Manager / Supervisor: __________________
             }
 
             renderProducts();
+            if (typeof evaluatePosAutoDiscounts === 'function') evaluatePosAutoDiscounts();
         }
 
         function selectPosWalkInCustomer() {
@@ -28588,6 +28620,7 @@ Manager / Supervisor: __________________
                 state.cart = [];
                 resetPosDelivery(true);
                 renderCart();
+                if (typeof evaluatePosAutoDiscounts === 'function') evaluatePosAutoDiscounts();
             }
             renderProducts();
         }
@@ -34299,7 +34332,201 @@ Manager / Supervisor: __________________
             }
         }
 
-        // --- POS CASHIER PROMO INTEGRATION ---
+                // --- POS CASHIER PROMO INTEGRATION ---
+
+        function checkDiscountRuleEligibility(r, ctx) {
+            if (!r || parseInt(r.is_active, 10) !== 1) {
+                return { eligible: false, reasons: ['Aturan promo tidak aktif'] };
+            }
+
+            const subtotal = (ctx && ctx.subtotal !== undefined) ? ctx.subtotal : (state.cart ? state.cart.reduce(function(acc, c) { return acc + (c.price * c.qty); }, 0) : 0);
+            const custId = (ctx && ctx.custId !== undefined) ? ctx.custId : (state.selectedCustomer ? state.selectedCustomer.id : null);
+            const custCat = (ctx && ctx.custCat !== undefined) ? ctx.custCat : (state.selectedCustomerCategory || (state.selectedCustomer ? state.selectedCustomer.category : 'REGULER'));
+            const payMethod = (ctx && ctx.payMethod !== undefined) ? ctx.payMethod : (state.paymentMethod || 'CASH');
+            const branchId = (ctx && ctx.branchId !== undefined) ? ctx.branchId : (state.currentBranch ? state.currentBranch.id : 1);
+
+            const reasons = [];
+            let eligible = true;
+
+            // 1. Cabang
+            if (r.branch_id && String(r.branch_id) !== String(branchId)) {
+                eligible = false;
+                reasons.push('Khusus cabang tertentu');
+            }
+
+            // 2. Tanggal Berlaku (YYYY-MM-DD)
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const todayStr = yyyy + '-' + mm + '-' + dd;
+
+            if (r.start_date && todayStr < r.start_date) {
+                eligible = false;
+                reasons.push('Promo mulai ' + r.start_date);
+            }
+            if (r.end_date && todayStr > r.end_date) {
+                eligible = false;
+                reasons.push('Promo berakhir ' + r.end_date);
+            }
+
+            // 3. Min Belanja
+            const minP = parseFloat(r.min_purchase || 0);
+            if (minP > 0 && subtotal < minP) {
+                eligible = false;
+                reasons.push('Min. belanja ' + formatRupiah(minP) + ' (kurang ' + formatRupiah(minP - subtotal) + ')');
+            }
+
+            // 4. Target Pelanggan
+            let custArr = r.customer_ids_arr;
+            if (!custArr && r.customer_ids) {
+                try { custArr = JSON.parse(r.customer_ids); } catch (e) { custArr = []; }
+            }
+            if (r.scope_customer_type === 'SPECIFIC' || (Array.isArray(custArr) && custArr.length > 0)) {
+                if (!custId || !custArr.some(function(cid) { return String(cid) === String(custId); })) {
+                    eligible = false;
+                    reasons.push('Khusus pelanggan terpilih');
+                }
+            }
+
+            // 5. Target Kategori Pelanggan
+            let catArr = r.customer_categories_arr;
+            if (!catArr && r.customer_categories) {
+                try { catArr = JSON.parse(r.customer_categories); } catch (e) { catArr = []; }
+            }
+            if (r.scope_category_type === 'SPECIFIC' || (Array.isArray(catArr) && catArr.length > 0)) {
+                if (!catArr.some(function(cat) { return String(cat).toUpperCase() === String(custCat).toUpperCase(); })) {
+                    eligible = false;
+                    reasons.push('Khusus kategori ' + catArr.join('/'));
+                }
+            }
+
+            // 6. Target Hari Berlaku
+            const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+            const todayDay = days[now.getDay()];
+            let dayArr = r.days_of_week_arr;
+            if (!dayArr && r.days_of_week) {
+                try { dayArr = JSON.parse(r.days_of_week); } catch (e) { dayArr = []; }
+            }
+            if (r.scope_day_type === 'SPECIFIC' || (Array.isArray(dayArr) && dayArr.length > 0)) {
+                if (!dayArr.includes(todayDay)) {
+                    eligible = false;
+                    reasons.push('Hanya berlaku hari ' + dayArr.join(', '));
+                }
+            }
+
+            // 7. Target Metode Pembayaran
+            let payArr = r.payment_methods_arr;
+            if (!payArr && r.payment_methods) {
+                try { payArr = JSON.parse(r.payment_methods); } catch (e) { payArr = []; }
+            }
+            if (r.scope_payment_type === 'SPECIFIC' || (Array.isArray(payArr) && payArr.length > 0)) {
+                if (!payArr.some(function(pm) { return String(pm).toUpperCase() === String(payMethod).toUpperCase(); })) {
+                    eligible = false;
+                    reasons.push('Khusus metode ' + payArr.join('/'));
+                }
+            }
+
+            return { eligible: eligible, reasons: reasons };
+        }
+
+        function updatePosDiscountUI(amount, rule) {
+            const discVal = parseFloat(amount || 0);
+            const discHiddenInput = document.getElementById('input-discount');
+            if (discHiddenInput) discHiddenInput.value = discVal;
+
+            const displayEl = document.getElementById('pos-discount-display');
+            if (displayEl) {
+                if (discVal > 0) {
+                    displayEl.innerText = '- ' + formatRupiah(discVal);
+                    displayEl.className = 'font-bold font-mono text-xs text-rose-600 dark:text-rose-400';
+                } else {
+                    displayEl.innerText = 'Rp 0';
+                    displayEl.className = 'font-bold font-mono text-xs text-slate-400 dark:text-slate-500';
+                }
+            }
+
+            const banner = document.getElementById('pos-active-promo-banner');
+            const bannerName = document.getElementById('pos-active-promo-name');
+            const bannerBadge = document.getElementById('pos-active-promo-mode-badge');
+            const bannerSub = document.getElementById('pos-active-promo-sub');
+
+            if (banner) {
+                if (rule && discVal > 0) {
+                    banner.classList.remove('hidden');
+                    if (bannerName) bannerName.innerText = rule.name || 'Promo Aktif';
+                    if (bannerBadge) {
+                        const isAuto = (rule.trigger_mode === 'AUTO');
+                        bannerBadge.innerText = isAuto ? 'AUTO' : 'MANUAL';
+                        bannerBadge.className = isAuto
+                            ? 'px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                            : 'px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-rose-200 text-rose-800 dark:bg-rose-950 dark:text-rose-300';
+                    }
+                    if (bannerSub) bannerSub.innerText = 'Potongan ' + formatRupiah(discVal);
+                } else {
+                    banner.classList.add('hidden');
+                }
+            }
+        }
+
+        function evaluatePosAutoDiscounts(skipRecalc) {
+            const rules = state.discountRules || [];
+            const subtotal = state.cart ? state.cart.reduce(function(acc, c) { return acc + (c.price * c.qty); }, 0) : 0;
+
+            // Jika keranjang kosong
+            if (subtotal <= 0) {
+                state.appliedDiscount = null;
+                updatePosDiscountUI(0, null);
+                if (!skipRecalc) calculateCartTotals(true);
+                return;
+            }
+
+            // Jika kasir secara sengaja memilih promo manual dari modal picker
+            if (state.appliedDiscount && state.appliedDiscount._isManualSelection) {
+                const checkManual = checkDiscountRuleEligibility(state.appliedDiscount);
+                if (checkManual.eligible) {
+                    updatePosDiscountUI(state.appliedDiscount.discount_amount, state.appliedDiscount);
+                    if (!skipRecalc) calculateCartTotals(true);
+                    return;
+                } else {
+                    // Syarat manual sudah tidak terpenuhi
+                    state.appliedDiscount = null;
+                }
+            }
+
+            // Cari promo AUTO yang eligible dengan nominal potongan tertinggi
+            let bestRule = null;
+            let maxDiscount = 0;
+
+            rules.forEach(function(r) {
+                if (parseInt(r.is_active, 10) !== 1) return;
+                if (r.trigger_mode !== 'AUTO') return;
+
+                const check = checkDiscountRuleEligibility(r);
+                if (check.eligible) {
+                    const amount = parseFloat(r.discount_amount || 0);
+                    if (amount > maxDiscount) {
+                        maxDiscount = amount;
+                        bestRule = r;
+                    }
+                }
+            });
+
+            if (bestRule) {
+                state.appliedDiscount = Object.assign({}, bestRule, { _isManualSelection: false });
+                updatePosDiscountUI(bestRule.discount_amount, state.appliedDiscount);
+            } else {
+                if (!state.appliedDiscount || !state.appliedDiscount._isManualSelection) {
+                    state.appliedDiscount = null;
+                    updatePosDiscountUI(0, null);
+                }
+            }
+
+            if (!skipRecalc) {
+                calculateCartTotals(true);
+            }
+        }
+
         function openPosPromoPicker() {
             const modal = document.getElementById('modal-pos-promo-picker');
             if (!modal) return;
@@ -34322,53 +34549,13 @@ Manager / Supervisor: __________________
                 return;
             }
 
-            const subtotal = state.cart ? state.cart.reduce(function(acc, c) { return acc + (c.price * c.qty); }, 0) : 0;
-            const custId = state.selectedCustomer ? state.selectedCustomer.id : null;
-            const custCat = state.selectedCustomerCategory || (state.selectedCustomer ? state.selectedCustomer.category : 'REGULER');
-            const payMethod = state.paymentMethod || 'CASH';
-
-            const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
-            const todayDay = days[new Date().getDay()];
-
             let html = '';
             rules.forEach(function(r) {
                 if (parseInt(r.is_active, 10) !== 1) return;
 
-                let eligible = true;
-                let reasons = [];
-
-                if (parseFloat(r.min_purchase) > 0 && subtotal < parseFloat(r.min_purchase)) {
-                    eligible = false;
-                    reasons.push('Min. belanja ' + formatRupiah(r.min_purchase) + ' (kurang ' + formatRupiah(parseFloat(r.min_purchase) - subtotal) + ')');
-                }
-
-                if (r.customer_ids_arr && r.customer_ids_arr.length > 0) {
-                    if (!custId || !r.customer_ids_arr.includes(parseInt(custId, 10))) {
-                        eligible = false;
-                        reasons.push('Khusus pelanggan terpilih');
-                    }
-                }
-
-                if (r.customer_categories_arr && r.customer_categories_arr.length > 0) {
-                    if (!r.customer_categories_arr.includes(custCat)) {
-                        eligible = false;
-                        reasons.push('Khusus kategori ' + r.customer_categories_arr.join('/'));
-                    }
-                }
-
-                if (r.days_of_week_arr && r.days_of_week_arr.length > 0) {
-                    if (!r.days_of_week_arr.includes(todayDay)) {
-                        eligible = false;
-                        reasons.push('Hanya berlaku hari ' + r.days_of_week_arr.join(', '));
-                    }
-                }
-
-                if (r.payment_methods_arr && r.payment_methods_arr.length > 0) {
-                    if (!r.payment_methods_arr.includes(payMethod)) {
-                        eligible = false;
-                        reasons.push('Khusus metode ' + r.payment_methods_arr.join('/'));
-                    }
-                }
+                const check = checkDiscountRuleEligibility(r);
+                const eligible = check.eligible;
+                const reasons = check.reasons;
 
                 const isApplied = (state.appliedDiscount && state.appliedDiscount.id == r.id);
                 const cardBorder = isApplied ? 'border-rose-500 bg-rose-50/70 dark:bg-rose-950/40 ring-2 ring-rose-400' : (eligible ? 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-rose-300' : 'border-slate-200/60 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 opacity-60');
@@ -34377,7 +34564,10 @@ Manager / Supervisor: __________________
                 html += '  <div>';
                 html += '    <div class="flex items-center justify-between">';
                 html += '      <span class="font-extrabold text-xs text-slate-800 dark:text-slate-100">' + escapeHtml(r.name) + '</span>';
-                html += '      <span class="px-2 py-0.5 rounded-md font-mono font-bold text-[10px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">' + escapeHtml(r.code) + '</span>';
+                html += '      <div class="flex items-center space-x-1">';
+                html += '        <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold ' + (r.trigger_mode === 'AUTO' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800') + '">' + escapeHtml(r.trigger_mode) + '</span>';
+                html += '        <span class="px-2 py-0.5 rounded-md font-mono font-bold text-[10px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">' + escapeHtml(r.code) + '</span>';
+                html += '      </div>';
                 html += '    </div>';
                 html += '    <div class="mt-1 font-mono font-black text-rose-600 text-sm">- ' + formatRupiah(r.discount_amount) + '</div>';
                 if (r.description) html += '    <p class="text-[10px] text-slate-500 mt-1">' + escapeHtml(r.description) + '</p>';
@@ -34390,7 +34580,7 @@ Manager / Supervisor: __________________
 
                 html += '  <div class="pt-1">';
                 if (isApplied) {
-                    html += '    <button type="button" onclick="removeAppliedPosPromo()" class="w-full py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-800 rounded-xl text-xs font-bold transition-colors">Batalkan Promo Ini</button>';
+                    html += '    <button type="button" onclick="removeAppliedPosPromo()" class="w-full py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-800 rounded-xl text-xs font-bold transition-colors cursor-pointer">Batalkan Promo Ini</button>';
                 } else if (eligible) {
                     html += '    <button type="button" onclick="applyPosPromo(' + r.id + ')" class="w-full py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow transition-colors cursor-pointer">Pasang Promo Ini</button>';
                 } else {
@@ -34404,43 +34594,23 @@ Manager / Supervisor: __________________
         }
 
         function applyPosPromo(ruleId) {
-            const rule = state.discountRules.find(function(item) { return item.id == ruleId; });
+            const rule = (state.discountRules || []).find(function(item) { return item.id == ruleId; });
             if (!rule) return;
-            state.appliedDiscount = rule;
-            const discInput = document.getElementById('input-discount');
-            if (discInput) discInput.value = parseFloat(rule.discount_amount || 0);
-
-            const banner = document.getElementById('pos-active-promo-banner');
-            const bannerName = document.getElementById('pos-active-promo-name');
-            const bannerVal = document.getElementById('pos-active-promo-val');
-            if (banner) {
-                banner.classList.remove('hidden');
-                if (bannerName) bannerName.innerText = rule.name;
-                if (bannerVal) bannerVal.innerText = '- ' + formatRupiah(rule.discount_amount);
-            }
-
+            state.appliedDiscount = Object.assign({}, rule, { _isManualSelection: true });
+            updatePosDiscountUI(rule.discount_amount, state.appliedDiscount);
             closePosPromoPicker();
-            calculateCartTotals();
+            calculateCartTotals(true);
         }
 
         function removeAppliedPosPromo() {
             state.appliedDiscount = null;
-            const discInput = document.getElementById('input-discount');
-            if (discInput) discInput.value = 0;
-
-            const banner = document.getElementById('pos-active-promo-banner');
-            if (banner) banner.classList.add('hidden');
-
+            updatePosDiscountUI(0, null);
             closePosPromoPicker();
-            calculateCartTotals();
+            calculateCartTotals(true);
         }
 
         function onPosManualDiscountInput() {
-            // Jika user mengetik manual, lepaskan promo otomatis/manual
-            state.appliedDiscount = null;
-            const banner = document.getElementById('pos-active-promo-banner');
-            if (banner) banner.classList.add('hidden');
-            calculateCartTotals();
+            // No-op karena input manual ditiadakan
         }
 
         // Assign ke window untuk proteksi 100% bebas ReferenceError
@@ -34462,6 +34632,9 @@ Manager / Supervisor: __________________
         window.closePosPromoPicker = closePosPromoPicker;
         window.applyPosPromo = applyPosPromo;
         window.removeAppliedPosPromo = removeAppliedPosPromo;
+        window.checkDiscountRuleEligibility = checkDiscountRuleEligibility;
+        window.evaluatePosAutoDiscounts = evaluatePosAutoDiscounts;
+        window.updatePosDiscountUI = updatePosDiscountUI;
         window.onPosManualDiscountInput = onPosManualDiscountInput;
 
         // ==========================================
