@@ -3840,7 +3840,7 @@ try {
         case 'get_recipes':
             // Get all Finished Goods that can have recipes
             $stmtFG = $pdo->query("
-                SELECT id, sku, name, unit, selling_price, cogs, has_bom 
+                SELECT id, sku, name, unit, selling_price, cogs, has_bom, product_type 
                 FROM products 
                 WHERE product_type = 'FINISHED_GOODS' AND is_active = 1
                 ORDER BY name ASC
@@ -3849,17 +3849,29 @@ try {
 
             // Get Raw Materials (available ingredients)
             $stmtRaw = $pdo->query("
-                SELECT id, sku, name, unit, cogs 
+                SELECT id, sku, name, unit, cogs, selling_price, product_type 
                 FROM products 
                 WHERE product_type = 'RAW_MATERIAL' AND is_active = 1
                 ORDER BY name ASC
             ");
             $rawMaterials = $stmtRaw->fetchAll();
 
+            // Get Finished Goods that can also be used as ingredients (e.g. Es 5kg for Es 10kg)
+            $stmtFGIngredients = $pdo->query("
+                SELECT id, sku, name, unit, cogs, selling_price, product_type 
+                FROM products 
+                WHERE product_type = 'FINISHED_GOODS' AND is_active = 1
+                ORDER BY name ASC
+            ");
+            $fgIngredients = $stmtFGIngredients->fetchAll();
+
+            $availableIngredients = array_merge($rawMaterials, $fgIngredients);
+
             // Get all BOM recipe lines
             $stmtBOM = $pdo->query("
                 SELECT pr.id, pr.finished_product_id, pr.ingredient_product_id, pr.qty_needed, pr.unit,
                        p.name as ingredient_name, p.sku as ingredient_sku, p.cogs as ingredient_cogs,
+                       p.product_type as ingredient_product_type,
                        (pr.qty_needed * p.cogs) as subtotal_ingredient_cost
                 FROM product_recipes pr
                 JOIN products p ON p.id = pr.ingredient_product_id
@@ -3882,7 +3894,9 @@ try {
             echo json_encode([
                 'success' => true,
                 'finished_goods' => $finishedGoods,
-                'raw_materials' => $rawMaterials
+                'raw_materials' => $rawMaterials,
+                'fg_ingredients' => $fgIngredients,
+                'available_ingredients' => $availableIngredients
             ]);
             break;
 
@@ -3893,23 +3907,56 @@ try {
             $unit = trim($input['unit'] ?? 'pcs');
 
             if (!$finishedId || !$ingredientId || $qtyNeeded <= 0) {
-                echo json_encode(['success' => false, 'message' => 'Lengkapi produk, bahan baku, dan takaran kebutuhan.']);
+                echo json_encode(['success' => false, 'message' => 'Lengkapi produk, bahan baku/komponen, dan takaran kebutuhan.']);
                 exit;
             }
 
-            $stmt = $pdo->prepare("
-                INSERT INTO product_recipes (finished_product_id, ingredient_product_id, qty_needed, unit)
-                VALUES (?, ?, ?, ?)
-            ");
-            $stmt->execute([$finishedId, $ingredientId, $qtyNeeded, $unit]);
+            if ($finishedId === $ingredientId) {
+                echo json_encode(['success' => false, 'message' => 'Produk tidak dapat menjadi bahan baku/komponen untuk dirinya sendiri.']);
+                exit;
+            }
+
+            // Validasi produk bahan/komponen
+            $stProd = $pdo->prepare("SELECT id, name, product_type, cogs, unit FROM products WHERE id = ?");
+            $stProd->execute([$ingredientId]);
+            $ingProd = $stProd->fetch(PDO::FETCH_ASSOC);
+            if (!$ingProd) {
+                echo json_encode(['success' => false, 'message' => 'Produk bahan/komponen tidak ditemukan.']);
+                exit;
+            }
+
+            // Cek ketergantungan melingkar (circular dependency)
+            $chkCirc = $pdo->prepare("SELECT COUNT(*) FROM product_recipes WHERE finished_product_id = ? AND ingredient_product_id = ?");
+            $chkCirc->execute([$ingredientId, $finishedId]);
+            if ($chkCirc->fetchColumn() > 0) {
+                echo json_encode(['success' => false, 'message' => "Terdeteksi ketergantungan melingkar: '{$ingProd['name']}' sudah menggunakan produk ini sebagai bahannya."]);
+                exit;
+            }
+
+            // Upsert jika sudah pernah ada di formula resep
+            $chkExists = $pdo->prepare("SELECT id FROM product_recipes WHERE finished_product_id = ? AND ingredient_product_id = ?");
+            $chkExists->execute([$finishedId, $ingredientId]);
+            $existingId = $chkExists->fetchColumn();
+
+            if ($existingId) {
+                $stmt = $pdo->prepare("UPDATE product_recipes SET qty_needed = ?, unit = ? WHERE id = ?");
+                $stmt->execute([$qtyNeeded, $unit, $existingId]);
+            } else {
+                $stmt = $pdo->prepare("
+                    INSERT INTO product_recipes (finished_product_id, ingredient_product_id, qty_needed, unit)
+                    VALUES (?, ?, ?, ?)
+                ");
+                $stmt->execute([$finishedId, $ingredientId, $qtyNeeded, $unit]);
+            }
 
             // Mark finished product as having BOM and auto calculate COGS
             $pdo->prepare("UPDATE products SET has_bom = 1 WHERE id = ?")->execute([$finishedId]);
             $autoCogs = recalculateProductBOMCogs($pdo, $finishedId);
 
+            $ingTypeLabel = ($ingProd['product_type'] === 'FINISHED_GOODS') ? 'Produk Jadi' : 'Bahan Baku';
             echo json_encode([
                 'success' => true, 
-                'message' => 'Bahan baku berhasil ditambahkan ke formula resep (BOM). HPP modal barang jadi otomatis diperbarui: Rp ' . number_format($autoCogs, 0, ',', '.'),
+                'message' => "{$ingTypeLabel} '{$ingProd['name']}' berhasil disimpan ke formula resep (BOM). HPP modal barang jadi otomatis diperbarui: Rp " . number_format($autoCogs, 0, ',', '.'),
                 'calculated_cogs' => $autoCogs
             ]);
             break;

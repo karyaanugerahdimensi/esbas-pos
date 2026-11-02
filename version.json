@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.6.6",
-    "build": "20261102-92",
+    "version": "1.6.7",
+    "build": "20261102-93",
     "release_date": "2026-11-02",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.6.7",
+            "commit": "HEAD",
+            "date": "2026-11-02",
+            "title": "Dukungan Produk Jadi Sebagai Komponen Resep BOM Multi-Level (FR-BOM-03)",
+            "description": "Menambahkan fleksibilitas pada formula Bill of Materials (BOM) sehingga komponen resep produk dapat dipilih dari Produk Jadi (Finished Goods) selain Bahan Baku (Raw Material), memungkinkan skenario produksi multi-level seperti Es Kristal 10 Kg dengan resep 2x Es Kristal 5kg: (1) Opsi Produk Jadi di Modal Formula Resep: Modal penambahan komponen resep kini dilengkapi filter tab (Semua, Bahan Baku, Produk Jadi) dan dropdown ber-optgroup untuk memilih bahan baku maupun produk jadi, dengan proteksi mandiri (tidak menampilkan produk itu sendiri untuk mencegah self-dependency); (2) Perluasan Endpoint get_recipes & save_recipe_item: api.php kini mengembalikan fg_ingredients & available_ingredients, menyertakan ingredient_product_type pada setiap baris resep, memvalidasi anti-circular dependency, serta mendukung upsert formula resep; (3) Rekalkulasi Otomatis HPP Modal Multi-Level: Perhitungan HPP modal barang jadi otomatis menghitung total biaya dari komponen produk jadi berdasarkan HPP produk jadi penyusun; (4) Indikator Badge Produk Jadi pada Kartu BOM: Daftar resep pada kartu BOM menampilkan badge pembeda 'Produk Jadi' (amber) dan 'Bahan Baku' (slate) beserta tombol '+ Komponen Resep'; (5) Kompatibilitas Penuh Android 8.1: 100% sintaks JavaScript standar ES5/ES6 bebas operator ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.6.6"
+        },
         {
             "version": "1.6.6",
             "commit": "HEAD",
@@ -14,7 +22,7 @@
             "description": "Memungkinkan kasir dan staff memilih cabang mana pun sebagai Cabang Asal (Pengirim) pada Formulir Transfer Stok Antar Cabang, tidak terbatas hanya pada cabang penugasan sendiri: (1) Dropdown Cabang Asal Tidak Terkunci: Mengubah populasi trfFromSel menggunakan allBranches (bukan effectiveAllowed) dan menetapkan disabled = false sehingga seluruh cabang aktif tersedia sebagai pilihan asal transfer; (2) Auto-Switch Cabang Tujuan saat Terjadi Tabrakan: Memperbarui onStockTransferBranchChange agar saat Cabang Asal diubah ke cabang yang sama dengan Cabang Tujuan, sistem otomatis memilihkan cabang tujuan alternatif tanpa popup error; (3) Label Nama Cabang Dinamis di Header Kolom Stok: Menampilkan nama cabang terpilih secara realtime di bawah judul kolom Stok Cabang Asal dan Stok Cabang Tujuan melalui elemen stockin-trf-from-label dan stockin-trf-to-label; (4) Backend api.php Transfer dari Cabang Mana Pun: Menghapus validasi ketat yang menolak from_branch_id di luar cabang penugasan aktor — izin create transfer sudah cukup tanpa perlu cabang asal sesuai penugasan; (5) Kompatibilitas Penuh Android 8.1: Bebas operator ES2020 (?., ??).",
             "rollback_command": "git checkout v1.6.5"
         },
-            "version": "1.6.5",
+        {
             "commit": "HEAD",
             "date": "2026-11-02",
             "title": "Perbaikan Persistensi Hak Akses Role, Deduplikasi Matriks Hak Akses & Aktivasi Form Transfer Cabang Kasir (FR-POS-63)",

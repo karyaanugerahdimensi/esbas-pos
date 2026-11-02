@@ -9037,30 +9037,60 @@ try {
         </div>
     </div>
 
-    <!-- Modal 5: Tambah Bahan Baku ke BOM Modal -->
+    <!-- Modal 5: Tambah Komponen / Bahan ke Formula Resep (BOM) -->
     <div id="recipe-add-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4">
-            <h3 class="font-bold text-slate-800 text-base">Tambah Bahan ke Formula Resep</h3>
-            <p id="recipe-modal-product-name" class="text-xs text-indigo-600 font-bold">Produk: Caramel Macchiato</p>
-            <form onsubmit="saveRecipeItemForm(event)" class="space-y-3 text-xs">
-                <input type="hidden" id="recipe-finished-id">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Pilih Bahan Baku (Raw Material):</label>
-                    <select id="recipe-ingredient-select" onchange="onRecipeIngredientChange()" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium"></select>
+                    <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
+                        <i data-lucide="layers" class="w-5 h-5 text-indigo-600"></i>
+                        <span>Tambah Komponen / Resep BOM</span>
+                    </h3>
+                    <p id="recipe-modal-product-name" class="text-xs text-indigo-600 font-bold mt-0.5">Produk: Caramel Macchiato</p>
                 </div>
+                <button type="button" onclick="closeRecipeModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="saveRecipeItemForm(event)" class="space-y-3.5 text-xs">
+                <input type="hidden" id="recipe-finished-id">
+
+                <!-- Filter Tipe Komponen: Bahan Baku vs Produk Jadi -->
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Filter Tipe Komponen:</label>
+                    <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-xl text-center">
+                        <button type="button" id="recipe-filter-tab-all" onclick="setRecipeIngredientTypeFilter('ALL')" class="py-1.5 px-2 rounded-lg font-bold text-[11px] bg-white text-indigo-600 shadow-2xs transition-all">Semua</button>
+                        <button type="button" id="recipe-filter-tab-raw" onclick="setRecipeIngredientTypeFilter('RAW_MATERIAL')" class="py-1.5 px-2 rounded-lg font-bold text-[11px] text-slate-600 hover:bg-white/60 transition-all">🧪 Bahan Baku</button>
+                        <button type="button" id="recipe-filter-tab-fg" onclick="setRecipeIngredientTypeFilter('FINISHED_GOODS')" class="py-1.5 px-2 rounded-lg font-bold text-[11px] text-slate-600 hover:bg-white/60 transition-all">📦 Produk Jadi</button>
+                    </div>
+                </div>
+
+                <!-- Dropdown Pilih Bahan / Komponen -->
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Pilih Komponen (Bahan Baku / Produk Jadi):</label>
+                    <select id="recipe-ingredient-select" onchange="onRecipeIngredientChange()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"></select>
+                </div>
+
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">Takaran Kebutuhan:</label>
-                        <input type="number" step="0.1" id="recipe-qty-needed" placeholder="20" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold" required>
+                        <input type="number" step="any" min="0.0001" id="recipe-qty-needed" oninput="updateRecipeCogsPreview()" placeholder="1" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none" required>
                     </div>
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">Satuan Takar:</label>
-                        <select id="recipe-unit-name" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold"></select>
+                        <select id="recipe-unit-name" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"></select>
                     </div>
                 </div>
+
+                <!-- Info HPP Preview -->
+                <div id="recipe-cogs-preview" class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center text-[11px]">
+                    <span class="text-slate-500 font-medium">Estimasi Modal Komponen:</span>
+                    <span id="recipe-cogs-val" class="font-bold text-slate-700 font-mono">Rp 0</span>
+                </div>
+
                 <div class="grid grid-cols-2 gap-2 pt-2">
-                    <button type="button" onclick="closeRecipeModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700">Batal</button>
-                    <button type="submit" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow">Simpan ke Formula</button>
+                    <button type="button" onclick="closeRecipeModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700 transition-colors">Batal</button>
+                    <button type="submit" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md transition-colors">Simpan ke Formula</button>
                 </div>
             </form>
         </div>
@@ -24433,98 +24463,220 @@ Manager / Supervisor: __________________
                 }
             state.recipesData = data;
 
-            document.getElementById('bom-cards-grid').innerHTML = data.finished_goods.map(fg => `
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-                    <div class="flex items-center justify-between border-b pb-2.5">
-                        <div>
-                            <h4 class="font-bold text-slate-800 text-sm flex items-center space-x-1.5">
-                                <span class="text-xl">☕</span>
-                                <span>${fg.name}</span>
-                            </h4>
-                            <p class="text-[10px] text-slate-400 font-medium">${fg.sku} • Jual: ${formatRupiah(fg.selling_price)}</p>
-                        </div>
-                        <div class="flex items-center space-x-1.5">
-                            ${(fg.ingredients && fg.ingredients.length > 0) ? `
-                            <button onclick="deleteBaseBOM(${fg.id}, '${fg.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold border border-rose-200 flex items-center space-x-1 transition-colors shadow-2xs" title="Hapus seluruh formula resep Base BOM untuk ${fg.name}">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-500"></i>
-                                <span>Hapus BOM</span>
-                            </button>
-                            ` : ''}
-                            <button onclick="openAddRecipeModal(${fg.id}, '${fg.name.replace(/'/g, "\\'")}')" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold border border-indigo-200 flex items-center space-x-1 transition-colors">
-                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                                <span>Bahan Baku</span>
-                            </button>
-                        </div>
-                    </div>
+            document.getElementById('bom-cards-grid').innerHTML = data.finished_goods.map(function(fg) {
+                var ingHtml = (fg.ingredients && fg.ingredients.length > 0) ? fg.ingredients.map(function(ing) {
+                    var isFg = (ing.ingredient_product_type === 'FINISHED_GOODS');
+                    var typeBadge = isFg 
+                        ? '<span class="px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-amber-100 text-amber-800 border border-amber-200">📦 Produk Jadi</span>'
+                        : '<span class="px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-slate-200/70 text-slate-700">🧪 Bahan Baku</span>';
+                    var escapedName = ing.ingredient_name ? escapeHtml(ing.ingredient_name) : '-';
+                    var escapedUnit = ing.unit ? escapeHtml(ing.unit) : 'pcs';
 
-                    <!-- Ingredients List -->
-                    <div class="space-y-1.5 text-xs">
-                        ${fg.ingredients && fg.ingredients.length > 0 ? fg.ingredients.map(ing => `
-                            <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                                <div>
-                                    <span class="font-bold text-slate-700">${ing.ingredient_name}</span>
-                                    <span class="text-[10px] text-slate-400 block">${formatDecimal(ing.qty_needed)} ${ing.unit} @ ${formatRupiah(ing.ingredient_cogs)}/${ing.unit}</span>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    <span class="font-mono text-slate-700 font-bold">${formatRupiah(ing.subtotal_ingredient_cost)}</span>
-                                    <button onclick="deleteRecipeItem(${ing.id})" class="text-rose-500 hover:text-rose-700 p-1">
-                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('') : '<p class="text-slate-400 text-center py-2.5 font-medium">Belum ada formula resep bahan</p>'}
-                    </div>
+                    return '<div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">' +
+                        '<div>' +
+                            '<div class="flex items-center space-x-1.5">' +
+                                '<span class="font-bold text-slate-700">' + escapedName + '</span>' +
+                                typeBadge +
+                            '</div>' +
+                            '<span class="text-[10px] text-slate-400 block">' + formatDecimal(ing.qty_needed) + ' ' + escapedUnit + ' @ ' + formatRupiah(ing.ingredient_cogs) + '/' + escapedUnit + '</span>' +
+                        '</div>' +
+                        '<div class="flex items-center space-x-2">' +
+                            '<span class="font-mono text-slate-700 font-bold">' + formatRupiah(ing.subtotal_ingredient_cost) + '</span>' +
+                            '<button type="button" onclick="deleteRecipeItem(' + ing.id + ')" class="text-rose-500 hover:text-rose-700 p-1" title="Hapus dari formula resep">' +
+                                '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i>' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>';
+                }).join('') : '<p class="text-slate-400 text-center py-2.5 font-medium">Belum ada formula resep bahan / produk</p>';
 
-                    <!-- Total BOM Cost Calculation -->
-                    <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex justify-between items-center text-xs">
-                        <span class="font-bold text-emerald-900">Total HPP Berbasis Resep:</span>
-                        <span class="font-black text-emerald-800 text-sm font-mono">${formatRupiah(fg.calculated_cogs)}</span>
-                    </div>
-                </div>
-            `).join('');
+                var hasBOM = (fg.ingredients && fg.ingredients.length > 0);
+                var deleteBtnHtml = hasBOM ? 
+                    '<button type="button" onclick="deleteBaseBOM(' + fg.id + ', \'' + (fg.name ? fg.name.replace(/'/g, "\\'") : '') + '\')" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold border border-rose-200 flex items-center space-x-1 transition-colors shadow-2xs" title="Hapus seluruh formula resep Base BOM untuk ' + escapeHtml(fg.name) + '">' +
+                        '<i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-500"></i>' +
+                        '<span>Hapus BOM</span>' +
+                    '</button>' : '';
+
+                return '<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">' +
+                    '<div class="flex items-center justify-between border-b pb-2.5">' +
+                        '<div>' +
+                            '<h4 class="font-bold text-slate-800 text-sm flex items-center space-x-1.5">' +
+                                '<span class="text-xl">☕</span>' +
+                                '<span>' + escapeHtml(fg.name) + '</span>' +
+                            '</h4>' +
+                            '<p class="text-[10px] text-slate-400 font-medium">' + escapeHtml(fg.sku) + ' &bull; Jual: ' + formatRupiah(fg.selling_price) + '</p>' +
+                        '</div>' +
+                        '<div class="flex items-center space-x-1.5">' +
+                            deleteBtnHtml +
+                            '<button type="button" onclick="openAddRecipeModal(' + fg.id + ', \'' + (fg.name ? fg.name.replace(/'/g, "\\'") : '') + '\')" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold border border-indigo-200 flex items-center space-x-1 transition-colors">' +
+                                '<i data-lucide="plus" class="w-3.5 h-3.5"></i>' +
+                                '<span>+ Komponen Resep</span>' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>' +
+
+                    '<!-- Ingredients List -->' +
+                    '<div class="space-y-1.5 text-xs">' +
+                        ingHtml +
+                    '</div>' +
+
+                    '<!-- Total BOM Cost Calculation -->' +
+                    '<div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex justify-between items-center text-xs">' +
+                        '<span class="font-bold text-emerald-900">Total HPP Berbasis Resep:</span>' +
+                        '<span class="font-black text-emerald-800 text-sm font-mono">' + formatRupiah(fg.calculated_cogs) + '</span>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
             lucide.createIcons();
         }
 
+        var currentRecipeFgId = 0;
+        var currentRecipeTypeFilter = 'ALL';
+
         function renderUnitSelectOptions(selectId, selectedUnit) {
-            const select = document.getElementById(selectId);
+            var select = document.getElementById(selectId);
             if (!select) return;
-            let units = (state.productUnits && state.productUnits.length > 0)
-                ? state.productUnits.map(u => ({ code: u.code, label: `${u.code} - ${u.name}` }))
-                : ['pcs', 'cup', 'botol', 'porsi', 'gram', 'kg', 'ml', 'liter', 'pack', 'box'].map(u => ({ code: u, label: u }));
+            var units = (state.productUnits && state.productUnits.length > 0)
+                ? state.productUnits.map(function(u) { return { code: u.code, label: u.code + ' - ' + u.name }; })
+                : ['pcs', 'cup', 'botol', 'porsi', 'gram', 'kg', 'ml', 'liter', 'pack', 'box', 'ball'].map(function(u) { return { code: u, label: u }; });
             
-            const currentCode = (selectedUnit || '').toLowerCase().trim();
+            var currentCode = (selectedUnit || '').toLowerCase().trim();
             if (currentCode) {
-                const exists = units.some(u => u.code.toLowerCase() === currentCode);
+                var exists = units.some(function(u) { return u.code.toLowerCase() === currentCode; });
                 if (!exists) {
                     units.unshift({ code: selectedUnit, label: selectedUnit });
                 }
             }
-            select.innerHTML = units.map(u => `<option value="${u.code}" ${u.code.toLowerCase() === currentCode ? 'selected' : ''}>${u.label}</option>`).join('');
+            select.innerHTML = units.map(function(u) {
+                return '<option value="' + u.code + '" ' + (u.code.toLowerCase() === currentCode ? 'selected' : '') + '>' + escapeHtml(u.label) + '</option>';
+            }).join('');
             if (currentCode) {
                 select.value = selectedUnit;
             }
         }
 
-        function onRecipeIngredientChange() {
-            const ingId = parseInt(document.getElementById('recipe-ingredient-select').value);
-            const rawList = (state.recipesData ? state.recipesData.raw_materials : []) || [];
-            const raw = rawList.find(r => r.id === ingId);
-            const unit = raw ? raw.unit : 'gram';
-            renderUnitSelectOptions('recipe-unit-name', unit);
-        }
-
         function openAddRecipeModal(fgId, fgName) {
-            document.getElementById('recipe-finished-id').value = fgId;
+            currentRecipeFgId = parseInt(fgId, 10) || 0;
+            currentRecipeTypeFilter = 'ALL';
+            document.getElementById('recipe-finished-id').value = String(currentRecipeFgId);
             document.getElementById('recipe-modal-product-name').innerText = 'Produk: ' + fgName;
 
-            const rawList = (state.recipesData ? state.recipesData.raw_materials : []) || [];
-            document.getElementById('recipe-ingredient-select').innerHTML = rawList.map(rm => 
-                `<option value="${rm.id}">${rm.name} (${rm.sku} - Satuan: ${rm.unit})</option>`
-            ).join('');
+            updateRecipeFilterTabUI('ALL');
+            renderRecipeIngredientOptions();
 
-            document.getElementById('recipe-qty-needed').value = '20';
+            document.getElementById('recipe-qty-needed').value = '1';
             onRecipeIngredientChange();
             document.getElementById('recipe-add-modal').classList.remove('hidden');
+        }
+
+        function setRecipeIngredientTypeFilter(filterType) {
+            currentRecipeTypeFilter = filterType;
+            updateRecipeFilterTabUI(filterType);
+            renderRecipeIngredientOptions();
+            onRecipeIngredientChange();
+        }
+
+        function updateRecipeFilterTabUI(activeType) {
+            var tabs = [
+                { id: 'recipe-filter-tab-all', type: 'ALL' },
+                { id: 'recipe-filter-tab-raw', type: 'RAW_MATERIAL' },
+                { id: 'recipe-filter-tab-fg', type: 'FINISHED_GOODS' }
+            ];
+            tabs.forEach(function(t) {
+                var btn = document.getElementById(t.id);
+                if (!btn) return;
+                if (t.type === activeType) {
+                    btn.className = 'py-1.5 px-2 rounded-lg font-bold text-[11px] bg-white text-indigo-600 shadow-2xs transition-all';
+                } else {
+                    btn.className = 'py-1.5 px-2 rounded-lg font-bold text-[11px] text-slate-600 hover:bg-white/60 transition-all';
+                }
+            });
+        }
+
+        function renderRecipeIngredientOptions() {
+            var sel = document.getElementById('recipe-ingredient-select');
+            if (!sel) return;
+
+            var rawMaterials = (state.recipesData && state.recipesData.raw_materials) ? state.recipesData.raw_materials : [];
+            var fgList = (state.recipesData && state.recipesData.fg_ingredients) 
+                ? state.recipesData.fg_ingredients 
+                : ((state.recipesData && state.recipesData.finished_goods) ? state.recipesData.finished_goods : []);
+
+            // Filter out the product itself from fgList to prevent self-dependency!
+            var filteredFg = fgList.filter(function(fg) {
+                return parseInt(fg.id, 10) !== parseInt(currentRecipeFgId, 10);
+            });
+
+            var html = '';
+
+            if (currentRecipeTypeFilter === 'ALL' || currentRecipeTypeFilter === 'RAW_MATERIAL') {
+                if (rawMaterials.length > 0) {
+                    html += '<optgroup label="🧪 Bahan Baku (Raw Material)">';
+                    rawMaterials.forEach(function(rm) {
+                        html += '<option value="' + rm.id + '" data-type="RAW_MATERIAL">🧪 ' + escapeHtml(rm.name) + ' (' + escapeHtml(rm.sku) + ' - Satuan: ' + escapeHtml(rm.unit) + ')</option>';
+                    });
+                    html += '</optgroup>';
+                }
+            }
+
+            if (currentRecipeTypeFilter === 'ALL' || currentRecipeTypeFilter === 'FINISHED_GOODS') {
+                if (filteredFg.length > 0) {
+                    html += '<optgroup label="📦 Produk Jadi (Finished Goods)">';
+                    filteredFg.forEach(function(fg) {
+                        html += '<option value="' + fg.id + '" data-type="FINISHED_GOODS">📦 ' + escapeHtml(fg.name) + ' (' + escapeHtml(fg.sku) + ' - Satuan: ' + escapeHtml(fg.unit) + ')</option>';
+                    });
+                    html += '</optgroup>';
+                }
+            }
+
+            if (!html) {
+                html = '<option value="" disabled>-- Tidak ada item yang sesuai --</option>';
+            }
+
+            sel.innerHTML = html;
+        }
+
+        function onRecipeIngredientChange() {
+            var sel = document.getElementById('recipe-ingredient-select');
+            var ingId = sel ? parseInt(sel.value, 10) : 0;
+            var rawMaterials = (state.recipesData && state.recipesData.raw_materials) ? state.recipesData.raw_materials : [];
+            var fgList = (state.recipesData && state.recipesData.fg_ingredients) 
+                ? state.recipesData.fg_ingredients 
+                : ((state.recipesData && state.recipesData.finished_goods) ? state.recipesData.finished_goods : []);
+
+            var foundItem = rawMaterials.find(function(r) { return parseInt(r.id, 10) === ingId; });
+            if (!foundItem) {
+                foundItem = fgList.find(function(f) { return parseInt(f.id, 10) === ingId; });
+            }
+
+            var unit = foundItem ? (foundItem.unit || 'pcs') : 'pcs';
+            renderUnitSelectOptions('recipe-unit-name', unit);
+
+            updateRecipeCogsPreview();
+        }
+
+        function updateRecipeCogsPreview() {
+            var sel = document.getElementById('recipe-ingredient-select');
+            var ingId = sel ? parseInt(sel.value, 10) : 0;
+            var rawMaterials = (state.recipesData && state.recipesData.raw_materials) ? state.recipesData.raw_materials : [];
+            var fgList = (state.recipesData && state.recipesData.fg_ingredients) 
+                ? state.recipesData.fg_ingredients 
+                : ((state.recipesData && state.recipesData.finished_goods) ? state.recipesData.finished_goods : []);
+
+            var foundItem = rawMaterials.find(function(r) { return parseInt(r.id, 10) === ingId; });
+            if (!foundItem) {
+                foundItem = fgList.find(function(f) { return parseInt(f.id, 10) === ingId; });
+            }
+
+            var unit = foundItem ? (foundItem.unit || 'pcs') : 'pcs';
+            var qtyInput = document.getElementById('recipe-qty-needed');
+            var qtyVal = qtyInput ? (parseFloat(qtyInput.value) || 0) : 0;
+            var cogsPerUnit = foundItem ? (parseFloat(foundItem.cogs) || 0) : 0;
+            var totalCogs = qtyVal * cogsPerUnit;
+
+            var cogsValEl = document.getElementById('recipe-cogs-val');
+            if (cogsValEl) {
+                cogsValEl.innerText = formatRupiah(totalCogs) + (foundItem ? ' (@ ' + formatRupiah(cogsPerUnit) + '/' + unit + ')' : '');
+            }
         }
 
         function closeRecipeModal() {
@@ -24554,7 +24706,7 @@ Manager / Supervisor: __________________
         }
 
         async function deleteRecipeItem(id) {
-            if (!confirm('Hapus bahan baku ini dari formula resep?')) return;
+            if (!confirm('Hapus komponen ini dari formula resep?')) return;
             try {
                 const res = await fetch('api.php?action=delete_recipe_item', {
                     method: 'POST',
@@ -24563,14 +24715,14 @@ Manager / Supervisor: __________________
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert('✅ ' + (data.message || 'Bahan baku berhasil dihapus dari resep.'));
+                    alert('✅ ' + (data.message || 'Komponen berhasil dihapus dari resep.'));
                     loadBOMRecipes();
                 } else {
-                    alert('⚠️ TIDAK BISA DIHAPUS:\n\n' + (data.message || data.error || 'Terjadi kesalahan saat menghapus bahan baku.'));
+                    alert('⚠️ TIDAK BISA DIHAPUS:\n\n' + (data.message || data.error || 'Terjadi kesalahan saat menghapus komponen resep.'));
                 }
             } catch (err) {
                 console.error(err);
-                alert('Terjadi kesalahan koneksi saat menghapus bahan baku resep.');
+                alert('Terjadi kesalahan koneksi saat menghapus komponen resep.');
             }
         }
 
