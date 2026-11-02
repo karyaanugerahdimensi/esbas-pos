@@ -3748,8 +3748,14 @@ try {
                                     <tr>
                                         <th class="py-2.5 px-3 w-10 text-center">#</th>
                                         <th class="py-2.5 px-3 min-w-[240px]">Produk / Bahan Baku</th>
-                                        <th class="py-2.5 px-3 text-right w-32">Stok Cabang Asal</th>
-                                        <th class="py-2.5 px-3 text-right w-32">Stok Cabang Tujuan</th>
+                                        <th class="py-2.5 px-3 text-right w-32">
+                                            <span>Stok Cabang Asal</span>
+                                            <span id="stockin-trf-from-label" class="block text-[10px] font-normal text-slate-400 truncate"></span>
+                                        </th>
+                                        <th class="py-2.5 px-3 text-right w-32">
+                                            <span>Stok Cabang Tujuan</span>
+                                            <span id="stockin-trf-to-label" class="block text-[10px] font-normal text-indigo-400 truncate"></span>
+                                        </th>
                                         <th class="py-2.5 px-3 text-center w-36">Qty Transfer</th>
                                         <th class="py-2.5 px-3 min-w-[150px]">Catatan Item</th>
                                         <th class="py-2.5 px-3 w-12 text-center">Aksi</th>
@@ -25634,15 +25640,16 @@ Manager / Supervisor: __________________
                 const trfFromSel = document.getElementById('stockin-trf-from-branch');
                 const trfToSel = document.getElementById('stockin-trf-to-branch');
                 if (trfFromSel) {
-                    trfFromSel.innerHTML = effectiveAllowed.map(function(b) {
-                        const lockIcon = (!stockInState.canAccessAll && effectiveAllowed.length === 1) ? '🔒 ' : '📤 ';
-                        return '<option value="' + b.id + '">' + lockIcon + escapeHtml(b.name) + (b.code ? ' (' + escapeHtml(b.code) + ')' : '') + '</option>';
+                    trfFromSel.innerHTML = allBranches.map(function(b) {
+                        return '<option value="' + b.id + '">📤 ' + escapeHtml(b.name) + (b.code ? ' (' + escapeHtml(b.code) + ')' : '') + '</option>';
                     }).join('');
-                    trfFromSel.disabled = (!stockInState.canAccessAll && effectiveAllowed.length <= 1);
-                    if (prevTrfFrom && effectiveAllowed.some(function(b) { return String(b.id) === String(prevTrfFrom); })) {
+                    trfFromSel.disabled = false;
+                    if (prevTrfFrom && allBranches.some(function(b) { return String(b.id) === String(prevTrfFrom); })) {
                         trfFromSel.value = String(prevTrfFrom);
-                    } else if (effectiveAllowed.some(function(b) { return parseInt(b.id, 10) === defaultOwnBranchId; })) {
+                    } else if (allBranches.some(function(b) { return parseInt(b.id, 10) === defaultOwnBranchId; })) {
                         trfFromSel.value = String(defaultOwnBranchId);
+                    } else if (allBranches[0]) {
+                        trfFromSel.value = String(allBranches[0].id);
                     }
                 }
                 if (trfToSel) {
@@ -25932,34 +25939,49 @@ Manager / Supervisor: __________________
 
         function onStockTransferBranchChange(which) {
             syncStockTransferRowsFromDOM();
-            const fromSel = document.getElementById('stockin-trf-from-branch');
-            const toSel = document.getElementById('stockin-trf-to-branch');
-            if (fromSel && toSel && fromSel.value === toSel.value && stockInState.branches.length > 1) {
+            var fromSel = document.getElementById('stockin-trf-from-branch');
+            var toSel = document.getElementById('stockin-trf-to-branch');
+            var allBr = stockInState.branches || [];
+            if (fromSel && toSel && fromSel.value === toSel.value && allBr.length > 1) {
                 if (which === 'from') {
-                    const alt = stockInState.branches.find(function(b) { return String(b.id) !== String(fromSel.value); });
-                    if (alt) toSel.value = String(alt.id);
+                    var altTo = allBr.find(function(b) { return String(b.id) !== String(fromSel.value); });
+                    if (altTo) toSel.value = String(altTo.id);
                 } else {
-                    showToast('Cabang Tujuan tidak boleh sama dengan Cabang Asal.', 'warning');
+                    var altFrom = allBr.find(function(b) { return String(b.id) !== String(toSel.value); });
+                    if (altFrom) fromSel.value = String(altFrom.id);
                 }
             }
             renderStockTransferRows();
         }
 
         function renderStockTransferRows() {
-            const tbody = document.getElementById('stockin-trf-rows-body');
+            var tbody = document.getElementById('stockin-trf-rows-body');
             if (!tbody) return;
-            const fromBranchId = parseInt(_val('stockin-trf-from-branch'), 10) || 0;
-            const toBranchId = parseInt(_val('stockin-trf-to-branch'), 10) || 0;
+            var fromBranchId = parseInt(_val('stockin-trf-from-branch'), 10) || 0;
+            var toBranchId = parseInt(_val('stockin-trf-to-branch'), 10) || 0;
+            var allBr = stockInState.branches || [];
+
+            // update label nama cabang di header kolom
+            var fromLabelEl = document.getElementById('stockin-trf-from-label');
+            var toLabelEl = document.getElementById('stockin-trf-to-label');
+            if (fromLabelEl) {
+                var fromBrObj = allBr.find(function(b) { return parseInt(b.id, 10) === fromBranchId; });
+                fromLabelEl.textContent = fromBrObj ? escapeHtml(fromBrObj.name) : '';
+            }
+            if (toLabelEl) {
+                var toBrObj = allBr.find(function(b) { return parseInt(b.id, 10) === toBranchId; });
+                toLabelEl.textContent = toBrObj ? escapeHtml(toBrObj.name) : '';
+            }
 
             tbody.innerHTML = stockInState.transferRows.map(function(r, idx) {
-                const prodObj = getStockInProductById(r.productId);
-                const unitText = prodObj ? (prodObj.unit || 'pcs') : '-';
-                const fromStock = (r.productId > 0 && fromBranchId > 0) ? getStockInBranchBalance(fromBranchId, r.productId) : 0;
-                const toStock = (r.productId > 0 && toBranchId > 0) ? getStockInBranchBalance(toBranchId, r.productId) : 0;
-                const qtyNum = parseFloat(r.qty) || 0;
-                const isInsufficient = (r.productId > 0 && qtyNum > fromStock);
-                const optsHtml = buildStockInProductOptionsHtml(r.productId, 'ALL', fromBranchId);
-                const disableDel = stockInState.transferRows.length <= 1;
+                var prodObj = getStockInProductById(r.productId);
+                var unitText = prodObj ? (prodObj.unit || 'pcs') : '-';
+                var fromStock = (r.productId > 0 && fromBranchId > 0) ? getStockInBranchBalance(fromBranchId, r.productId) : 0;
+                var toStock = (r.productId > 0 && toBranchId > 0) ? getStockInBranchBalance(toBranchId, r.productId) : 0;
+                var qtyNum = parseFloat(r.qty) || 0;
+                var isInsufficient = (r.productId > 0 && qtyNum > fromStock);
+                var optsHtml = buildStockInProductOptionsHtml(r.productId, 'ALL', fromBranchId);
+                var disableDel = stockInState.transferRows.length <= 1;
 
                 return '<tr class="hover:bg-slate-50/70 transition-colors">' +
                     '<td class="py-2.5 px-3 text-center font-mono text-slate-400 font-bold">' + (idx + 1) + '</td>' +

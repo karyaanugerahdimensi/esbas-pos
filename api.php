@@ -5230,10 +5230,7 @@ try {
                     echo json_encode(['success' => false, 'message' => 'Cabang Asal dan Cabang Tujuan tidak boleh sama.']);
                     break;
                 }
-                if (!$actorCanAllBranches && !in_array($fromBranchId, $actorAllowedBranches, true)) {
-                    echo json_encode(['success' => false, 'message' => 'Akses Ditolak: Anda hanya diizinkan mengirim transfer dari cabang penugasan Anda sendiri.']);
-                    break;
-                }
+                // Transfer diizinkan dari cabang manapun selama user punya izin create transfer
 
                 $stBr = $pdo->prepare("SELECT id, name FROM branches WHERE id = ?");
                 $stBr->execute([$fromBranchId]);

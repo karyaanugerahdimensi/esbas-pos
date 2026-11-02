@@ -9,8 +9,8 @@ if (!function_exists('getAppVersionData')) {
         $versionFile = __DIR__ . '/version.json';
         $data = [
             'app_name' => 'KAD Tech Multicabang',
-            'version' => '1.6.5',
-            'build' => '20261102-91',
+            'version' => '1.6.6',
+            'build' => '20261102-92',
             'release_date' => '2026-11-02',
             'commit_hash' => 'HEAD',
             'branch' => 'main',

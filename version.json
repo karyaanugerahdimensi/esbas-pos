@@ -1,12 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.6.5",
-    "build": "20261102-91",
+    "version": "1.6.6",
+    "build": "20261102-92",
     "release_date": "2026-11-02",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
         {
+            "version": "1.6.6",
+            "commit": "HEAD",
+            "date": "2026-11-02",
+            "title": "Pemilihan Cabang Asal Bebas pada Form Transfer Stok Antar Cabang (FR-TRF-01)",
+            "description": "Memungkinkan kasir dan staff memilih cabang mana pun sebagai Cabang Asal (Pengirim) pada Formulir Transfer Stok Antar Cabang, tidak terbatas hanya pada cabang penugasan sendiri: (1) Dropdown Cabang Asal Tidak Terkunci: Mengubah populasi trfFromSel menggunakan allBranches (bukan effectiveAllowed) dan menetapkan disabled = false sehingga seluruh cabang aktif tersedia sebagai pilihan asal transfer; (2) Auto-Switch Cabang Tujuan saat Terjadi Tabrakan: Memperbarui onStockTransferBranchChange agar saat Cabang Asal diubah ke cabang yang sama dengan Cabang Tujuan, sistem otomatis memilihkan cabang tujuan alternatif tanpa popup error; (3) Label Nama Cabang Dinamis di Header Kolom Stok: Menampilkan nama cabang terpilih secara realtime di bawah judul kolom Stok Cabang Asal dan Stok Cabang Tujuan melalui elemen stockin-trf-from-label dan stockin-trf-to-label; (4) Backend api.php Transfer dari Cabang Mana Pun: Menghapus validasi ketat yang menolak from_branch_id di luar cabang penugasan aktor — izin create transfer sudah cukup tanpa perlu cabang asal sesuai penugasan; (5) Kompatibilitas Penuh Android 8.1: Bebas operator ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.6.5"
+        },
             "version": "1.6.5",
             "commit": "HEAD",
             "date": "2026-11-02",
