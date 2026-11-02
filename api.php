@@ -6567,6 +6567,14 @@ try {
                 ];
             }
 
+            // Filter keluar produk turunan BOM kemasan (Es Kristal 10 Kg) dari inputan sisa fisik closing
+            $closingItems = array_values(array_filter($closingItems, function($it) {
+                if (($it['sku'] ?? '') === 'PRD-00008' || stripos($it['name'] ?? '', 'Es Kristal 10') !== false) {
+                    return false;
+                }
+                return true;
+            }));
+
             if ($openingItemsWasHealed && ($shift['status'] ?? '') === 'OPEN') {
                 try {
                     $pdo->prepare("UPDATE cashier_shifts SET night_items_json = ?, opening_items_json = ? WHERE id = ?")
@@ -7544,6 +7552,12 @@ try {
                             $cMapH[$pPlastikH] = 11; $sRef['closing_raw_plastik'] = 11; $needHeal = true;
                         }
                     }
+                    // Es Kristal 10 Kg (PRD-00008): Bersihkan dari snapshot shift karena merupakan turunan BOM 2x Es 5kg
+                    $pEs10H = $pdo->query("SELECT id FROM products WHERE sku = 'PRD-00008'")->fetchColumn();
+                    if ($pEs10H && (isset($nMapH[$pEs10H]) || isset($oMapH[$pEs10H]) || isset($aMapH[$pEs10H]) || isset($cMapH[$pEs10H]))) {
+                        unset($nMapH[$pEs10H], $oMapH[$pEs10H], $aMapH[$pEs10H], $cMapH[$pEs10H]);
+                        $needHeal = true;
+                    }
 
                     if ($needHeal) {
                         $sRef['night_items_json'] = json_encode($nMapH);
@@ -7593,6 +7607,13 @@ try {
                     ORDER BY id ASC
                 ")->fetchAll();
             }
+            // Eliminasi produk turunan seperti Es Kristal 10 Kg (PRD-00008) yang BOM-nya terdiri dari produk jadi lain
+            $trackedMaster = array_values(array_filter($trackedMaster, function($tm) {
+                if (($tm['sku'] ?? '') === 'PRD-00008' || stripos($tm['name'] ?? '', 'Es Kristal 10') !== false) {
+                    return false;
+                }
+                return true;
+            }));
 
             $stmtReportBs = $pdo->prepare("SELECT product_id, stock FROM branch_stocks WHERE branch_id = ?");
             $stmtReportBs->execute([$branchId]);
@@ -7810,7 +7831,7 @@ try {
                                 $consumedQty = $parentSoldQty * (float)$parentBOMRow['qty_needed'];
                                 $bomConsumedByOtherFG += $consumedQty;
                                 $cleanParentName = str_ireplace('Es Kristal ', 'Es ', $parentBOMRow['parent_name']);
-                                $bomConsumedDetails[] = "{$consumedQty} BOM {$cleanParentName}";
+                                $bomConsumedDetails[] = "{$consumedQty} dari {$cleanParentName}";
                             }
                         }
                     } catch (Exception $eParentBOM) {}
@@ -7820,6 +7841,7 @@ try {
 
                     $extraQty = (float)($midAddedReportMap[$pId] ?? 0);
                     $isCapTm = ($tm['sku'] === 'RAW-089' || $tm['sku'] === 'RAW-020' || $tm['sku'] === 'RAW-00092' || stripos($tm['name'] ?? '', 'Tutup Galon') !== false || stripos($tm['name'] ?? '', 'Plastik PE') !== false || ($tm['product_type'] ?? '') === 'RAW_MATERIAL');
+                    $isIceItem = ($tm['sku'] === 'PRD-00007' || stripos($tm['name'] ?? '', 'Es Kristal') !== false);
                     $hasBomTm = (!$isCapTm && (!empty($tm['has_bom']) || (int)($tm['recipe_count'] ?? 0) > 0));
                     $isStockableTm = isset($tm['is_stockable']) ? (int)$tm['is_stockable'] : 1;
 
@@ -7857,7 +7879,7 @@ try {
                         }
                     }
 
-                    if ($hasBomTm) {
+                    if ($hasBomTm && !$isIceItem) {
                         // Produk Jadi Olahan Ber-BOM (misal Air Mineral Galon 19L, Air RO Galon 19L)
                         $availPool = max(0, $initialQty + $openAddedQty + $extraQty);
                         if ($isStockableTm === 0) {
@@ -7873,12 +7895,13 @@ try {
                         $remBeforeStandby = max(0, $initialQty + $openAddedQty + $extraQty - $fromStock);
                         $standbyRefill = ($s['status'] === 'CLOSED') ? max(0, $cQty - $remBeforeStandby) : 0;
                     } else {
-                        // Produk Jadi Non-BOM / Stok Murni (misal Aqua Refill 19L, Gas 3 KG, Es Kristal):
-                        // 100% mengikuti formula murni: Stok Akhir = Stok Awal + Stok Opening - Penjualan + Stok Input Tambahan
-                        $fromStock = $totSold;
-                        $onDemand = 0;
-                        $remBeforeStandby = max(0, $initialQty + $openAddedQty - $totSold + $extraQty);
-                        $standbyRefill = 0;
+                        // Produk Berstok Fisik (misal Aqua Refill 19L, Gas 3 KG, Es Kristal 5kg):
+                        // Stok penjualan diambil langsung dari stok fisik kasir
+                        $availPool = max(0, $initialQty + $openAddedQty + $extraQty);
+                        $fromStock = min($availPool, $totSold);
+                        $onDemand = max(0, $totSold - $availPool);
+                        $remBeforeStandby = max(0, $initialQty + $openAddedQty + $extraQty - $fromStock);
+                        $standbyRefill = ($s['status'] === 'CLOSED') ? max(0, $cQty - $remBeforeStandby) : 0;
                     }
 
                     $fgBreakdown[$pId] = [
@@ -7960,6 +7983,11 @@ try {
                         while ($pr = $stmtPR->fetch(PDO::FETCH_ASSOC)) {
                             $rawId = (int)$pr['ingredient_product_id'];
                             if (isset($varIngIdsUsed[$rawId])) continue; // Proteksi deduplikasi dengan resep varian
+                            // Plastik PE (RAW-00092) tidak dihitung pecahan on-demand, tapi dihitung bulat dari es kristal standby/closing
+                            $isPlastikIng = ($rawId == ($plastikPid ?? 0));
+                            if (!$isPlastikIng && isset($rawSkuMap[$rawId]) && $rawSkuMap[$rawId] === 'RAW-00092') $isPlastikIng = true;
+                            if ($isPlastikIng) continue;
+
                             $needed = (float)$pr['qty_needed'] * $itemOnDemandQty;
                             if (!isset($rawBOMUsage[$rawId])) $rawBOMUsage[$rawId] = ['on_demand_usage' => 0, 'standby_usage' => 0, 'direct_sold' => 0];
                             $rawBOMUsage[$rawId]['on_demand_usage'] += $needed;
@@ -8055,24 +8083,25 @@ try {
                         break;
                     }
                 }
+                if (!$plastikPid) {
+                    $plastikPid = (int)($pdo->query("SELECT id FROM products WHERE sku = 'RAW-00092'")->fetchColumn() ?: 0);
+                }
                 if ($plastikPid) {
                     if (!isset($rawBOMUsage[$plastikPid])) {
                         $rawBOMUsage[$plastikPid] = ['on_demand_usage' => 0, 'standby_usage' => 0, 'direct_sold' => 0];
                     }
-                    $curPlastikUsage = $rawBOMUsage[$plastikPid]['on_demand_usage'] + $rawBOMUsage[$plastikPid]['standby_usage'];
-                    if ($curPlastikUsage <= 0) {
-                        // Penggunaan plastik bahan baku untuk stok closing es (kemasan closing standby)
-                        $pOpenPack = (float)($fgBreakdown[$plastikPid]['opening_added_qty'] ?? $fgBreakdown[$plastikPid]['opening_qty'] ?? 0);
-                        if ($pOpenPack <= 0 && isset($s['opening_raw_plastik'])) $pOpenPack = (float)$s['opening_raw_plastik'];
-                        $pClosePhys = (float)($fgBreakdown[$plastikPid]['closing_qty'] ?? 0);
-                        if ($pClosePhys <= 0 && isset($s['closing_raw_plastik'])) $pClosePhys = (float)$s['closing_raw_plastik'];
-                        $plastikUsed = max(0, $pOpenPack - $pClosePhys);
-                        if ($plastikUsed > 0) {
-                            $rawBOMUsage[$plastikPid]['standby_usage'] = $plastikUsed;
-                        } else {
-                            $rawBOMUsage[$plastikPid]['standby_usage'] = 9;
-                        }
+                    // Pastikan Plastik PE tidak mencatat pemakaian on-demand desimal
+                    $rawBOMUsage[$plastikPid]['on_demand_usage'] = 0;
+
+                    $pOpenPack = (float)($fgBreakdown[$plastikPid]['opening_added_qty'] ?? $fgBreakdown[$plastikPid]['opening_qty'] ?? 0);
+                    if ($pOpenPack <= 0 && isset($s['opening_raw_plastik'])) $pOpenPack = (float)$s['opening_raw_plastik'];
+                    $pClosePhys = (float)($fgBreakdown[$plastikPid]['closing_qty'] ?? 0);
+                    if ($pClosePhys <= 0 && isset($s['closing_raw_plastik'])) $pClosePhys = (float)$s['closing_raw_plastik'];
+                    $plastikUsed = max(0, $pOpenPack - $pClosePhys);
+                    if ($plastikUsed <= 0 && ($s['status'] ?? '') === 'CLOSED') {
+                        $plastikUsed = 9;
                     }
+                    $rawBOMUsage[$plastikPid]['standby_usage'] = $plastikUsed;
                 }
 
                 // 4. Rekonsiliasi & Penentuan Selisih Realtime untuk Produk yang Dilacak (Tracked Master)
@@ -8088,6 +8117,7 @@ try {
                     $extraQty = $fgb ? (float)$fgb['extra_added_qty'] : 0;
                     $cQty = $fgb ? (float)$fgb['closing_qty'] : 0;
                     $isCapMaster = ($tm['sku'] === 'RAW-089' || $tm['sku'] === 'RAW-020' || $tm['sku'] === 'RAW-00092' || stripos($tm['name'] ?? '', 'Tutup Galon') !== false || stripos($tm['name'] ?? '', 'Plastik PE') !== false || ($tm['product_type'] ?? '') === 'RAW_MATERIAL');
+                    $isIceMaster = ($tm['sku'] === 'PRD-00007' || stripos($tm['name'] ?? '', 'Es Kristal') !== false);
                     $isFG = (!$isCapMaster && $fgb && (($tm['product_type'] ?? '') === 'FINISHED_GOODS' || in_array($tm['sku'], ['PRD-00001', 'PRD-00002'])));
 
                     if ($isFG) {
@@ -8100,11 +8130,17 @@ try {
                         $bomOther = (float)($fgb['bom_consumed_by_other'] ?? 0);
                         $directSold = (float)($fgb['direct_sold'] ?? $totSold);
 
-                        if ($hasBomItem) {
+                        if ($isIceMaster) {
+                            // Es Kristal 5kg: Stok Akhir = Stok Awal + Opening - Penjualan + (Mutasi Tambahan + Standby Refill)
+                            $displayExtra = $extraQty + $standbyRefill;
+                            $expectedPhysical = $initialQty + $openAddedQty - $totSold + $displayExtra;
+                        } elseif ($hasBomItem) {
                             $expectedPhysical = $fgb['rem_opening'] + $standbyRefill;
+                            $displayExtra = $extraQty;
                         } else {
                             // Formula Murni: Stok Akhir Sistem = Stok Awal + Stok Opening - Penjualan + Stok Input Tambahan
                             $expectedPhysical = $initialQty + $openAddedQty - $totSold + $extraQty;
+                            $displayExtra = $extraQty;
                         }
 
                         $diffStock = ($s['status'] === 'CLOSED') ? ($cQty - $expectedPhysical) : 0;
@@ -8116,7 +8152,9 @@ try {
                         }
 
                         $breakdownSubtext = '';
-                        if ($bomOther > 0) {
+                        if ($isIceMaster && $bomOther > 0) {
+                            $breakdownSubtext = "({$directSold} Es 5kg + {$bomOther} dari Es 10kg)";
+                        } elseif ($bomOther > 0) {
                             $breakdownSubtext = "({$directSold} Jual + {$bomOther} BOM)";
                         } elseif ($hasBomItem && $totSold > 0) {
                             if ($fromStock > 0 && $onDemand > 0) {
@@ -8133,6 +8171,8 @@ try {
                             $extraSubtext = "(+{$extraQty} Mutasi + {$standbyRefill} Refill Standby)";
                         } elseif ($standbyRefill > 0) {
                             $extraSubtext = "(+{$standbyRefill} Refill Standby)";
+                        } elseif ($extraQty > 0) {
+                            $extraSubtext = "(+{$extraQty} Mutasi)";
                         }
 
                         $reconciledItems[] = [
@@ -8146,7 +8186,7 @@ try {
                             'initial_qty' => $initialQty,
                             'opening_added_qty' => $openAddedQty,
                             'opening_qty' => $oQty,
-                            'extra_added_qty' => $extraQty,
+                            'extra_added_qty' => $displayExtra,
                             'extra_subtext' => $extraSubtext,
                             'sold_qty' => $totSold,
                             'sold_from_stock' => $fromStock,
@@ -8178,7 +8218,9 @@ try {
                         }
 
                         $breakdownSubtext = '';
-                        if ($standbyUse > 0 && $onDemandUse > 0) {
+                        if ($tm['sku'] === 'RAW-00092' || stripos($tm['name'] ?? '', 'Plastik PE') !== false) {
+                            $breakdownSubtext = "({$totalUsage} Kemasan Es Kristal)";
+                        } elseif ($standbyUse > 0 && $onDemandUse > 0) {
                             $breakdownSubtext = "({$onDemandUse} Jual + {$standbyUse} Standby)";
                         } elseif ($onDemandUse > 0) {
                             $breakdownSubtext = "({$onDemandUse} Jual On-Demand)";
@@ -8222,6 +8264,11 @@ try {
                         $pInfo = $stmtPFetch->fetch(PDO::FETCH_ASSOC);
                     }
                     if (!$pInfo) continue;
+
+                    // Jangan munculkan produk turunan kemasan BOM (seperti Es Kristal 10 Kg) karena sudah terakumulasi ke Es 5kg
+                    if (($pInfo['sku'] ?? '') === 'PRD-00008' || stripos($pInfo['name'] ?? '', 'Es Kristal 10') !== false) {
+                        continue;
+                    }
 
                     $uExtra = (float)($midAddedReportMap[(int)$soldPid] ?? 0);
                     $reconciledItems[] = [

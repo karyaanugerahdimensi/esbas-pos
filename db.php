@@ -2928,6 +2928,13 @@ function autoMigrateMysql($pdo) {
                         }
                     }
 
+                    // 8. Es Kristal 10 Kg (PRD-00008): Bersihkan dari snapshot shift
+                    $pEs10 = $pdo->query("SELECT id FROM products WHERE sku = 'PRD-00008'")->fetchColumn();
+                    if ($pEs10 && (isset($nMap[$pEs10]) || isset($oMap[$pEs10]) || isset($aMap[$pEs10]) || isset($cMap[$pEs10]))) {
+                        unset($nMap[$pEs10], $oMap[$pEs10], $aMap[$pEs10], $cMap[$pEs10]);
+                        $isChanged = true;
+                    }
+
                     if ($isChanged) {
                         $stmtHeal = $pdo->prepare("
                             UPDATE cashier_shifts

@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.7.5",
-    "build": "20261102-101",
+    "version": "1.7.6",
+    "build": "20261102-102",
     "release_date": "2026-11-02",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.7.6",
+            "commit": "HEAD",
+            "date": "2026-11-02",
+            "title": "Perbaikan Rekonsiliasi Stok Shift: Eliminasi Baris Es 10kg, Akumulasi Penjualan ke Es 5kg, & Presisi Kemasan Plastik PE (FR-POS-68)",
+            "description": "Menyempurnakan kalkulasi rekonsiliasi stok penutupan shift: (1) Mengeliminasi produk turunan kemasan BOM (PRD-00008 / Es Kristal 10 Kg) dari baris tabel rekonsiliasi stok dan input closing kasir; (2) Mengakumulasikan kuantitas penjualan Es 10kg (x2 rasio BOM) langsung ke baris Es Kristal 5kg (PRD-00007) dengan rincian subtext informatif (misal: 9 Es 5kg + 14 dari Es 10kg = 23); (3) Mengoreksi kalkulasi stok akhir Es Kristal 5kg dengan formula seimbang: Stok Awal (10) + Opening (5) - Penjualan (23) + Tambahan (18, yaitu 9 Mutasi + 9 Standby Refill) = 10, Sisa Fisik = 10, Selisih = 0; (4) Memperbaiki perhitungan pemakaian kemasan Plastik PE 40x60 (RAW-00092) menjadi integer bulat murni (20 - 11 = 9 kantong) tanpa pecahan desimal on-demand rasio (-5.48), sehingga Stok Akhir = 11, Sisa Fisik = 11, Selisih = 0; (5) Sinkronisasi auto-heal pada MySQL server hosting (kadtech.my.id).",
+            "rollback_command": "git checkout v1.7.5"
+        },
         {
             "version": "1.7.5",
             "commit": "HEAD",
