@@ -19206,7 +19206,7 @@ try {
                                 <span class="font-bold text-slate-900">${formatRupiah(s.expected_cash)}</span>
                             </div>
                             ${(s.total_disbursements > 0) ? `
-                                <div class="p-2 bg-rose-50/70 rounded-xl border border-rose-200/80 space-y-1">
+                                <div class="p-2.5 bg-rose-50/70 rounded-xl border border-rose-200/80 space-y-1.5">
                                     <div class="flex items-center justify-between font-bold text-rose-900 text-[11px]">
                                         <span>💸 Pengeluaran Kasir (Petty Cash):</span>
                                         <span class="font-mono text-rose-800">- ${formatRupiah(s.total_disbursements)}</span>
@@ -19216,6 +19216,22 @@ try {
                                         <div>Kasbon: <b class="text-amber-700">${formatRupiah(s.total_kasbon || 0)}</b></div>
                                         <div>Uang Makan: <b class="text-emerald-700">${formatRupiah(s.total_meal_allowance || 0)}</b></div>
                                     </div>
+                                    ${(s.disbursements_detail && Array.isArray(s.disbursements_detail.expenses) && s.disbursements_detail.expenses.length > 0) ? `
+                                        <div class="pt-1.5 border-t border-rose-100/90 space-y-1">
+                                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Rincian Beban Shift:</span>
+                                            ${s.disbursements_detail.expenses.map(function(ex) {
+                                                var vehBadge = '';
+                                                if (ex.odometer !== undefined && ex.odometer !== null) {
+                                                    var vLabel = ex.plate_number ? (ex.plate_number + ' • ') : '';
+                                                    vehBadge = ' <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200">🛵 ' + escapeHtml(vLabel) + 'KM Odo: ' + formatDecimal(ex.odometer) + '</span>';
+                                                }
+                                                return '<div class="flex items-center justify-between text-[10px] text-slate-700 gap-1">' +
+                                                    '<span class="truncate flex items-center gap-1"><span>• ' + escapeHtml(ex.category || ex.notes || 'Beban') + '</span>' + vehBadge + '</span>' +
+                                                    '<span class="font-mono font-bold text-rose-700 shrink-0">' + formatRupiah(ex.amount) + '</span>' +
+                                                '</div>';
+                                            }).join('')}
+                                        </div>
+                                    ` : ''}
                                 </div>
                             ` : ''}
                             <div class="flex items-center justify-between text-slate-600 font-medium">
@@ -28129,37 +28145,65 @@ Manager / Supervisor: __________________
                     return;
                 }
 
-                tbody.innerHTML = expenses.map(exp => {
-                    const isManual = (exp.source === 'MANUAL');
-                    let srcBadge = '<span class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full font-bold text-[10px]">Manual Input</span>';
-                    if (exp.source === 'VEHICLE_FUEL') srcBadge = '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full font-bold text-[10px]">Armada BBM</span>';
-                    else if (exp.source === 'VEHICLE_SERVICE') srcBadge = '<span class="px-2 py-0.5 bg-rose-100 text-rose-800 rounded-full font-bold text-[10px]">Servis Armada</span>';
-                    else if (exp.source === 'REIMBURSEMENT_ESS') srcBadge = '<span class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded-full font-bold text-[10px]">ESS Klaim</span>';
+                tbody.innerHTML = expenses.map(function(exp) {
+                    var isManual = (exp.source === 'MANUAL');
+                    var srcBadge = '<span class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full font-bold text-[10px]">Manual Input</span>';
+                    if (exp.source === 'VEHICLE_FUEL') {
+                        srcBadge = '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full font-bold text-[10px]">Armada BBM</span>';
+                    } else if (exp.source === 'VEHICLE_SERVICE') {
+                        srcBadge = '<span class="px-2 py-0.5 bg-rose-100 text-rose-800 rounded-full font-bold text-[10px]">Servis Armada</span>';
+                    } else if (exp.source === 'REIMBURSEMENT_ESS') {
+                        srcBadge = '<span class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded-full font-bold text-[10px]">ESS Klaim</span>';
+                    } else if (exp.source === 'SHIFT_EXPENSE') {
+                        srcBadge = '<span class="px-2 py-0.5 bg-sky-100 text-sky-800 rounded-full font-bold text-[10px]">Tutup Shift</span>';
+                    }
 
-                    return `
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="py-3 px-4 font-mono text-slate-600">${exp.expense_date}</td>
-                            <td class="py-3 px-4 font-bold text-slate-800">${exp.category}</td>
-                            <td class="py-3 px-4 text-slate-600 font-medium">${exp.branch_name || 'Cabang'}</td>
-                            <td class="py-3 px-4 text-slate-600 text-[11px] max-w-xs truncate">${exp.notes || '-'}</td>
-                            <td class="py-3 px-4 text-center">${srcBadge}</td>
-                            <td class="py-3 px-4 text-right font-mono font-black text-rose-700">${formatRupiah(exp.amount)}</td>
-                            <td class="py-3 px-4 text-center">
-                                ${isManual ? `
-                                    <div class="inline-flex items-center space-x-1.5">
-                                        <button onclick="editBranchExpense(${JSON.stringify(exp).replace(/"/g, '&quot;')})" title="Edit Beban" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors">
-                                            <i data-lucide="edit-3" class="w-4 h-4"></i>
-                                        </button>
-                                        <button onclick="deleteBranchExpense(${exp.id}, '${exp.category.replace(/'/g, "\\'")}', ${exp.amount})" title="Hapus Beban" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
-                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                        </button>
-                                    </div>
-                                ` : `
-                                    <span class="text-[10px] text-slate-400 italic">Sistem Auto</span>
-                                `}
-                            </td>
-                        </tr>
-                    `;
+                    var rawNotes = exp.notes || '-';
+                    var noteDisplay = rawNotes;
+                    var odoBadge = '';
+
+                    // Deteksi catatan odometer BBM: [Armada: PLAT (NAMA) | KM Odo: 1234 (Sebelumnya: 1200)]
+                    var odoRegex = /\[Armada:\s*([^\|\]]+)\s*\|\s*KM Odo:\s*([^\]]+)\]/i;
+                    var odoMatch = rawNotes.match(odoRegex);
+                    if (odoMatch) {
+                        noteDisplay = rawNotes.replace(odoMatch[0], '').trim();
+                        var armadaInfo = odoMatch[1].trim();
+                        var odoInfo = odoMatch[2].trim();
+                        odoBadge = '<div class="mt-1 flex items-center gap-1.5 flex-wrap">' +
+                            '<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">' +
+                                '<span>🛵 ' + escapeHtml(armadaInfo) + '</span>' +
+                            '</span>' +
+                            '<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">' +
+                                '<span>📍 KM Odo: ' + escapeHtml(odoInfo) + '</span>' +
+                            '</span>' +
+                        '</div>';
+                    }
+
+                    return '<tr class="hover:bg-slate-50 transition-colors">' +
+                        '<td class="py-3 px-4 font-mono text-slate-600">' + escapeHtml(exp.expense_date) + '</td>' +
+                        '<td class="py-3 px-4 font-bold text-slate-800">' + escapeHtml(exp.category) + '</td>' +
+                        '<td class="py-3 px-4 text-slate-600 font-medium">' + escapeHtml(exp.branch_name || 'Cabang') + '</td>' +
+                        '<td class="py-3 px-4 text-slate-600 text-[11px] max-w-sm">' +
+                            '<div class="font-medium text-slate-700 leading-snug">' + escapeHtml(noteDisplay) + '</div>' +
+                            odoBadge +
+                        '</td>' +
+                        '<td class="py-3 px-4 text-center">' + srcBadge + '</td>' +
+                        '<td class="py-3 px-4 text-right font-mono font-black text-rose-700">' + formatRupiah(exp.amount) + '</td>' +
+                        '<td class="py-3 px-4 text-center">' +
+                            (isManual ? (
+                                '<div class="inline-flex items-center space-x-1.5">' +
+                                    '<button onclick="editBranchExpense(' + JSON.stringify(exp).replace(/"/g, '&quot;') + ')" title="Edit Beban" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors">' +
+                                        '<i data-lucide="edit-3" class="w-4 h-4"></i>' +
+                                    '</button>' +
+                                    '<button onclick="deleteBranchExpense(' + exp.id + ', \'' + (exp.category ? exp.category.replace(/'/g, "\\'") : '') + '\', ' + exp.amount + ')" title="Hapus Beban" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">' +
+                                        '<i data-lucide="trash-2" class="w-4 h-4"></i>' +
+                                    '</button>' +
+                                '</div>'
+                            ) : (
+                                '<span class="text-[10px] text-slate-400 italic">Sistem Auto</span>'
+                            )) +
+                        '</td>' +
+                    '</tr>';
                 }).join('');
 
                 lucide.createIcons();

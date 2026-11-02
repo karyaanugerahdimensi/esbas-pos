@@ -6838,7 +6838,7 @@ try {
                 $now = date('Y-m-d H:i:s');
 
                 // A. Catat Biaya Beban Toko ke branch_expenses (Menu Beban Operasional / Laba Rugi)
-                foreach ($expensesList as $exp) {
+                foreach ($expensesList as &$exp) {
                     $expNote = "Pengeluaran Kasir Shift #{$shift['shift_number']} ({$shift['shift_name']}) - " . ($exp['notes'] ?: $exp['category']);
                     
                     // Integrasi BBM: Catat Odometer, sinkronkan ke courier_vehicles & vehicle_fuel_logs
@@ -6848,6 +6848,8 @@ try {
                             $stmtV->execute([$exp['vehicle_id']]);
                             $vehInfo = $stmtV->fetch(PDO::FETCH_ASSOC);
                             if ($vehInfo) {
+                                $exp['plate_number'] = $vehInfo['plate_number'];
+                                $exp['vehicle_name'] = $vehInfo['vehicle_name'];
                                 $lastOdo = (float)($vehInfo['current_odometer'] ?? 0);
                                 $newOdo = (float)$exp['odometer'];
                                 $expNote .= " [Armada: {$vehInfo['plate_number']} ({$vehInfo['vehicle_name']}) | KM Odo: {$newOdo} (Sebelumnya: {$lastOdo})]";
@@ -6883,6 +6885,7 @@ try {
                     ");
                     $stmtExp->execute([$shift['branch_id'], $exp['category'], $exp['amount'], $shiftDate, $shiftId, $expNote]);
                 }
+                unset($exp);
 
                 // B. Catat Kasbon Karyawan ke salary_loans (Menu Penggajian / Slip Gaji Potongan Kasbon)
                 foreach ($loansList as $loan) {

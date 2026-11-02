@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.7.1",
-    "build": "20261102-97",
+    "version": "1.7.2",
+    "build": "20261102-98",
     "release_date": "2026-11-02",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.7.2",
+            "commit": "HEAD",
+            "date": "2026-11-02",
+            "title": "Transparansi Tampilan Odometer Closing Shift pada Beban Operasional & Laporan Shift (FR-LOG-07)",
+            "description": "Menyempurnakan visibilitas data KM Odometer motor armada yang dicatat saat penutupan shift kasir / End Day: (1) Menu Beban Operasional Cabang: Menghilangkan pembatasan truncate pada kolom Keterangan/Catatan dan menambahkan badge visual khusus 'Armada' (indigo) dan 'KM Odometer' (amber) lengkap dengan KM terakhir dan KM sebelumnya; (2) Kartu Laporan Shift Kasir: Menampilkan rincian beban operasional kasir (petty cash) beserta plat nomor armada dan angka KM Odometer pada audit kas laci kasir; (3) Sinkronisasi Multidimensi BBM: Menjaga integritas data log bensin otomatis di subtab Bensin & KM Motor (vehicle_fuel_logs) serta pembaruan KM terkini armada pada subtab Armada Kendaraan Kurir (courier_vehicles); (4) Kompatibilitas Android 8.1 Oreo: 100% bebas token ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.7.1"
+        },
         {
             "version": "1.7.1",
             "commit": "HEAD",
