@@ -8963,17 +8963,31 @@ try {
                 $paymentStatus = 'PAID';
             }
 
+            $saleCreatedAt = date('Y-m-d H:i:s');
+
             // Insert Sale with Customer, Tier, Delivery & Payment Status Info
             $stmtSale = $pdo->prepare("
-                INSERT INTO sales (invoice_number, branch_id, user_id, shift_id, customer_id, customer_name, customer_category, sales_type, subtotal, discount, discount_rule_id, discount_name, tax, delivery_fee, delivery_distance_km, courier_vehicle_id, driver_user_id, driver_name, is_delivery_included, delivery_status, grand_total, total_cogs, payment_method, payment_status, cash_received, cash_change, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+                INSERT INTO sales (
+                    invoice_number, branch_id, user_id, shift_id, customer_id, customer_name, customer_category,
+                    sales_type, subtotal, discount, discount_rule_id, discount_name, tax, delivery_fee,
+                    delivery_distance_km, courier_vehicle_id, driver_user_id, driver_name, is_delivery_included,
+                    delivery_status, grand_total, total_cogs, payment_method, payment_status, cash_received,
+                    cash_change, created_at
+                ) VALUES (
+                    ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?,
+                    ?, ?
+                )
             ");
             $stmtSale->execute([
                 $invoiceNumber, $branchId, $userId, $shiftId,
                 $customerId, $customerName, $customerCategory, $salesType,
                 $subtotal, $discountNominal, $discountRuleId, $discountName, $tax, $deliveryFee, $deliveryDistanceKm,
                 $courierVehicleId, $driverUserId, $driverName, $isDeliveryIncluded, $deliveryStatus,
-                $grandTotal, $totalCogs, $paymentMethod, $paymentStatus, $cashReceived, $cashChange
+                $grandTotal, $totalCogs, $paymentMethod, $paymentStatus, $cashReceived, $cashChange,
+                $saleCreatedAt
             ]);
             $saleId = $pdo->lastInsertId();
 
@@ -8982,11 +8996,14 @@ try {
             if ($paymentMethod === 'PIUTANG') {
                 $dueDate = !empty($input['due_date']) ? $input['due_date'] : date('Y-m-d', strtotime('+30 days'));
                 $recNotes = !empty($input['notes']) ? trim($input['notes']) : ("Piutang penjualan POS kpd " . $customerName . " ({$customerCategory})");
+                $recCreatedAt = date('Y-m-d H:i:s');
                 $stmtAR = $pdo->prepare("
-                    INSERT INTO customer_receivables (sale_id, invoice_number, customer_id, branch_id, total_amount, paid_amount, remaining_amount, due_date, status, notes, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, 0, ?, ?, 'BELUM_LUNAS', ?, datetime('now', 'localtime'), datetime('now', 'localtime'))
+                    INSERT INTO customer_receivables (
+                        sale_id, invoice_number, customer_id, branch_id, total_amount, paid_amount,
+                        remaining_amount, due_date, status, notes, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, 0, ?, ?, 'BELUM_LUNAS', ?, ?, ?)
                 ");
-                $stmtAR->execute([$saleId, $invoiceNumber, $customerId, $branchId, $grandTotal, $grandTotal, $dueDate, $recNotes]);
+                $stmtAR->execute([$saleId, $invoiceNumber, $customerId, $branchId, $grandTotal, $grandTotal, $dueDate, $recNotes, $recCreatedAt, $recCreatedAt]);
                 $receivableId = $pdo->lastInsertId();
             }
 

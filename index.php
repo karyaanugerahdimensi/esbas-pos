@@ -3257,7 +3257,7 @@ try {
                             <span>Satuan Produk</span>
                         </button>
                         <button onclick="switchProductSubTab('taxes')" id="prod-subtab-btn-taxes" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
-                            <i data-lucide="receipt-percent" class="w-4 h-4"></i>
+                            <i data-lucide="percent" class="w-4 h-4"></i>
                             <span>Master Pajak / Taxes</span>
                         </button>
                         <button onclick="switchProductSubTab('opening_shift')" id="prod-subtab-btn-opening_shift" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">

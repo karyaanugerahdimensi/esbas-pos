@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.7.2",
-    "build": "20261102-98",
+    "version": "1.7.3",
+    "build": "20261102-99",
     "release_date": "2026-11-02",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.7.3",
+            "commit": "HEAD",
+            "date": "2026-11-02",
+            "title": "Perbaikan Sinkronisasi Kolom & Nilai Kueri Checkout Penjualan POS (FR-POS-67)",
+            "description": "Menyelesaikan galat SQLSTATE[21S01] Error 1136 Column count doesn't match value count at row 1 pada aksi checkout pembayaran POS: (1) Menyelaraskan 100% jumlah 27 kolom pada kueri INSERT INTO sales dengan 27 placeholder parameter (?) dan 27 data array execute; (2) Menggunakan timestamp PHP date('Y-m-d H:i:s') yang universal untuk kolom created_at pada sales dan customer_receivables; (3) Mengganti icon lucide receipt-percent dengan icon standar percent pada tombol subtab Master Pajak; (4) Kompatibilitas Android 8.1: 100% bebas token ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.7.2"
+        },
         {
             "version": "1.7.2",
             "commit": "HEAD",
