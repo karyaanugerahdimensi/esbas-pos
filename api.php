@@ -2118,6 +2118,7 @@ try {
                            u.base_salary, u.allowance, u.daily_transport,
                            u.default_work_shift_id,
                            u.assigned_vehicle_id,
+                           u.join_date,
                            ws.name as default_shift_name, ws.code as default_shift_code, ws.start_time as default_shift_start, ws.end_time as default_shift_end, ws.color_tag as default_shift_color,
                            b.name as branch_name, b.code as branch_code,
                            cv.plate_number as assigned_vehicle_plate, cv.vehicle_name as assigned_vehicle_name
@@ -2192,6 +2193,7 @@ try {
                                u.base_salary, u.allowance, u.daily_transport,
                                u.default_work_shift_id,
                                u.assigned_vehicle_id,
+                               u.join_date,
                                ws.name as default_shift_name, ws.code as default_shift_code, ws.start_time as default_shift_start, ws.end_time as default_shift_end, ws.color_tag as default_shift_color,
                                b.name as branch_name,
                                cv.plate_number as assigned_vehicle_plate, cv.vehicle_name as assigned_vehicle_name
@@ -2210,6 +2212,7 @@ try {
                                u.base_salary, u.allowance, u.daily_transport,
                                NULL as default_work_shift_id,
                                NULL as assigned_vehicle_id,
+                               NULL as join_date,
                                NULL as default_shift_name, NULL as default_shift_code, NULL as default_shift_start, NULL as default_shift_end, NULL as default_shift_color,
                                b.name as branch_name,
                                NULL as assigned_vehicle_plate, NULL as assigned_vehicle_name
@@ -2277,6 +2280,13 @@ try {
             $allowance = isset($input['allowance']) ? (float)$input['allowance'] : 500000;
             $dailyTransport = isset($input['daily_transport']) ? (float)$input['daily_transport'] : 25000;
             $joinDate = !empty($input['join_date']) ? trim($input['join_date']) : null;
+
+            // Auto-migrate: pastikan kolom join_date ada di tabel users (MySQL & SQLite hosting)
+            try { $pdo->exec("ALTER TABLE users ADD COLUMN join_date DATE DEFAULT NULL"); } catch (Exception $eMig) {}
+            // Auto-migrate: pastikan kolom lain yang mungkin belum ada
+            try { $pdo->exec("ALTER TABLE users ADD COLUMN default_work_shift_id INT DEFAULT NULL"); } catch (Exception $eMig) {}
+            try { $pdo->exec("ALTER TABLE users ADD COLUMN assigned_vehicle_id INT DEFAULT NULL"); } catch (Exception $eMig) {}
+            try { $pdo->exec("ALTER TABLE users ADD COLUMN assigned_branch_ids TEXT DEFAULT NULL"); } catch (Exception $eMig) {}
 
             if ($id) {
                 // Update

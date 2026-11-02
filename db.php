@@ -2193,6 +2193,22 @@ function autoMigrateMysql($pdo) {
         }
     } catch (Exception $e) {}
 
+    // Migrasi kolom assigned_vehicle_id pada tabel users (MySQL)
+    try {
+        $cols = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'assigned_vehicle_id'")->fetchAll();
+        if (empty($cols)) {
+            $pdo->exec("ALTER TABLE `users` ADD COLUMN `assigned_vehicle_id` INT DEFAULT NULL");
+        }
+    } catch (Exception $e) {}
+
+    // Migrasi kolom join_date pada tabel users (MySQL)
+    try {
+        $cols = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'join_date'")->fetchAll();
+        if (empty($cols)) {
+            $pdo->exec("ALTER TABLE `users` ADD COLUMN `join_date` DATE DEFAULT NULL");
+        }
+    } catch (Exception $e) {}
+
     try {
         $pdo->exec("CREATE TABLE IF NOT EXISTS `user_branches` (
             `id` INT AUTO_INCREMENT PRIMARY KEY,
