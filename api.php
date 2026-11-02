@@ -12435,25 +12435,43 @@ try {
                 $month = date('Y-m');
             }
 
-            $isManager = true;
+            $isManager = false;
             $isSuperAdmin = false;
-            $userBranchId = null;
+            $userBranchId = 0;
             if ($actorId > 0) {
                 $stmtR = $pdo->prepare("SELECT role, branch_id FROM users WHERE id = ?");
                 $stmtR->execute([$actorId]);
                 $uData = $stmtR->fetch(PDO::FETCH_ASSOC);
                 if ($uData) {
-                    $userRole = strtoupper($uData['role'] ?? '');
+                    $userRole = strtoupper(str_replace('_', '', $uData['role'] ?? ''));
                     $userBranchId = (int)($uData['branch_id'] ?? 0);
-                    $isSuperAdmin = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'SUPER ADMIN']);
-                    $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'SUPER ADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+                    $isSuperAdmin = in_array($userRole, ['SUPERADMIN', 'SUPER ADMIN']);
+                    $isManager = in_array($userRole, ['SUPERADMIN', 'SUPER ADMIN', 'BRANCHMANAGER', 'MANAGER']);
                     if (!$isSuperAdmin && $userBranchId > 0) {
                         $branchId = $userBranchId;
                     }
                 }
             }
+            if (!$isSuperAdmin && !$isManager && !empty($_SESSION['role'])) {
+                $sRole = strtoupper(str_replace('_', '', $_SESSION['role']));
+                $isSuperAdmin = in_array($sRole, ['SUPERADMIN', 'SUPER ADMIN']);
+                $isManager = in_array($sRole, ['SUPERADMIN', 'SUPER ADMIN', 'BRANCHMANAGER', 'MANAGER']);
+                if (!empty($_SESSION['branch_id'])) $userBranchId = (int)$_SESSION['branch_id'];
+            }
 
-            if ($branchId > 0) {
+            if (!$isSuperAdmin && !$isManager) {
+                // Karyawan biasa (Kasir, Staff, Kurir, Operator, dll):
+                // HANYA BISA MELIHAT SLIP GAJI MILIK DIRINYA SENDIRI
+                $stmtEmp = $pdo->prepare("
+                    SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.base_salary, u.allowance, u.daily_transport, u.commission_rate,
+                           COALESCE(b.name, 'Kantor Pusat') as branch_name
+                    FROM users u
+                    LEFT JOIN branches b ON b.id = u.branch_id
+                    WHERE u.id = ? AND u.is_active = 1
+                    LIMIT 1
+                ");
+                $stmtEmp->execute([$actorId]);
+            } else if ($branchId > 0) {
                 $stmtEmp = $pdo->prepare("
                     SELECT u.id, u.nik, u.name, u.role, u.branch_id, u.base_salary, u.allowance, u.daily_transport, u.commission_rate,
                            b.name as branch_name
@@ -12598,6 +12616,8 @@ try {
                 'success' => true,
                 'month' => $month,
                 'branch_id' => $branchId,
+                'is_manager' => $isManager,
+                'is_super_admin' => $isSuperAdmin,
                 'payrolls' => $payrolls,
                 'totals' => [
                     'employee_count' => count($payrolls),
@@ -12613,12 +12633,16 @@ try {
             $targetUserId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : 3;
             $month = !empty($_GET['month']) ? trim($_GET['month']) : date('Y-m');
 
-            $isManager = true;
+            $isManager = false;
             if ($reqUserId > 0) {
                 $stmtR = $pdo->prepare("SELECT role FROM users WHERE id = ?");
                 $stmtR->execute([$reqUserId]);
-                $userRole = strtoupper($stmtR->fetchColumn() ?: '');
-                $isManager = in_array($userRole, ['SUPER_ADMIN', 'SUPERADMIN', 'BRANCH_MANAGER', 'MANAGER']);
+                $uRole = strtoupper(str_replace('_', '', $stmtR->fetchColumn() ?: ''));
+                $isManager = in_array($uRole, ['SUPERADMIN', 'SUPER ADMIN', 'BRANCHMANAGER', 'MANAGER']);
+            }
+            if (!$isManager && !empty($_SESSION['role'])) {
+                $sRole = strtoupper(str_replace('_', '', $_SESSION['role']));
+                $isManager = in_array($sRole, ['SUPERADMIN', 'SUPER ADMIN', 'BRANCHMANAGER', 'MANAGER']);
             }
 
             // Jika BUKAN Super Admin / Branch Manager, paksakan user_id adalah ID user itu sendiri!
@@ -12953,6 +12977,22 @@ try {
             break;
 
         case 'delete_saved_payroll':
+            $actorId = (int)($input['actor_id'] ?? ($input['approver_id'] ?? ($_GET['user_id'] ?? ($_SESSION['user_id'] ?? 0))));
+            $isAuthorized = false;
+            if ($actorId > 0) {
+                $stmtRole = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                $stmtRole->execute([$actorId]);
+                $actorRole = strtoupper(str_replace('_', '', $stmtRole->fetchColumn() ?: ''));
+                $isAuthorized = in_array($actorRole, ['SUPERADMIN', 'SUPER ADMIN', 'BRANCHMANAGER', 'MANAGER']);
+            }
+            if (!$isAuthorized && !empty($_SESSION['role'])) {
+                $sRole = strtoupper(str_replace('_', '', $_SESSION['role']));
+                $isAuthorized = in_array($sRole, ['SUPERADMIN', 'SUPER ADMIN', 'BRANCHMANAGER', 'MANAGER']);
+            }
+            if (!$isAuthorized) {
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak! Hanya Super Admin atau Branch Manager yang berwenang mereset slip gaji.']);
+                break;
+            }
             $payrollId = (int)($input['payroll_id'] ?? ($_GET['id'] ?? 0));
             $userId = (int)($input['user_id'] ?? 0);
             $month = trim($input['month'] ?? '');
@@ -13691,10 +13731,28 @@ try {
         // 10b. MODUL LAPORAN PENJUALAN MITRA (B2B PARTNER SALES REPORT)
         // ==========================================
         case 'partner_sales_report':
-            $curUser = $_SESSION['user'] ?? null;
-            $roleClean = strtoupper(str_replace('_', '', $curUser['role'] ?? ''));
-            $isSuperAdmin = in_array($roleClean, ['SUPERADMIN', 'SUPER_ADMIN']) || ($curUser['assigned_branch_ids'] ?? '') === 'ALL';
-            $isBranchManager = in_array($roleClean, ['BRANCHMANAGER', 'BRANCH_MANAGER', 'MANAGER']);
+            $actorId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : (int)($_SESSION['user_id'] ?? 0);
+            $uRole = '';
+            $uBranchId = 0;
+            $uAssigned = '';
+
+            if ($actorId > 0) {
+                $stmtU = $pdo->prepare("SELECT id, role, branch_id, assigned_branch_ids FROM users WHERE id = ?");
+                $stmtU->execute([$actorId]);
+                $uRow = $stmtU->fetch(PDO::FETCH_ASSOC);
+                if ($uRow) {
+                    $uRole = strtoupper(str_replace('_', '', $uRow['role'] ?? ''));
+                    $uBranchId = (int)($uRow['branch_id'] ?? 0);
+                    $uAssigned = $uRow['assigned_branch_ids'] ?? '';
+                }
+            }
+            if (!$uRole && !empty($_SESSION['role'])) {
+                $uRole = strtoupper(str_replace('_', '', $_SESSION['role']));
+                $uBranchId = (int)($_SESSION['branch_id'] ?? 0);
+            }
+
+            $isSuperAdmin = in_array($uRole, ['SUPERADMIN', 'SUPER ADMIN']) || $uAssigned === 'ALL';
+            $isBranchManager = in_array($uRole, ['BRANCHMANAGER', 'MANAGER']);
 
             $periodType = strtolower(trim($_GET['period_type'] ?? 'monthly'));
             $startDate = trim($_GET['start_date'] ?? '');
@@ -13778,23 +13836,45 @@ try {
             $whereClause = "WHERE date(s.created_at) BETWEEN ? AND ? AND (s.status IS NULL OR s.status != 'CANCELLED') AND (UPPER(COALESCE(s.customer_category, '')) = 'MITRA' OR UPPER(COALESCE(c.category, '')) = 'MITRA' OR UPPER(COALESCE(s.sales_type, '')) LIKE '%MITRA%')";
             $params = [$startDate, $endDate];
 
-            $branchId = !empty($_GET['branch_id']) && $_GET['branch_id'] !== 'ALL' ? (int)$_GET['branch_id'] : null;
-            if ($branchId) {
+            $requestedBranch = !empty($_GET['branch_id']) && $_GET['branch_id'] !== 'ALL' ? (int)$_GET['branch_id'] : null;
+
+            if (!$isSuperAdmin && !$isBranchManager) {
+                // KASIR / STAFF / KARYAWAN: KUNCI MUTLAK HANYA CABANG DIMANA DIA DIPOSISIKAN
+                $effectiveBranchId = $uBranchId > 0 ? $uBranchId : 1;
                 $whereClause .= " AND s.branch_id = ?";
-                $params[] = $branchId;
+                $params[] = $effectiveBranchId;
+                $branchId = $effectiveBranchId;
             } else if ($isBranchManager && !$isSuperAdmin) {
                 $assignedIds = [];
-                if (!empty($curUser['assigned_branch_ids'])) {
-                    $dec = json_decode($curUser['assigned_branch_ids'], true);
+                if (!empty($uAssigned)) {
+                    $dec = json_decode($uAssigned, true);
                     if (is_array($dec)) $assignedIds = array_map('intval', $dec);
                 }
-                if (empty($assignedIds) && !empty($curUser['branch_id'])) {
-                    $assignedIds = [(int)$curUser['branch_id']];
+                if (empty($assignedIds) && $uBranchId > 0) {
+                    $assignedIds = [$uBranchId];
                 }
-                if (!empty($assignedIds)) {
+                if ($requestedBranch && in_array($requestedBranch, $assignedIds)) {
+                    $whereClause .= " AND s.branch_id = ?";
+                    $params[] = $requestedBranch;
+                    $branchId = $requestedBranch;
+                } else if (!empty($assignedIds)) {
                     $inPlaceholders = implode(',', array_fill(0, count($assignedIds), '?'));
                     $whereClause .= " AND s.branch_id IN ($inPlaceholders)";
                     foreach ($assignedIds as $bId) $params[] = $bId;
+                    $branchId = 'ASSIGNED';
+                } else {
+                    $branchId = $uBranchId;
+                    $whereClause .= " AND s.branch_id = ?";
+                    $params[] = $branchId;
+                }
+            } else {
+                // Super Admin
+                if ($requestedBranch) {
+                    $whereClause .= " AND s.branch_id = ?";
+                    $params[] = $requestedBranch;
+                    $branchId = $requestedBranch;
+                } else {
+                    $branchId = 'ALL';
                 }
             }
 
@@ -14030,10 +14110,28 @@ try {
             break;
 
         case 'export_partner_sales_excel':
-            $curUser = $_SESSION['user'] ?? null;
-            $roleClean = strtoupper(str_replace('_', '', $curUser['role'] ?? ''));
-            $isSuperAdmin = in_array($roleClean, ['SUPERADMIN', 'SUPER_ADMIN']) || ($curUser['assigned_branch_ids'] ?? '') === 'ALL';
-            $isBranchManager = in_array($roleClean, ['BRANCHMANAGER', 'BRANCH_MANAGER', 'MANAGER']);
+            $actorId = !empty($_GET['user_id']) ? (int)$_GET['user_id'] : (int)($_SESSION['user_id'] ?? 0);
+            $uRole = '';
+            $uBranchId = 0;
+            $uAssigned = '';
+
+            if ($actorId > 0) {
+                $stmtU = $pdo->prepare("SELECT id, role, branch_id, assigned_branch_ids FROM users WHERE id = ?");
+                $stmtU->execute([$actorId]);
+                $uRow = $stmtU->fetch(PDO::FETCH_ASSOC);
+                if ($uRow) {
+                    $uRole = strtoupper(str_replace('_', '', $uRow['role'] ?? ''));
+                    $uBranchId = (int)($uRow['branch_id'] ?? 0);
+                    $uAssigned = $uRow['assigned_branch_ids'] ?? '';
+                }
+            }
+            if (!$uRole && !empty($_SESSION['role'])) {
+                $uRole = strtoupper(str_replace('_', '', $_SESSION['role']));
+                $uBranchId = (int)($_SESSION['branch_id'] ?? 0);
+            }
+
+            $isSuperAdmin = in_array($uRole, ['SUPERADMIN', 'SUPER ADMIN']) || $uAssigned === 'ALL';
+            $isBranchManager = in_array($uRole, ['BRANCHMANAGER', 'MANAGER']);
 
             $periodType = strtolower(trim($_GET['period_type'] ?? 'monthly'));
             $startDate = trim($_GET['start_date'] ?? '');
@@ -14108,23 +14206,45 @@ try {
             $whereClause = "WHERE date(s.created_at) BETWEEN ? AND ? AND (s.status IS NULL OR s.status != 'CANCELLED') AND (UPPER(COALESCE(s.customer_category, '')) = 'MITRA' OR UPPER(COALESCE(c.category, '')) = 'MITRA' OR UPPER(COALESCE(s.sales_type, '')) LIKE '%MITRA%')";
             $params = [$startDate, $endDate];
 
-            $branchId = !empty($_GET['branch_id']) && $_GET['branch_id'] !== 'ALL' ? (int)$_GET['branch_id'] : null;
-            if ($branchId) {
+            $requestedBranch = !empty($_GET['branch_id']) && $_GET['branch_id'] !== 'ALL' ? (int)$_GET['branch_id'] : null;
+
+            if (!$isSuperAdmin && !$isBranchManager) {
+                // KASIR / STAFF / KARYAWAN: KUNCI MUTLAK HANYA CABANG DIMANA DIA DIPOSISIKAN
+                $effectiveBranchId = $uBranchId > 0 ? $uBranchId : 1;
                 $whereClause .= " AND s.branch_id = ?";
-                $params[] = $branchId;
+                $params[] = $effectiveBranchId;
+                $branchId = $effectiveBranchId;
             } else if ($isBranchManager && !$isSuperAdmin) {
                 $assignedIds = [];
-                if (!empty($curUser['assigned_branch_ids'])) {
-                    $dec = json_decode($curUser['assigned_branch_ids'], true);
+                if (!empty($uAssigned)) {
+                    $dec = json_decode($uAssigned, true);
                     if (is_array($dec)) $assignedIds = array_map('intval', $dec);
                 }
-                if (empty($assignedIds) && !empty($curUser['branch_id'])) {
-                    $assignedIds = [(int)$curUser['branch_id']];
+                if (empty($assignedIds) && $uBranchId > 0) {
+                    $assignedIds = [$uBranchId];
                 }
-                if (!empty($assignedIds)) {
+                if ($requestedBranch && in_array($requestedBranch, $assignedIds)) {
+                    $whereClause .= " AND s.branch_id = ?";
+                    $params[] = $requestedBranch;
+                    $branchId = $requestedBranch;
+                } else if (!empty($assignedIds)) {
                     $inPlaceholders = implode(',', array_fill(0, count($assignedIds), '?'));
                     $whereClause .= " AND s.branch_id IN ($inPlaceholders)";
                     foreach ($assignedIds as $bId) $params[] = $bId;
+                    $branchId = 'ASSIGNED';
+                } else {
+                    $branchId = $uBranchId;
+                    $whereClause .= " AND s.branch_id = ?";
+                    $params[] = $branchId;
+                }
+            } else {
+                // Super Admin
+                if ($requestedBranch) {
+                    $whereClause .= " AND s.branch_id = ?";
+                    $params[] = $requestedBranch;
+                    $branchId = $requestedBranch;
+                } else {
+                    $branchId = 'ALL';
                 }
             }
 

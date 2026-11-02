@@ -21452,27 +21452,38 @@ Manager / Supervisor: __________________
             const month = mInput ? mInput.value : new Date().toISOString().slice(0, 7);
             payrollModuleState.month = month;
 
-            // Render opsi cabang
+            // Render opsi cabang & hak akses role
             const bSelect = document.getElementById('payroll-branch-select');
             const curUser = state.currentUser || state.loggedInUser || { id: 1 };
-            const userRole = (curUser.role || 'CASHIER').toUpperCase().trim();
-            const isSuperAdmin = (userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'SUPER ADMIN');
+            const rawRole = ((curUser.role || 'CASHIER') + '').toUpperCase().replace(/_/g, '').trim();
+            const isSuperAdmin = (rawRole === 'SUPERADMIN' || rawRole === 'SUPER ADMIN');
+            const isManager = isSuperAdmin || rawRole === 'BRANCHMANAGER' || rawRole === 'MANAGER';
             const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
 
-            if (bSelect && bSelect.options.length <= 1) {
-                const currentVal = bSelect.value || 'ALL';
-                let bOpts = '';
-                if (isSuperAdmin) {
-                    bOpts += '<option value="ALL">Semua Cabang</option>';
-                    (state.branches || []).forEach(b => {
-                        bOpts += `<option value="${b.id}">${b.name}</option>`;
-                    });
+            if (bSelect) {
+                const bContainer = bSelect.parentElement;
+                if (!isManager && !isSuperAdmin) {
+                    if (bContainer) bContainer.style.display = 'none';
+                    bSelect.innerHTML = `<option value="${userBranchId}">Cabang Penugasan</option>`;
+                    bSelect.value = userBranchId;
                 } else {
-                    const myBranch = (state.branches || []).find(b => b.id == userBranchId) || state.currentBranch || { id: userBranchId, name: 'Cabang Penugasan' };
-                    bOpts += `<option value="${myBranch.id}">${myBranch.name}</option>`;
+                    if (bContainer) bContainer.style.display = 'flex';
+                    if (bSelect.options.length <= 1) {
+                        const currentVal = bSelect.value || 'ALL';
+                        let bOpts = '';
+                        if (isSuperAdmin) {
+                            bOpts += '<option value="ALL">Semua Cabang</option>';
+                            (state.branches || []).forEach(b => {
+                                bOpts += `<option value="${b.id}">${b.name}</option>`;
+                            });
+                        } else {
+                            const myBranch = (state.branches || []).find(b => b.id == userBranchId) || state.currentBranch || { id: userBranchId, name: 'Cabang Penugasan' };
+                            bOpts += `<option value="${myBranch.id}">${myBranch.name}</option>`;
+                        }
+                        bSelect.innerHTML = bOpts;
+                        bSelect.value = isSuperAdmin ? currentVal : userBranchId;
+                    }
                 }
-                bSelect.innerHTML = bOpts;
-                bSelect.value = isSuperAdmin ? currentVal : userBranchId;
             }
             const branchId = bSelect ? bSelect.value : (isSuperAdmin ? 'ALL' : userBranchId);
             payrollModuleState.branchId = branchId;
@@ -21503,7 +21514,13 @@ Manager / Supervisor: __________________
                 const kpiDeduct = document.getElementById('payroll-kpi-deductions');
                 const kpiNet = document.getElementById('payroll-kpi-net');
 
-                if (kpiCount) kpiCount.innerText = `${totals.employee_count || payrollModuleState.payrolls.length} Orang`;
+                if (kpiCount) {
+                    if (isManager || isSuperAdmin) {
+                        kpiCount.innerText = `${totals.employee_count || payrollModuleState.payrolls.length} Orang`;
+                    } else {
+                        kpiCount.innerText = `1 Orang (Pribadi)`;
+                    }
+                }
                 if (kpiGross) kpiGross.innerText = formatRupiah(totals.total_gross || 0);
                 if (kpiDeduct) kpiDeduct.innerText = formatRupiah(totals.total_deductions || 0);
                 if (kpiNet) kpiNet.innerText = formatRupiah(totals.total_net || 0);
@@ -21587,9 +21604,15 @@ Manager / Supervisor: __________________
                             <button onclick="openPayrollSlipModal(${p.user_id}, '${p.period_month}')" class="px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs font-bold transition-colors" title="Lihat & Cetak Slip Gaji Resmi">
                                 👁️ Slip
                             </button>
-                            <button onclick="openPayrollEditorModal(${p.user_id}, '${p.period_month}')" class="px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs font-bold transition-colors" title="Sesuaikan / Koreksi Komponen Gaji">
-                                ✏️ Edit
-                            </button>
+                            ${(function() {
+                                const curU = state.currentUser || state.loggedInUser || {};
+                                const rR = ((curU.role || 'CASHIER') + '').toUpperCase().replace(/_/g, '').trim();
+                                const canEdit = (rR === 'SUPERADMIN' || rR === 'SUPER ADMIN' || rR === 'BRANCHMANAGER' || rR === 'MANAGER');
+                                return canEdit ? `
+                                <button onclick="openPayrollEditorModal(${p.user_id}, '${p.period_month}')" class="px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs font-bold transition-colors" title="Sesuaikan / Koreksi Komponen Gaji">
+                                    ✏️ Edit
+                                </button>` : '';
+                            })()}
                         </td>
                     </tr>
                 `;
@@ -22186,8 +22209,14 @@ Manager / Supervisor: __________________
         }
 
         async function openPayrollEditorModal(userId, month = null) {
-            const mVal = month || payrollModuleState.month || _val('payroll-month-input') || new Date().toISOString().slice(0, 7);
             const curUser = state.currentUser || state.loggedInUser || { id: 1 };
+            const rawRole = ((curUser.role || '') + '').toUpperCase().replace(/_/g, '');
+            const canManage = (rawRole === 'SUPERADMIN' || rawRole.indexOf('MANAGER') !== -1);
+            if (!canManage) {
+                alert('Akses Dibatasi: Hanya Super Admin dan Branch Manager yang berwenang mengedit komponen gaji.');
+                return;
+            }
+            const mVal = month || payrollModuleState.month || _val('payroll-month-input') || new Date().toISOString().slice(0, 7);
 
             try {
                 const res = await fetch(`api.php?action=get_employee_payslip&user_id=${userId}&req_user_id=${curUser.id}&month=${mVal}`);
@@ -27451,19 +27480,66 @@ Manager / Supervisor: __________________
             const select = document.getElementById('partner-filter-branch');
             if (!select) return;
 
-            const curVal = select.value;
-            let optionsHtml = '<option value="ALL">🌐 Semua Cabang (Konsolidasi)</option>';
+            const curUser = state.currentUser || state.loggedInUser || {};
+            const rawRole = ((curUser.role || 'CASHIER') + '').toUpperCase().replace(/_/g, '').trim();
+            const isSuperAdmin = (rawRole === 'SUPERADMIN' || rawRole === 'SUPER ADMIN');
+            const isManager = isSuperAdmin || rawRole === 'BRANCHMANAGER' || rawRole === 'MANAGER';
+            const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
 
-            if (state.branches && state.branches.length > 0) {
-                state.branches.forEach(b => {
-                    optionsHtml += `<option value="${b.id}">${escapeHtml(b.name)}</option>`;
-                });
+            let optionsHtml = '';
+            if (isSuperAdmin) {
+                optionsHtml += '<option value="ALL">🌐 Semua Cabang (Konsolidasi)</option>';
+                if (state.branches && state.branches.length > 0) {
+                    state.branches.forEach(b => {
+                        optionsHtml += `<option value="${b.id}">${escapeHtml(b.name)}</option>`;
+                    });
+                }
+                select.disabled = false;
+                select.classList.remove('opacity-75', 'cursor-not-allowed', 'bg-slate-100');
+            } else if (isManager) {
+                let myBranches = [];
+                if (curUser.assigned_branch_ids) {
+                    try {
+                        const parsed = typeof curUser.assigned_branch_ids === 'string' ? JSON.parse(curUser.assigned_branch_ids) : curUser.assigned_branch_ids;
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            myBranches = (state.branches || []).filter(b => parsed.indexOf(parseInt(b.id, 10)) !== -1);
+                        }
+                    } catch(e) {}
+                }
+                if (myBranches.length === 0) {
+                    myBranches = (state.branches || []).filter(b => b.id == userBranchId);
+                }
+                if (myBranches.length > 1) {
+                    optionsHtml += '<option value="ALL">🌐 Semua Cabang Ditugaskan</option>';
+                    myBranches.forEach(b => {
+                        optionsHtml += `<option value="${b.id}">${escapeHtml(b.name)}</option>`;
+                    });
+                    select.disabled = false;
+                    select.classList.remove('opacity-75', 'cursor-not-allowed', 'bg-slate-100');
+                } else {
+                    const bObj = myBranches[0] || (state.branches || []).find(b => b.id == userBranchId) || state.currentBranch || { id: userBranchId, name: 'Cabang Penugasan' };
+                    optionsHtml += `<option value="${bObj.id}">📍 ${escapeHtml(bObj.name)}</option>`;
+                    select.disabled = true;
+                    select.classList.add('opacity-75', 'cursor-not-allowed', 'bg-slate-100');
+                }
+            } else {
+                // KASIR / STAFF / KARYAWAN: HANYA BISA MELIHAT CABANG DI MANA DIA DIPOSISIKAN
+                const myBranch = (state.branches || []).find(b => b.id == userBranchId) || state.currentBranch || { id: userBranchId, name: 'Cabang Penugasan' };
+                optionsHtml += `<option value="${myBranch.id}">📍 ${escapeHtml(myBranch.name)} (Terkunci)</option>`;
+                select.disabled = true;
+                select.classList.add('opacity-75', 'cursor-not-allowed', 'bg-slate-100');
             }
+
             select.innerHTML = optionsHtml;
-            if (curVal && select.querySelector(`option[value="${curVal}"]`)) {
-                select.value = curVal;
-            } else if (state.currentBranch && state.currentUser && state.currentUser.role !== 'SUPERADMIN') {
-                select.value = state.currentBranch.id;
+            if (isSuperAdmin) {
+                const curVal = select.value;
+                if (curVal && select.querySelector(`option[value="${curVal}"]`)) {
+                    select.value = curVal;
+                } else {
+                    select.value = 'ALL';
+                }
+            } else {
+                select.value = userBranchId;
             }
         }
 
@@ -27498,12 +27574,24 @@ Manager / Supervisor: __________________
                     renderPartnerPeriodControls();
                 }
 
-                const branchId = branchSel ? branchSel.value : 'ALL';
+                const curUser = state.currentUser || state.loggedInUser || {};
+                const rawRole = ((curUser.role || 'CASHIER') + '').toUpperCase().replace(/_/g, '').trim();
+                const isSuperAdmin = (rawRole === 'SUPERADMIN' || rawRole === 'SUPER ADMIN');
+                const isManager = isSuperAdmin || rawRole === 'BRANCHMANAGER' || rawRole === 'MANAGER';
+                const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
+
+                let branchId = branchSel ? branchSel.value : 'ALL';
+                if (!isSuperAdmin && !isManager) {
+                    branchId = userBranchId;
+                    if (branchSel) branchSel.value = userBranchId;
+                }
+
                 const customerId = _val('partner-filter-customer') || 'ALL';
                 const paymentStatus = _val('partner-filter-status') || 'ALL';
                 const paymentMethod = _val('partner-filter-method') || 'ALL';
 
                 let url = `api.php?action=partner_sales_report&period_type=${encodeURIComponent(partnerPeriodType)}`;
+                if (curUser && curUser.id) url += `&user_id=${encodeURIComponent(curUser.id)}`;
                 if (branchId) url += `&branch_id=${encodeURIComponent(branchId)}`;
                 if (customerId) url += `&customer_id=${encodeURIComponent(customerId)}`;
                 if (paymentStatus) url += `&payment_status=${encodeURIComponent(paymentStatus)}`;
@@ -27838,13 +27926,24 @@ Manager / Supervisor: __________________
         }
 
         function exportPartnerSalesExcel() {
+            const curUser = state.currentUser || state.loggedInUser || {};
+            const rawRole = ((curUser.role || 'CASHIER') + '').toUpperCase().replace(/_/g, '').trim();
+            const isSuperAdmin = (rawRole === 'SUPERADMIN' || rawRole === 'SUPER ADMIN');
+            const isManager = isSuperAdmin || rawRole === 'BRANCHMANAGER' || rawRole === 'MANAGER';
+            const userBranchId = curUser.branch_id || (state.currentBranch ? state.currentBranch.id : 1);
+
             const branchSel = document.getElementById('partner-filter-branch');
-            const branchId = branchSel ? branchSel.value : 'ALL';
+            let branchId = branchSel ? branchSel.value : 'ALL';
+            if (!isSuperAdmin && !isManager) {
+                branchId = userBranchId;
+            }
+
             const customerId = _val('partner-filter-customer') || 'ALL';
             const paymentStatus = _val('partner-filter-status') || 'ALL';
             const paymentMethod = _val('partner-filter-method') || 'ALL';
 
             let url = `api.php?action=export_partner_sales_excel&period_type=${encodeURIComponent(partnerPeriodType)}`;
+            if (curUser && curUser.id) url += `&user_id=${encodeURIComponent(curUser.id)}`;
             if (branchId) url += `&branch_id=${encodeURIComponent(branchId)}`;
             if (customerId) url += `&customer_id=${encodeURIComponent(customerId)}`;
             if (paymentStatus) url += `&payment_status=${encodeURIComponent(paymentStatus)}`;

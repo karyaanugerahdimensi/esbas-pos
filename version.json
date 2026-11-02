@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.6.9",
-    "build": "20261102-95",
+    "version": "1.7.0",
+    "build": "20261102-96",
     "release_date": "2026-11-02",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.7.0",
+            "commit": "HEAD",
+            "date": "2026-11-02",
+            "title": "Hak Akses Payroll Slip Mandiri & Isolasi Cabang Laporan Penjualan Mitra (FR-HR-04, FR-REP-08)",
+            "description": "Memperketat proteksi data finansial dan isolasi cabang operasional: (1) Modul Payroll & Slip Gaji Karyawan Mandiri (FR-HR-04): Pengguna non-manajer (kasir, staf, kurir) kini hanya dapat melihat dan mencetak slip gaji dirinya sendiri, tombol edit gaji disembunyikan dan diproteksi di backend, serta KPI ringkasan mencerminkan data personal; (2) Isolasi Cabang Laporan Penjualan Mitra B2B (FR-REP-08): Akses kasir dan staf dikunci mutlak hanya pada cabang penugasan aktif (opsi konsolidasi semua cabang ditiadakan dan dropdown dikunci), dengan penegakan filter ketat di backend api.php baik untuk tampilan laporan maupun ekspor file Excel; (3) Kompatibilitas Penuh Android 8.1 Oreo: Bebas token modern ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.6.9"
+        },
         {
             "version": "1.6.9",
             "commit": "HEAD",
