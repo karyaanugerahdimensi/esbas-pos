@@ -2082,15 +2082,16 @@ function autoMigrateAndSync($pdo) {
         ['logistics', '11. Kurir & Biaya Kirim'],
         ['branches', '12. Kelola Cabang (CRUD)'],
         ['payments', '13. Metode Pembayaran'],
+        ['discounts', '13b. Aturan Diskon & Promo'],
         ['sale-cancellations', '14. Pembatalan Penjualan (Void)'],
         ['settings', '15. Konfigurasi Sistem & Cetak']
     ];
 
     $roleAccessRules = [
-        'SUPERADMIN'     => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'],
-        'SUPER_ADMIN'    => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'],
-        'BRANCH_MANAGER' => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
-        'MANAGER'        => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'settings'],
+        'SUPERADMIN'     => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'discounts', 'sale-cancellations', 'settings'],
+        'SUPER_ADMIN'    => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'discounts', 'sale-cancellations', 'settings'],
+        'BRANCH_MANAGER' => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'discounts', 'settings'],
+        'MANAGER'        => ['pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'discounts', 'settings'],
         'CASHIER'        => ['pos', 'reports', 'ess', 'customers', 'stock-in'],
         'STAFF'          => ['ess', 'stocks', 'stock-in', 'logistics']
     ];
@@ -2722,6 +2723,7 @@ function autoMigrateMysql($pdo) {
                     ['stock-in:transfer', '2. Transfer Cabang', $canTrf, $canTrf, $canTrf, $ud, $ud, 'stock-in', 1],
                     ['reports:deliveries', 'Laporan Kiriman & Kurir', $canRepMy, $canRepMy, $ud, $ud, $ud, 'reports', 1],
                     ['reports:discounts', 'Laporan Diskon & Promo', $canRepMy, $canRepMy, $ud, $ud, $ud, 'reports', 1],
+                    ['discounts', 'Aturan Diskon & Promo', $ud, $ud, $ud, $ud, $ud, null, 0],
                     ['customers:discounts', 'Aturan Diskon & Promo', $ud, $ud, $ud, $ud, $ud, 'customers', 1]
                 ];
 

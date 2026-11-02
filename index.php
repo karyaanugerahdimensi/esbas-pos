@@ -531,6 +531,10 @@ try {
                         <i data-lucide="credit-card" class="w-4 h-4 shrink-0"></i>
                         <span class="sidebar-label whitespace-nowrap">Metode Pembayaran</span>
                     </button>
+                    <button onclick="switchTab('discounts')" id="tab-btn-discounts" title="Kelola Aturan Diskon & Promo Penjualan (CRUD)" class="sidebar-menu-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                        <i data-lucide="tag" class="w-4 h-4 shrink-0 text-amber-400"></i>
+                        <span class="sidebar-label whitespace-nowrap">Aturan Diskon & Promo</span>
+                    </button>
                 </div>
 
                 <!-- Section 8: Otorisasi & Pembatalan Transaksi (Superadmin Only) -->
@@ -4516,10 +4520,7 @@ try {
                             <i data-lucide="tags" class="w-4 h-4"></i>
                             <span>Kategori Pelanggan</span>
                         </button>
-                        <button type="button" onclick="setCustomerSubtab('discounts')" id="subtab-btn-cust-discounts" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
-                            <i data-lucide="badge-percent" class="w-4 h-4 text-rose-600"></i>
-                            <span>🏷️ Aturan Diskon & Promo</span>
-                        </button>
+
                         <button type="button" onclick="setCustomerSubtab('maps')" id="subtab-btn-cust-maps" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900">
                             <i data-lucide="map" class="w-4 h-4"></i>
                             <span>Peta Geospasial Pelanggan</span>
@@ -4869,86 +4870,7 @@ try {
                 </div>
             </div>
 
-                <!-- SUBTAB 6: ATURAN DISKON & PROMOSI NOMINAL (CRUD) -->
-                <div id="subview-cust-discounts" class="space-y-4 hidden">
-                    <!-- Top Bar: Filter, Pencarian & Tombol Tambah Aturan Diskon -->
-                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-3 items-center justify-between">
-                        <div class="relative flex-1 min-w-[240px]">
-                            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-                            <input type="text" id="disc-rule-search-keyword" oninput="renderDiscountRulesTable()" placeholder="Cari nama promo, kode voucher, atau deskripsi aturan..." class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400">
-                        </div>
-                        <div class="flex gap-2 items-center flex-wrap">
-                            <!-- Filter Mode Penerapan -->
-                            <div class="flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs">
-                                <button type="button" onclick="setDiscRuleModeFilter('ALL')" id="filter-disc-mode-all" class="disc-mode-filter-btn px-2.5 py-1 rounded-lg font-bold bg-rose-600 text-white shadow-2xs">Semua Mode</button>
-                                <button type="button" onclick="setDiscRuleModeFilter('AUTO')" id="filter-disc-mode-auto" class="disc-mode-filter-btn px-2.5 py-1 rounded-lg font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">⚡ Otomatis</button>
-                                <button type="button" onclick="setDiscRuleModeFilter('MANUAL')" id="filter-disc-mode-manual" class="disc-mode-filter-btn px-2.5 py-1 rounded-lg font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">🔘 Manual Kasir</button>
-                            </div>
-                            <!-- Filter Status -->
-                            <select id="filter-disc-rule-status" onchange="renderDiscountRulesTable()" class="px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-700 dark:text-slate-200 focus:outline-none">
-                                <option value="ALL">Semua Status</option>
-                                <option value="ACTIVE" selected>Aktif Saja</option>
-                                <option value="INACTIVE">Nonaktif Saja</option>
-                            </select>
-                            <button type="button" onclick="openDiscountRuleModal()" class="shrink-0 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow transition-colors flex items-center space-x-1.5 cursor-pointer">
-                                <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                                <span>+ Tambah Aturan Diskon Baru</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Mini KPI Row for Discounts -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs">
-                            <span class="text-[10px] font-bold uppercase text-slate-400 block">Total Aturan Promo</span>
-                            <h4 id="disc-rule-stat-total" class="text-lg font-black text-slate-800 dark:text-slate-100 mt-0.5">0</h4>
-                            <span class="text-[10px] text-slate-500">Tersimpan di sistem</span>
-                        </div>
-                        <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 shadow-2xs bg-gradient-to-br from-emerald-50/50 to-transparent">
-                            <span class="text-[10px] font-bold uppercase text-emerald-700 block">⚡ Promo Otomatis</span>
-                            <h4 id="disc-rule-stat-auto" class="text-lg font-black text-emerald-700 mt-0.5">0</h4>
-                            <span class="text-[10px] text-emerald-600">Autoset saat syarat terpenuhi</span>
-                        </div>
-                        <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-indigo-200 dark:border-indigo-800/60 shadow-2xs bg-gradient-to-br from-indigo-50/50 to-transparent">
-                            <span class="text-[10px] font-bold uppercase text-indigo-700 block">🔘 Promo Tombol Manual</span>
-                            <h4 id="disc-rule-stat-manual" class="text-lg font-black text-indigo-700 mt-0.5">0</h4>
-                            <span class="text-[10px] text-indigo-600">Dipilih kasir di kasir POS</span>
-                        </div>
-                        <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-rose-200 dark:border-rose-800/60 shadow-2xs bg-gradient-to-br from-rose-50/50 to-transparent">
-                            <span class="text-[10px] font-bold uppercase text-rose-700 block">Total Diskon Diberikan</span>
-                            <h4 id="disc-rule-stat-given" class="text-lg font-black text-rose-600 mt-0.5">Rp 0</h4>
-                            <span id="disc-rule-stat-orders" class="text-[10px] text-rose-600">0 Transaksi penjualan</span>
-                        </div>
-                    </div>
-
-                    <!-- Tabel Daftar Aturan Diskon -->
-                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-xs">
-                                <thead class="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-100 dark:border-slate-800 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
-                                    <tr>
-                                        <th class="py-3 px-4">Nama & Kode Promo</th>
-                                        <th class="py-3 px-3 text-right">Potongan Diskon</th>
-                                        <th class="py-3 px-3 text-right">Min. Belanja</th>
-                                        <th class="py-3 px-3">Target Kategori & Pelanggan</th>
-                                        <th class="py-3 px-3">Hari Berlaku</th>
-                                        <th class="py-3 px-3">Metode Bayar</th>
-                                        <th class="py-3 px-3 text-center">Mode</th>
-                                        <th class="py-3 px-3 text-center">Pemakaian</th>
-                                        <th class="py-3 px-3 text-center">Status</th>
-                                        <th class="py-3 px-4 text-center">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="cust-discounts-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
-                                    <tr>
-                                        <td colspan="10" class="text-center py-8 text-slate-400">Memuat data aturan diskon & promo...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            <!-- ---------------------------------------------------- -->
+                <!-- ---------------------------------------------------- -->
             <!-- TAB 10: MODUL LOGISTIK, ARMADA KURIR & BIAYA KIRIM   -->
             <!-- ---------------------------------------------------- -->
             <div id="tab-logistics" class="space-y-6 hidden">
@@ -5864,6 +5786,107 @@ try {
             </div>
 
             <!-- ---------------------------------------------------- -->
+            
+            <!-- ======================================================== -->
+            <!-- TAB 13: KELOLA ATURAN DISKON & PROMOSI NOMINAL (CRUD)    -->
+            <!-- ======================================================== -->
+            <div id="tab-discounts" class="tab-pane hidden space-y-6">
+                <!-- Header Banner -->
+                <div class="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                    <div>
+                        <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg flex items-center space-x-2">
+                            <i data-lucide="tag" class="w-5 h-5 text-amber-500"></i>
+                            <span>Manajemen Aturan Diskon & Promo (CRUD)</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Kelola aturan potongan harga nominal berdasarkan kriteria pelanggan, kategori, hari, dan metode pembayaran.</p>
+                    </div>
+                    <button onclick="openDiscountRuleModal()" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md shadow-rose-100 flex items-center space-x-2 transition-all cursor-pointer">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>+ Tambah Aturan Diskon Baru</span>
+                    </button>
+                </div>
+
+                <!-- Mini KPI Row for Discounts -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                        <span class="text-[10px] font-bold uppercase text-slate-400 block">Total Aturan Promo</span>
+                        <h4 id="disc-rule-stat-total" class="text-xl font-black text-slate-800 dark:text-slate-100 mt-0.5">0</h4>
+                        <span class="text-[10px] text-slate-500">Tersimpan di sistem</span>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 shadow-2xs bg-gradient-to-br from-emerald-50/50 to-transparent">
+                        <span class="text-[10px] font-bold uppercase text-emerald-700 block">⚡ Promo Otomatis</span>
+                        <h4 id="disc-rule-stat-auto" class="text-xl font-black text-emerald-700 mt-0.5">0</h4>
+                        <span class="text-[10px] text-emerald-600">Autoset saat syarat terpenuhi</span>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-indigo-200 dark:border-indigo-800/60 shadow-2xs bg-gradient-to-br from-indigo-50/50 to-transparent">
+                        <span class="text-[10px] font-bold uppercase text-indigo-700 block">🔘 Promo Tombol Manual</span>
+                        <h4 id="disc-rule-stat-manual" class="text-xl font-black text-indigo-700 mt-0.5">0</h4>
+                        <span class="text-[10px] text-indigo-600">Dipilih kasir di kasir POS</span>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-rose-200 dark:border-rose-800/60 shadow-2xs bg-gradient-to-br from-rose-50/50 to-transparent">
+                        <span class="text-[10px] font-bold uppercase text-rose-700 block">Total Diskon Diberikan</span>
+                        <h4 id="disc-rule-stat-given" class="text-xl font-black text-rose-600 mt-0.5">Rp 0</h4>
+                        <span id="disc-rule-stat-orders" class="text-[10px] text-rose-600">0 Transaksi penjualan</span>
+                    </div>
+                </div>
+
+                <!-- Toolbar Filter & Search -->
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-3 items-center justify-between">
+                    <div class="relative flex-1 min-w-[240px]">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
+                        <input type="text" id="disc-rule-search-keyword" oninput="renderDiscountRulesTable()" placeholder="Cari nama promo, kode voucher, atau deskripsi aturan..." class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400">
+                    </div>
+                    <div class="flex gap-2 items-center flex-wrap">
+                        <!-- Filter Mode Penerapan -->
+                        <div class="flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs">
+                            <button type="button" onclick="setDiscRuleModeFilter('ALL')" id="filter-disc-mode-all" class="disc-mode-filter-btn px-2.5 py-1 rounded-lg font-bold bg-rose-600 text-white shadow-2xs">Semua Mode</button>
+                            <button type="button" onclick="setDiscRuleModeFilter('AUTO')" id="filter-disc-mode-auto" class="disc-mode-filter-btn px-2.5 py-1 rounded-lg font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">⚡ Otomatis</button>
+                            <button type="button" onclick="setDiscRuleModeFilter('MANUAL')" id="filter-disc-mode-manual" class="disc-mode-filter-btn px-2.5 py-1 rounded-lg font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">🔘 Manual Kasir</button>
+                        </div>
+                        <!-- Filter Status -->
+                        <select id="filter-disc-rule-status" onchange="renderDiscountRulesTable()" class="px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-700 dark:text-slate-200 focus:outline-none">
+                            <option value="ALL">Semua Status</option>
+                            <option value="ACTIVE" selected>Aktif Saja</option>
+                            <option value="INACTIVE">Nonaktif Saja</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tabel Data Aturan Diskon -->
+                <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="list" class="w-4 h-4 text-slate-400"></i>
+                            <h4 class="font-bold text-xs text-slate-700 dark:text-slate-200 uppercase tracking-wider">Daftar Aturan Promo & Diskon Penjualan</h4>
+                        </div>
+                        <span class="text-xs text-slate-400 font-medium">Promo aktif otomatis dievaluasi atau dapat dipilih di kasir POS</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-100 dark:border-slate-800 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+                                <tr>
+                                    <th class="py-3 px-4">Nama & Kode Promo</th>
+                                    <th class="py-3 px-3 text-right">Potongan Diskon</th>
+                                    <th class="py-3 px-3 text-right">Min. Belanja</th>
+                                    <th class="py-3 px-3">Target Kategori & Pelanggan</th>
+                                    <th class="py-3 px-3">Hari Berlaku</th>
+                                    <th class="py-3 px-3">Metode Bayar</th>
+                                    <th class="py-3 px-3 text-center">Mode</th>
+                                    <th class="py-3 px-3 text-center">Pemakaian</th>
+                                    <th class="py-3 px-3 text-center">Status</th>
+                                    <th class="py-3 px-4 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="discounts-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <tr>
+                                    <td colspan="10" class="text-center py-8 text-slate-400">Memuat data aturan diskon & promo...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- TAB 13: PEMBATALAN TRANSAKSI PENJUALAN (SUPERADMIN)  -->
             <!-- ---------------------------------------------------- -->
             <div id="tab-sale-cancellations" class="space-y-6 hidden">
@@ -12818,6 +12841,7 @@ try {
             'logistics': { title: 'Kurir, Biaya Kirim Dinamis & Armada Motor', sub: 'Peta Geospasial Leaflet, Kalkulator Ongkir Jarak Dinamis, Log BBM Odometer Motor & Servis Armada Masuk Beban Biaya' },
             'branches': { title: 'Manajemen Cabang & Outlet (CRUD)', sub: 'Kelola data seluruh toko, titik koordinat GPS maps outlet, radius presensi, dan nomor kontak cabang' },
             'payments': { title: 'Manajemen Metode Pembayaran (CRUD)', sub: 'Kelola saluran pembayaran kasir (Tunai, QRIS Dinamis, Kartu Debit EDC, Transfer Bank, E-Wallet) & status aktivasi' },
+            'discounts': { title: 'Manajemen Aturan Diskon & Promo (CRUD)', sub: 'Kelola aturan potongan harga nominal berdasarkan kriteria pelanggan, kategori, hari, dan metode pembayaran' },
             'sale-cancellations': { title: 'Pembatalan Transaksi Penjualan (Void Sales)', sub: 'Otorisasi Super Admin &bull; Pembatalan faktur, pengembalian stok barang & bahan baku BOM, serta pembatalan piutang' },
             'settings': { title: 'Konfigurasi Sistem, Perangkat & Hak Akses', sub: 'Pengaturan Identitas Toko, Logo, Printer Thermal USB/IP, Format Nota, Slip Gaji, serta Notifikasi WA & Telegram' }
         };
@@ -14014,7 +14038,7 @@ try {
 
         function switchTab(tab) {
             state.currentTab = tab;
-            const tabIds = ['dashboard', 'pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'partner-sales', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
+            const tabIds = ['dashboard', 'pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'partner-sales', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'discounts', 'sale-cancellations', 'settings'];
             tabIds.forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 const btn = document.getElementById(`tab-btn-${t}`);
@@ -14115,6 +14139,9 @@ try {
             if (tab === 'payments') {
                 loadPaymentMethods();
                 loadCashDenominations();
+            }
+            if (tab === 'discounts') {
+                loadDiscountRules();
             }
             if (tab === 'sale-cancellations') loadSaleCancellations();
             if (tab === 'settings') loadAppSettingsModule();
@@ -28907,8 +28934,7 @@ Manager / Supervisor: __________________
                 { key: 'mitra-pricing', elId: 'subview-cust-mitra', btnId: 'subtab-btn-cust-mitra' },
                 { key: 'branch-pricing', elId: 'subview-cust-branch', btnId: 'subtab-btn-cust-branch' },
                 { key: 'category', elId: 'subview-cust-category', btnId: 'subtab-btn-cust-category' },
-                { key: 'maps', elId: 'subview-cust-maps', btnId: 'subtab-btn-cust-maps' },
-                { key: 'discounts', elId: 'subview-cust-discounts', btnId: 'subtab-btn-cust-discounts' }
+                { key: 'maps', elId: 'subview-cust-maps', btnId: 'subtab-btn-cust-maps' }
             ];
 
             const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
@@ -28936,8 +28962,7 @@ Manager / Supervisor: __________________
             if (subtab === 'mitra-pricing') loadMitraPricing();
             if (subtab === 'branch-pricing') loadBranchPricing();
             if (subtab === 'category') loadCustomerCategories();
-            if (subtab === 'discounts') loadDiscountRulesTable();
-            lucide.createIcons();
+                        lucide.createIcons();
         }
 
         // SUBTAB 1: CUSTOMERS CRUD
@@ -33733,6 +33758,712 @@ Manager / Supervisor: __________________
             }
         }
 
+                // ==========================================
+        // 13. MANAJEMEN ATURAN DISKON & PROMO (CRUD)
+        // ==========================================
+        state.discountRules = [];
+        state.discRuleModeFilter = 'ALL';
+        state.appliedDiscount = null;
+
+        async function loadDiscountRules() {
+            try {
+                const res = await fetch('api.php?action=get_discount_rules&status=ALL');
+                const data = await res.json();
+                if (data.success && Array.isArray(data.discount_rules)) {
+                    state.discountRules = data.discount_rules;
+                    renderDiscountRulesTable();
+                } else {
+                    console.error('Gagal memuat aturan diskon:', data.message || 'Error');
+                }
+            } catch (err) {
+                console.error('Error loadDiscountRules:', err);
+            }
+        }
+
+        function setDiscRuleModeFilter(mode) {
+            state.discRuleModeFilter = mode;
+            const btnAll = document.getElementById('filter-disc-mode-all');
+            const btnAuto = document.getElementById('filter-disc-mode-auto');
+            const btnManual = document.getElementById('filter-disc-mode-manual');
+
+            const actClass = 'disc-mode-filter-btn px-2.5 py-1 rounded-lg font-bold bg-rose-600 text-white shadow-2xs';
+            const inactClass = 'disc-mode-filter-btn px-2.5 py-1 rounded-lg font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700';
+
+            if (btnAll) btnAll.className = (mode === 'ALL') ? actClass : inactClass;
+            if (btnAuto) btnAuto.className = (mode === 'AUTO') ? actClass : inactClass;
+            if (btnManual) btnManual.className = (mode === 'MANUAL') ? actClass : inactClass;
+
+            renderDiscountRulesTable();
+        }
+
+        function renderDiscountRulesTable() {
+            const tbody = document.getElementById('discounts-table-body');
+            if (!tbody) return;
+
+            const kwInput = document.getElementById('disc-rule-search-keyword');
+            const kw = kwInput ? kwInput.value.trim().toLowerCase() : '';
+            const stSelect = document.getElementById('filter-disc-rule-status');
+            const stFilter = stSelect ? stSelect.value : 'ALL';
+            const modeFilter = state.discRuleModeFilter || 'ALL';
+
+            let totalRules = 0;
+            let autoCount = 0;
+            let manualCount = 0;
+            let totalGiven = 0;
+            let totalUsageOrders = 0;
+
+            state.discountRules.forEach(function(r) {
+                totalRules++;
+                if (r.trigger_mode === 'AUTO') autoCount++;
+                if (r.trigger_mode === 'MANUAL') manualCount++;
+                totalGiven += parseFloat(r.total_discount_given || 0);
+                totalUsageOrders += parseInt(r.usage_count || 0, 10);
+            });
+
+            const statTot = document.getElementById('disc-rule-stat-total');
+            const statAuto = document.getElementById('disc-rule-stat-auto');
+            const statMan = document.getElementById('disc-rule-stat-manual');
+            const statGiven = document.getElementById('disc-rule-stat-given');
+            const statOrders = document.getElementById('disc-rule-stat-orders');
+
+            if (statTot) statTot.innerText = totalRules;
+            if (statAuto) statAuto.innerText = autoCount;
+            if (statMan) statMan.innerText = manualCount;
+            if (statGiven) statGiven.innerText = formatRupiah(totalGiven);
+            if (statOrders) statOrders.innerText = totalUsageOrders + ' Transaksi penjualan';
+
+            const filtered = state.discountRules.filter(function(r) {
+                if (stFilter === 'ACTIVE' && parseInt(r.is_active, 10) !== 1) return false;
+                if (stFilter === 'INACTIVE' && parseInt(r.is_active, 10) === 1) return false;
+                if (modeFilter === 'AUTO' && r.trigger_mode !== 'AUTO') return false;
+                if (modeFilter === 'MANUAL' && r.trigger_mode !== 'MANUAL') return false;
+                if (kw) {
+                    const searchBlob = ((r.name || '') + ' ' + (r.code || '') + ' ' + (r.description || '')).toLowerCase();
+                    if (searchBlob.indexOf(kw) === -1) return false;
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-slate-400">Tidak ada data aturan diskon & promo yang sesuai filter.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(function(r) {
+                const isActive = (parseInt(r.is_active, 10) === 1);
+                const isAuto = (r.trigger_mode === 'AUTO');
+                const modeBadge = isAuto
+                    ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">⚡ AUTO</span>'
+                    : '<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">🔘 MANUAL</span>';
+
+                let targetCustStr = '<span class="text-slate-500 font-medium">Semua Pelanggan</span>';
+                if (r.customer_ids_arr && r.customer_ids_arr.length > 0) {
+                    targetCustStr = '<span class="font-bold text-rose-600">' + r.customer_ids_arr.length + ' Pelanggan Tertentu</span>';
+                } else if (r.customer_categories_arr && r.customer_categories_arr.length > 0) {
+                    targetCustStr = '<span class="font-bold text-indigo-700 dark:text-indigo-300">' + r.customer_categories_arr.join(', ') + '</span>';
+                }
+
+                let daysStr = '<span class="text-slate-400 font-medium">Setiap Hari</span>';
+                if (r.days_of_week_arr && r.days_of_week_arr.length > 0) {
+                    daysStr = '<span class="font-bold text-slate-700 dark:text-slate-300">' + r.days_of_week_arr.join(', ') + '</span>';
+                }
+
+                let payStr = '<span class="text-slate-400 font-medium">Semua Metode</span>';
+                if (r.payment_methods_arr && r.payment_methods_arr.length > 0) {
+                    payStr = '<span class="font-bold text-slate-700 dark:text-slate-300">' + r.payment_methods_arr.join(', ') + '</span>';
+                }
+
+                const switchChecked = isActive ? 'checked' : '';
+                const statusText = isActive ? '<span class="text-emerald-600 font-bold">Aktif</span>' : '<span class="text-slate-400 font-medium">Nonaktif</span>';
+
+                html += '<tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">';
+                html += '  <td class="py-3 px-4">';
+                html += '    <div class="font-extrabold text-slate-900 dark:text-slate-100">' + escapeHtml(r.name) + '</div>';
+                html += '    <div class="font-mono text-[11px] font-bold text-rose-600 dark:text-rose-400 tracking-wide mt-0.5">' + escapeHtml(r.code) + '</div>';
+                if (r.description) html += '    <div class="text-[10px] text-slate-400 italic mt-0.5 line-clamp-1">' + escapeHtml(r.description) + '</div>';
+                html += '  </td>';
+                html += '  <td class="py-3 px-3 text-right font-mono font-black text-rose-600 text-sm">- ' + formatRupiah(r.discount_amount) + '</td>';
+                html += '  <td class="py-3 px-3 text-right font-mono font-bold text-slate-700 dark:text-slate-300">' + (parseFloat(r.min_purchase) > 0 ? formatRupiah(r.min_purchase) : '<span class="text-slate-400 text-[10px]">Tanpa Min</span>') + '</td>';
+                html += '  <td class="py-3 px-3 text-[11px]">' + targetCustStr + '</td>';
+                html += '  <td class="py-3 px-3 text-[11px]">' + daysStr + '</td>';
+                html += '  <td class="py-3 px-3 text-[11px]">' + payStr + '</td>';
+                html += '  <td class="py-3 px-3 text-center">' + modeBadge + '</td>';
+                html += '  <td class="py-3 px-3 text-center">';
+                html += '    <span class="font-extrabold text-slate-800 dark:text-slate-200">' + (r.usage_count || 0) + 'x</span>';
+                if (parseFloat(r.total_discount_given) > 0) {
+                    html += '    <div class="text-[10px] text-rose-600 font-bold font-mono">' + formatRupiah(r.total_discount_given) + '</div>';
+                }
+                html += '  </td>';
+                html += '  <td class="py-3 px-3 text-center">';
+                html += '    <label class="relative inline-flex items-center cursor-pointer">';
+                html += '      <input type="checkbox" onchange="toggleDiscountRuleStatus(' + r.id + ', this.checked)" class="sr-only peer" ' + switchChecked + '>';
+                html += '      <div class="w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[\'\'] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>';
+                html += '    </label>';
+                html += '    <div class="text-[9px] mt-0.5">' + statusText + '</div>';
+                html += '  </td>';
+                html += '  <td class="py-3 px-4 text-center">';
+                html += '    <div class="flex items-center justify-center space-x-1">';
+                html += '      <button type="button" onclick="openDiscountRuleModal(' + r.id + ')" class="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 dark:hover:bg-slate-800 rounded-lg" title="Edit Aturan Promo">';
+                html += '        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>';
+                html += '      </button>';
+                html += '      <button type="button" onclick="deleteDiscountRule(' + r.id + ', \'' + escapeHtml(r.name).replace(/'/g, "\\'") + '\')" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 dark:hover:bg-slate-800 rounded-lg" title="Hapus Aturan Promo">';
+                html += '        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>';
+                html += '      </button>';
+                html += '    </div>';
+                html += '  </td>';
+                html += '</tr>';
+            });
+
+            tbody.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function openDiscountRuleModal(ruleId) {
+            const modal = document.getElementById('modal-discount-rule');
+            if (!modal) return;
+
+            const form = document.getElementById('form-discount-rule');
+            if (form) form.reset();
+
+            const titleEl = document.getElementById('disc-rule-modal-title');
+            const idInput = document.getElementById('disc-rule-id');
+
+            const brSelect = document.getElementById('disc-rule-branch-id');
+            if (brSelect) {
+                let brHtml = '<option value="">Semua Cabang (Global)</option>';
+                if (state.branches && state.branches.length > 0) {
+                    state.branches.forEach(function(b) {
+                        brHtml += '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>';
+                    });
+                }
+                brSelect.innerHTML = brHtml;
+            }
+
+            renderDiscCustomerCheckboxes();
+
+            if (ruleId) {
+                const r = state.discountRules.find(function(item) { return item.id == ruleId; });
+                if (r) {
+                    if (titleEl) titleEl.innerText = 'Edit Aturan Diskon';
+                    if (idInput) idInput.value = r.id;
+                    document.getElementById('disc-rule-name').value = r.name || '';
+                    document.getElementById('disc-rule-code').value = r.code || '';
+                    document.getElementById('disc-rule-amount').value = r.discount_amount || '';
+                    document.getElementById('disc-rule-min-purchase').value = r.min_purchase || 0;
+                    
+                    const modeRadios = document.getElementsByName('disc-rule-trigger-mode');
+                    for (let i = 0; i < modeRadios.length; i++) {
+                        modeRadios[i].checked = (modeRadios[i].value === r.trigger_mode);
+                    }
+
+                    const hasCustIds = (r.customer_ids_arr && r.customer_ids_arr.length > 0);
+                    const custTypeRadios = document.getElementsByName('disc-scope-cust-type');
+                    for (let i = 0; i < custTypeRadios.length; i++) {
+                        custTypeRadios[i].checked = (custTypeRadios[i].value === (hasCustIds ? 'SPECIFIC' : 'ALL'));
+                    }
+                    onDiscScopeCustChange();
+                    if (hasCustIds) {
+                        const cBoxes = document.getElementsByName('disc-cust-checkbox');
+                        for (let i = 0; i < cBoxes.length; i++) {
+                            cBoxes[i].checked = r.customer_ids_arr.includes(parseInt(cBoxes[i].value, 10));
+                        }
+                    }
+
+                    const hasCat = (r.customer_categories_arr && r.customer_categories_arr.length > 0);
+                    const catTypeRadios = document.getElementsByName('disc-scope-cat-type');
+                    for (let i = 0; i < catTypeRadios.length; i++) {
+                        catTypeRadios[i].checked = (catTypeRadios[i].value === (hasCat ? 'SPECIFIC' : 'ALL'));
+                    }
+                    onDiscScopeCatChange();
+                    if (hasCat) {
+                        const catBoxes = document.getElementsByName('disc-cat-checkbox');
+                        for (let i = 0; i < catBoxes.length; i++) {
+                            catBoxes[i].checked = r.customer_categories_arr.includes(catBoxes[i].value);
+                        }
+                    }
+
+                    const hasDays = (r.days_of_week_arr && r.days_of_week_arr.length > 0);
+                    const dayTypeRadios = document.getElementsByName('disc-scope-day-type');
+                    for (let i = 0; i < dayTypeRadios.length; i++) {
+                        dayTypeRadios[i].checked = (dayTypeRadios[i].value === (hasDays ? 'SPECIFIC' : 'ALL'));
+                    }
+                    onDiscScopeDayChange();
+                    if (hasDays) {
+                        const dayBoxes = document.getElementsByName('disc-day-checkbox');
+                        for (let i = 0; i < dayBoxes.length; i++) {
+                            dayBoxes[i].checked = r.days_of_week_arr.includes(dayBoxes[i].value);
+                        }
+                    }
+
+                    const hasPay = (r.payment_methods_arr && r.payment_methods_arr.length > 0);
+                    const payTypeRadios = document.getElementsByName('disc-scope-pay-type');
+                    for (let i = 0; i < payTypeRadios.length; i++) {
+                        payTypeRadios[i].checked = (payTypeRadios[i].value === (hasPay ? 'SPECIFIC' : 'ALL'));
+                    }
+                    onDiscScopePayChange();
+                    if (hasPay) {
+                        const payBoxes = document.getElementsByName('disc-pay-checkbox');
+                        for (let i = 0; i < payBoxes.length; i++) {
+                            payBoxes[i].checked = r.payment_methods_arr.includes(payBoxes[i].value);
+                        }
+                    }
+
+                    document.getElementById('disc-rule-start-date').value = r.start_date || '';
+                    document.getElementById('disc-rule-end-date').value = r.end_date || '';
+                    if (brSelect) brSelect.value = r.branch_id || '';
+                    document.getElementById('disc-rule-is-active').checked = (parseInt(r.is_active, 10) === 1);
+                    document.getElementById('disc-rule-description').value = r.description || '';
+                }
+            } else {
+                if (titleEl) titleEl.innerText = 'Tambah Aturan Diskon Baru';
+                if (idInput) idInput.value = '';
+                onDiscScopeCustChange();
+                onDiscScopeCatChange();
+                onDiscScopeDayChange();
+                onDiscScopePayChange();
+            }
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeDiscountRuleModal() {
+            const modal = document.getElementById('modal-discount-rule');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function onDiscScopeCustChange() {
+            const radios = document.getElementsByName('disc-scope-cust-type');
+            let val = 'ALL';
+            for (let i = 0; i < radios.length; i++) {
+                if (radios[i].checked) { val = radios[i].value; break; }
+            }
+            const container = document.getElementById('disc-cust-specific-container');
+            if (container) {
+                if (val === 'SPECIFIC') container.classList.remove('hidden');
+                else container.classList.add('hidden');
+            }
+        }
+
+        function onDiscScopeCatChange() {
+            const radios = document.getElementsByName('disc-scope-cat-type');
+            let val = 'ALL';
+            for (let i = 0; i < radios.length; i++) {
+                if (radios[i].checked) { val = radios[i].value; break; }
+            }
+            const container = document.getElementById('disc-cat-specific-container');
+            if (container) {
+                if (val === 'SPECIFIC') container.classList.remove('hidden');
+                else container.classList.add('hidden');
+            }
+        }
+
+        function onDiscScopeDayChange() {
+            const radios = document.getElementsByName('disc-scope-day-type');
+            let val = 'ALL';
+            for (let i = 0; i < radios.length; i++) {
+                if (radios[i].checked) { val = radios[i].value; break; }
+            }
+            const container = document.getElementById('disc-day-specific-container');
+            if (container) {
+                if (val === 'SPECIFIC') container.classList.remove('hidden');
+                else container.classList.add('hidden');
+            }
+        }
+
+        function onDiscScopePayChange() {
+            const radios = document.getElementsByName('disc-scope-pay-type');
+            let val = 'ALL';
+            for (let i = 0; i < radios.length; i++) {
+                if (radios[i].checked) { val = radios[i].value; break; }
+            }
+            const container = document.getElementById('disc-pay-specific-container');
+            if (container) {
+                if (val === 'SPECIFIC') container.classList.remove('hidden');
+                else container.classList.add('hidden');
+            }
+        }
+
+        function renderDiscCustomerCheckboxes() {
+            const listEl = document.getElementById('disc-cust-checkboxes-list');
+            if (!listEl) return;
+            const custs = state.customers || [];
+            if (custs.length === 0) {
+                listEl.innerHTML = '<p class="text-slate-400 p-2 text-center">Belum ada data pelanggan.</p>';
+                return;
+            }
+            let html = '';
+            custs.forEach(function(c) {
+                html += '<label class="flex items-center space-x-2 p-1.5 hover:bg-white dark:hover:bg-slate-800 rounded cursor-pointer disc-cust-chk-row" data-name="' + escapeHtml(c.name || '').toLowerCase() + '" data-phone="' + escapeHtml(c.phone || '').toLowerCase() + '">';
+                html += '  <input type="checkbox" name="disc-cust-checkbox" value="' + c.id + '" class="text-rose-600 rounded">';
+                html += '  <div class="flex-1 leading-tight">';
+                html += '    <span class="font-bold text-slate-800 dark:text-slate-200 block">' + escapeHtml(c.name) + '</span>';
+                html += '    <span class="text-[10px] text-slate-400 font-mono">' + escapeHtml(c.phone || '-') + ' &bull; ' + escapeHtml(c.category || 'REGULER') + '</span>';
+                html += '  </div>';
+                html += '</label>';
+            });
+            listEl.innerHTML = html;
+        }
+
+        function filterDiscCustomerCheckboxList() {
+            const kwInput = document.getElementById('disc-cust-filter-search');
+            const kw = kwInput ? kwInput.value.trim().toLowerCase() : '';
+            const rows = document.querySelectorAll('.disc-cust-chk-row');
+            rows.forEach(function(row) {
+                const name = row.getAttribute('data-name') || '';
+                const phone = row.getAttribute('data-phone') || '';
+                if (!kw || name.indexOf(kw) !== -1 || phone.indexOf(kw) !== -1) {
+                    row.classList.remove('hidden');
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+        }
+
+        async function saveDiscountRuleForm(e) {
+            if (e) e.preventDefault();
+
+            const id = document.getElementById('disc-rule-id').value;
+            const name = document.getElementById('disc-rule-name').value.trim();
+            const code = document.getElementById('disc-rule-code').value.trim();
+            const discountAmount = parseFloat(document.getElementById('disc-rule-amount').value || 0);
+            const minPurchase = parseFloat(document.getElementById('disc-rule-min-purchase').value || 0);
+
+            const modeRadios = document.getElementsByName('disc-rule-trigger-mode');
+            let triggerMode = 'AUTO';
+            for (let i = 0; i < modeRadios.length; i++) {
+                if (modeRadios[i].checked) { triggerMode = modeRadios[i].value; break; }
+            }
+
+            const custRadios = document.getElementsByName('disc-scope-cust-type');
+            let scopeCustType = 'ALL';
+            for (let i = 0; i < custRadios.length; i++) {
+                if (custRadios[i].checked) { scopeCustType = custRadios[i].value; break; }
+            }
+            const customerIds = [];
+            if (scopeCustType === 'SPECIFIC') {
+                const cBoxes = document.getElementsByName('disc-cust-checkbox');
+                for (let i = 0; i < cBoxes.length; i++) {
+                    if (cBoxes[i].checked) customerIds.push(parseInt(cBoxes[i].value, 10));
+                }
+                if (customerIds.length === 0) {
+                    alert('Pilih minimal 1 pelanggan atau gunakan opsi Semua Pelanggan.');
+                    return;
+                }
+            }
+
+            const catRadios = document.getElementsByName('disc-scope-cat-type');
+            let scopeCatType = 'ALL';
+            for (let i = 0; i < catRadios.length; i++) {
+                if (catRadios[i].checked) { scopeCatType = catRadios[i].value; break; }
+            }
+            const customerCategories = [];
+            if (scopeCatType === 'SPECIFIC') {
+                const catBoxes = document.getElementsByName('disc-cat-checkbox');
+                for (let i = 0; i < catBoxes.length; i++) {
+                    if (catBoxes[i].checked) customerCategories.push(catBoxes[i].value);
+                }
+                if (customerCategories.length === 0) {
+                    alert('Pilih minimal 1 kategori pelanggan atau gunakan opsi Semua Kategori.');
+                    return;
+                }
+            }
+
+            const dayRadios = document.getElementsByName('disc-scope-day-type');
+            let scopeDayType = 'ALL';
+            for (let i = 0; i < dayRadios.length; i++) {
+                if (dayRadios[i].checked) { scopeDayType = dayRadios[i].value; break; }
+            }
+            const daysOfWeek = [];
+            if (scopeDayType === 'SPECIFIC') {
+                const dayBoxes = document.getElementsByName('disc-day-checkbox');
+                for (let i = 0; i < dayBoxes.length; i++) {
+                    if (dayBoxes[i].checked) daysOfWeek.push(dayBoxes[i].value);
+                }
+                if (daysOfWeek.length === 0) {
+                    alert('Pilih minimal 1 hari berlaku atau gunakan opsi Semua Hari.');
+                    return;
+                }
+            }
+
+            const payRadios = document.getElementsByName('disc-scope-pay-type');
+            let scopePayType = 'ALL';
+            for (let i = 0; i < payRadios.length; i++) {
+                if (payRadios[i].checked) { scopePayType = payRadios[i].value; break; }
+            }
+            const paymentMethods = [];
+            if (scopePayType === 'SPECIFIC') {
+                const payBoxes = document.getElementsByName('disc-pay-checkbox');
+                for (let i = 0; i < payBoxes.length; i++) {
+                    if (payBoxes[i].checked) paymentMethods.push(payBoxes[i].value);
+                }
+                if (paymentMethods.length === 0) {
+                    alert('Pilih minimal 1 metode pembayaran atau gunakan opsi Semua Metode.');
+                    return;
+                }
+            }
+
+            const startDate = document.getElementById('disc-rule-start-date').value || null;
+            const endDate = document.getElementById('disc-rule-end-date').value || null;
+            const branchId = document.getElementById('disc-rule-branch-id').value || null;
+            const isActive = document.getElementById('disc-rule-is-active').checked ? 1 : 0;
+            const description = document.getElementById('disc-rule-description').value.trim();
+
+            if (!name || discountAmount <= 0) {
+                alert('Lengkapi nama aturan diskon dan nominal potongan diskon.');
+                return;
+            }
+
+            const payload = {
+                id: id || null,
+                name: name,
+                code: code,
+                discount_amount: discountAmount,
+                min_purchase: minPurchase,
+                trigger_mode: triggerMode,
+                scope_customer_type: scopeCustType,
+                customer_ids: customerIds,
+                scope_category_type: scopeCatType,
+                customer_categories: customerCategories,
+                scope_day_type: scopeDayType,
+                days_of_week: daysOfWeek,
+                scope_payment_type: scopePayType,
+                payment_methods: paymentMethods,
+                start_date: startDate,
+                end_date: endDate,
+                branch_id: branchId,
+                is_active: isActive,
+                description: description
+            };
+
+            try {
+                const res = await fetch('api.php?action=save_discount_rule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeDiscountRuleModal();
+                    await loadDiscountRules();
+                    alert(data.message || 'Aturan diskon berhasil disimpan!');
+                } else {
+                    alert('Gagal menyimpan aturan diskon: ' + (data.message || 'Terjadi kesalahan.'));
+                }
+            } catch (err) {
+                console.error('Error saveDiscountRuleForm:', err);
+                alert('Terjadi kesalahan jaringan saat menyimpan aturan diskon.');
+            }
+        }
+
+        async function toggleDiscountRuleStatus(id, newStatus) {
+            try {
+                const res = await fetch('api.php?action=toggle_discount_rule_status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id, is_active: newStatus ? 1 : 0 })
+                });
+                const data = await res.json();
+                if (!data.success) {
+                    alert('Gagal memperbarui status promo: ' + (data.message || 'Error'));
+                    await loadDiscountRules();
+                } else {
+                    const rule = state.discountRules.find(function(item) { return item.id == id; });
+                    if (rule) rule.is_active = newStatus ? 1 : 0;
+                    renderDiscountRulesTable();
+                }
+            } catch (err) {
+                console.error('Error toggleDiscountRuleStatus:', err);
+            }
+        }
+
+        async function deleteDiscountRule(id, name) {
+            if (!confirm('Apakah Anda yakin ingin menghapus aturan promo "' + name + '"?')) return;
+            try {
+                const res = await fetch('api.php?action=delete_discount_rule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await loadDiscountRules();
+                    alert(data.message || 'Aturan promo berhasil dihapus.');
+                } else {
+                    alert('Gagal menghapus aturan promo: ' + (data.message || 'Error'));
+                }
+            } catch (err) {
+                console.error('Error deleteDiscountRule:', err);
+                alert('Terjadi kesalahan koneksi.');
+            }
+        }
+
+        // --- POS CASHIER PROMO INTEGRATION ---
+        function openPosPromoPicker() {
+            const modal = document.getElementById('modal-pos-promo-picker');
+            if (!modal) return;
+            renderPosPromoPickerList();
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closePosPromoPicker() {
+            const modal = document.getElementById('modal-pos-promo-picker');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function renderPosPromoPickerList() {
+            const container = document.getElementById('pos-promo-picker-list');
+            if (!container) return;
+            const rules = state.discountRules || [];
+            if (rules.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 p-6 text-center text-xs">Belum ada aturan promo tersimpan.</p>';
+                return;
+            }
+
+            const subtotal = state.cart ? state.cart.reduce(function(acc, c) { return acc + (c.price * c.qty); }, 0) : 0;
+            const custId = state.selectedCustomer ? state.selectedCustomer.id : null;
+            const custCat = state.selectedCustomerCategory || (state.selectedCustomer ? state.selectedCustomer.category : 'REGULER');
+            const payMethod = state.paymentMethod || 'CASH';
+
+            const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+            const todayDay = days[new Date().getDay()];
+
+            let html = '';
+            rules.forEach(function(r) {
+                if (parseInt(r.is_active, 10) !== 1) return;
+
+                let eligible = true;
+                let reasons = [];
+
+                if (parseFloat(r.min_purchase) > 0 && subtotal < parseFloat(r.min_purchase)) {
+                    eligible = false;
+                    reasons.push('Min. belanja ' + formatRupiah(r.min_purchase) + ' (kurang ' + formatRupiah(parseFloat(r.min_purchase) - subtotal) + ')');
+                }
+
+                if (r.customer_ids_arr && r.customer_ids_arr.length > 0) {
+                    if (!custId || !r.customer_ids_arr.includes(parseInt(custId, 10))) {
+                        eligible = false;
+                        reasons.push('Khusus pelanggan terpilih');
+                    }
+                }
+
+                if (r.customer_categories_arr && r.customer_categories_arr.length > 0) {
+                    if (!r.customer_categories_arr.includes(custCat)) {
+                        eligible = false;
+                        reasons.push('Khusus kategori ' + r.customer_categories_arr.join('/'));
+                    }
+                }
+
+                if (r.days_of_week_arr && r.days_of_week_arr.length > 0) {
+                    if (!r.days_of_week_arr.includes(todayDay)) {
+                        eligible = false;
+                        reasons.push('Hanya berlaku hari ' + r.days_of_week_arr.join(', '));
+                    }
+                }
+
+                if (r.payment_methods_arr && r.payment_methods_arr.length > 0) {
+                    if (!r.payment_methods_arr.includes(payMethod)) {
+                        eligible = false;
+                        reasons.push('Khusus metode ' + r.payment_methods_arr.join('/'));
+                    }
+                }
+
+                const isApplied = (state.appliedDiscount && state.appliedDiscount.id == r.id);
+                const cardBorder = isApplied ? 'border-rose-500 bg-rose-50/70 dark:bg-rose-950/40 ring-2 ring-rose-400' : (eligible ? 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-rose-300' : 'border-slate-200/60 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 opacity-60');
+
+                html += '<div class="p-3.5 rounded-2xl border ' + cardBorder + ' transition-all flex flex-col justify-between space-y-2">';
+                html += '  <div>';
+                html += '    <div class="flex items-center justify-between">';
+                html += '      <span class="font-extrabold text-xs text-slate-800 dark:text-slate-100">' + escapeHtml(r.name) + '</span>';
+                html += '      <span class="px-2 py-0.5 rounded-md font-mono font-bold text-[10px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">' + escapeHtml(r.code) + '</span>';
+                html += '    </div>';
+                html += '    <div class="mt-1 font-mono font-black text-rose-600 text-sm">- ' + formatRupiah(r.discount_amount) + '</div>';
+                if (r.description) html += '    <p class="text-[10px] text-slate-500 mt-1">' + escapeHtml(r.description) + '</p>';
+                if (!eligible && reasons.length > 0) {
+                    html += '    <div class="mt-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-medium bg-amber-50 dark:bg-amber-950/40 p-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60">';
+                    html += '      ⚠️ Syarat belum terpenuhi: ' + reasons.join(' &bull; ');
+                    html += '    </div>';
+                }
+                html += '  </div>';
+
+                html += '  <div class="pt-1">';
+                if (isApplied) {
+                    html += '    <button type="button" onclick="removeAppliedPosPromo()" class="w-full py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-800 rounded-xl text-xs font-bold transition-colors">Batalkan Promo Ini</button>';
+                } else if (eligible) {
+                    html += '    <button type="button" onclick="applyPosPromo(' + r.id + ')" class="w-full py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow transition-colors cursor-pointer">Pasang Promo Ini</button>';
+                } else {
+                    html += '    <button type="button" disabled class="w-full py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-400 rounded-xl text-xs font-bold cursor-not-allowed">Syarat Belum Terpenuhi</button>';
+                }
+                html += '  </div>';
+                html += '</div>';
+            });
+
+            container.innerHTML = html;
+        }
+
+        function applyPosPromo(ruleId) {
+            const rule = state.discountRules.find(function(item) { return item.id == ruleId; });
+            if (!rule) return;
+            state.appliedDiscount = rule;
+            const discInput = document.getElementById('input-discount');
+            if (discInput) discInput.value = parseFloat(rule.discount_amount || 0);
+
+            const banner = document.getElementById('pos-active-promo-banner');
+            const bannerName = document.getElementById('pos-active-promo-name');
+            const bannerVal = document.getElementById('pos-active-promo-val');
+            if (banner) {
+                banner.classList.remove('hidden');
+                if (bannerName) bannerName.innerText = rule.name;
+                if (bannerVal) bannerVal.innerText = '- ' + formatRupiah(rule.discount_amount);
+            }
+
+            closePosPromoPicker();
+            calculateCartTotals();
+        }
+
+        function removeAppliedPosPromo() {
+            state.appliedDiscount = null;
+            const discInput = document.getElementById('input-discount');
+            if (discInput) discInput.value = 0;
+
+            const banner = document.getElementById('pos-active-promo-banner');
+            if (banner) banner.classList.add('hidden');
+
+            closePosPromoPicker();
+            calculateCartTotals();
+        }
+
+        function onPosManualDiscountInput() {
+            // Jika user mengetik manual, lepaskan promo otomatis/manual
+            state.appliedDiscount = null;
+            const banner = document.getElementById('pos-active-promo-banner');
+            if (banner) banner.classList.add('hidden');
+            calculateCartTotals();
+        }
+
+        // Assign ke window untuk proteksi 100% bebas ReferenceError
+        window.loadDiscountRules = loadDiscountRules;
+        window.setDiscRuleModeFilter = setDiscRuleModeFilter;
+        window.renderDiscountRulesTable = renderDiscountRulesTable;
+        window.openDiscountRuleModal = openDiscountRuleModal;
+        window.closeDiscountRuleModal = closeDiscountRuleModal;
+        window.saveDiscountRuleForm = saveDiscountRuleForm;
+        window.toggleDiscountRuleStatus = toggleDiscountRuleStatus;
+        window.deleteDiscountRule = deleteDiscountRule;
+        window.onDiscScopeCustChange = onDiscScopeCustChange;
+        window.onDiscScopeCatChange = onDiscScopeCatChange;
+        window.onDiscScopeDayChange = onDiscScopeDayChange;
+        window.onDiscScopePayChange = onDiscScopePayChange;
+        window.renderDiscCustomerCheckboxes = renderDiscCustomerCheckboxes;
+        window.filterDiscCustomerCheckboxList = filterDiscCustomerCheckboxList;
+        window.openPosPromoPicker = openPosPromoPicker;
+        window.closePosPromoPicker = closePosPromoPicker;
+        window.applyPosPromo = applyPosPromo;
+        window.removeAppliedPosPromo = removeAppliedPosPromo;
+        window.onPosManualDiscountInput = onPosManualDiscountInput;
+
         // ==========================================
         // 15. MODUL PEMBATALAN TRANSAKSI PENJUALAN (VOID SALES)
         // ==========================================
@@ -35028,7 +35759,7 @@ Manager / Supervisor: __________________
             const isSuperAdmin = (role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'SUPER ADMIN');
 
             // Ambil izin menu role
-            const allMenus = ['dashboard', 'pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'sale-cancellations', 'settings'];
+            const allMenus = ['dashboard', 'pos', 'reports', 'ess', 'employees', 'payroll', 'products', 'bom', 'stocks', 'stock-in', 'pnl', 'expenses', 'customers', 'logistics', 'branches', 'payments', 'discounts', 'sale-cancellations', 'settings'];
 
             allMenus.forEach(mKey => {
                 const btn = document.getElementById(`tab-btn-${mKey}`);
@@ -35529,6 +36260,14 @@ Manager / Supervisor: __________________
                 icon: 'credit-card',
                 subtabs: [
                     { key: 'payments:methods', title: 'Metode Pembayaran Kasir', desc: 'Aktivasi Tunai, QRIS Dinamis, Kartu Debit, Transfer Bank' }
+                ]
+            },
+            {
+                key: 'discounts',
+                title: 'Aturan Diskon & Promo',
+                icon: 'tag',
+                subtabs: [
+                    { key: 'discounts:rules', title: 'Aturan Diskon & Promo', desc: 'Kelola aturan potongan harga nominal per pelanggan, kategori, hari, dan metode bayar' }
                 ]
             },
             {
