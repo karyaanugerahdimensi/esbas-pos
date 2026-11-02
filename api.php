@@ -5751,18 +5751,19 @@ try {
                 // Resolusi Stok Acuan Pembukaan Shift:
                 // 1. Tutup Galon pada awal hari baru (Shift 1) mulai dari 0 di meja kasir (sisa semalam diretur ke gudang).
                 // 2. Untuk produk lain (misal Aqua Refill 19 Liter, Gas 3 KG, Air Mineral, Es Kristal):
-                //    - Jika belum ada riwayat shift yang ditutup (misal DB baru atau pasca Reset dengan Pertahankan Stok Awal),
-                //      gunakan saldo stok cabang saat ini ($bStock): bernilai 0 jika di-reset total, atau bernilai Stok Awal (misal 12) jika tercatat!
-                //    - Jika sudah ada shift tertutup sebelumnya, utamakan saldo aktual cabang ($bStock) bila baris branch_stocks tersedia,
-                //      agar penyetelan Stok Awal / Penambahan Stok Manual / Reset Stok di luar shift selalu sinkron dengan Opening Shift.
-                $refQty = 0;
+                //    - Jika ada riwayat shift yang ditutup (CLOSED): gunakan sisa fisik yang diinput kasir saat closing kemarin ($closedVal).
+                //    - Jika belum ada riwayat shift yang ditutup (toko pertama kali buka atau pasca RESET):
+                //      Stok Malam murni 0 ($nightQty = 0), dan acuan awal menggunakan Saldo Stok Awal Cabang ($initialStock).
+                $nightQty = 0;
+                $initialStock = max(0, (float)$bStock);
                 $isPrevFinal = $lastShift && !empty($lastShift['is_final_shift']);
                 $isCapSku = ($sku === 'RAW-089' || $sku === 'RAW-020' || stripos($r['name'] ?? '', 'Tutup Galon') !== false);
                 $isNewDayOrShift1 = (!$isContinuation || $nextShiftNumber == 1);
 
                 if ($isCapSku && $isNewDayOrShift1) {
-                    // Sisa tutup semalam telah diretur ke gudang saat tutup toko, sehingga stok fisik semalam di toko bersih 0
-                    $refQty = 0;
+                    // Sisa tutup semalam telah diretur ke gudang saat tutup toko, sehingga stok fisik semalam di meja toko bersih 0
+                    $nightQty = 0;
+                    $openingStock = 0;
                 } elseif ($lastShift && $lastShift['status'] === 'CLOSED') {
                     $closedVal = null;
                     if (!empty($lastClosingItems) && isset($lastClosingItems[$pId]) && $lastClosingItems[$pId] !== '' && $lastClosingItems[$pId] !== null) {
@@ -5771,17 +5772,17 @@ try {
                         $closedVal = (float)$lastClosingItems[$sku];
                     }
 
-                    if ($hasBsRow) {
-                        $refQty = max(0, $bStock);
-                    } elseif ($closedVal !== null) {
-                        $refQty = max(0, $closedVal);
+                    if ($closedVal !== null) {
+                        $nightQty = max(0, $closedVal);
                     } else {
-                        $refQty = max(0, $bStock);
+                        $nightQty = 0;
                     }
+                    $openingStock = $nightQty;
                 } else {
-                    // Belum ada riwayat shift yang ditutup:
-                    // Mengikuti saldo Stok Awal cabang ($bStock == 0 jika habis reset total, atau misal 12 jika memiliki Stok Awal)
-                    $refQty = max(0, $bStock);
+                    // Belum ada riwayat shift yang ditutup (hari pertama / pasca Reset Data):
+                    // Stok Malam murni 0!
+                    $nightQty = 0;
+                    $openingStock = $initialStock;
                 }
 
                 $dynamicItems[] = [
@@ -5793,20 +5794,21 @@ try {
                     'product_type' => $r['product_type'],
                     'image_emoji' => $r['image_emoji'] ?? '📦',
                     'branch_stock' => $bStock,
-                    'night_stock' => $refQty,
-                    'opening_stock' => $refQty
+                    'night_stock' => $nightQty,
+                    'initial_stock' => $initialStock,
+                    'opening_stock' => $openingStock
                 ];
 
                 $rawBySku[$sku] = $r;
 
                 if ($sku === 'RAW-089') {
-                    $nightStockLegacy['mineral'] = $refQty;
+                    $nightStockLegacy['mineral'] = $nightQty;
                     $currentStockLegacy['mineral'] = $bStock;
                 } elseif ($sku === 'RAW-020') {
-                    $nightStockLegacy['ro'] = $refQty;
+                    $nightStockLegacy['ro'] = $nightQty;
                     $currentStockLegacy['ro'] = $bStock;
                 } elseif ($sku === 'RAW-00092') {
-                    $nightStockLegacy['plastik'] = $refQty;
+                    $nightStockLegacy['plastik'] = $nightQty;
                     $currentStockLegacy['plastik'] = $bStock;
                 }
             }
@@ -5893,7 +5895,7 @@ try {
             // 2. Tentukan nomor shift & nama shift:
             // Cek apakah shift terakhir yang closed adalah final shift (is_final_shift = 1)
             $stmtLastClosedAny = $pdo->prepare("
-                SELECT is_final_shift FROM cashier_shifts
+                SELECT is_final_shift, closing_items_json FROM cashier_shifts
                 WHERE branch_id = ? AND status = 'CLOSED'
                 ORDER BY id DESC LIMIT 1
             ");
@@ -5901,6 +5903,13 @@ try {
             $lastClosedRow = $stmtLastClosedAny->fetch(PDO::FETCH_ASSOC);
             $hasPrevClosedShift = ($lastClosedRow !== false);
             $lastWasFinal = $hasPrevClosedShift ? (int)($lastClosedRow['is_final_shift'] ?? 0) : 0;
+            $lastClosedItems = [];
+            if ($hasPrevClosedShift && !empty($lastClosedRow['closing_items_json'])) {
+                $decClosed = json_decode($lastClosedRow['closing_items_json'], true);
+                if (is_array($decClosed)) {
+                    $lastClosedItems = $decClosed;
+                }
+            }
 
             $stmtCountToday = $pdo->prepare("SELECT COUNT(*) FROM cashier_shifts WHERE branch_id = ? AND date(start_time) = ?");
             $stmtCountToday->execute([$branchId, $today]);
@@ -5945,7 +5954,6 @@ try {
                         $pId = (int)($v['product_id'] ?? 0);
                         if ($pId) {
                             $curExistingStock = $currentBranchStocks[$pId] ?? 0;
-                            $nightVal = (isset($v['night_qty']) && $v['night_qty'] !== '' && $v['night_qty'] !== null) ? (float)$v['night_qty'] : $curExistingStock;
                             
                             $hasAddedInput = (isset($v['added_qty']) && $v['added_qty'] !== '' && $v['added_qty'] !== null);
                             $addedVal = $hasAddedInput ? (float)$v['added_qty'] : 0;
@@ -5969,15 +5977,31 @@ try {
                                     $explicitlyUpdated[$pId] = false;
                                 }
                             } else {
-                                $effectiveExisting = array_key_exists($pId, $currentBranchStocks) ? max(0, (float)$currentBranchStocks[$pId]) : max(0, $nightVal);
-                                $baseBeforeAdd = array_key_exists($pId, $currentBranchStocks) ? $effectiveExisting : max($effectiveExisting, $nightVal);
-                                $nightVal = $baseBeforeAdd;
+                                $prevClosingVal = null;
+                                if ($hasPrevClosedShift && !empty($lastClosedItems)) {
+                                    if (isset($lastClosedItems[$pId]) && $lastClosedItems[$pId] !== '' && $lastClosedItems[$pId] !== null) {
+                                        $prevClosingVal = (float)$lastClosedItems[$pId];
+                                    } elseif ($prodMeta && isset($lastClosedItems[$prodMeta['sku']]) && $lastClosedItems[$prodMeta['sku']] !== '' && $lastClosedItems[$prodMeta['sku']] !== null) {
+                                        $prevClosingVal = (float)$lastClosedItems[$prodMeta['sku']];
+                                    }
+                                }
+
+                                if ($hasPrevClosedShift) {
+                                    $nightVal = ($prevClosingVal !== null) ? max(0, $prevClosingVal) : (isset($v['night_qty']) && $v['night_qty'] !== '' ? max(0, (float)$v['night_qty']) : 0);
+                                    $baseBeforeAdd = $nightVal;
+                                } else {
+                                    // Toko pertama kali buka atau pasca Reset Data (tanpa riwayat shift closed):
+                                    // Stok Malam murni 0! Acuan pembukaan awal menggunakan Saldo Stok Awal Cabang yang tercatat
+                                    $nightVal = 0;
+                                    $baseBeforeAdd = array_key_exists($pId, $currentBranchStocks) ? max(0, (float)$currentBranchStocks[$pId]) : 0;
+                                }
+
                                 if ($hasAddedInput && $addedVal > 0) {
                                     $effAdded = $addedVal;
                                     $openVal = $baseBeforeAdd + $effAdded;
                                     $explicitlyUpdated[$pId] = true;
                                 } else {
-                                    // Diabaikan mengikuti stok awal / saldo aktual yang sudah ada sebelumnya di cabang
+                                    // Diabaikan mengikuti acuan stok yang sudah ada sebelumnya
                                     $effAdded = 0;
                                     $openVal = $baseBeforeAdd;
                                     $explicitlyUpdated[$pId] = false;
@@ -5993,12 +6017,12 @@ try {
                         $openVal = (float)$v;
                         $curExistingStock = max(0, (float)($currentBranchStocks[$pId] ?? 0));
                         if ($openVal > 0) {
-                            $nightMap[$pId] = $curExistingStock;
-                            $addedMap[$pId] = max(0, $openVal - $curExistingStock);
+                            $nightMap[$pId] = $hasPrevClosedShift ? $curExistingStock : 0;
+                            $addedMap[$pId] = $hasPrevClosedShift ? max(0, $openVal - $curExistingStock) : $openVal;
                             $openingMap[$pId] = $openVal;
                             $explicitlyUpdated[$pId] = true;
                         } else {
-                            $nightMap[$pId] = $curExistingStock;
+                            $nightMap[$pId] = 0;
                             $addedMap[$pId] = 0;
                             $openingMap[$pId] = $curExistingStock;
                             $explicitlyUpdated[$pId] = false;
@@ -6021,10 +6045,23 @@ try {
                     $ensPid = (int)$ospEnsure['product_id'];
                     if ($ensPid > 0 && !array_key_exists($ensPid, $openingMap)) {
                         $ensIsCap = ($ospEnsure['sku'] === 'RAW-089' || $ospEnsure['sku'] === 'RAW-020' || stripos($ospEnsure['name'] ?? '', 'Tutup Galon') !== false);
-                        $ensInit = ($ensIsCap && ($shiftNumber == 1 || $lastWasFinal == 1))
-                            ? 0
-                            : max(0, (float)($currentBranchStocks[$ensPid] ?? 0));
-                        $nightMap[$ensPid] = $ensInit;
+                        if ($ensIsCap && ($shiftNumber == 1 || $lastWasFinal == 1)) {
+                            $ensNight = 0;
+                            $ensInit = 0;
+                        } elseif ($hasPrevClosedShift) {
+                            $prevC = null;
+                            if (isset($lastClosedItems[$ensPid]) && $lastClosedItems[$ensPid] !== '' && $lastClosedItems[$ensPid] !== null) {
+                                $prevC = (float)$lastClosedItems[$ensPid];
+                            } elseif (isset($lastClosedItems[$ospEnsure['sku']]) && $lastClosedItems[$ospEnsure['sku']] !== '' && $lastClosedItems[$ospEnsure['sku']] !== null) {
+                                $prevC = (float)$lastClosedItems[$ospEnsure['sku']];
+                            }
+                            $ensNight = ($prevC !== null) ? max(0, $prevC) : 0;
+                            $ensInit = $ensNight;
+                        } else {
+                            $ensNight = 0;
+                            $ensInit = max(0, (float)($currentBranchStocks[$ensPid] ?? 0));
+                        }
+                        $nightMap[$ensPid] = $ensNight;
                         $addedMap[$ensPid] = 0;
                         $openingMap[$ensPid] = $ensInit;
                         $explicitlyUpdated[$ensPid] = false;

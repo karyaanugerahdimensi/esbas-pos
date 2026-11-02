@@ -8457,7 +8457,7 @@ try {
 
                         <!-- Checkbox Opsi Sekaligus Kosongkan Saldo Fisik Cabang (Stok = 0) -->
                         <label id="container-zero-physical-stock" class="flex items-center space-x-2 pt-0.5 cursor-pointer">
-                            <input type="checkbox" id="reset-opt-zero-physical-stock" class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
+                            <input type="checkbox" id="reset-opt-zero-physical-stock" checked class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
                             <span class="text-[11px] font-bold text-rose-700">Sekaligus nolkan / kosongkan saldo persediaan fisik produk cabang (Stok = 0)</span>
                         </label>
                     </div>
@@ -16105,7 +16105,8 @@ try {
 
                     if (items.length > 0) {
                         // Kolom Kiri: PENAMBAHAN STOK PAGI (+) (Kasir Pertama Hari Ini)
-                        // Rumus: Stok Awal = Input Tambahan + Stok Malam
+                        // Rumus: Stok Awal = Input Tambahan + Acuan Stok (Stok Malam jika ada shift kemarin, atau Saldo Stok Awal Cabang jika baru/pasca reset)
+                        const hasPrevShift = !(!prevInfo);
                         openingInputsHtml = items.map(item => {
                             let legacyId = '';
                             if (item.sku === 'RAW-089') legacyId = 'id="opening-raw-mineral"';
@@ -16114,6 +16115,26 @@ try {
 
                             const itemName = escapeHtml(item.name || item.sku);
                             const itemUnit = escapeHtml(item.unit || 'pcs');
+                            const isCapSku = (item.sku === 'RAW-089' || item.sku === 'RAW-020' || (item.name && item.name.toLowerCase().indexOf('tutup galon') !== -1));
+                            
+                            let nightVal = (item.night_stock !== undefined && item.night_stock !== null) ? parseFloat(item.night_stock) : 0;
+                            if (isNaN(nightVal)) nightVal = 0;
+                            
+                            let initVal = (item.initial_stock !== undefined && item.initial_stock !== null) ? parseFloat(item.initial_stock) : ((item.branch_stock !== undefined && item.branch_stock !== null) ? parseFloat(item.branch_stock) : 0);
+                            if (isNaN(initVal)) initVal = 0;
+
+                            let baseAcuanVal = 0;
+                            if (isCapSku) {
+                                baseAcuanVal = 0;
+                            } else if (hasPrevShift) {
+                                baseAcuanVal = nightVal;
+                            } else {
+                                baseAcuanVal = initVal;
+                            }
+
+                            const acuanSubLabel = hasPrevShift 
+                                ? ('Stok Malam: <b class="text-slate-700">' + formatDecimal(nightVal) + '</b> ' + itemUnit)
+                                : ('Stok Awal: <b class="text-slate-700">' + formatDecimal(baseAcuanVal) + '</b> ' + itemUnit);
 
                             return `
                                 <div class="bg-white/95 p-3 rounded-2xl border border-emerald-100 shadow-2xs flex flex-col space-y-2">
@@ -16123,22 +16144,22 @@ try {
                                                 <span class="text-xs font-black text-slate-800 uppercase leading-snug break-words">${itemName}</span>
                                                 <span class="text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded font-bold">${itemUnit}</span>
                                             </div>
-                                            <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${item.sku} • Stok Malam: <b class="text-slate-700">${formatDecimal(item.night_stock)}</b> ${itemUnit}</span>
+                                            <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${item.sku} • ${acuanSubLabel}</span>
                                         </div>
                                         <div class="flex items-center space-x-1.5 shrink-0">
                                             <span class="text-xs font-black text-emerald-600">+</span>
-                                            <input type="number" ${legacyId} data-product-id="${item.product_id}" data-sku="${item.sku}" data-product-name="${itemName}" data-unit="${itemUnit}" data-night-stock="${item.night_stock}" oninput="calculateOpeningShiftVariance()" value="" min="0" placeholder="" class="shift-added-item-input w-20 sm:w-24 text-center py-1.5 px-2 bg-emerald-50/50 border-2 border-emerald-300 rounded-xl font-black text-emerald-950 text-sm focus:ring-2 focus:ring-emerald-500 shadow-inner">
+                                            <input type="number" ${legacyId} data-product-id="${item.product_id}" data-sku="${item.sku}" data-product-name="${itemName}" data-unit="${itemUnit}" data-night-stock="${baseAcuanVal}" data-has-prev-shift="${hasPrevShift ? '1' : '0'}" oninput="calculateOpeningShiftVariance()" value="" min="0" placeholder="" class="shift-added-item-input w-20 sm:w-24 text-center py-1.5 px-2 bg-emerald-50/50 border-2 border-emerald-300 rounded-xl font-black text-emerald-950 text-sm focus:ring-2 focus:ring-emerald-500 shadow-inner">
                                         </div>
                                     </div>
                                     <div id="item-calc-badge-${item.product_id}" class="text-[11px] pt-1.5 border-t border-slate-100 flex items-center justify-between text-slate-600 transition-all">
-                                        <span>Stok Awal: <b class="font-mono text-slate-900 font-black">${formatDecimal(item.night_stock)}</b> ${itemUnit}</span>
+                                        <span>Stok Awal: <b class="font-mono text-slate-900 font-black">${formatDecimal(baseAcuanVal)}</b> ${itemUnit}</span>
                                         <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">✓ Stok Tetap</span>
                                     </div>
                                 </div>
                             `;
                         }).join('');
 
-                        // Kolom Kanan: STOK ACUAN MALAM (Terkunci 🔒 / Readonly)
+                        // Kolom Kanan: STOK ACUAN MALAM / AWAL TERCATAT (Terkunci 🔒 / Readonly)
                         nightInputsHtml = items.map(item => {
                             let legacyIdNight = '';
                             if (item.sku === 'RAW-089') legacyIdNight = 'id="closing-night-mineral"';
@@ -16147,7 +16168,24 @@ try {
 
                             const itemName = escapeHtml(item.name || item.sku);
                             const itemUnit = escapeHtml(item.unit || 'pcs');
-                            const nightSourceLabel = prevInfo ? 'Sisa Closing Kemarin' : 'Stok Awal Tercatat';
+                            const isCapSku = (item.sku === 'RAW-089' || item.sku === 'RAW-020' || (item.name && item.name.toLowerCase().indexOf('tutup galon') !== -1));
+                            
+                            let nightVal = (item.night_stock !== undefined && item.night_stock !== null) ? parseFloat(item.night_stock) : 0;
+                            if (isNaN(nightVal)) nightVal = 0;
+                            
+                            let initVal = (item.initial_stock !== undefined && item.initial_stock !== null) ? parseFloat(item.initial_stock) : ((item.branch_stock !== undefined && item.branch_stock !== null) ? parseFloat(item.branch_stock) : 0);
+                            if (isNaN(initVal)) initVal = 0;
+
+                            let baseAcuanVal = 0;
+                            if (isCapSku) {
+                                baseAcuanVal = 0;
+                            } else if (hasPrevShift) {
+                                baseAcuanVal = nightVal;
+                            } else {
+                                baseAcuanVal = initVal;
+                            }
+
+                            const nightSourceLabel = hasPrevShift ? 'Sisa Closing Kemarin' : 'Stok Awal Tercatat';
 
                             return `
                                 <div class="bg-white/90 p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col space-y-2">
@@ -16160,14 +16198,14 @@ try {
                                             <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${item.sku} • ${nightSourceLabel}</span>
                                         </div>
                                         <div class="w-20 sm:w-24 text-center py-1.5 px-2 bg-slate-100 border border-slate-300 rounded-xl font-black text-slate-700 text-sm shadow-inner relative">
-                                            <input type="hidden" ${legacyIdNight} data-product-id="${item.product_id}" value="${item.night_stock}" class="shift-night-item-input">
-                                            <span>${formatDecimal(item.night_stock)}</span>
+                                            <input type="hidden" ${legacyIdNight} data-product-id="${item.product_id}" value="${baseAcuanVal}" class="shift-night-item-input">
+                                            <span>${formatDecimal(baseAcuanVal)}</span>
                                             <span class="absolute right-1.5 top-2 text-[10px] text-slate-400">🔒</span>
                                         </div>
                                     </div>
                                     <div class="text-[11px] pt-1.5 border-t border-slate-100 flex items-center justify-between text-slate-500">
                                         <span>Total Stok Awal:</span>
-                                        <span id="item-night-total-${item.product_id}" class="font-mono font-black text-indigo-950">${item.night_stock} ${itemUnit}</span>
+                                        <span id="item-night-total-${item.product_id}" class="font-mono font-black text-indigo-950">${formatDecimal(baseAcuanVal)} ${itemUnit}</span>
                                     </div>
                                 </div>
                             `;
@@ -16322,16 +16360,20 @@ try {
 
             let addedItems = [];
             let sameCount = 0;
+            let hasAnyPrevShift = false;
 
             addedInputs.forEach(input => {
                 const pId = input.getAttribute('data-product-id');
                 const pName = input.getAttribute('data-product-name') || 'Produk';
                 const sku = input.getAttribute('data-sku') || '';
                 const unit = input.getAttribute('data-unit') || 'pcs';
-                const isCap = (sku === 'RAW-089' || sku === 'RAW-020' || pName.toLowerCase().includes('tutup galon'));
-                let nightVal = parseInt(input.getAttribute('data-night-stock')) || 0;
+                const hasPrev = input.getAttribute('data-has-prev-shift') === '1';
+                if (hasPrev) hasAnyPrevShift = true;
+
+                const isCap = (sku === 'RAW-089' || sku === 'RAW-020' || (pName && pName.toLowerCase().indexOf('tutup galon') !== -1));
+                let nightVal = parseFloat(input.getAttribute('data-night-stock')) || 0;
                 if (isCap) nightVal = 0;
-                const addedVal = Math.max(0, parseInt(input.value) || 0);
+                const addedVal = Math.max(0, parseFloat(input.value) || 0);
                 const totalOpeningVal = nightVal + addedVal;
 
                 const badge = document.getElementById(`item-calc-badge-${pId}`);
@@ -16343,21 +16385,22 @@ try {
                 if (badge) {
                     if (addedVal > 0) {
                         badge.className = 'text-[11px] pt-1.5 border-t border-emerald-100 flex items-center justify-between text-emerald-800 transition-all';
+                        const sourceTag = hasPrev ? 'malam' : 'awal';
                         badge.innerHTML = `
-                            <span>Stok Awal: <b class="font-mono text-emerald-950 font-black">${formatDecimal(totalOpeningVal)}</b> ${unit} <span class="text-[10px] text-emerald-700 font-bold">(${formatDecimal(nightVal)} malam + ${formatDecimal(addedVal)} baru)</span></span>
+                            <span>Stok Awal: <b class="font-mono text-emerald-950 font-black">${formatDecimal(totalOpeningVal)}</b> ${unit} <span class="text-[10px] text-emerald-700 font-bold">(${formatDecimal(nightVal)} ${sourceTag} + ${formatDecimal(addedVal)} baru)</span></span>
                             <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">📥 +${formatDecimal(addedVal)} Masuk</span>
                         `;
                     } else {
                         badge.className = 'text-[11px] pt-1.5 border-t border-slate-100 flex items-center justify-between text-slate-600 transition-all';
                         badge.innerHTML = `
-                            <span>Stok Awal: <b class="font-mono text-slate-900">${nightVal}</b> ${unit}</span>
+                            <span>Stok Awal: <b class="font-mono text-slate-900">${formatDecimal(nightVal)}</b> ${unit}</span>
                             <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">✓ Stok Tetap</span>
                         `;
                     }
                 }
 
                 if (addedVal > 0) {
-                    addedItems.push({ name: pName, added: addedVal, night: nightVal, total: totalOpeningVal, unit: unit });
+                    addedItems.push({ name: pName, added: addedVal, night: nightVal, total: totalOpeningVal, unit: unit, hasPrev: hasPrev });
                 } else {
                     sameCount++;
                 }
@@ -16365,7 +16408,10 @@ try {
 
             if (addedItems.length > 0) {
                 box.className = 'p-3.5 rounded-2xl text-xs font-medium transition-all bg-emerald-50 border border-emerald-300 text-emerald-900 space-y-1.5 shadow-sm';
-                let addedRows = addedItems.map(it => `• <b>${it.name}</b>: Sisa malam ${it.night} + <b class="text-emerald-700 font-black">+${it.added} ${it.unit} Tambahan Baru</b> = <b>Total Stok Awal ${it.total} ${it.unit}</b>`).join('<br>');
+                let addedRows = addedItems.map(it => {
+                    const prefix = it.hasPrev ? ('Sisa malam ' + formatDecimal(it.night)) : ('Stok awal ' + formatDecimal(it.night));
+                    return `• <b>${it.name}</b>: ${prefix} + <b class="text-emerald-700 font-black">+${formatDecimal(it.added)} ${it.unit} Tambahan Baru</b> = <b>Total Stok Awal ${formatDecimal(it.total)} ${it.unit}</b>`;
+                }).join('<br>');
                 box.innerHTML = `
                     <div class="flex items-center space-x-2 font-black text-emerald-950 text-sm">
                         <span>📥</span>
@@ -16374,15 +16420,19 @@ try {
                     <div class="pl-6 text-[11px] leading-relaxed">
                         ${addedRows}
                     </div>
-                    <p class="text-[10px] text-emerald-700 pl-6 italic">Perhitungan: Stok Awal = Stok Input Awal Shift (+ Tambahan) + Stok Malam.</p>
+                    <p class="text-[10px] text-emerald-700 pl-6 italic">Perhitungan: Stok Awal = Stok Input Awal Shift (+ Tambahan) + Acuan Stok.</p>
                 `;
             } else {
                 box.className = 'p-3.5 rounded-2xl text-xs font-bold transition-all bg-slate-50 border border-slate-200 text-slate-700 flex items-center space-x-2.5';
+                const bannerTitle = hasAnyPrevShift ? 'Stok Awal Pagi = Stok Malam Hari Kemarin' : 'Stok Awal Pagi = Saldo Stok Awal Tercatat';
+                const bannerDesc = hasAnyPrevShift
+                    ? `Tidak ada penambahan stok baru masuk pagi ini (Stok Awal = 0 + Stok Malam). Seluruh ${sameCount} item siap dijual.`
+                    : `Tidak ada penambahan stok baru masuk pagi ini (Stok Awal = Saldo Stok Cabang). Seluruh ${sameCount} item siap dijual.`;
                 box.innerHTML = `
                     <span class="p-1 bg-emerald-100 text-emerald-700 rounded-lg text-sm">✓</span>
                     <div>
-                        <span class="font-black text-slate-900">Stok Awal Pagi = Stok Malam Hari Kemarin</span>
-                        <span class="block text-[10px] font-normal text-slate-500">Tidak ada penambahan stok baru masuk pagi ini (Stok Awal = 0 + Stok Malam). Seluruh ${sameCount} item siap dijual.</span>
+                        <span class="font-black text-slate-900">${bannerTitle}</span>
+                        <span class="block text-[10px] font-normal text-slate-500">${bannerDesc}</span>
                     </div>
                 `;
             }

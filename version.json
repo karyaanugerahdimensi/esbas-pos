@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.6.3",
-    "build": "20261101-89",
-    "release_date": "2026-11-01",
+    "version": "1.6.4",
+    "build": "20261102-90",
+    "release_date": "2026-11-02",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.6.4",
+            "commit": "HEAD",
+            "date": "2026-11-02",
+            "title": "Penyelarasan Reset Data Stok, Transaksi & Acuan Stok Malam pada Pembukaan Toko (FR-POS-62)",
+            "description": "Menyelesaikan isu data stok malam yang masih muncul pada modal Buka Penjualan Toko Hari Ini (Opening Shift) pasca Reset Data Toko / Penghapusan Transaksi & Shift: (1) Penegasan Pembedaan Stok Malam vs Stok Awal: Memperbaiki get_opening_shift_data di api.php sehingga saat toko pertama kali dibuka atau pasca reset data (tanpa riwayat shift tertutup / CLOSED), nilai night_stock murni bernilai 0 dan initial_stock menggunakan saldo stok cabang yang tercatat; (2) Penegasan Formula open_shift di Backend: Memastikan nightMap disimpan senilai 0 jika tidak ada riwayat shift tertutup sebelumnya, dengan acuan dasar pembukaan mengikuti saldo cabang terdaftar dan penambahan baru pagi; (3) Tampilan Dinamis Modal Opening Shift di Frontend: Memperbaiki index.php pada kolom kiri dan kanan agar menampilkan label 'Stok Awal: X' dan 'Stok Awal Tercatat' saat toko belum memiliki shift sebelumnya, serta 'Stok Malam: X' dan 'Sisa Closing Kemarin' saat terdapat shift tertutup kemarin; (4) Penyelarasan Otomatis Checkbox Reset Saldo Fisik: Memastikan opsi pengosongan saldo fisik produk terpilih secara otomatis saat reset stok dieksekusi; (5) Kompatibilitas Penuh Android 8.1: Bebas operator ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.6.3"
+        },
         {
             "version": "1.6.3",
             "commit": "HEAD",
