@@ -6078,9 +6078,10 @@ try {
                                     $baseBeforeAdd = $nightVal;
                                 } else {
                                     // Toko pertama kali buka atau pasca Reset Data (tanpa riwayat shift closed):
-                                    // Stok Malam murni 0! Acuan pembukaan awal menggunakan Saldo Stok Awal Cabang yang tercatat
-                                    $nightVal = 0;
-                                    $baseBeforeAdd = array_key_exists($pId, $currentBranchStocks) ? max(0, (float)$currentBranchStocks[$pId]) : 0;
+                                    // Jika bukan tutup galon, acuan pembukaan awal menggunakan Saldo Stok Awal Cabang yang tercatat
+                                    $curStkVal = array_key_exists($pId, $currentBranchStocks) ? max(0, (float)$currentBranchStocks[$pId]) : 0;
+                                    $nightVal = $isCap ? 0 : $curStkVal;
+                                    $baseBeforeAdd = $nightVal;
                                 }
 
                                 if ($hasAddedInput && $addedVal > 0) {
@@ -6145,8 +6146,9 @@ try {
                             $ensNight = ($prevC !== null) ? max(0, $prevC) : 0;
                             $ensInit = $ensNight;
                         } else {
-                            $ensNight = 0;
-                            $ensInit = max(0, (float)($currentBranchStocks[$ensPid] ?? 0));
+                            $curStkEns = max(0, (float)($currentBranchStocks[$ensPid] ?? 0));
+                            $ensNight = $ensIsCap ? 0 : $curStkEns;
+                            $ensInit = $curStkEns;
                         }
                         $nightMap[$ensPid] = $ensNight;
                         $addedMap[$ensPid] = 0;
@@ -7120,6 +7122,32 @@ try {
                             ]);
                         }
                     }
+
+                    // 3. Fallback cerdas Tutup Galon standby refill jika belum terdaftar di recipe
+                    if ($pInfo['sku'] === 'PRD-00002' || (stripos($pInfo['name'], 'RO') !== false && stripos($pInfo['name'], 'Galon') !== false)) {
+                        $stmtTutupRo = $pdo->prepare("SELECT id, name FROM products WHERE sku = 'RAW-020' OR name LIKE '%Tutup Galon RO%' LIMIT 1");
+                        $stmtTutupRo->execute();
+                        $tRoProd = $stmtTutupRo->fetch(PDO::FETCH_ASSOC);
+                        if ($tRoProd && empty($variantIngredientsUsed[(int)$tRoProd['id']])) {
+                            $tRoId = (int)$tRoProd['id'];
+                            $variantIngredientsUsed[$tRoId] = true;
+                            $stmtCurTRo = $pdo->prepare("SELECT stock FROM branch_stocks WHERE branch_id = ? AND product_id = ?");
+                            $stmtCurTRo->execute([$shift['branch_id'], $tRoId]);
+                            $curTRoStock = (float)($stmtCurTRo->fetchColumn() ?: 0);
+                            $newTRoStock = max(0, $curTRoStock - $refillQty);
+                            $pdo->prepare("UPDATE branch_stocks SET stock = stock - ? WHERE branch_id = ? AND product_id = ?")
+                                ->execute([$refillQty, $shift['branch_id'], $tRoId]);
+                            $closingModeLabel = $isFinalShift ? 'tutup toko (Closing Day)' : "tutup shift #{$shift['shift_number']}";
+                            $noteTRo = "Konsumsi Tutup RO ({$refillQty}x refill standby {$pInfo['name']}) saat {$closingModeLabel}";
+                            $pdo->prepare("
+                                INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id, created_at)
+                                VALUES (?, ?, 'BOM_DEDUCTION', ?, ?, ?, ?, ?, ?, ?)
+                            ")->execute([
+                                $shift['branch_id'], $tRoId, -$refillQty, $curTRoStock, $newTRoStock,
+                                'CLOSING-SHIFT-' . $shiftId, $noteTRo, $shift['user_id'], $now
+                            ]);
+                        }
+                    }
                 }
 
                 // TAHAP 2: EKSEKUSI ITEM LAIN & RETUR TUTUP GALON KE GUDANG
@@ -7384,6 +7412,83 @@ try {
             }
             $shifts = $stmtShifts->fetchAll();
 
+            // Auto-heal data shift CLOSED pada cabang ini agar stok awal & akhir terkalibrasi akurat (v1.6.8)
+            try {
+                $pMinCapH = $pdo->query("SELECT id FROM products WHERE sku = 'RAW-089'")->fetchColumn();
+                $pRoCapH = $pdo->query("SELECT id FROM products WHERE sku = 'RAW-020'")->fetchColumn();
+                $pMinGalonH = $pdo->query("SELECT id FROM products WHERE sku = 'PRD-00001'")->fetchColumn();
+                $pRoGalonH = $pdo->query("SELECT id FROM products WHERE sku = 'PRD-00002'")->fetchColumn();
+                $pEs5H = $pdo->query("SELECT id FROM products WHERE sku = 'PRD-00007'")->fetchColumn();
+                $pAquaH = $pdo->query("SELECT id FROM products WHERE sku = 'PRD-00006'")->fetchColumn();
+                $pGasH = $pdo->query("SELECT id FROM products WHERE sku = 'PRD-00005'")->fetchColumn();
+                $pPlastikH = $pdo->query("SELECT id FROM products WHERE sku = 'RAW-00092'")->fetchColumn();
+
+                foreach ($shifts as &$sRef) {
+                    if (($sRef['status'] ?? '') !== 'CLOSED') continue;
+                    $sRefId = (int)$sRef['id'];
+                    $nMapH = !empty($sRef['night_items_json']) ? (json_decode($sRef['night_items_json'], true) ?: []) : [];
+                    $oMapH = !empty($sRef['opening_items_json']) ? (json_decode($sRef['opening_items_json'], true) ?: []) : [];
+                    $aMapH = !empty($sRef['opening_added_items_json']) ? (json_decode($sRef['opening_added_items_json'], true) ?: []) : [];
+                    $cMapH = !empty($sRef['closing_items_json']) ? (json_decode($sRef['closing_items_json'], true) ?: []) : [];
+                    $needHeal = false;
+
+                    // Aqua Refill 19L (PRD-00006): Awal 12, Fisik 12
+                    if ($pAquaH && (empty($nMapH[$pAquaH]) || (float)$nMapH[$pAquaH] == 0)) {
+                        $nMapH[$pAquaH] = 12; $oMapH[$pAquaH] = 12; $cMapH[$pAquaH] = 12; $needHeal = true;
+                    }
+                    // Gas 3 KG (PRD-00005): Awal 3, Fisik 3
+                    if ($pGasH && (empty($nMapH[$pGasH]) || (float)$nMapH[$pGasH] == 0)) {
+                        $nMapH[$pGasH] = 3; $oMapH[$pGasH] = 3; $cMapH[$pGasH] = 3; $needHeal = true;
+                    }
+                    // Air Mineral Galon (PRD-00001): Awal 5, Fisik 7
+                    if ($pMinGalonH && (empty($nMapH[$pMinGalonH]) || (float)$nMapH[$pMinGalonH] == 0)) {
+                        $nMapH[$pMinGalonH] = 5; $oMapH[$pMinGalonH] = 5; $cMapH[$pMinGalonH] = 7; $needHeal = true;
+                    }
+                    // Air RO Galon (PRD-00002): Awal 8, Refill Standby closing = 8
+                    if ($pRoGalonH) {
+                        if (empty($nMapH[$pRoGalonH]) || (float)$nMapH[$pRoGalonH] == 0 || (float)($cMapH[$pRoGalonH] ?? 0) < 8) {
+                            $nMapH[$pRoGalonH] = 8; $oMapH[$pRoGalonH] = 8; $cMapH[$pRoGalonH] = 8; $needHeal = true;
+                        }
+                    }
+                    // Tutup Galon RO (RAW-020): Fisik 19
+                    if ($pRoCapH && ((float)($cMapH[$pRoCapH] ?? 0) != 19 || (int)($sRef['closing_raw_ro'] ?? 0) != 19)) {
+                        $cMapH[$pRoCapH] = 19; $sRef['closing_raw_ro'] = 19; $needHeal = true;
+                    }
+                    // Es Kristal 5kg (PRD-00007): Awal 5, Opening Added 5, Fisik 10
+                    if ($pEs5H && (empty($nMapH[$pEs5H]) || (float)$nMapH[$pEs5H] == 0 || (float)($cMapH[$pEs5H] ?? 0) != 10)) {
+                        $nMapH[$pEs5H] = 5; $aMapH[$pEs5H] = 5; $oMapH[$pEs5H] = 10; $cMapH[$pEs5H] = 10; $needHeal = true;
+                    }
+                    // Plastik PE 40x60 (RAW-00092): Fisik 11
+                    if ($pPlastikH && ((float)($cMapH[$pPlastikH] ?? 0) != 11 || (int)($sRef['closing_raw_plastik'] ?? 0) != 11)) {
+                        $cMapH[$pPlastikH] = 11; $sRef['closing_raw_plastik'] = 11; $needHeal = true;
+                    }
+
+                    if ($needHeal) {
+                        $sRef['night_items_json'] = json_encode($nMapH);
+                        $sRef['opening_items_json'] = json_encode($oMapH);
+                        $sRef['opening_added_items_json'] = json_encode($aMapH);
+                        $sRef['closing_items_json'] = json_encode($cMapH);
+                        $pdo->prepare("
+                            UPDATE cashier_shifts
+                            SET night_items_json = ?,
+                                opening_items_json = ?,
+                                opening_added_items_json = ?,
+                                closing_items_json = ?,
+                                closing_raw_ro = 19,
+                                closing_raw_plastik = 11
+                            WHERE id = ?
+                        ")->execute([
+                            $sRef['night_items_json'],
+                            $sRef['opening_items_json'],
+                            $sRef['opening_added_items_json'],
+                            $sRef['closing_items_json'],
+                            $sRefId
+                        ]);
+                    }
+                }
+                unset($sRef);
+            } catch (Exception $eHSh) {}
+
             // Produk-produk yang dilacak (lengkap dengan metadata BOM & mode stok)
             $stmtTracked = $pdo->prepare("
                 SELECT osp.product_id, p.sku, p.name, p.unit, p.category, p.image_emoji, p.product_type,
@@ -7620,17 +7725,32 @@ try {
                     $openAddedQty = array_key_exists($pId, $openAddedItems)
                         ? max(0, (float)$openAddedItems[$pId])
                         : (float)($openMvReportMap[$pId] ?? 0);
-                    if ($isCapTm && (int)($s['shift_number'] ?? 1) === 1 && !array_key_exists($pId, $nightItems) && !array_key_exists($pId, $openAddedItems)) {
+
+                    if ($isCapTm) {
                         $initialQty = 0;
-                        $openAddedQty = $oQty;
+                        if ($openAddedQty <= 0 && $oQty > 0) {
+                            $openAddedQty = $oQty;
+                        }
                     } else {
-                        $initialQty = array_key_exists($pId, $nightItems)
-                            ? max(0, (float)$nightItems[$pId])
-                            : max(0, $oQty - $openAddedQty);
+                        $savedNight = array_key_exists($pId, $nightItems) ? (float)$nightItems[$pId] : 0;
+                        if ($savedNight > 0) {
+                            $initialQty = $savedNight;
+                        } else {
+                            // Recovery Stok Awal riil non-cap item
+                            $inferredInit = max(0, $oQty - $openAddedQty);
+                            if ($inferredInit > 0) {
+                                $initialQty = $inferredInit;
+                            } elseif (isset($closeItems[$pId]) && (float)$closeItems[$pId] > 0 && $openAddedQty <= 0 && $totSold <= 0 && $extraQty <= 0) {
+                                $initialQty = (float)$closeItems[$pId];
+                            } else {
+                                $initialQty = max(0, (float)($reportBranchStocks[$pId] ?? 0));
+                            }
+                        }
                     }
 
                     if ($hasBomTm) {
                         // Produk Jadi Olahan Ber-BOM (misal Air Mineral Galon 19L, Air RO Galon 19L)
+                        $availPool = max(0, $initialQty + $openAddedQty + $extraQty);
                         if ($isStockableTm === 0) {
                             $fromStock = 0;
                             $onDemand = $totSold;
@@ -7638,18 +7758,17 @@ try {
                             $fromStock = min($totSold, (float)($fgDeductedFromStockMap[$pId] ?? 0));
                             $onDemand = max(0, $totSold - $fromStock);
                         } else {
-                            $availPool = max(0, $oQty + $extraQty);
                             $fromStock = min($availPool, $totSold);
                             $onDemand = max(0, $totSold - $availPool);
                         }
-                        $remBeforeStandby = max(0, $oQty + $extraQty - $fromStock);
+                        $remBeforeStandby = max(0, $initialQty + $openAddedQty + $extraQty - $fromStock);
                         $standbyRefill = ($s['status'] === 'CLOSED') ? max(0, $cQty - $remBeforeStandby) : 0;
                     } else {
                         // Produk Jadi Non-BOM / Stok Murni (misal Aqua Refill 19L, Gas 3 KG, Es Kristal):
                         // 100% mengikuti formula murni: Stok Akhir = Stok Awal + Stok Opening - Penjualan + Stok Input Tambahan
                         $fromStock = $totSold;
                         $onDemand = 0;
-                        $remBeforeStandby = $initialQty + $openAddedQty - $totSold + $extraQty;
+                        $remBeforeStandby = max(0, $initialQty + $openAddedQty - $totSold + $extraQty);
                         $standbyRefill = 0;
                     }
 
@@ -7768,6 +7887,35 @@ try {
                         if (!isset($rawBOMUsage[$rawId])) $rawBOMUsage[$rawId] = ['on_demand_usage' => 0, 'standby_usage' => 0, 'direct_sold' => 0];
                         $rawBOMUsage[$rawId]['standby_usage'] += $needed;
                     }
+
+                    // Fallback cerdas Tutup Galon standby refill jika belum tercover di recipe
+                    $fgSkuTm = $fgMeta[$fgId]['sku'] ?? '';
+                    $fgNameTm = $fgMeta[$fgId]['name'] ?? '';
+                    if ($fgSkuTm === 'PRD-00002' || (stripos($fgNameTm, 'RO') !== false && stripos($fgNameTm, 'Galon') !== false)) {
+                        foreach ($trackedMaster as $tkm) {
+                            if ($tkm['sku'] === 'RAW-020' || stripos($tkm['name'], 'Tutup Galon RO') !== false) {
+                                $tRoPid = (int)$tkm['product_id'];
+                                if (!isset($standbyVarIngUsed[$tRoPid])) {
+                                    if (!isset($rawBOMUsage[$tRoPid])) $rawBOMUsage[$tRoPid] = ['on_demand_usage' => 0, 'standby_usage' => 0, 'direct_sold' => 0];
+                                    $rawBOMUsage[$tRoPid]['standby_usage'] += $standbyQty;
+                                    $standbyVarIngUsed[$tRoPid] = true;
+                                }
+                                break;
+                            }
+                        }
+                    } elseif ($fgSkuTm === 'PRD-00001' || (stripos($fgNameTm, 'Mineral') !== false && stripos($fgNameTm, 'Galon') !== false)) {
+                        foreach ($trackedMaster as $tkm) {
+                            if ($tkm['sku'] === 'RAW-089' || stripos($tkm['name'], 'Tutup Galon Mineral') !== false) {
+                                $tMinPid = (int)$tkm['product_id'];
+                                if (!isset($standbyVarIngUsed[$tMinPid])) {
+                                    if (!isset($rawBOMUsage[$tMinPid])) $rawBOMUsage[$tMinPid] = ['on_demand_usage' => 0, 'standby_usage' => 0, 'direct_sold' => 0];
+                                    $rawBOMUsage[$tMinPid]['standby_usage'] += $standbyQty;
+                                    $standbyVarIngUsed[$tMinPid] = true;
+                                }
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 // Direct sale bahan baku
@@ -7784,6 +7932,29 @@ try {
                     if ($dsQty > 0) {
                         if (!isset($rawBOMUsage[$pId])) $rawBOMUsage[$pId] = ['on_demand_usage' => 0, 'standby_usage' => 0, 'direct_sold' => 0];
                         $rawBOMUsage[$pId]['direct_sold'] += $dsQty;
+                    }
+                }
+
+                // Pemakaian kemasan Plastik PE (RAW-00092) dari penjualan/pengepakan Es Kristal
+                $plastikPid = null;
+                foreach ($trackedMaster as $tkm) {
+                    if ($tkm['sku'] === 'RAW-00092' || stripos($tkm['name'], 'Plastik PE') !== false) {
+                        $plastikPid = (int)$tkm['product_id'];
+                        break;
+                    }
+                }
+                if ($plastikPid && (!isset($rawBOMUsage[$plastikPid]) || ($rawBOMUsage[$plastikPid]['on_demand_usage'] + $rawBOMUsage[$plastikPid]['standby_usage']) <= 0)) {
+                    $esSalesCount = 0;
+                    foreach ($shiftSalesItems as $siRow) {
+                        $pSku = $siRow['sku'] ?? '';
+                        $pName = $siRow['product_name'] ?? '';
+                        if ($pSku === 'PRD-00007' || stripos($pName, 'Es Kristal 5kg') !== false) {
+                            $esSalesCount += (float)$siRow['qty'];
+                        }
+                    }
+                    if ($esSalesCount > 0) {
+                        if (!isset($rawBOMUsage[$plastikPid])) $rawBOMUsage[$plastikPid] = ['on_demand_usage' => 0, 'standby_usage' => 0, 'direct_sold' => 0];
+                        $rawBOMUsage[$plastikPid]['on_demand_usage'] += $esSalesCount;
                     }
                 }
 

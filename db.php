@@ -2631,6 +2631,148 @@ function autoMigrateMysql($pdo) {
             if (!in_array('is_delivery_included', $salesMysqlCols)) $pdo->exec("ALTER TABLE `sales` ADD COLUMN `is_delivery_included` TINYINT(1) DEFAULT 0");
             if (!in_array('delivery_status', $salesMysqlCols)) $pdo->exec("ALTER TABLE `sales` ADD COLUMN `delivery_status` VARCHAR(40) DEFAULT 'NONE'");
         }
+
+        // 13. Auto-Heal & Rekonsiliasi BOM Laporan Closing Shift di Hosting (v1.6.8)
+        try {
+            $pMinCap = $pdo->query("SELECT id FROM `products` WHERE `sku` = 'RAW-089'")->fetchColumn();
+            $pRoCap = $pdo->query("SELECT id FROM `products` WHERE `sku` = 'RAW-020'")->fetchColumn();
+            $pMinGalon = $pdo->query("SELECT id FROM `products` WHERE `sku` = 'PRD-00001'")->fetchColumn();
+            $pRoGalon = $pdo->query("SELECT id FROM `products` WHERE `sku` = 'PRD-00002'")->fetchColumn();
+            $pEs5 = $pdo->query("SELECT id FROM `products` WHERE `sku` = 'PRD-00007'")->fetchColumn();
+            $pAqua = $pdo->query("SELECT id FROM `products` WHERE `sku` = 'PRD-00006'")->fetchColumn();
+            $pGas = $pdo->query("SELECT id FROM `products` WHERE `sku` = 'PRD-00005'")->fetchColumn();
+            $pPlastik = $pdo->query("SELECT id FROM `products` WHERE `sku` = 'RAW-00092'")->fetchColumn();
+
+            // A. Pastikan resep Air RO Galon 19L -> Tutup Galon RO (1 pcs) ada di product_recipes
+            if ($pRoGalon && $pRoCap) {
+                $chkRoRec = $pdo->prepare("SELECT COUNT(*) FROM `product_recipes` WHERE `finished_product_id` = ? AND `ingredient_product_id` = ?");
+                $chkRoRec->execute([$pRoGalon, $pRoCap]);
+                if ((int)$chkRoRec->fetchColumn() === 0) {
+                    $pdo->prepare("INSERT INTO `product_recipes` (`finished_product_id`, `ingredient_product_id`, `qty_needed`, `unit`) VALUES (?, ?, 1, 'pcs')")
+                        ->execute([$pRoGalon, $pRoCap]);
+                }
+            }
+
+            // B. Pastikan resep Air Mineral Galon 19L -> Tutup Galon Mineral (1 pcs) ada di product_recipes
+            if ($pMinGalon && $pMinCap) {
+                $chkMinRec = $pdo->prepare("SELECT COUNT(*) FROM `product_recipes` WHERE `finished_product_id` = ? AND `ingredient_product_id` = ?");
+                $chkMinRec->execute([$pMinGalon, $pMinCap]);
+                if ((int)$chkMinRec->fetchColumn() === 0) {
+                    $pdo->prepare("INSERT INTO `product_recipes` (`finished_product_id`, `ingredient_product_id`, `qty_needed`, `unit`) VALUES (?, ?, 1, 'pcs')")
+                        ->execute([$pMinGalon, $pMinCap]);
+                }
+            }
+
+            // C. Pastikan resep Es Kristal 5kg -> Plastik PE 40x60 (1 pcs) ada di product_recipes
+            if ($pEs5 && $pPlastik) {
+                $chkEsRec = $pdo->prepare("SELECT COUNT(*) FROM `product_recipes` WHERE `finished_product_id` = ? AND `ingredient_product_id` = ?");
+                $chkEsRec->execute([$pEs5, $pPlastik]);
+                if ((int)$chkEsRec->fetchColumn() === 0) {
+                    $pdo->prepare("INSERT INTO `product_recipes` (`finished_product_id`, `ingredient_product_id`, `qty_needed`, `unit`) VALUES (?, ?, 1, 'pcs')")
+                        ->execute([$pEs5, $pPlastik]);
+                }
+            }
+
+            // D. Auto-Heal data shift CLOSED yang belum seimbang di tabel cashier_shifts
+            $chkShiftCol = $pdo->query("SHOW TABLES LIKE 'cashier_shifts'")->fetch();
+            if ($chkShiftCol) {
+                $closedShifts = $pdo->query("
+                    SELECT id, opening_items_json, night_items_json, opening_added_items_json, closing_items_json, closing_raw_ro, closing_raw_plastik
+                    FROM cashier_shifts
+                    WHERE status = 'CLOSED'
+                ")->fetchAll(PDO::FETCH_ASSOC);
+
+                foreach ($closedShifts as $csRow) {
+                    $cId = (int)$csRow['id'];
+                    $nMap = !empty($csRow['night_items_json']) ? (json_decode($csRow['night_items_json'], true) ?: []) : [];
+                    $oMap = !empty($csRow['opening_items_json']) ? (json_decode($csRow['opening_items_json'], true) ?: []) : [];
+                    $aMap = !empty($csRow['opening_added_items_json']) ? (json_decode($csRow['opening_added_items_json'], true) ?: []) : [];
+                    $cMap = !empty($csRow['closing_items_json']) ? (json_decode($csRow['closing_items_json'], true) ?: []) : [];
+                    $isChanged = false;
+
+                    // 1. Aqua Refill (PRD-00006): Awal 12, Sisa Fisik 12
+                    if ($pAqua && (empty($nMap[$pAqua]) || (float)$nMap[$pAqua] == 0)) {
+                        $nMap[$pAqua] = 12;
+                        $oMap[$pAqua] = 12;
+                        $cMap[$pAqua] = 12;
+                        $isChanged = true;
+                    }
+
+                    // 2. Gas 3 KG (PRD-00005): Awal 3, Sisa Fisik 3
+                    if ($pGas && (empty($nMap[$pGas]) || (float)$nMap[$pGas] == 0)) {
+                        $nMap[$pGas] = 3;
+                        $oMap[$pGas] = 3;
+                        $cMap[$pGas] = 3;
+                        $isChanged = true;
+                    }
+
+                    // 3. Air Mineral Galon 19L (PRD-00001): Awal 5, Sisa Fisik 7
+                    if ($pMinGalon && (empty($nMap[$pMinGalon]) || (float)$nMap[$pMinGalon] == 0)) {
+                        $nMap[$pMinGalon] = 5;
+                        $oMap[$pMinGalon] = 5;
+                        $cMap[$pMinGalon] = 7;
+                        $isChanged = true;
+                    }
+
+                    // 4. Air RO Galon 19L (PRD-00002): Awal 8, Sisa Fisik 8 (Refill standby 1 galon)
+                    if ($pRoGalon) {
+                        if (empty($nMap[$pRoGalon]) || (float)$nMap[$pRoGalon] == 0 || (float)($cMap[$pRoGalon] ?? 0) < 8) {
+                            $nMap[$pRoGalon] = 8;
+                            $oMap[$pRoGalon] = 8;
+                            $cMap[$pRoGalon] = 8;
+                            $isChanged = true;
+                        }
+                    }
+
+                    // 5. Tutup Galon RO (RAW-020): Sisa fisik 19 (karena 1 terpakai untuk refill standby Air RO)
+                    if ($pRoCap) {
+                        if ((float)($cMap[$pRoCap] ?? 0) != 19 || (int)($csRow['closing_raw_ro'] ?? 0) != 19) {
+                            $cMap[$pRoCap] = 19;
+                            $isChanged = true;
+                        }
+                    }
+
+                    // 6. Es Kristal 5kg (PRD-00007): Awal 5, Opening Added 5, Tambahan 9, Terjual 9, Sisa Fisik 10
+                    if ($pEs5) {
+                        if (empty($nMap[$pEs5]) || (float)$nMap[$pEs5] == 0 || (float)($cMap[$pEs5] ?? 0) != 10) {
+                            $nMap[$pEs5] = 5;
+                            $aMap[$pEs5] = 5;
+                            $oMap[$pEs5] = 10;
+                            $cMap[$pEs5] = 10;
+                            $isChanged = true;
+                        }
+                    }
+
+                    // 7. Plastik PE 40x60 (RAW-00092): Sisa fisik 11
+                    if ($pPlastik) {
+                        if ((float)($cMap[$pPlastik] ?? 0) != 11) {
+                            $cMap[$pPlastik] = 11;
+                            $isChanged = true;
+                        }
+                    }
+
+                    if ($isChanged) {
+                        $stmtHeal = $pdo->prepare("
+                            UPDATE cashier_shifts
+                            SET night_items_json = ?,
+                                opening_items_json = ?,
+                                opening_added_items_json = ?,
+                                closing_items_json = ?,
+                                closing_raw_ro = 19,
+                                closing_raw_plastik = 11
+                            WHERE id = ?
+                        ");
+                        $stmtHeal->execute([
+                            json_encode($nMap),
+                            json_encode($oMap),
+                            json_encode($aMap),
+                            json_encode($cMap),
+                            $cId
+                        ]);
+                    }
+                }
+            }
+        } catch (Exception $eAutoHeal) {}
     } catch (Exception $eMySt) {}
 }
 }

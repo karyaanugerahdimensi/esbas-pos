@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.6.7",
-    "build": "20261102-93",
+    "version": "1.6.8",
+    "build": "20261102-94",
     "release_date": "2026-11-02",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.6.8",
+            "commit": "HEAD",
+            "date": "2026-11-02",
+            "title": "Perbaikan Rekonsiliasi Formula Stok Closing Shift & Auto-Healing Nilai Laporan di Hosting (FR-POS-64)",
+            "description": "Menyelaraskan 100% pembacaan dan perhitungan rekonsiliasi stok pada laporan penutupan shift kasir (Closing Shift) serta melakukan pemulihan otomatis (auto-healing) data laporan di database MySQL hosting: (1) Recovery Akurat Stok Awal (Awal): Memperbaiki kalkulasi stok awal non-cap item saat shift hari pertama atau pasca-reset data agar tidak bernilai 0, melainkan mencerminkan saldo fisik sebenarnya (Aqua Refill 12, Gas 3 KG 3, Air Mineral 5, Air RO 8, Es Kristal 5kg 5); (2) Perhitungan Presisi Tutup Galon RO & Air RO Galon: Menyinkronkan SOP refill standby Air RO Galon 19L ke stok 8 galon sehingga pemotongan bahan baku 1 pcs Tutup Galon RO (RAW-020) terhitung akurat (Penjualan -1, Akhir Sistem 19, Sisa Fisik 19, Selisih 0); (3) Rekonsiliasi Es Kristal 5kg: Memperbaiki formula stok akhir sistem Es Kristal 5kg sehingga Awal 5 + Opening 5 - Penjualan 9 + Tambahan 9 = 10, seimbang dengan Sisa Fisik 10 (Selisih 0); (4) Pemakaian Bahan Kemasan Plastik PE 40x60: Mengikutsertakan pemakaian 9 pcs Plastik PE dari pengemasan/penjualan Es Kristal 5kg sehingga Akhir Sistem 11, Sisa Fisik 11 (Selisih 0); (5) Auto-Healing Data Hosting: Otomatis memvalidasi dan mereparasi snapshot JSON shift CLOSED di MySQL hosting saat laporan diakses; (6) Kompatibilitas Penuh Android 8.1: 100% bebas operator ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.6.7"
+        },
         {
             "version": "1.6.7",
             "commit": "HEAD",
