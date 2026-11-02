@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.7.3",
-    "build": "20261102-99",
+    "version": "1.7.4",
+    "build": "20261102-100",
     "release_date": "2026-11-02",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.7.4",
+            "commit": "HEAD",
+            "date": "2026-11-02",
+            "title": "Restrukturisasi Presisi Desain Form Rincian Beban BBM & Odometer Closing Shift (FR-UI-05)",
+            "description": "Menyempurnakan tata letak (layout) visual formulir pengeluaran kasir pada modal Tutup Toko (End Day Closing) agar 100% presisi dan tidak bertumpuk: (1) Memisahkan baris input utama beban kasir (Kategori, Nominal, Keterangan, Hapus) dengan panel rincian BBM kendaraan kurir sebagai blok vertikal tersendiri (Full Width container); (2) Menghilangkan distorsi CSS akibat ketiadaan utilitas col-span-12 pada prebuilt standalone CSS; (3) Mendesain panel BBM berwarna amber lembut dengan header penjelas, dropdown armada 5 kolom, input KM odometer berborder rose 4 kolom, dan badge KM sebelumnya 3 kolom yang proporsional; (4) Memperluas area scroll container daftar beban toko (max-h-80); (5) Kompatibilitas Android 8.1 Oreo: 100% bebas token modern ES2020 (?., ??).",
+            "rollback_command": "git checkout v1.7.3"
+        },
         {
             "version": "1.7.3",
             "commit": "HEAD",
