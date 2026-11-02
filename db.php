@@ -2974,9 +2974,15 @@ if ($dbDriver === 'mysql') {
     }
     // Jalankan migrasi ringan khusus MySQL yang aman (bebas syntax error SQLite)
     autoMigrateMysql($pdo);
+    if (function_exists('ensureSecurityTables')) {
+        ensureSecurityTables($pdo);
+    }
 } else {
     initDatabaseSchema($pdo);
     autoMigrateAndSync($pdo);
+    if (function_exists('ensureSecurityTables')) {
+        ensureSecurityTables($pdo);
+    }
 }
 
 if (!function_exists('getResolvedAppSettings')) {

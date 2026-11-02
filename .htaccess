@@ -1,12 +1,19 @@
 # =====================================================
-# KAD Tech Web Security & Configuration (.htaccess)
+# KAD Tech - Enterprise Web Security Shield (.htaccess)
 # =====================================================
 
-# 1. Nonaktifkan Directory Listing
-Options -Indexes
+# 1. Nonaktifkan Directory Listing & Penjelajahan Berkas
+Options -Indexes -MultiViews
 
-# 2. Blokir Akses Langsung ke File Sensitif (Database SQLite, Log, Script Test, Config)
-<FilesMatch "\.(sqlite|sqlite3|db|wal|shm|log|env|md|bat|ps1|exe)$">
+# 2. Blokir HTTP Request Methods Berbahaya (Anti-Trace / Anti-Reconnaissance)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK) [NC]
+    RewriteRule .* - [F]
+</IfModule>
+
+# 3. Blokir Akses Langsung ke Seluruh Berkas Konfigurasi, Database & Sensitif
+<FilesMatch "^(config\.php|config\.example\.php|db\.php|security\.php|version\.php|version\.json|generate_mysql_dump\.php)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
@@ -16,8 +23,8 @@ Options -Indexes
     </IfModule>
 </FilesMatch>
 
-# 3. Blokir Akses Langsung ke Seluruh File Testing
-<FilesMatch "^test_.*\.php$">
+# 4. Blokir Berkas Database, Log, Environment, Shell Script, dan Berkas Rahasia
+<FilesMatch "\.(sqlite|sqlite3|db|wal|shm|sql|log|env|md|bat|ps1|exe|bak|backup|old|tmp|swp|ini)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
@@ -27,5 +34,42 @@ Options -Indexes
     </IfModule>
 </FilesMatch>
 
-# 4. UTF-8 Encoding Default
+# 5. Blokir Akses Langsung ke Seluruh Skrip Pengujian (test_*.php & verify_*.php)
+<FilesMatch "^(test_|verify_|check_|audit_).*\.php$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# 6. Proteksi Terhadap Direktori Sensitif (Sessions, Git, Cache)
+<IfModule mod_rewrite.c>
+    RewriteRule ^sessions(/.*)?$ - [F,L]
+    RewriteRule ^\.git(/.*)?$ - [F,L]
+</IfModule>
+
+# 7. Filter Eksploitasi Query String Berbahaya di Level Apache
+<IfModule mod_rewrite.c>
+    RewriteCond %{QUERY_STRING} (base64_encode[^(]*\([^)]*\)|base64_decode[^(]*\([^)]*\)) [NC,OR]
+    RewriteCond %{QUERY_STRING} (<|%3C)([^s]*s)+cript.*(>|%3E) [NC,OR]
+    RewriteCond %{QUERY_STRING} GLOBALS(=|\[|\%[0-9A-Z]{0,2}) [OR]
+    RewriteCond %{QUERY_STRING} _REQUEST(=|\[|\%[0-9A-Z]{0,2}) [OR]
+    RewriteCond %{QUERY_STRING} (concat_ws|group_concat|benchmark|load_file|into_outfile) [NC]
+    RewriteRule .* - [F,L]
+</IfModule>
+
+# 8. HTTP Security Headers di Level Apache (Defense in Depth)
+<IfModule mod_headers.c>
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "geolocation=(self), camera=(), microphone=()"
+    Header unset X-Powered-By
+</IfModule>
+
+# 9. UTF-8 Encoding Default
 AddDefaultCharset UTF-8

@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/security.php';
+initSecurityShield();
+
 if (!headers_sent()) {
     header('Content-Type: application/json; charset=utf-8');
     header('Access-Control-Allow-Origin: *');
@@ -9,6 +12,7 @@ if (!headers_sent()) {
 }
 
 require_once __DIR__ . '/db.php';
+ensureSecurityTables($pdo);
 require_once __DIR__ . '/version.php';
 
 if (!function_exists('cal_days_in_month')) {
@@ -1290,6 +1294,19 @@ try {
                 exit;
             }
 
+            // 1. Anti-Brute Force Protection Check
+            if (function_exists('checkSecurityLoginBruteForce')) {
+                $secCheck = checkSecurityLoginBruteForce($username);
+                if (!$secCheck['allowed']) {
+                    echo json_encode([
+                        'success' => false,
+                        'security_blocked' => true,
+                        'message' => $secCheck['message']
+                    ]);
+                    exit;
+                }
+            }
+
             $stmt = $pdo->prepare("
                 SELECT u.*, b.name as branch_name 
                 FROM users u 
@@ -1361,8 +1378,16 @@ try {
             }
 
             if (!$isValid) {
+                if (function_exists('recordSecurityLoginAttempt')) {
+                    recordSecurityLoginAttempt($username, false);
+                }
                 echo json_encode(['success' => false, 'message' => 'Kata sandi atau PIN salah. Silakan coba lagi.']);
                 exit;
+            }
+
+            // Catat login berhasil & bersihkan counter kegagalan
+            if (function_exists('recordSecurityLoginAttempt')) {
+                recordSecurityLoginAttempt($username, true);
             }
 
             $loginTime = time();
@@ -19299,6 +19324,77 @@ try {
                     'message' => "Simulasi pengiriman Nota Telegram ke ID {$chatId} BERHASIL disiapkan!\n" . ($isConfigured ? "(Mode Terhubung Bot Telegram)" : "(Mode Simulasi - Token Bot / Chat ID belum diisi)")
                 ]);
             }
+            break;
+
+        case 'get_security_status':
+            // Cek otorisasi superadmin / manager
+            $userRole = strtoupper(str_replace('_', '', $_SESSION['role'] ?? ''));
+            if (empty($_SESSION['user_id']) || (strpos($userRole, 'SUPERADMIN') === false && strpos($userRole, 'MANAGER') === false)) {
+                echo json_encode(['success' => false, 'message' => 'Hanya Super Admin atau Manager yang berhak mengakses status keamanan.']);
+                exit;
+            }
+
+            $currentIp = function_exists('getSecurityClientIp') ? getSecurityClientIp() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+            $bannedIps = [];
+            $recentLogs = [];
+            $totalBannedIps = 0;
+
+            try {
+                $stmtBans = $pdo->prepare("SELECT * FROM security_ip_bans WHERE is_active = 1 AND banned_until > ? ORDER BY id DESC LIMIT 50");
+                $stmtBans->execute([date('Y-m-d H:i:s')]);
+                $bannedIps = $stmtBans->fetchAll(PDO::FETCH_ASSOC);
+                $totalBannedIps = count($bannedIps);
+            } catch (Throwable $eB) {
+                try {
+                    $stmtBans = $pdo->query("SELECT * FROM security_ip_bans WHERE is_active = 1 ORDER BY id DESC LIMIT 50");
+                    if ($stmtBans) $bannedIps = $stmtBans->fetchAll(PDO::FETCH_ASSOC);
+                    $totalBannedIps = count($bannedIps);
+                } catch (Throwable $eB2) {}
+            }
+
+            try {
+                $stmtLogs = $pdo->query("SELECT * FROM security_audit_logs ORDER BY id DESC LIMIT 50");
+                if ($stmtLogs) $recentLogs = $stmtLogs->fetchAll(PDO::FETCH_ASSOC);
+            } catch (Throwable $eL) {}
+
+            echo json_encode([
+                'success' => true,
+                'data' => [
+                    'shield_active' => true,
+                    'current_client_ip' => $currentIp,
+                    'waf_active' => true,
+                    'rate_limiter_active' => true,
+                    'anti_brute_force_active' => true,
+                    'http_headers_active' => true,
+                    'total_banned_ips' => $totalBannedIps,
+                    'total_incidents_logged' => count($recentLogs),
+                    'banned_ips' => $bannedIps,
+                    'recent_logs' => $recentLogs
+                ]
+            ]);
+            break;
+
+        case 'unban_security_ip':
+            $userRole = strtoupper(str_replace('_', '', $_SESSION['role'] ?? ''));
+            if (empty($_SESSION['user_id']) || (strpos($userRole, 'SUPERADMIN') === false && strpos($userRole, 'MANAGER') === false)) {
+                echo json_encode(['success' => false, 'message' => 'Hanya Super Admin atau Manager yang berhak membuka pemblokiran IP.']);
+                exit;
+            }
+
+            $targetIp = trim($input['ip_address'] ?? ($_GET['ip_address'] ?? ''));
+            if (empty($targetIp)) {
+                echo json_encode(['success' => false, 'message' => 'Alamat IP yang ingin dibuka wajib disertakan.']);
+                exit;
+            }
+
+            if (function_exists('unbanSecurityIp')) {
+                unbanSecurityIp($targetIp);
+            }
+
+            echo json_encode([
+                'success' => true,
+                'message' => "Pemblokiran untuk alamat IP {$targetIp} berhasil dibuka!"
+            ]);
             break;
 
         default:

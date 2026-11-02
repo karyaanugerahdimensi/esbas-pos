@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/security.php';
+initSecurityShield();
 require_once __DIR__ . '/version.php';
 $appVersionData = getAppVersionData();
 
@@ -6119,6 +6121,9 @@ try {
                         <button id="settings-tab-btn-sync" onclick="setSettingsSubtab('sync')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900" title="Sinkronisasi Database Master Hosting & Lokal">
                             <span>🌐 Sinkronisasi Hosting</span>
                         </button>
+                        <button id="settings-tab-btn-security" onclick="setSettingsSubtab('security')" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900" title="Keamanan Siber, WAF, Anti-Brute Force & Proteksi Server">
+                            <span>🛡️ Perisai Keamanan</span>
+                        </button>
                     </div>
                 </div>
 
@@ -6752,6 +6757,152 @@ try {
                                 <span id="subtab-sync-last-time" class="text-[11px] text-slate-400">Siap</span>
                             </div>
                             <pre id="subtab-sync-console" class="text-[11px] leading-relaxed max-h-40 overflow-y-auto whitespace-pre-wrap text-emerald-400">Sistem siap menyelaraskan master data hosting dan lokal.</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUBTAB 8: Perisai Keamanan Siber Terpadu (Security Shield & WAF) -->
+                <div id="settings-subtab-security" class="space-y-6 hidden">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+                        <!-- Header Banner -->
+                        <div class="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
+                                    <span>🛡️ Perisai Keamanan Siber & Perlindungan Server Hosting</span>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                        Active Defense 🟢
+                                    </span>
+                                </h3>
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    Perlindungan proaktif tingkat aplikasi untuk mencegah peretasan (hacking), serangan brute force kata sandi/PIN kasir, injeksi berbahaya (SQLi/XSS/RCE), bot scanner, dan penolakan layanan (DoS / Takedown).
+                                </p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" onclick="loadSecurityShieldStatus(true)" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold shadow-md flex items-center space-x-2 transition-all">
+                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                    <span>Segarkan Status Keamanan</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 4 Kartu Pilar Perlindungan Siber -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- Pilar 1: WAF -->
+                            <div class="p-4 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-600 uppercase">WAF Filter</span>
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                </div>
+                                <div class="font-black text-slate-900 text-base flex items-center gap-1.5">
+                                    <span>🧱</span> <span>Virtual Patching</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500">Mendeteksi dan memblokir seketika payload SQL Injection, XSS, RCE & Path Traversal.</p>
+                                <div class="pt-1 text-[10px] font-bold text-emerald-700">Status: Aktif & Memindai</div>
+                            </div>
+
+                            <!-- Pilar 2: Anti-Brute Force -->
+                            <div class="p-4 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-600 uppercase">Anti-Brute Force</span>
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                </div>
+                                <div class="font-black text-slate-900 text-base flex items-center gap-1.5">
+                                    <span>🔐</span> <span>Lockout Engine</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500">Batas toleransi 5x salah kata sandi/PIN ➔ Lockout 10 menit + progressive tarpit delay.</p>
+                                <div class="pt-1 text-[10px] font-bold text-emerald-700">Status: Lockout 10 Menit Aktif</div>
+                            </div>
+
+                            <!-- Pilar 3: Anti-Flood DoS -->
+                            <div class="p-4 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-600 uppercase">Anti-Takedown</span>
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                </div>
+                                <div class="font-black text-slate-900 text-base flex items-center gap-1.5">
+                                    <span>🌊</span> <span>Rate Limiting</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500">Membatasi frekuensi request (120 req/menit per IP) untuk mencegah server hosting overload.</p>
+                                <div class="pt-1 text-[10px] font-bold text-emerald-700">Status: Token Bucket Aktif</div>
+                            </div>
+
+                            <!-- Pilar 4: Headers & Hardening -->
+                            <div class="p-4 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-600 uppercase">Server Hardening</span>
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                </div>
+                                <div class="font-black text-slate-900 text-base flex items-center gap-1.5">
+                                    <span>🛡️</span> <span>HTTP Headers</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500">X-Frame-Options, X-Content-Type, HSTS, serta isolasi berkas sensitif .htaccess.</p>
+                                <div class="pt-1 text-[10px] font-bold text-emerald-700">Status: Terpasang Ketat</div>
+                            </div>
+                        </div>
+
+                        <!-- Panel Alamat IP Pengguna Saat Ini -->
+                        <div class="p-3 bg-indigo-50/60 rounded-2xl border border-indigo-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-indigo-900">Alamat IP Anda Saat Ini:</span>
+                                <span id="sec-current-ip-badge" class="font-mono font-black text-indigo-700 bg-white px-2 py-0.5 rounded-lg border border-indigo-200">127.0.0.1</span>
+                            </div>
+                            <span class="text-[11px] text-slate-500">Terverifikasi aman & terhubung ke sistem</span>
+                        </div>
+
+                        <!-- Daftar IP yang Sedang Diblokir (Active IP Bans) -->
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                                    <span>🚫 Daftar Alamat IP yang Sedang Diblokir</span>
+                                    <span id="sec-banned-count-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">0 IP</span>
+                                </h4>
+                            </div>
+                            <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                                        <tr>
+                                            <th class="py-2.5 px-3">Alamat IP</th>
+                                            <th class="py-2.5 px-3">Alasan Pemblokiran</th>
+                                            <th class="py-2.5 px-3">Waktu Blokir</th>
+                                            <th class="py-2.5 px-3">Berlaku Sampai</th>
+                                            <th class="py-2.5 px-3 text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sec-banned-ips-tbody" class="divide-y divide-slate-100">
+                                        <tr>
+                                            <td colspan="5" class="py-6 text-center text-slate-400 text-xs">Semua aman! Tidak ada alamat IP yang sedang diblokir.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Log Audit Insiden Keamanan Terbaru -->
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                                    <span>📋 Log Audit Insiden & Aktivitas Keamanan Terbaru</span>
+                                    <span id="sec-logs-count-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">0 Aktivitas</span>
+                                </h4>
+                            </div>
+                            <div class="overflow-x-auto rounded-2xl border border-slate-200 max-h-80 overflow-y-auto">
+                                <table class="w-full text-left text-[11px]">
+                                    <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 sticky top-0">
+                                        <tr>
+                                            <th class="py-2.5 px-3">Waktu</th>
+                                            <th class="py-2.5 px-3">Alamat IP</th>
+                                            <th class="py-2.5 px-3">Jenis Insiden / Event</th>
+                                            <th class="py-2.5 px-3">Rincian Peristiwa</th>
+                                            <th class="py-2.5 px-3">Target URI</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sec-audit-logs-tbody" class="divide-y divide-slate-100">
+                                        <tr>
+                                            <td colspan="5" class="py-6 text-center text-slate-400 text-xs">Belum ada rekaman insiden keamanan.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -36172,7 +36323,7 @@ Manager / Supervisor: __________________
 
         function setSettingsSubtab(subtab) {
             settingsSubtabActive = subtab;
-            const subtabs = ['general', 'roles', 'printer', 'receipt', 'payslip', 'notifications', 'sync'];
+            const subtabs = ['general', 'roles', 'printer', 'receipt', 'payslip', 'notifications', 'sync', 'security'];
             const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
             const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
 
@@ -36190,7 +36341,106 @@ Manager / Supervisor: __________________
 
             if (subtab === 'receipt') updateReceiptLivePreview();
             if (subtab === 'roles') renderRolePermissionsMatrix();
+            if (subtab === 'security') loadSecurityShieldStatus(false);
             lucide.createIcons();
+        }
+
+        async function loadSecurityShieldStatus(isManualRefresh) {
+            try {
+                const res = await fetch('api.php?action=get_security_status');
+                const json = await res.json();
+                if (!json || !json.success || !json.data) {
+                    if (isManualRefresh && json && json.message) alert(json.message);
+                    return;
+                }
+
+                const d = json.data;
+                const ipBadge = document.getElementById('sec-current-ip-badge');
+                if (ipBadge) ipBadge.textContent = d.current_client_ip || '127.0.0.1';
+
+                const bannedBadge = document.getElementById('sec-banned-count-badge');
+                if (bannedBadge) bannedBadge.textContent = (d.total_banned_ips || 0) + ' IP';
+
+                const logsBadge = document.getElementById('sec-logs-count-badge');
+                if (logsBadge) logsBadge.textContent = (d.total_incidents_logged || 0) + ' Aktivitas';
+
+                // Render Banned IPs
+                const bannedTbody = document.getElementById('sec-banned-ips-tbody');
+                if (bannedTbody) {
+                    if (!d.banned_ips || d.banned_ips.length === 0) {
+                        bannedTbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">Semua aman! Tidak ada alamat IP yang sedang diblokir.</td></tr>';
+                    } else {
+                        bannedTbody.innerHTML = d.banned_ips.map(function(b) {
+                            return '<tr class="hover:bg-slate-50">' +
+                                '<td class="py-2.5 px-3 font-mono font-bold text-rose-700">' + escapeHtml(b.ip_address) + '</td>' +
+                                '<td class="py-2.5 px-3 text-slate-600">' + escapeHtml(b.reason || 'Mencurigakan') + '</td>' +
+                                '<td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">' + escapeHtml(b.banned_at || '-') + '</td>' +
+                                '<td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">' + escapeHtml(b.banned_until || '-') + '</td>' +
+                                '<td class="py-2.5 px-3 text-center">' +
+                                    '<button type="button" onclick="executeUnbanSecurityIp(\'' + escapeHtml(b.ip_address) + '\')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[10px] font-bold transition-all">' +
+                                        'Buka Blokir' +
+                                    '</button>' +
+                                '</td>' +
+                            '</tr>';
+                        }).join('');
+                    }
+                }
+
+                // Render Audit Logs
+                const logsTbody = document.getElementById('sec-audit-logs-tbody');
+                if (logsTbody) {
+                    if (!d.recent_logs || d.recent_logs.length === 0) {
+                        logsTbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">Belum ada rekaman insiden keamanan.</td></tr>';
+                    } else {
+                        logsTbody.innerHTML = d.recent_logs.map(function(l) {
+                            var typeClass = 'bg-slate-100 text-slate-700';
+                            if (l.event_type === 'LOGIN_SUCCESS') {
+                                typeClass = 'bg-emerald-100 text-emerald-800';
+                            } else if (l.event_type === 'LOGIN_FAILED') {
+                                typeClass = 'bg-amber-100 text-amber-800';
+                            } else if (l.event_type === 'LOGIN_LOCKOUT' || l.event_type === 'BRUTE_FORCE_BLOCKED' || l.event_type === 'IP_BANNED') {
+                                typeClass = 'bg-rose-100 text-rose-800 font-bold';
+                            } else if (l.event_type.indexOf('SQL') !== -1 || l.event_type.indexOf('WAF') !== -1 || l.event_type.indexOf('RCE') !== -1) {
+                                typeClass = 'bg-purple-100 text-purple-800 font-bold';
+                            }
+
+                            return '<tr class="hover:bg-slate-50">' +
+                                '<td class="py-2 px-3 font-mono text-[10px] text-slate-500 whitespace-nowrap">' + escapeHtml(l.created_at || '-') + '</td>' +
+                                '<td class="py-2 px-3 font-mono font-semibold text-slate-700 whitespace-nowrap">' + escapeHtml(l.ip_address) + '</td>' +
+                                '<td class="py-2 px-3"><span class="px-2 py-0.5 rounded text-[10px] ' + typeClass + '">' + escapeHtml(l.event_type) + '</span></td>' +
+                                '<td class="py-2 px-3 text-slate-600 max-w-xs truncate" title="' + escapeHtml(l.details || '') + '">' + escapeHtml(l.details || '-') + '</td>' +
+                                '<td class="py-2 px-3 font-mono text-[10px] text-slate-400 max-w-xs truncate" title="' + escapeHtml(l.request_uri || l.user_agent || '') + '">' + escapeHtml(l.request_uri || '-') + '</td>' +
+                            '</tr>';
+                        }).join('');
+                    }
+                }
+
+                if (isManualRefresh) {
+                    alert('Status Perisai Keamanan Siber berhasil diperbarui!');
+                }
+            } catch (err) {
+                console.error('Gagal memuat status keamanan:', err);
+            }
+        }
+
+        async function executeUnbanSecurityIp(ipAddress) {
+            if (!confirm('Buka pemblokiran untuk alamat IP ' + ipAddress + '?')) return;
+            try {
+                const res = await fetch('api.php?action=unban_security_ip', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip_address: ipAddress })
+                });
+                const json = await res.json();
+                if (json && json.success) {
+                    alert(json.message || 'Pemblokiran IP berhasil dibuka.');
+                    loadSecurityShieldStatus(false);
+                } else {
+                    alert((json && json.message) || 'Gagal membuka pemblokiran IP.');
+                }
+            } catch (err) {
+                alert('Terjadi kesalahan jaringan.');
+            }
         }
 
         function applyAppSettingsToUI() {

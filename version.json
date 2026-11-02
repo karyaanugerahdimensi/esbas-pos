@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.7.6",
-    "build": "20261102-102",
+    "version": "1.7.7",
+    "build": "20261102-103",
     "release_date": "2026-11-02",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.7.7",
+            "commit": "HEAD",
+            "date": "2026-11-02",
+            "title": "Perisai Keamanan Siber Terpadu: WAF, Anti-Brute Force, Anti-Takedown Rate Limiter & Server Hardening (FR-SEC-01)",
+            "description": "Mengimplementasikan sistem keamanan siber proaktif komprehensif tingkat aplikasi untuk deployment publik: (1) Web Application Firewall (WAF) virtual patching untuk memfilter dan memblokir seketika payload berbahaya (SQL Injection, XSS, Remote Code Execution / Web Shell, dan LFI/Path Traversal); (2) Anti-Brute Force Engine pada autentikasi login kasir/staf dengan batas toleransi 5x gagal, auto-lockout 10 menit, progressive tarpit delay, dan regenerasi session_id aman; (3) Anti-Takedown / Rate Limiter per IP (maks. 120 req/menit) guna mencegah penolakan layanan (DoS / HTTP Flood); (4) Bot & Malicious Scanner Blocker (memblokir otomatis sqlmap, nikto, dirbuster, gobuster, wpscan, dll); (5) HTTP Security Headers ketat (X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy, HSTS) dan penutupan fingerprint X-Powered-By; (6) Apache .htaccess Hardening menyeluruh memblokir akses langsung publik ke config.php, db.php, security.php, database .sqlite, dump .sql, berkas sessions, dan HTTP methods TRACE/TRACK; (7) Sub-tab Perisai Keamanan pada Konfigurasi Sistem dengan audit logs dan kontrol unban IP.",
+            "rollback_command": "git checkout v1.7.6"
+        },
         {
             "version": "1.7.6",
             "commit": "HEAD",
