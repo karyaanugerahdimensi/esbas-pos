@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.8.9",
-    "build": "20261103-115",
+    "version": "1.8.10",
+    "build": "20261103-116",
     "release_date": "2026-11-03",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.8.10",
+            "commit": "HEAD",
+            "date": "2026-11-03",
+            "title": "Perbaikan Responsivitas Tampilan Login 3D 'STARQUA' pada Mobile & Tablet (Solid Opaque, Zero Grid Artifacts)",
+            "description": "Menyempurnakan tampilan login 3D pada perangkat HP dan Tablet: (1) Mengatasi tembus pandang (transparansi) yang memperlihatkan menu POS Kasir di belakang login dengan latar belakang solid void black (#06070d !important, z-index: 99999); (2) Menghilangkan efek garis-garis kotak putih tebal (grid artifacts) yang muncul di layar HP; (3) Desain adaptif mobile: Mengubah header hero menjadi banner 3D yang proporsional (h-36/h-44) dengan teks 'ENTER STARQUA' yang pas di layar HP dan canvas Torus Knot 3D yang terpusat rapi; (4) Menambahkan dukungan touchmove 3D parallax pada layar sentuh; (5) Form login, tombol CONTINUE, dan grid pilih cepat akun pas dalam genggaman tanpa tumpang tindih; (6) Kompilasi Tailwind CSS.",
+            "rollback_command": "git checkout v1.8.9"
+        },
         {
             "version": "1.8.9",
             "commit": "HEAD",

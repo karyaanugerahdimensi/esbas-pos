@@ -275,66 +275,72 @@ try {
     <!-- ======================================================== -->
     <!-- 0. LOGIN OVERLAY / SCREEN (3D THE VOID AESTHETIC)       -->
     <!-- ======================================================== -->
-    <div id="login-screen" class="fixed inset-0 z-50 bg-[#05060b] text-slate-100 flex items-center justify-center p-3 sm:p-5 lg:p-8 overflow-y-auto overflow-x-hidden selection:bg-purple-600 selection:text-white">
+    <div id="login-screen" class="fixed inset-0 flex items-center justify-center p-3 sm:p-5 lg:p-8 overflow-y-auto overflow-x-hidden selection:bg-purple-600 selection:text-white" style="background-color: #06070d !important; z-index: 99999;">
         
-        <!-- Ambient Radial Glow Effects (Background Depth) -->
-        <div class="fixed inset-0 pointer-events-none overflow-hidden">
-            <div class="absolute -top-40 -left-40 w-96 sm:w-[500px] h-96 sm:h-[500px] bg-indigo-600/20 rounded-full blur-[120px]"></div>
-            <div class="absolute top-1/2 left-1/3 -translate-y-1/2 w-80 sm:w-[600px] h-80 sm:h-[600px] bg-purple-600/15 rounded-full blur-[140px]"></div>
-            <div class="absolute -bottom-40 -right-40 w-96 sm:w-[500px] h-96 sm:h-[500px] bg-violet-600/20 rounded-full blur-[120px]"></div>
-            <!-- Subtle Cyber Grid Lines -->
-            <div class="absolute inset-0 opacity-[0.035]" style="background-image: linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px); background-size: 40px 40px;"></div>
+        <!-- Ambient Radial Glow Effects (Clean Depth, No Grid Lines) -->
+        <div class="fixed inset-0 pointer-events-none overflow-hidden" style="background: radial-gradient(circle at 50% 15%, rgba(147, 51, 234, 0.22), transparent 60%), radial-gradient(circle at 85% 85%, rgba(99, 102, 241, 0.18), transparent 50%);">
+            <div class="absolute -top-32 -left-32 w-80 sm:w-96 h-80 sm:h-96 bg-indigo-600/20 rounded-full blur-[100px]"></div>
+            <div class="absolute -bottom-32 -right-32 w-80 sm:w-96 h-80 sm:h-96 bg-purple-600/20 rounded-full blur-[100px]"></div>
         </div>
 
         <!-- Main 3D Portal Split Card -->
-        <div class="relative w-full max-w-5xl my-auto rounded-[2rem] border border-white/10 bg-slate-950/60 backdrop-blur-3xl shadow-[0_0_80px_-20px_rgba(147,51,234,0.35)] overflow-hidden grid grid-cols-1 lg:grid-cols-12 z-10">
+        <div class="relative w-full max-w-md lg:max-w-5xl my-auto rounded-3xl border border-white/10 shadow-[0_0_80px_-20px_rgba(147,51,234,0.4)] overflow-hidden grid grid-cols-1 lg:grid-cols-12 z-10" style="background-color: #0a0b12 !important;">
             
             <!-- Left Column: 3D Wireframe Scene & Typography (Hero) -->
-            <div class="lg:col-span-7 p-6 sm:p-10 lg:p-12 flex flex-col justify-between relative overflow-hidden min-h-[380px] sm:min-h-[440px] lg:min-h-[580px] border-b lg:border-b-0 lg:border-r border-white/10">
-                <!-- Dedicated 3D Canvas Layer -->
-                <canvas id="canvas-3d-void" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
+            <div class="lg:col-span-7 p-4 sm:p-6 lg:p-12 flex flex-col justify-between relative overflow-hidden border-b lg:border-b-0 lg:border-r border-white/10">
                 
                 <!-- Left Header: Protocol & App Meta -->
                 <div class="relative z-10 flex items-center justify-between">
-                    <div class="flex items-center space-x-2.5">
-                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/25 text-purple-400 font-mono text-xs font-bold shadow-inner">
+                    <div class="flex items-center space-x-2">
+                        <span class="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-purple-500/10 border border-purple-500/25 text-purple-400 font-mono text-xs font-bold shadow-inner">
                             ⚡
                         </span>
                         <div>
-                            <span class="block text-[11px] font-mono font-bold tracking-[0.25em] text-indigo-300 uppercase">SECURE ACCESS // 01</span>
-                            <span class="text-[9px] text-slate-500 font-mono">ENCRYPTED WORKSPACE</span>
+                            <span class="block text-[10px] sm:text-[11px] font-mono font-bold tracking-[0.2em] text-indigo-300 uppercase">SECURE ACCESS // 01</span>
+                            <span class="text-[8px] sm:text-[9px] text-slate-500 font-mono hidden sm:inline">ENCRYPTED WORKSPACE</span>
                         </div>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-xs">
+                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-xs">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
                             <span>ONLINE</span>
                         </span>
+                        <!-- Theme Toggle on Mobile Header -->
+                        <button type="button" onclick="toggleTheme()" class="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-white/5 transition-colors cursor-pointer border border-white/10" title="Ubah Tema (Gelap / Terang)">
+                            <i data-lucide="sun" class="theme-icon-sun w-3.5 h-3.5 hidden"></i>
+                            <i data-lucide="moon" class="theme-icon-moon w-3.5 h-3.5"></i>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Left Middle: The Iconic 'ENTER STARQUA' Typography -->
-                <div class="relative z-10 my-auto py-8 select-none">
-                    <p class="text-xs sm:text-sm font-mono tracking-[0.35em] text-indigo-400/90 uppercase font-semibold mb-1">WELCOME TO</p>
-                    <h1 class="font-black text-5xl sm:text-7xl lg:text-8xl tracking-tighter uppercase leading-[0.85] text-transparent"
-                        style="-webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.28); text-stroke: 1.5px rgba(255, 255, 255, 0.28); font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                        ENTER
-                    </h1>
-                    <h2 class="font-black text-5xl sm:text-7xl lg:text-8xl tracking-tighter uppercase leading-[0.9] text-white bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-purple-400 drop-shadow-[0_0_40px_rgba(168,85,247,0.5)]">
-                        STARQUA
-                    </h2>
-                    <p class="mt-4 text-xs sm:text-sm text-slate-400 font-normal max-w-md leading-relaxed tracking-wide">
-                        A minimal portal to your workspace. Designed for focus, built for speed.
-                    </p>
+                <!-- 3D Scene Container (Responsive: compact banner on mobile, expansive on desktop) -->
+                <div class="relative w-full h-36 sm:h-44 lg:h-auto lg:my-auto lg:py-10 rounded-2xl lg:rounded-none overflow-hidden my-3 lg:my-0 flex flex-col items-center lg:items-start justify-center select-none bg-black/40 lg:bg-transparent border border-white/5 lg:border-none">
+                    <!-- Dedicated 3D Canvas Layer -->
+                    <canvas id="canvas-3d-void" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
+                    
+                    <!-- Content Over 3D Canvas -->
+                    <div class="relative z-10 text-center lg:text-left px-2">
+                        <p class="text-[10px] sm:text-xs font-mono tracking-[0.3em] text-indigo-400/90 uppercase font-semibold mb-0.5">WELCOME TO</p>
+                        <h1 class="font-black text-3xl sm:text-5xl lg:text-8xl tracking-tighter uppercase leading-[0.85] text-transparent"
+                            style="-webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.28); text-stroke: 1.5px rgba(255, 255, 255, 0.28); font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                            ENTER
+                        </h1>
+                        <h2 class="font-black text-3xl sm:text-5xl lg:text-8xl tracking-tighter uppercase leading-[0.9] text-white bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-purple-400 drop-shadow-[0_0_35px_rgba(168,85,247,0.55)]">
+                            STARQUA
+                        </h2>
+                        <p class="mt-2 text-[10px] sm:text-xs lg:text-sm text-slate-400 font-normal max-w-md leading-relaxed tracking-wide hidden sm:block">
+                            A minimal portal to your workspace. Designed for focus, built for speed.
+                        </p>
+                    </div>
                 </div>
 
-                <!-- Left Footer: Version & Theme -->
-                <div class="relative z-10 pt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+                <!-- Left Footer: Version & Theme (Desktop) -->
+                <div class="relative z-10 pt-2 lg:pt-4 hidden lg:flex items-center justify-between text-xs text-slate-400">
                     <button type="button" onclick="openVersionModal()" class="hover:text-indigo-300 font-mono text-[11px] transition-colors inline-flex items-center space-x-2 group text-left cursor-pointer">
                         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
                         <span class="font-semibold group-hover:underline">Base Ver: v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</span>
                     </button>
-                    <!-- Theme Toggle on Login Screen -->
+                    <!-- Theme Toggle on Desktop -->
                     <button type="button" onclick="toggleTheme()" class="p-2 rounded-xl text-slate-400 hover:text-amber-300 hover:bg-white/5 transition-colors cursor-pointer border border-white/5" title="Ubah Tema (Gelap / Terang)">
                         <i data-lucide="sun" class="theme-icon-sun w-4 h-4 hidden"></i>
                         <i data-lucide="moon" class="theme-icon-moon w-4 h-4"></i>
@@ -343,16 +349,16 @@ try {
             </div>
 
             <!-- Right Column: Glassmorphism Sign-In Card -->
-            <div class="lg:col-span-5 p-6 sm:p-8 lg:p-10 flex flex-col justify-center relative z-10 bg-slate-900/70 backdrop-blur-2xl space-y-5">
+            <div class="lg:col-span-5 p-4 sm:p-6 lg:p-10 flex flex-col justify-center relative z-10 bg-slate-900/80 backdrop-blur-2xl space-y-4">
                 
                 <!-- Card Header -->
                 <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-[10px] font-mono tracking-widest text-slate-500 uppercase">// SYSTEM CREDENTIALS</span>
-                        <span class="text-[10px] font-mono text-purple-400/80">ID: CMH-01</span>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-[9px] sm:text-[10px] font-mono tracking-widest text-slate-500 uppercase">// SYSTEM CREDENTIALS</span>
+                        <span class="text-[9px] sm:text-[10px] font-mono text-purple-400/80">ID: CMH-01</span>
                     </div>
-                    <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Sign in</h3>
-                    <p class="text-xs text-slate-400 mt-1">Your workspace is waiting.</p>
+                    <h3 class="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight">Sign in</h3>
+                    <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">Your workspace is waiting.</p>
                 </div>
 
                 <!-- Hidden anchors for JS settings updater compatibility -->
@@ -363,60 +369,60 @@ try {
                 </div>
 
                 <!-- Login Form -->
-                <form onsubmit="handleLogin(event)" class="space-y-4">
-                    <div id="login-error-alert" style="display: none;" class="p-3 bg-rose-950/60 border border-rose-500/50 text-rose-300 text-xs rounded-xl items-center space-x-2 shadow-lg shadow-rose-950/50">
+                <form onsubmit="handleLogin(event)" class="space-y-3 sm:space-y-4">
+                    <div id="login-error-alert" style="display: none;" class="p-2.5 sm:p-3 bg-rose-950/70 border border-rose-500/50 text-rose-300 text-xs rounded-xl items-center space-x-2 shadow-lg shadow-rose-950/50">
                         <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400 shrink-0"></i>
                         <span id="login-error-text" class="font-medium">Kredensial tidak valid</span>
                     </div>
 
-                    <div class="space-y-1.5">
-                        <label class="block text-[10px] font-mono font-bold tracking-wider text-slate-400 uppercase">
+                    <div class="space-y-1">
+                        <label class="block text-[9px] sm:text-[10px] font-mono font-bold tracking-wider text-slate-400 uppercase">
                             EMAIL / NIK LOGIN
                         </label>
                         <div class="relative">
-                            <i data-lucide="user" class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500 pointer-events-none"></i>
-                            <input type="text" id="login-username" value="" autocomplete="username" placeholder="CSR001 atau siti@jkt.retail.com" class="w-full pl-10 pr-3 py-3 bg-black/50 border border-white/10 hover:border-white/20 focus:border-indigo-400 text-white placeholder-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/25 font-mono transition-all" required>
+                            <i data-lucide="user" class="w-4 h-4 absolute left-3 top-3 text-slate-500 pointer-events-none"></i>
+                            <input type="text" id="login-username" value="" autocomplete="username" placeholder="CSR001 atau siti@jkt.retail.com" class="w-full pl-9 pr-3 py-2.5 sm:py-3 bg-black/60 border border-white/10 hover:border-white/20 focus:border-indigo-400 text-white placeholder-slate-600 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/25 font-mono transition-all" required>
                         </div>
                     </div>
 
-                    <div class="space-y-1.5">
+                    <div class="space-y-1">
                         <div class="flex items-center justify-between">
-                            <label class="block text-[10px] font-mono font-bold tracking-wider text-slate-400 uppercase">
+                            <label class="block text-[9px] sm:text-[10px] font-mono font-bold tracking-wider text-slate-400 uppercase">
                                 PASSWORD / PIN 6-DIGIT
                             </label>
-                            <span class="text-[9px] font-mono text-purple-400 font-semibold">*Wajib diisi</span>
+                            <span class="text-[8px] sm:text-[9px] font-mono text-purple-400 font-semibold">*Wajib diisi</span>
                         </div>
                         <div class="relative">
-                            <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500 pointer-events-none"></i>
-                            <input type="password" id="login-password" value="" autocomplete="new-password" placeholder="••••••••" class="w-full pl-10 pr-3 py-3 bg-black/50 border border-white/10 hover:border-white/20 focus:border-indigo-400 text-white placeholder-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/25 font-mono transition-all" required>
+                            <i data-lucide="lock" class="w-4 h-4 absolute left-3 top-3 text-slate-500 pointer-events-none"></i>
+                            <input type="password" id="login-password" value="" autocomplete="new-password" placeholder="••••••••" class="w-full pl-9 pr-3 py-2.5 sm:py-3 bg-black/60 border border-white/10 hover:border-white/20 focus:border-indigo-400 text-white placeholder-slate-600 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/25 font-mono transition-all" required>
                         </div>
                     </div>
 
                     <!-- Options: Remember me & Forgot Password -->
-                    <div class="flex items-center justify-between text-xs text-slate-400 pt-1">
+                    <div class="flex items-center justify-between text-xs text-slate-400 pt-0.5">
                         <label class="inline-flex items-center space-x-2 cursor-pointer select-none group">
                             <input type="checkbox" id="login-remember-me" checked class="rounded border-white/20 bg-black/40 text-indigo-500 focus:ring-0 focus:ring-offset-0 cursor-pointer">
-                            <span class="text-[11px] text-slate-400 group-hover:text-slate-300 font-medium">Remember me</span>
+                            <span class="text-[10px] sm:text-[11px] text-slate-400 group-hover:text-slate-300 font-medium">Remember me</span>
                         </label>
-                        <a href="javascript:void(0)" onclick="alert('Silakan hubungi Super Admin toko atau manajer untuk reset kata sandi / PIN kasir.')" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium hover:underline transition-colors">
+                        <a href="javascript:void(0)" onclick="alert('Silakan hubungi Super Admin toko atau manajer untuk reset kata sandi / PIN kasir.')" class="text-[10px] sm:text-[11px] text-indigo-400 hover:text-indigo-300 font-medium hover:underline transition-colors">
                             Forgot password?
                         </a>
                     </div>
 
                     <!-- The Iconic CONTINUE -> Button with ACCESS GRANTED state -->
-                    <button type="submit" id="btn-login-submit" class="w-full py-3.5 px-5 bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-500 bg-[length:200%_auto] hover:bg-right text-white font-extrabold rounded-xl shadow-[0_0_30px_rgba(99,102,241,0.35)] hover:shadow-[0_0_40px_rgba(168,85,247,0.55)] transition-all duration-300 flex items-center justify-center space-x-2 text-sm tracking-wider cursor-pointer active:scale-[0.98]">
+                    <button type="submit" id="btn-login-submit" class="w-full py-3 sm:py-3.5 px-4 sm:px-5 bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-500 bg-[length:200%_auto] hover:bg-right text-white font-extrabold rounded-xl shadow-[0_0_25px_rgba(99,102,241,0.35)] hover:shadow-[0_0_35px_rgba(168,85,247,0.55)] transition-all duration-300 flex items-center justify-center space-x-2 text-xs sm:text-sm tracking-wider cursor-pointer active:scale-[0.98]">
                         <span>CONTINUE</span>
                         <span class="text-base">&rarr;</span>
                     </button>
                 </form>
 
                 <!-- Quick Account Selection Drawer (Pilih Cepat Akun) -->
-                <div class="pt-4 border-t border-white/10">
-                    <div class="flex items-center justify-between mb-2">
-                        <p class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">PILIH CEPAT AKUN:</p>
-                        <span class="text-[9px] font-mono text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full">1-Klik Pilih</span>
+                <div class="pt-3 border-t border-white/10">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <p class="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">PILIH CEPAT AKUN:</p>
+                        <span class="text-[8px] sm:text-[9px] font-mono text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-1.5 py-0.5 rounded-full">1-Klik Pilih</span>
                     </div>
-                    <div id="quick-accounts-grid" class="grid grid-cols-2 gap-2 text-xs">
+                    <div id="quick-accounts-grid" class="grid grid-cols-2 gap-1.5 sm:gap-2 text-xs">
                         <?php if (!empty($quickUsers)): ?>
                             <?php foreach ($quickUsers as $qu): 
                                 $roleMeta = getQuickUserRoleInfo($qu['role']);
@@ -425,22 +431,33 @@ try {
                                 $escapedName = htmlspecialchars(addslashes($qu['name']));
                                 $branchName = !empty($qu['branch_name']) ? htmlspecialchars($qu['branch_name']) : '';
                             ?>
-                                <button type="button" onclick="selectQuickAccount('<?= $displayNik ?>', '<?= $escapedName ?>')" class="p-2.5 bg-black/40 hover:bg-purple-950/40 border border-white/5 hover:border-purple-500/40 rounded-xl text-left transition-all group shadow-xs cursor-pointer">
+                                <button type="button" onclick="selectQuickAccount('<?= $displayNik ?>', '<?= $escapedName ?>')" class="p-2 sm:p-2.5 bg-black/50 hover:bg-purple-950/40 border border-white/5 hover:border-purple-500/40 rounded-xl text-left transition-all group shadow-xs cursor-pointer">
                                     <div class="flex items-center justify-between">
-                                        <p class="font-bold text-slate-200 group-hover:text-purple-300 text-[11px] truncate"><?= $roleMeta['emoji'] ?> <?= htmlspecialchars($roleMeta['label']) ?></p>
+                                        <p class="font-bold text-slate-200 group-hover:text-purple-300 text-[10px] sm:text-[11px] truncate"><?= $roleMeta['emoji'] ?> <?= htmlspecialchars($roleMeta['label']) ?></p>
                                         <?php if (!empty($branchName)): ?>
-                                            <span class="text-[9px] text-slate-500 group-hover:text-purple-400 truncate max-w-[60px] ml-1 shrink-0"><?= $branchName ?></span>
+                                            <span class="text-[8px] sm:text-[9px] text-slate-500 group-hover:text-purple-400 truncate max-w-[50px] sm:max-w-[60px] ml-1 shrink-0"><?= $branchName ?></span>
                                         <?php endif; ?>
                                     </div>
-                                    <div class="flex items-center justify-between mt-1">
-                                        <p class="text-[10px] text-slate-400 group-hover:text-slate-200 font-medium truncate"><?= $displayName ?></p>
+                                    <div class="flex items-center justify-between mt-0.5">
+                                        <p class="text-[9px] sm:text-[10px] text-slate-400 group-hover:text-slate-200 font-medium truncate"><?= $displayName ?></p>
                                     </div>
                                 </button>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <div class="col-span-2 text-center py-2 text-slate-500 text-[11px] font-mono">Memuat akun pengguna...</div>
+                            <div class="col-span-2 text-center py-2 text-slate-500 text-[10px] sm:text-[11px] font-mono">Memuat akun pengguna...</div>
                         <?php endif; ?>
                     </div>
+                </div>
+
+                <!-- Mobile Footer: Base Version Modal Link -->
+                <div class="pt-2 border-t border-white/10 lg:hidden flex items-center justify-between text-[10px] text-slate-400">
+                    <button type="button" onclick="openVersionModal()" class="hover:text-indigo-300 font-mono transition-colors inline-flex items-center space-x-1.5 group text-left cursor-pointer">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                        <span class="font-semibold group-hover:underline">Base Ver: v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</span>
+                    </button>
+                    <button type="button" onclick="openVersionModal()" class="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-medium transition-colors">
+                        Riwayat
+                    </button>
                 </div>
 
             </div>
@@ -38722,8 +38739,8 @@ Manager / Supervisor: __________________
                 var w = parent ? parent.clientWidth : 600;
                 var h = parent ? parent.clientHeight : 600;
                 var dpr = window.devicePixelRatio || 1;
-                void3D.canvas.width = Math.max(300, w) * dpr;
-                void3D.canvas.height = Math.max(300, h) * dpr;
+                void3D.canvas.width = Math.max(150, w) * dpr;
+                void3D.canvas.height = Math.max(100, h) * dpr;
                 void3D.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             }
             resizeCanvas();
@@ -38736,6 +38753,16 @@ Manager / Supervisor: __________________
                 void3D.targetRotY = ((e.clientX - halfW) / halfW) * 0.75 + 0.45;
                 void3D.targetRotX = -((e.clientY - halfH) / halfH) * 0.55 + 0.35;
             });
+
+            window.addEventListener('touchmove', function(e) {
+                if (e.touches && e.touches[0]) {
+                    var t = e.touches[0];
+                    var halfW = window.innerWidth / 2;
+                    var halfH = window.innerHeight / 2;
+                    void3D.targetRotY = ((t.clientX - halfW) / halfW) * 0.75 + 0.45;
+                    void3D.targetRotX = -((t.clientY - halfH) / halfH) * 0.55 + 0.35;
+                }
+            }, { passive: true });
 
             startVoid3DCanvas();
         }
@@ -38778,10 +38805,11 @@ Manager / Supervisor: __________________
                 var cosX = Math.cos(void3D.rotX), sinX = Math.sin(void3D.rotX);
                 var cosY = Math.cos(void3D.rotY), sinY = Math.sin(void3D.rotY);
 
-                // Place 3D object slightly to the right of left column to align with the video aesthetic
-                var cx = w * 0.58;
+                // Responsive center & FOV
+                var isDesktop = (window.innerWidth >= 1024);
+                var cx = isDesktop ? (w * 0.58) : (w * 0.50);
                 var cy = h * 0.50;
-                var fov = Math.min(w, h) * 0.85;
+                var fov = Math.min(w, h) * (isDesktop ? 0.85 : 0.65);
                 var cameraZ = 4.3;
 
                 function projectPoint(p) {
