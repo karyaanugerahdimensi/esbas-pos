@@ -2449,7 +2449,7 @@ try {
                                 <thead id="ess-roster-table-head" class="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
                                     <!-- Injected by loadMonthlySchedules() -->
                                 </thead>
-                                <tbody id="ess-roster-table-body" class="divide-y divide-slate-100">
+                                <tbody id="ess-roster-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
                                     <!-- Injected by loadMonthlySchedules() -->
                                 </tbody>
                             </table>
@@ -11288,9 +11288,9 @@ try {
     <!-- Modal ESS 1: Master Jam Kerja / Shift CRUD -->
     <div id="work-shift-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 space-y-4 text-slate-800 dark:text-slate-100">
-            <div class="flex items-center justify-between border-b pb-3">
-                <h3 id="ws-modal-title" class="font-bold text-slate-800 text-base">Tambah Shift Jam Kerja Baru</h3>
-                <button type="button" onclick="closeWorkShiftModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <h3 id="ws-modal-title" class="font-bold text-slate-800 dark:text-slate-100 text-base">Tambah Shift Jam Kerja Baru</h3>
+                <button type="button" onclick="closeWorkShiftModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <form onsubmit="saveWorkShiftForm(event)" class="space-y-3 text-xs">
                 <input type="hidden" id="ws-id">
@@ -11332,12 +11332,12 @@ try {
                     </div>
                 </div>
                 <div class="pt-1">
-                    <label class="flex items-center space-x-2 cursor-pointer p-2.5 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <label class="flex items-center space-x-2 cursor-pointer p-2.5 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded-xl border border-slate-200 dark:border-slate-700">
                         <input type="checkbox" id="ws-is-day-off" class="w-4 h-4 text-rose-600 rounded">
-                        <span class="font-bold text-slate-700">Tandai Sebagai Hari Libur / Off Day</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-200">Tandai Sebagai Hari Libur / Off Day</span>
                     </label>
                 </div>
-                <div class="grid grid-cols-2 gap-2 pt-2 border-t">
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <button type="button" onclick="closeWorkShiftModal()" class="py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl font-bold text-slate-700 dark:text-slate-300">Batal</button>
                     <button type="submit" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow">Simpan Shift</button>
                 </div>
@@ -11356,10 +11356,10 @@ try {
                 <button type="button" onclick="closeImportScheduleModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <form onsubmit="submitImportSchedule(event)" class="space-y-3 text-xs">
-                <div class="p-3 bg-blue-50 border border-blue-200 rounded-2xl text-[11px] text-blue-900 leading-relaxed space-y-1">
+                <div class="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 rounded-2xl text-[11px] text-blue-900 dark:text-blue-200 leading-relaxed space-y-1">
                     <p class="font-bold">Format Kolom CSV / Excel yang didukung:</p>
                     <p class="font-mono text-[10px] bg-white dark:bg-slate-800 p-1.5 rounded border border-blue-200 dark:border-blue-900 text-blue-800 dark:text-blue-300">NIK,Nama_Karyawan,Cabang,Tanggal,Kode_Shift,Nama_Shift,Jam_Masuk,Jam_Pulang,Libur,Catatan</p>
-                    <p class="text-slate-500">Anda dapat mendownload template dengan tombol <strong>Export Excel / CSV</strong> terlebih dahulu.</p>
+                    <p class="text-slate-500 dark:text-slate-400">Anda dapat mendownload template dengan tombol <strong>Export Excel / CSV</strong> terlebih dahulu.</p>
                 </div>
                 <div>
                     <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Pilih File CSV:</label>
@@ -11369,7 +11369,7 @@ try {
                     <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Atau Tempel / Paste Isi Teks CSV di sini:</label>
                     <textarea id="import-sched-text" rows="5" placeholder="NIK,Tanggal,Kode_Shift...&#10;CSR001,2026-10-15,S1&#10;CSR002,2026-10-15,S2" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono text-[11px] dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500"></textarea>
                 </div>
-                <div class="grid grid-cols-2 gap-2 pt-2 border-t">
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <button type="button" onclick="closeImportScheduleModal()" class="py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl font-bold text-slate-700 dark:text-slate-300">Batal</button>
                     <button type="submit" class="py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow flex items-center justify-center space-x-1.5">
                         <i data-lucide="upload-cloud" class="w-4 h-4"></i>
@@ -11383,12 +11383,12 @@ try {
     <!-- Modal ESS 3: Set Hari Libur Toko -->
     <div id="holiday-setter-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 space-y-4 text-slate-800 dark:text-slate-100">
-            <div class="flex items-center justify-between border-b pb-3">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                 <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base flex items-center space-x-2">
-                    <i data-lucide="calendar-off" class="w-5 h-5 text-rose-600"></i>
+                    <i data-lucide="calendar-off" class="w-5 h-5 text-rose-600 dark:text-rose-400"></i>
                     <span>Set Hari Libur Toko / Nasional</span>
                 </h3>
-                <button type="button" onclick="closeHolidaySetterModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button type="button" onclick="closeHolidaySetterModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <form onsubmit="submitHolidaySetter(event)" class="space-y-3 text-xs">
                 <div>
@@ -11399,10 +11399,10 @@ try {
                     <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Nama / Keterangan Hari Libur:</label>
                     <input type="text" id="holiday-notes-input" value="Hari Libur Toko / Nasional" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500" required>
                 </div>
-                <div class="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-[11px] text-rose-900 leading-relaxed">
+                <div class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-2xl text-[11px] text-rose-900 dark:text-rose-200 leading-relaxed">
                     💡 <strong>Otomatisasi:</strong> Seluruh karyawan di cabang aktif pada tanggal tersebut akan otomatis disetel berstatus <strong>Libur / Off Day</strong> pada roster bulanan.
                 </div>
-                <div class="grid grid-cols-2 gap-2 pt-2 border-t">
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <button type="button" onclick="closeHolidaySetterModal()" class="py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl font-bold text-slate-700 dark:text-slate-300">Batal</button>
                     <button type="submit" class="py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow">Terapkan Libur Toko</button>
                 </div>
@@ -11413,12 +11413,12 @@ try {
     <!-- Modal ESS 4: Edit Cepat Shift Karyawan per Tanggal -->
     <div id="single-schedule-edit-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 dark:border-slate-800 space-y-4 text-slate-800 dark:text-slate-100">
-            <div class="flex items-center justify-between border-b pb-2">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
                 <div>
-                    <h3 id="sched-cell-modal-title" class="font-bold text-slate-800 text-sm">Ubah Jadwal Kerja</h3>
-                    <p id="sched-cell-modal-sub" class="text-[11px] text-slate-500">Karyawan: Bima</p>
+                    <h3 id="sched-cell-modal-title" class="font-bold text-slate-800 dark:text-slate-100 text-sm">Ubah Jadwal Kerja</h3>
+                    <p id="sched-cell-modal-sub" class="text-[11px] text-slate-500 dark:text-slate-400">Karyawan: Bima</p>
                 </div>
-                <button type="button" onclick="closeSingleScheduleModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <button type="button" onclick="closeSingleScheduleModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             <form onsubmit="saveSingleScheduleForm(event)" class="space-y-3 text-xs">
                 <input type="hidden" id="sched-cell-user-id">
@@ -11431,7 +11431,7 @@ try {
                     <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Catatan Tambahan:</label>
                     <input type="text" id="sched-cell-notes" placeholder="Opsional catatan khusus..." class="w-full p-2 bg-slate-50 border rounded-xl text-xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500">
                 </div>
-                <div class="grid grid-cols-2 gap-2 pt-2 border-t">
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <button type="button" onclick="closeSingleScheduleModal()" class="py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl font-bold text-slate-700 dark:text-slate-300">Batal</button>
                     <button type="submit" class="py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow">Simpan</button>
                 </div>
@@ -20668,33 +20668,33 @@ Manager / Supervisor: __________________
                 if (!container) return;
 
                 container.innerHTML = essWorkShiftsList.map(ws => `
-                    <div class="p-3.5 rounded-2xl border ${ws.is_day_off ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-200'} shadow-2xs space-y-2 relative">
+                    <div class="p-3.5 rounded-2xl border ${ws.is_day_off ? 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/80' : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/80'} shadow-2xs space-y-2 relative transition-colors">
                         <div class="flex items-center justify-between">
-                            <span class="px-2 py-0.5 rounded-lg text-[10px] font-black font-mono text-white" style="background-color: ${ws.color_tag || '#3b82f6'}">${ws.code}</span>
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${ws.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700'}">
+                            <span class="px-2 py-0.5 rounded-lg text-[10px] font-black font-mono text-white shadow-2xs" style="background-color: ${ws.color_tag || '#3b82f6'}">${ws.code}</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${ws.is_active ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700'}">
                                 ${ws.is_active ? 'Aktif' : 'Nonaktif'}
                             </span>
                         </div>
                         <div>
-                            <h4 class="font-bold text-slate-800 text-xs">${ws.name}</h4>
-                            <p class="font-mono text-xs text-slate-600 font-bold mt-0.5">
+                            <h4 class="font-bold text-slate-800 dark:text-slate-100 text-xs">${ws.name}</h4>
+                            <p class="font-mono text-xs text-slate-600 dark:text-slate-300 font-bold mt-0.5">
                                 ${ws.is_day_off ? '🏖️ HARI LIBUR / OFF' : `🕒 ${ws.start_time} - ${ws.end_time}`}
                             </p>
-                            ${!ws.is_day_off ? `<p class="text-[10px] text-slate-400 mt-0.5">Toleransi: ${ws.late_tolerance_mins} menit</p>` : ''}
+                            ${!ws.is_day_off ? `<p class="text-[10px] text-slate-400 dark:text-slate-400 mt-0.5">Toleransi: ${ws.late_tolerance_mins} menit</p>` : ''}
                         </div>
                         ${isManager ? `
-                        <div class="flex items-center justify-end space-x-1 pt-2 border-t border-slate-100">
-                            <button onclick='openWorkShiftModal(${JSON.stringify(ws)})' class="p-1 text-slate-500 hover:text-indigo-600 rounded-lg text-xs font-semibold flex items-center space-x-1">
+                        <div class="flex items-center justify-end space-x-1 pt-2 border-t border-slate-100 dark:border-slate-700/60">
+                            <button onclick='openWorkShiftModal(${JSON.stringify(ws)})' class="p-1 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-colors">
                                 <i data-lucide="edit" class="w-3.5 h-3.5"></i>
                                 <span>Edit</span>
                             </button>
-                            <button onclick="deleteWorkShift(${ws.id})" class="p-1 text-slate-400 hover:text-rose-600 rounded-lg text-xs font-semibold">
+                            <button onclick="deleteWorkShift(${ws.id})" class="p-1 text-slate-400 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg text-xs font-semibold transition-colors">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                             </button>
                         </div>
                         ` : ''}
                     </div>
-                `).join('') || `<p class="text-xs text-slate-400 col-span-4">Belum ada shift kerja terdaftar</p>`;
+                `).join('') || `<p class="text-xs text-slate-400 dark:text-slate-500 col-span-4">Belum ada shift kerja terdaftar</p>`;
 
                 lucide.createIcons();
             } catch (err) {
@@ -20859,8 +20859,8 @@ Manager / Supervisor: __________________
                     const fullDate = `${mVal}-${dStr}`;
                     const dayName = new Date(fullDate).toLocaleDateString('id-ID', { weekday: 'narrow' });
                     const isSun = new Date(fullDate).getDay() === 0;
-                    thHtml += `<th class="py-2 px-1.5 text-center min-w-[38px] border-r border-slate-200 ${isSun ? 'bg-rose-50 text-rose-700' : ''}">
-                        <span class="block text-[10px] text-slate-400 font-semibold">${dayName}</span>
+                    thHtml += `<th class="py-2 px-1.5 text-center min-w-[38px] border-r border-slate-200 dark:border-slate-700/80 ${isSun ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400' : 'text-slate-700 dark:text-slate-200'}">
+                        <span class="block text-[10px] ${isSun ? 'text-rose-500 dark:text-rose-400 font-bold' : 'text-slate-400 dark:text-slate-400 font-semibold'}">${dayName}</span>
                         <span>${d}</span>
                     </th>`;
                 }
@@ -20869,16 +20869,16 @@ Manager / Supervisor: __________________
 
                 // Render Body
                 if (employees.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="${daysCount + 1}" class="text-center py-6 text-slate-400">Belum ada jadwal untuk Anda di periode ini</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="${daysCount + 1}" class="text-center py-6 text-slate-400 dark:text-slate-500">Belum ada jadwal untuk Anda di periode ini</td></tr>`;
                     return;
                 }
 
                 let tbHtml = '';
                 employees.forEach(emp => {
-                    tbHtml += `<tr class="hover:bg-slate-50/80 transition-colors">
+                    tbHtml += `<tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                         <td class="py-2 px-3 sticky left-0 bg-white dark:bg-slate-900 z-10 border-r border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 shadow-xs">
-                            <span class="font-bold text-slate-800 block truncate max-w-[150px]">${emp.name}</span>
-                            <span class="text-[10px] text-slate-400 font-mono">${emp.nik} &bull; ${emp.role}</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-100 block truncate max-w-[150px]">${emp.name}</span>
+                            <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono">${emp.nik} &bull; ${emp.role}</span>
                         </td>`;
                     for (let d = 1; d <= daysCount; d++) {
                         const dStr = String(d).padStart(2, '0');
@@ -20887,15 +20887,26 @@ Manager / Supervisor: __________________
                         const cellSched = schedMap[emp.id] ? schedMap[emp.id][fullDate] : null;
 
                         let badgeCode = cellSched ? (cellSched.shift_code || 'S1') : (isSun ? 'OFF' : '-');
-                        let badgeColor = cellSched ? (cellSched.color_tag || '#3b82f6') : (isSun ? '#94a3b8' : '#e2e8f0');
                         let isOff = cellSched ? (cellSched.is_holiday == 1 || cellSched.shift_is_day_off == 1) : isSun;
-                        let textColor = isOff ? 'text-slate-600' : 'text-white';
-                        let bgColor = isOff ? 'bg-slate-200' : '';
+                        let isUnscheduled = !cellSched && !isSun;
+                        
+                        let btnClass = '';
+                        let styleAttr = '';
 
-                        tbHtml += `<td class="p-1 text-center border-r border-slate-200 ${isSun ? 'bg-rose-50/30' : ''}">
+                        if (isUnscheduled) {
+                            btnClass = 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700/60';
+                        } else if (isOff) {
+                            btnClass = 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700';
+                        } else {
+                            let color = cellSched.color_tag || '#3b82f6';
+                            btnClass = 'text-white border border-transparent shadow-xs';
+                            styleAttr = `background-color: ${color};`;
+                        }
+
+                        tbHtml += `<td class="p-1 text-center border-r border-slate-200 dark:border-slate-800/80 ${isSun ? 'bg-rose-50/30 dark:bg-rose-950/20' : ''}">
                             <button ${isManager ? `onclick="openSingleScheduleModal(${emp.id}, '${fullDate}', '${emp.name}', ${cellSched ? cellSched.work_shift_id : null})"` : `onclick="void(0)"`}
-                                    class="w-full py-1 rounded text-[10px] font-black font-mono shadow-2xs ${isManager ? 'hover:scale-105 cursor-pointer' : 'cursor-default'} transition-transform ${textColor} ${bgColor}"
-                                    style="${!isOff ? `background-color: ${badgeColor};` : ''}"
+                                    class="w-full py-1 rounded text-[10px] font-black font-mono shadow-2xs ${isManager ? 'hover:scale-105 cursor-pointer' : 'cursor-default'} transition-transform ${btnClass}"
+                                    ${styleAttr ? `style="${styleAttr}"` : ''}
                                     title="${cellSched ? `${cellSched.shift_name} (${cellSched.start_time}-${cellSched.end_time})` : (isManager ? 'Klik untuk atur shift' : 'Libur / Tidak Terjadwal')}">
                                 ${badgeCode}
                             </button>

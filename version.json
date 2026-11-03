@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.8.2",
-    "build": "20261103-108",
+    "version": "1.8.3",
+    "build": "20261103-109",
     "release_date": "2026-11-03",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.8.3",
+            "commit": "HEAD",
+            "date": "2026-11-03",
+            "title": "Harmonisasi Kartu Master Jam Kerja Toko dan Matriks Roster Jadwal Bulanan untuk Dark Mode",
+            "description": "Menyelaraskan tampilan subtab Jam Kerja & Roster Bulanan pada Portal ESS Karyawan (#tab-ess): (1) Master Jam Kerja Toko (CRUD Shift): Kartu shift kerja dinamis diperbarui dengan dark:bg-slate-800/80 dark:border-slate-700/80, nama shift dark:text-slate-100, jam operasional dark:text-slate-300, dan tombol aksi yang selaras; (2) Matriks Penyusunan Roster Jadwal Kerja Bulanan: Header tanggal hari Minggu (isSun) disesuaikan dengan dark:bg-rose-950/40 dark:text-rose-400 (tidak lagi putih silau bg-rose-50), sel tanggal belum terjadwal diselaraskan dengan dark:bg-slate-800/80 dark:text-slate-500 alih-alih warna terang #e2e8f0, sel OFF diselaraskan dengan dark:bg-slate-800 dark:text-slate-300, serta sel hari Minggu dark:bg-rose-950/20; (3) Modal Dialog ESS: Memperbarui modal tambah shift kerja, modal import jadwal CSV, modal set hari libur, dan modal edit shift cepat dengan border, background, dan teks dark mode; (4) Kompilasi Tailwind CSS.",
+            "rollback_command": "git checkout v1.8.2"
+        },
         {
             "version": "1.8.2",
             "commit": "HEAD",
