@@ -17151,17 +17151,15 @@ try {
         }
 
         function switchDisbursementTab(tabName) {
-            document.querySelectorAll('.disb-tab-pane').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.disb-tab-btn').forEach(btn => {
-                btn.classList.remove('bg-rose-600', 'text-white', 'shadow-xs');
-                btn.classList.add('bg-slate-100', 'text-slate-600');
+            document.querySelectorAll('.disb-tab-pane').forEach(function(el) { el.classList.add('hidden'); });
+            document.querySelectorAll('.disb-tab-btn').forEach(function(btn) {
+                btn.className = 'disb-tab-btn py-1.5 px-2 rounded-lg text-[11px] sm:text-xs font-black bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-all flex items-center justify-center space-x-1';
             });
-            const pane = document.getElementById(`disb-pane-${tabName}`);
+            const pane = document.getElementById('disb-pane-' + tabName);
             if (pane) pane.classList.remove('hidden');
-            const activeBtn = document.getElementById(`disb-btn-${tabName}`);
+            const activeBtn = document.getElementById('disb-btn-' + tabName);
             if (activeBtn) {
-                activeBtn.classList.remove('bg-slate-100', 'text-slate-600');
-                activeBtn.classList.add('bg-rose-600', 'text-white', 'shadow-xs');
+                activeBtn.className = 'disb-tab-btn py-1.5 px-2 rounded-lg text-[11px] sm:text-xs font-black bg-rose-600 text-white shadow-xs transition-all flex items-center justify-center space-x-1 border border-rose-600';
             }
         }
 
@@ -24662,7 +24660,7 @@ Manager / Supervisor: __________________
             if (openingShiftView) openingShiftView.classList.add('hidden');
 
             // Reset tab button styles
-            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white border border-transparent dark:border-slate-700';
             const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
 
             if (btnCatalog) btnCatalog.className = inactiveClass;
@@ -25721,7 +25719,7 @@ Manager / Supervisor: __________________
             const actionsBase = document.getElementById('bom-base-actions');
 
             const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
-            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white border border-transparent dark:border-slate-700';
 
             if (sub === 'base') {
                 btnBase.className = activeClass;
@@ -25987,7 +25985,7 @@ Manager / Supervisor: __________________
             const viewMov = document.getElementById('stock-view-movements');
 
             const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
-            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white border border-transparent dark:border-slate-700';
 
             if (sub === 'balance') {
                 if (btnBal) btnBal.className = activeClass;
@@ -26602,7 +26600,7 @@ Manager / Supervisor: __________________
 
             const activeManualCls = 'px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-2 bg-emerald-600 text-white shadow-2xs';
             const activeTransferCls = 'px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-2 bg-indigo-600 text-white shadow-2xs';
-            const inactiveCls = 'px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const inactiveCls = 'px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white border border-transparent dark:border-slate-700';
 
             if (btnManual) {
                 btnManual.className = (target === 'manual') ? activeManualCls : inactiveCls;
@@ -26827,27 +26825,27 @@ Manager / Supervisor: __________________
                 const optsHtml = buildStockInProductOptionsHtml(r.productId, typeFilter, branchId);
                 const disableDel = stockInState.manualRows.length <= 1;
 
-                return '<tr class="hover:bg-slate-50/70 transition-colors">' +
+                return '<tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">' +
                     '<td class="py-2.5 px-3 text-center font-mono text-slate-400 font-bold">' + (idx + 1) + '</td>' +
                     '<td class="py-2.5 px-3">' +
                         '<select id="stockin-man-prod-' + r.rowId + '" onchange="onManualRowProductChange(' + r.rowId + ')" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none">' +
                             optsHtml +
                         '</select>' +
                     '</td>' +
-                    '<td class="py-2.5 px-3 text-right font-mono font-bold text-slate-600" id="stockin-man-cur-' + r.rowId + '">' +
+                    '<td class="py-2.5 px-3 text-right font-mono font-bold text-slate-600 dark:text-slate-300" id="stockin-man-cur-' + r.rowId + '">' +
                         (r.productId > 0 ? (formatDecimal(curStock) + ' <span class="text-[10px] text-slate-400">' + escapeHtml(unitText) + '</span>') : '-') +
                     '</td>' +
                     '<td class="py-2.5 px-3">' +
-                        '<input type="number" step="any" min="0" id="stockin-man-qty-' + r.rowId + '" value="' + escapeHtml(r.qty) + '" oninput="onManualRowQtyInput(' + r.rowId + ')" placeholder="0" class="w-full p-2 text-center bg-emerald-50/60 border border-emerald-200 rounded-xl font-mono font-black text-emerald-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none">' +
+                        '<input type="number" step="any" min="0" id="stockin-man-qty-' + r.rowId + '" value="' + escapeHtml(r.qty) + '" oninput="onManualRowQtyInput(' + r.rowId + ')" placeholder="0" class="w-full p-2 text-center bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-700/80 rounded-xl font-mono font-black text-emerald-800 dark:text-emerald-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none">' +
                     '</td>' +
-                    '<td class="py-2.5 px-3 text-right font-mono font-black text-emerald-700" id="stockin-man-after-' + r.rowId + '">' +
+                    '<td class="py-2.5 px-3 text-right font-mono font-black text-emerald-700 dark:text-emerald-400" id="stockin-man-after-' + r.rowId + '">' +
                         (r.productId > 0 ? (formatDecimal(estAfter) + ' <span class="text-[10px] text-slate-400">' + escapeHtml(unitText) + '</span>') : '-') +
                     '</td>' +
                     '<td class="py-2.5 px-3">' +
                         '<input type="text" id="stockin-man-note-' + r.rowId + '" value="' + escapeHtml(r.notes) + '" placeholder="Keterangan baris (opsional)" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none">' +
                     '</td>' +
                     '<td class="py-2.5 px-3 text-center">' +
-                        '<button type="button" onclick="removeStockInManualRow(' + r.rowId + ')" ' + (disableDel ? 'disabled' : '') + ' class="p-1.5 rounded-lg ' + (disableDel ? 'text-slate-300 cursor-not-allowed' : 'text-rose-500 hover:bg-rose-50') + '" title="Hapus Baris">' +
+                        '<button type="button" onclick="removeStockInManualRow(' + r.rowId + ')" ' + (disableDel ? 'disabled' : '') + ' class="p-1.5 rounded-lg ' + (disableDel ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed' : 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40') + '" title="Hapus Baris">' +
                             '<i data-lucide="trash-2" class="w-4 h-4"></i>' +
                         '</button>' +
                     '</td>' +
@@ -27000,13 +26998,13 @@ Manager / Supervisor: __________________
                 return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">' +
                     '<td class="py-2.5 px-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">' + escapeHtml(m.created_at || '-') + '</td>' +
                     '<td class="py-2.5 px-3 whitespace-nowrap"><span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md font-bold text-[11px] text-slate-700 dark:text-slate-300">'  + escapeHtml(m.branch_name || '-') + '</span></td>' +
-                    '<td class="py-2.5 px-3 font-bold text-slate-800">' + icon + ' ' + escapeHtml(m.product_name || '-') + ' <span class="text-[10px] font-mono text-slate-400">(' + escapeHtml(m.product_sku || '') + ')</span></td>' +
-                    '<td class="py-2.5 px-3 text-right font-mono font-black text-emerald-600">+' + formatDecimal(m.qty_change) + ' <span class="text-[10px] font-normal text-slate-400">' + escapeHtml(m.unit || '') + '</span></td>' +
+                    '<td class="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-100">' + icon + ' ' + escapeHtml(m.product_name || '-') + ' <span class="text-[10px] font-mono text-slate-400">(' + escapeHtml(m.product_sku || '') + ')</span></td>' +
+                    '<td class="py-2.5 px-3 text-right font-mono font-black text-emerald-600 dark:text-emerald-400">+' + formatDecimal(m.qty_change) + ' <span class="text-[10px] font-normal text-slate-400">' + escapeHtml(m.unit || '') + '</span></td>' +
                     '<td class="py-2.5 px-3 text-right font-mono text-slate-400">' + formatDecimal(m.stock_before) + '</td>' +
-                    '<td class="py-2.5 px-3 text-right font-mono font-bold text-slate-800">' + formatDecimal(m.stock_after) + '</td>' +
-                    '<td class="py-2.5 px-3 font-mono text-[11px] font-bold text-emerald-700">' + escapeHtml(m.reference_no || '-') + '</td>' +
-                    '<td class="py-2.5 px-3 text-slate-600 text-[11px]">' + escapeHtml(m.notes || '-') + '</td>' +
-                    '<td class="py-2.5 px-3 text-slate-500 text-[11px]">' + escapeHtml(m.user_name || 'Admin') + '</td>' +
+                    '<td class="py-2.5 px-3 text-right font-mono font-bold text-slate-800 dark:text-slate-100">' + formatDecimal(m.stock_after) + '</td>' +
+                    '<td class="py-2.5 px-3 font-mono text-[11px] font-bold text-emerald-700 dark:text-emerald-400">' + escapeHtml(m.reference_no || '-') + '</td>' +
+                    '<td class="py-2.5 px-3 text-slate-600 dark:text-slate-300 text-[11px]">' + escapeHtml(m.notes || '-') + '</td>' +
+                    '<td class="py-2.5 px-3 text-slate-500 dark:text-slate-400 text-[11px]">' + escapeHtml(m.user_name || 'Admin') + '</td>' +
                 '</tr>';
             }).join('');
         }
@@ -27069,27 +27067,27 @@ Manager / Supervisor: __________________
                 var optsHtml = buildStockInProductOptionsHtml(r.productId, 'ALL', fromBranchId);
                 var disableDel = stockInState.transferRows.length <= 1;
 
-                return '<tr class="hover:bg-slate-50/70 transition-colors">' +
+                return '<tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">' +
                     '<td class="py-2.5 px-3 text-center font-mono text-slate-400 font-bold">' + (idx + 1) + '</td>' +
                     '<td class="py-2.5 px-3">' +
                         '<select id="stockin-trf-prod-' + r.rowId + '" onchange="onTransferRowProductChange(' + r.rowId + ')" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none">' +
                             optsHtml +
                         '</select>' +
                     '</td>' +
-                    '<td class="py-2.5 px-3 text-right font-mono font-bold ' + (isInsufficient ? 'text-rose-600' : 'text-slate-700') + '" id="stockin-trf-frombal-' + r.rowId + '">' +
+                    '<td class="py-2.5 px-3 text-right font-mono font-bold ' + (isInsufficient ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-300') + '" id="stockin-trf-frombal-' + r.rowId + '">' +
                         (r.productId > 0 ? (formatDecimal(fromStock) + ' <span class="text-[10px] text-slate-400">' + escapeHtml(unitText) + '</span>') : '-') +
                     '</td>' +
-                    '<td class="py-2.5 px-3 text-right font-mono font-semibold text-indigo-700" id="stockin-trf-tobal-' + r.rowId + '">' +
+                    '<td class="py-2.5 px-3 text-right font-mono font-semibold text-indigo-700 dark:text-indigo-400" id="stockin-trf-tobal-' + r.rowId + '">' +
                         (r.productId > 0 ? (formatDecimal(toStock) + ' <span class="text-[10px] text-slate-400">' + escapeHtml(unitText) + '</span>') : '-') +
                     '</td>' +
                     '<td class="py-2.5 px-3">' +
-                        '<input type="number" step="any" min="0" id="stockin-trf-qty-' + r.rowId + '" value="' + escapeHtml(r.qty) + '" oninput="onTransferRowQtyInput(' + r.rowId + ')" placeholder="0" class="w-full p-2 text-center bg-indigo-50/60 border ' + (isInsufficient ? 'border-rose-400 text-rose-700' : 'border-indigo-200 text-indigo-900') + ' rounded-xl font-mono font-black focus:ring-2 focus:ring-indigo-500 focus:outline-none">' +
+                        '<input type="number" step="any" min="0" id="stockin-trf-qty-' + r.rowId + '" value="' + escapeHtml(r.qty) + '" oninput="onTransferRowQtyInput(' + r.rowId + ')" placeholder="0" class="w-full p-2 text-center bg-indigo-50/60 dark:bg-indigo-950/40 border ' + (isInsufficient ? 'border-rose-400 text-rose-700 dark:text-rose-300' : 'border-indigo-200 dark:border-indigo-700/80 text-indigo-900 dark:text-indigo-300') + ' rounded-xl font-mono font-black focus:ring-2 focus:ring-indigo-500 focus:outline-none">' +
                     '</td>' +
                     '<td class="py-2.5 px-3">' +
                         '<input type="text" id="stockin-trf-note-' + r.rowId + '" value="' + escapeHtml(r.notes) + '" placeholder="Catatan item (opsional)" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none">' +
                     '</td>' +
                     '<td class="py-2.5 px-3 text-center">' +
-                        '<button type="button" onclick="removeStockTransferRow(' + r.rowId + ')" ' + (disableDel ? 'disabled' : '') + ' class="p-1.5 rounded-lg ' + (disableDel ? 'text-slate-300 cursor-not-allowed' : 'text-rose-500 hover:bg-rose-50') + '" title="Hapus Baris">' +
+                        '<button type="button" onclick="removeStockTransferRow(' + r.rowId + ')" ' + (disableDel ? 'disabled' : '') + ' class="p-1.5 rounded-lg ' + (disableDel ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed' : 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40') + '" title="Hapus Baris">' +
                             '<i data-lucide="trash-2" class="w-4 h-4"></i>' +
                         '</button>' +
                     '</td>' +
@@ -27149,7 +27147,7 @@ Manager / Supervisor: __________________
             const fromStock = getStockInBranchBalance(fromBranchId, pId);
             const toStock = getStockInBranchBalance(toBranchId, pId);
             if (fromCell) {
-                fromCell.className = 'py-2.5 px-3 text-right font-mono font-bold ' + (qtyVal > fromStock ? 'text-rose-600' : 'text-slate-700');
+                fromCell.className = 'py-2.5 px-3 text-right font-mono font-bold ' + (qtyVal > fromStock ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-300');
                 fromCell.innerHTML = formatDecimal(fromStock) + ' <span class="text-[10px] text-slate-400">' + escapeHtml(unitText) + '</span>';
             }
             if (toCell) {
@@ -27270,8 +27268,8 @@ Manager / Supervisor: __________________
                 }).join(', ');
                 return '<div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-amber-200 dark:border-amber-800 flex flex-wrap items-center justify-between gap-2">' +
                     '<div class="text-xs">' +
-                        '<div class="font-black text-slate-800">' + escapeHtml(t.transfer_no) + ' — <span class="text-indigo-700">' + escapeHtml(t.from_branch_name || '-') + ' ➔ ' + escapeHtml(t.to_branch_name || '-') + '</span></div>' +
-                        '<div class="text-[11px] text-slate-600 mt-0.5">' + (itemsSummary || '-') + '</div>' +
+                        '<div class="font-black text-slate-800 dark:text-slate-100">' + escapeHtml(t.transfer_no) + ' — <span class="text-indigo-700 dark:text-indigo-400">' + escapeHtml(t.from_branch_name || '-') + ' ➔ ' + escapeHtml(t.to_branch_name || '-') + '</span></div>' +
+                        '<div class="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">' + (itemsSummary || '-') + '</div>' +
                     '</div>' +
                     '<button type="button" onclick="receiveStockTransferAction(' + parseInt(t.id, 10) + ', \'' + escapeHtml(t.transfer_no) + '\')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-xs flex items-center space-x-1.5">' +
                         '<i data-lucide="package-check" class="w-4 h-4"></i>' +
@@ -27281,8 +27279,8 @@ Manager / Supervisor: __________________
             }).join('');
 
             banner.innerHTML =
-                '<div class="flex items-center space-x-2 text-amber-900 font-black text-xs">' +
-                    '<i data-lucide="truck" class="w-4 h-4 text-amber-600"></i>' +
+                '<div class="flex items-center space-x-2 text-amber-900 dark:text-amber-300 font-black text-xs">' +
+                    '<i data-lucide="truck" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>' +
                     '<span>🚚 Terdapat ' + incoming.length + ' Pengiriman Transfer Cabang Menunggu Konfirmasi Penerimaan:</span>' +
                 '</div>' +
                 '<div class="space-y-2">' + cardsHtml + '</div>';
@@ -27298,7 +27296,7 @@ Manager / Supervisor: __________________
                 if (st === stockInState.transferStatusFilter) {
                     pill.className = 'px-3 py-1.5 rounded-xl font-bold bg-indigo-600 text-white';
                 } else {
-                    pill.className = 'px-3 py-1.5 rounded-xl font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200';
+                    pill.className = 'px-3 py-1.5 rounded-xl font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700';
                 }
             });
             renderStockTransferHistory();
@@ -27321,57 +27319,57 @@ Manager / Supervisor: __________________
             const canCancelPerm = hasUserPerm('stock-in:transfer', 'delete') || stockInState.permissions.transfer_delete;
 
             tbody.innerHTML = filtered.map(function(t) {
-                let statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">✅ SELESAI</span>';
+                let statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">✅ SELESAI</span>';
                 if (t.status === 'IN_TRANSIT') {
-                    statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-100 text-amber-800">🚚 IN-TRANSIT</span>';
+                    statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">🚚 IN-TRANSIT</span>';
                 } else if (t.status === 'CANCELLED') {
-                    statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-100 text-rose-800">❌ DIBATALKAN</span>';
+                    statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800">❌ DIBATALKAN</span>';
                 }
 
                 const modeBadge = (t.transfer_mode === 'IN_TRANSIT')
-                    ? '<span class="block text-[10px] text-amber-700 font-semibold mt-0.5">Konfirmasi Tujuan</span>'
-                    : '<span class="block text-[10px] text-indigo-600 font-semibold mt-0.5">⚡ Langsung (Instan)</span>';
+                    ? '<span class="block text-[10px] text-amber-700 dark:text-amber-400 font-semibold mt-0.5">Konfirmasi Tujuan</span>'
+                    : '<span class="block text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">⚡ Langsung (Instan)</span>';
 
                 const itemsHtml = (t.items || []).map(function(it) {
                     const icon = isStockInRawMaterial(it.product_type) ? '🧪' : '📦';
                     return '<div class="inline-flex items-center px-2 py-0.5 mr-1 mb-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-800 dark:text-slate-200">' +
-                        icon + ' ' + escapeHtml(it.product_name || ('#' + it.product_id)) + ': <b class="ml-1 font-mono text-indigo-700">' + formatDecimal(it.qty_sent) + ' ' + escapeHtml(it.unit || 'pcs') + '</b>' +
+                        icon + ' ' + escapeHtml(it.product_name || ('#' + it.product_id)) + ': <b class="ml-1 font-mono text-indigo-700 dark:text-indigo-400">' + formatDecimal(it.qty_sent) + ' ' + escapeHtml(it.unit || 'pcs') + '</b>' +
                     '</div>';
                 }).join('');
 
                 const canReceiveThis = (t.status === 'IN_TRANSIT') && (stockInState.canAccessAll || stockInState.allowedBranchIds.indexOf(parseInt(t.to_branch_id, 10)) !== -1);
                 const canCancelThis = (t.status === 'IN_TRANSIT') && canCancelPerm && (stockInState.canAccessAll || stockInState.allowedBranchIds.indexOf(parseInt(t.from_branch_id, 10)) !== -1);
 
-                let actionsHtml = '<span class="text-slate-300 text-[11px]">—</span>';
+                let actionsHtml = '<span class="text-slate-300 dark:text-slate-600 text-[11px]">—</span>';
                 if (canReceiveThis || canCancelThis) {
                     actionsHtml = '<div class="flex flex-wrap items-center justify-center gap-1.5">';
                     if (canReceiveThis) {
                         actionsHtml += '<button type="button" onclick="receiveStockTransferAction(' + parseInt(t.id, 10) + ', \'' + escapeHtml(t.transfer_no) + '\')" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold">Terima</button>';
                     }
                     if (canCancelThis) {
-                        actionsHtml += '<button type="button" onclick="cancelStockTransferAction(' + parseInt(t.id, 10) + ', \'' + escapeHtml(t.transfer_no) + '\')" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[11px] font-bold">Batal</button>';
+                        actionsHtml += '<button type="button" onclick="cancelStockTransferAction(' + parseInt(t.id, 10) + ', \'' + escapeHtml(t.transfer_no) + '\')" class="px-2.5 py-1.5 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 rounded-lg text-[11px] font-bold">Batal</button>';
                     }
                     actionsHtml += '</div>';
                 }
 
                 let actorInfo = 'Kirim: ' + escapeHtml(t.created_by_name || 'Admin');
                 if (t.status === 'COMPLETED' && t.received_by_name) {
-                    actorInfo += '<span class="block text-[10px] text-emerald-700">Terima: ' + escapeHtml(t.received_by_name) + '</span>';
+                    actorInfo += '<span class="block text-[10px] text-emerald-700 dark:text-emerald-400">Terima: ' + escapeHtml(t.received_by_name) + '</span>';
                 } else if (t.status === 'CANCELLED' && t.cancelled_by_name) {
-                    actorInfo += '<span class="block text-[10px] text-rose-600">Batal: ' + escapeHtml(t.cancelled_by_name) + '</span>';
+                    actorInfo += '<span class="block text-[10px] text-rose-600 dark:text-rose-400">Batal: ' + escapeHtml(t.cancelled_by_name) + '</span>';
                 }
 
                 return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">' +
                     '<td class="py-3 px-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">' + escapeHtml(t.created_at || '-') + '</td>' +
-                    '<td class="py-3 px-3 font-mono text-[11px] font-black text-indigo-800 whitespace-nowrap">' + escapeHtml(t.transfer_no) + modeBadge + '</td>' +
+                    '<td class="py-3 px-3 font-mono text-[11px] font-black text-indigo-800 dark:text-indigo-400 whitespace-nowrap">' + escapeHtml(t.transfer_no) + modeBadge + '</td>' +
                     '<td class="py-3 px-3 whitespace-nowrap">' +
-                        '<div class="text-xs font-bold text-slate-800">📤 ' + escapeHtml(t.from_branch_name || '-') + '</div>' +
-                        '<div class="text-xs font-bold text-teal-700 mt-0.5">📥 ' + escapeHtml(t.to_branch_name || '-') + '</div>' +
+                        '<div class="text-xs font-bold text-slate-800 dark:text-slate-100">📤 ' + escapeHtml(t.from_branch_name || '-') + '</div>' +
+                        '<div class="text-xs font-bold text-teal-700 dark:text-teal-400 mt-0.5">📥 ' + escapeHtml(t.to_branch_name || '-') + '</div>' +
                     '</td>' +
                     '<td class="py-3 px-3">' + (itemsHtml || '-') + '</td>' +
                     '<td class="py-3 px-3 whitespace-nowrap">' + statusBadge + '</td>' +
-                    '<td class="py-3 px-3 text-[11px] text-slate-600">' + escapeHtml(t.notes || '-') + '</td>' +
-                    '<td class="py-3 px-3 text-[11px] text-slate-600 whitespace-nowrap">' + actorInfo + '</td>' +
+                    '<td class="py-3 px-3 text-[11px] text-slate-600 dark:text-slate-300">' + escapeHtml(t.notes || '-') + '</td>' +
+                    '<td class="py-3 px-3 text-[11px] text-slate-600 dark:text-slate-400 whitespace-nowrap">' + actorInfo + '</td>' +
                     '<td class="py-3 px-3 text-center whitespace-nowrap">' + actionsHtml + '</td>' +
                 '</tr>';
             }).join('');
@@ -28179,7 +28177,7 @@ Manager / Supervisor: __________________
 
             const activeLedgerClass = "px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-rose-600 text-white shadow-2xs";
             const activeCatClass = "px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs";
-            const inactiveClass = "px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900";
+            const inactiveClass = "px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white border border-transparent dark:border-slate-700";
 
             if (subtab === 'ledger') {
                 if (btnLedger) btnLedger.className = activeLedgerClass;
@@ -29432,7 +29430,7 @@ Manager / Supervisor: __________________
             ];
 
             const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
-            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white border border-transparent dark:border-slate-700';
 
             subtabs.forEach(item => {
                 const el = document.getElementById(item.elId);
@@ -32123,7 +32121,7 @@ Manager / Supervisor: __________________
             ];
 
             const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
-            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white border border-transparent dark:border-slate-700';
 
             subtabs.forEach(item => {
                 const view = document.getElementById(item.viewId);
@@ -33579,7 +33577,7 @@ Manager / Supervisor: __________________
             const btnMaps = document.getElementById('subtab-btn-branch-maps');
 
             const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
-            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white border border-transparent dark:border-slate-700';
 
             if (isTable) {
                 if (tableEl) tableEl.classList.remove('hidden');
@@ -36326,7 +36324,7 @@ Manager / Supervisor: __________________
             settingsSubtabActive = subtab;
             const subtabs = ['general', 'roles', 'printer', 'receipt', 'payslip', 'notifications', 'sync', 'security'];
             const activeClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-indigo-600 text-white shadow-2xs';
-            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900';
+            const inactiveClass = 'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center space-x-1.5 sm:space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white border border-transparent dark:border-slate-700';
 
             subtabs.forEach(st => {
                 const el = document.getElementById(`settings-subtab-${st}`);

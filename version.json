@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.8.1",
-    "build": "20261103-107",
+    "version": "1.8.2",
+    "build": "20261103-108",
     "release_date": "2026-11-03",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.8.2",
+            "commit": "HEAD",
+            "date": "2026-11-03",
+            "title": "Harmonisasi Menyeluruh Subtab Switcher & Tampilan Input Penambahan Stok & Distribusi Antar Cabang untuk Dark Mode",
+            "description": "Menyempurnakan styling subtab switcher di seluruh sistem agar tidak kembali putih saat berpindah subtab: (1) Modul Input Penambahan Stok (#tab-stock-in): Memperbaiki switchStockInSubTab inactiveCls dengan dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700, menyelaraskan form input manual baris produk (qty, catatan, estimasi stok), serta tabel riwayat; (2) Transfer Antar Cabang: Menyelaraskan baris pengiriman, input transfer, status banner in-transit, dan riwayat dokumen pengiriman; (3) Harmonisasi Global Subtab Switcher di Seluruh Modul: Mengupdate class inactive pada switchProductSubTab, switchBOMSubTab, switchStockSubTab, setExpenseSubtab, setCustomerSubtab, setLogisticsSubtab, setBranchSubtab, setSettingsSubtab, dan switchDisbursementTab (Tutup Toko); (4) Kompilasi Tailwind CSS.",
+            "rollback_command": "git checkout v1.8.1"
+        },
         {
             "version": "1.8.1",
             "commit": "HEAD",
