@@ -3922,7 +3922,7 @@ try {
                                 <span>Penjualan Kredit (Piutang Pelanggan / Piutang Cust)</span>
                                 <span id="pnl-receivable-sales" class="font-bold">Rp 0</span>
                             </div>
-                            <div class="flex justify-between pl-4 text-slate-400 dark:text-slate-500 text-[11px]">
+                            <div class="flex justify-between pl-4 text-slate-500 dark:text-slate-400 text-[11px]">
                                 <span>Total Penjualan Kotor (Kombinasi Kas & Piutang)</span>
                                 <span id="pnl-gross-sales">Rp 0</span>
                             </div>
@@ -3937,7 +3937,7 @@ try {
                                 <span>2. HARGA POKOK PENJUALAN (COGS)</span>
                                 <span id="pnl-cogs" class="text-rose-600 dark:text-rose-400">(Rp 0)</span>
                             </div>
-                            <div class="flex justify-between pl-4 text-slate-500 dark:text-slate-400">
+                            <div class="flex justify-between pl-4 text-slate-500 dark:text-slate-300">
                                 <span>Beban Pokok Barang Terjual (Moving Average / FIFO)</span>
                                 <span id="pnl-cogs-detail">Rp 0</span>
                             </div>
@@ -3953,7 +3953,7 @@ try {
                                 <span>3. BEBAN OPERASIONAL CABANG (OPERATING EXPENSES)</span>
                                 <span id="pnl-total-expenses" class="text-rose-600 dark:text-rose-400">(Rp 0)</span>
                             </div>
-                            <div id="pnl-expenses-list" class="space-y-1 pl-4 text-slate-600 dark:text-slate-400"></div>
+                            <div id="pnl-expenses-list" class="space-y-1 pl-4 text-slate-600 dark:text-slate-300"></div>
                         </div>
 
                         <div class="flex justify-between font-bold text-slate-800 dark:text-slate-100 text-sm pt-1">
@@ -3961,7 +3961,7 @@ try {
                             <span id="pnl-operating-income">Rp 0</span>
                         </div>
 
-                        <div class="flex justify-between pl-4 text-slate-500 dark:text-slate-400">
+                        <div class="flex justify-between pl-4 text-slate-500 dark:text-slate-300">
                             <span>Estimasi Pajak Penghasilan (5%)</span>
                             <span id="pnl-tax" class="text-rose-600 dark:text-rose-400">(Rp 0)</span>
                         </div>
@@ -3971,7 +3971,7 @@ try {
                             <span id="pnl-net-profit" class="text-amber-300">Rp 0</span>
                         </div>
 
-                        <div class="flex justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1">
+                        <div class="flex justify-between text-[11px] text-slate-500 dark:text-slate-300 pt-1">
                             <span>Net Profit Margin (% terhadap Penjualan):</span>
                             <span id="pnl-net-margin" class="font-bold text-indigo-700 dark:text-indigo-400">0%</span>
                         </div>
@@ -6315,7 +6315,7 @@ try {
                             <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base flex items-center space-x-2">
                                 <span>🖨️ Pengaturan Printer Kasir Thermal (USB, IP / LAN, Browser)</span>
                             </h3>
-                            <p class="text-xs text-slate-500">Konfigurasikan tipe koneksi printer kasir untuk cetak struk kasir otomatis.</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Konfigurasikan tipe koneksi printer kasir untuk cetak struk kasir otomatis.</p>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
@@ -6330,7 +6330,7 @@ try {
                                     </select>
                                 </div>
                                 <div id="printer-ip-config-block" class="space-y-3 p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700">
-                                    <h4 class="font-bold text-indigo-900">Pengaturan IP Printer (Network LAN)</h4>
+                                    <h4 class="font-bold text-indigo-900 dark:text-indigo-300">Pengaturan IP Printer (Network LAN)</h4>
                                     <div>
                                         <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Alamat IP Printer</label>
                                         <input type="text" id="set-printer-ip" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500" placeholder="192.168.1.200">
@@ -6353,15 +6353,15 @@ try {
                                 <div class="space-y-2 pt-2">
                                     <label class="flex items-center space-x-2.5 cursor-pointer">
                                         <input type="checkbox" id="set-printer-auto-cut" class="w-4 h-4 text-indigo-600 rounded border-slate-300">
-                                        <span class="font-bold text-slate-700">Autocut Kertas Setelah Selesai Cetak</span>
+                                        <span class="font-bold text-slate-700 dark:text-slate-300">Autocut Kertas Setelah Selesai Cetak</span>
                                     </label>
                                     <label class="flex items-center space-x-2.5 cursor-pointer">
                                         <input type="checkbox" id="set-printer-cash-drawer" class="w-4 h-4 text-indigo-600 rounded border-slate-300">
-                                        <span class="font-bold text-slate-700">Otomatis Buka Laci Kasir (Cash Drawer Kick Pin)</span>
+                                        <span class="font-bold text-slate-700 dark:text-slate-300">Otomatis Buka Laci Kasir (Cash Drawer Kick Pin)</span>
                                     </label>
                                 </div>
                                 <div class="pt-2">
-                                    <button type="button" onclick="testThermalPrinter()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold flex items-center space-x-2 shadow">
+                                    <button type="button" onclick="testThermalPrinter()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center space-x-2 shadow">
                                         <i data-lucide="printer" class="w-4 h-4"></i>
                                         <span>Tes Cetak Lembar Uji Printer</span>
                                     </button>
@@ -6385,7 +6385,7 @@ try {
                             <!-- Left: Form Input Settings -->
                             <div class="space-y-5">
                                 <div class="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
-                                    <h4 class="font-bold text-indigo-900 uppercase tracking-wider text-[11px]">1. Bagian Header (Bagian Atas Nota)</h4>
+                                    <h4 class="font-bold text-indigo-900 dark:text-indigo-300 uppercase tracking-wider text-[11px]">1. Bagian Header (Bagian Atas Nota)</h4>
                                     <div>
                                         <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Judul Utama Header Struk</label>
                                         <input type="text" id="set-receipt-header-title" oninput="updateReceiptLivePreview()" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500" placeholder="ESBAS RETAIL TOKO">
@@ -6400,26 +6400,26 @@ try {
                                     </div>
                                     <label class="flex items-center space-x-2 cursor-pointer pt-1">
                                         <input type="checkbox" id="set-receipt-show-logo" onchange="updateReceiptLivePreview()" class="w-4 h-4 text-indigo-600 rounded">
-                                        <span class="font-semibold text-slate-700">Tampilkan Logo / Emoji di Atas Struk</span>
+                                        <span class="font-semibold text-slate-700 dark:text-slate-300">Tampilkan Logo / Emoji di Atas Struk</span>
                                     </label>
                                 </div>
 
                                 <div class="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
-                                    <h4 class="font-bold text-indigo-900 uppercase tracking-wider text-[11px]">2. Bagian Body (Daftar Item & Rincian)</h4>
+                                    <h4 class="font-bold text-indigo-900 dark:text-indigo-300 uppercase tracking-wider text-[11px]">2. Bagian Body (Daftar Item & Rincian)</h4>
                                     <div class="space-y-2">
                                         <label class="flex items-center space-x-2 cursor-pointer">
                                             <input type="checkbox" id="set-receipt-show-sku" onchange="updateReceiptLivePreview()" class="w-4 h-4 text-indigo-600 rounded">
-                                            <span class="font-semibold text-slate-700">Tampilkan Kode SKU di samping nama item</span>
+                                            <span class="font-semibold text-slate-700 dark:text-slate-300">Tampilkan Kode SKU di samping nama item</span>
                                         </label>
                                         <label class="flex items-center space-x-2 cursor-pointer">
                                             <input type="checkbox" id="set-receipt-compact" onchange="updateReceiptLivePreview()" class="w-4 h-4 text-indigo-600 rounded">
-                                            <span class="font-semibold text-slate-700">Gunakan spasi rapat (Compact spacing hemat kertas thermal)</span>
+                                            <span class="font-semibold text-slate-700 dark:text-slate-300">Gunakan spasi rapat (Compact spacing hemat kertas thermal)</span>
                                         </label>
                                     </div>
                                 </div>
 
                                 <div class="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
-                                    <h4 class="font-bold text-indigo-900 uppercase tracking-wider text-[11px]">3. Bagian Footer (Catatan Bawah Nota)</h4>
+                                    <h4 class="font-bold text-indigo-900 dark:text-indigo-300 uppercase tracking-wider text-[11px]">3. Bagian Footer (Catatan Bawah Nota)</h4>
                                     <div>
                                         <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Ucapan Penutup (Baris 1)</label>
                                         <input type="text" id="set-receipt-footer-1" oninput="updateReceiptLivePreview()" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500" placeholder="Terima Kasih Atas Kunjungan Anda!">
@@ -6439,31 +6439,31 @@ try {
                             <div>
                                 <h4 class="font-bold text-slate-700 dark:text-slate-200 mb-2">Pratinjau Struk Langsung (Live Preview)</h4>
                                 <div id="receipt-preview-box" class="receipt-font text-xs bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 space-y-2 max-w-sm mx-auto shadow-sm">
-                                    <div class="text-center pb-2 border-b border-dashed border-slate-300">
+                                    <div class="text-center pb-2 border-b border-dashed border-slate-300 dark:border-slate-700">
                                         <p id="prev-receipt-logo" class="text-lg">🛍️</p>
                                         <p id="prev-receipt-title" class="font-bold text-sm tracking-wider">ESBAS RETAIL TOKO</p>
                                         <p id="prev-receipt-subtitle" class="font-medium text-[11px]">Pusat Belanja & Grosir</p>
-                                        <p class="text-[10px] text-slate-500">Cabang Pusat Cimahi • Jl. Raya No. 1</p>
-                                        <p id="prev-receipt-custom" class="text-[9px] text-slate-400">NPWP: 01.234.567.8-901.000</p>
+                                        <p class="text-[10px] text-slate-500 dark:text-slate-400">Cabang Pusat Cimahi • Jl. Raya No. 1</p>
+                                        <p id="prev-receipt-custom" class="text-[9px] text-slate-400 dark:text-slate-500">NPWP: 01.234.567.8-901.000</p>
                                     </div>
-                                    <div class="text-[10px] space-y-0.5 border-b border-dashed border-slate-300 pb-1.5">
+                                    <div class="text-[10px] space-y-0.5 border-b border-dashed border-slate-300 dark:border-slate-700 pb-1.5">
                                         <div class="flex justify-between"><span>No:</span><span class="font-bold">INV/20261012/001</span></div>
                                         <div class="flex justify-between"><span>Waktu:</span><span>12/10/2026 14:30</span></div>
                                         <div class="flex justify-between"><span>Kasir:</span><span>Siti Rahmawati</span></div>
                                         <div class="flex justify-between"><span>Pelanggan:</span><span class="font-bold">Pelanggan Umum</span></div>
                                     </div>
-                                    <div class="space-y-1 border-b border-dashed border-slate-300 py-1.5 text-[11px]">
+                                    <div class="space-y-1 border-b border-dashed border-slate-300 dark:border-slate-700 py-1.5 text-[11px]">
                                         <div class="flex justify-between"><span id="prev-item-1">Air Galon RO 19L x2</span><span>Rp 38.000</span></div>
                                         <div class="flex justify-between"><span id="prev-item-2">Kopi Arabika 250g x1</span><span>Rp 35.000</span></div>
                                     </div>
                                     <div class="text-[11px] space-y-0.5 pt-1">
                                         <div class="flex justify-between"><span>Subtotal:</span><span>Rp 73.000</span></div>
                                         <div class="flex justify-between"><span>Diskon:</span><span>Rp 0</span></div>
-                                        <div class="flex justify-between font-bold text-xs pt-1 border-t border-slate-300"><span>TOTAL:</span><span>Rp 73.000</span></div>
-                                        <div class="flex justify-between text-[10px] text-slate-600"><span>TUNAI (CASH):</span><span>Rp 100.000</span></div>
-                                        <div class="flex justify-between text-[10px] text-slate-600 font-bold"><span>Kembalian:</span><span>Rp 27.000</span></div>
+                                        <div class="flex justify-between font-bold text-xs pt-1 border-t border-slate-300 dark:border-slate-700"><span>TOTAL:</span><span>Rp 73.000</span></div>
+                                        <div class="flex justify-between text-[10px] text-slate-600 dark:text-slate-400"><span>TUNAI (CASH):</span><span>Rp 100.000</span></div>
+                                        <div class="flex justify-between text-[10px] text-slate-600 dark:text-slate-400 font-bold"><span>Kembalian:</span><span>Rp 27.000</span></div>
                                     </div>
-                                    <div class="text-center pt-3 border-t border-dashed border-slate-300 text-[10px] text-slate-500 space-y-0.5">
+                                    <div class="text-center pt-3 border-t border-dashed border-slate-300 dark:border-slate-700 text-[10px] text-slate-500 dark:text-slate-400 space-y-0.5">
                                         <p id="prev-receipt-f1">Terima Kasih Atas Kunjungan Anda!</p>
                                         <p id="prev-receipt-f2" class="text-[9px]">Barang yang dibeli tidak dapat dikembalikan.</p>
                                         <p id="prev-receipt-f3" class="text-[9px]">Simpan struk sebagai bukti sah.</p>
@@ -6481,7 +6481,7 @@ try {
                             <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base flex items-center space-x-2">
                                 <span>💼 Pengaturan Layout Lembar Slip Gaji Resmi</span>
                             </h3>
-                            <p class="text-xs text-slate-500">Konfigurasikan judul slip gaji, nama institusi, label kerahasiaan, jabatan penanda tangan, dan catatan legal footer.</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Konfigurasikan judul slip gaji, nama institusi, label kerahasiaan, jabatan penanda tangan, dan catatan legal footer.</p>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
@@ -6501,11 +6501,11 @@ try {
                                 <div class="space-y-2 pt-2">
                                     <label class="flex items-center space-x-2 cursor-pointer">
                                         <input type="checkbox" id="set-payslip-show-terbilang" class="w-4 h-4 text-indigo-600 rounded">
-                                        <span class="font-bold text-slate-700">Tampilkan teks ejaan terbilang rupiah di bawah gaji bersih</span>
+                                        <span class="font-bold text-slate-700 dark:text-slate-300">Tampilkan teks ejaan terbilang rupiah di bawah gaji bersih</span>
                                     </label>
                                     <label class="flex items-center space-x-2 cursor-pointer">
                                         <input type="checkbox" id="set-payslip-show-attendance" class="w-4 h-4 text-indigo-600 rounded">
-                                        <span class="font-bold text-slate-700">Tampilkan rincian hari hadir kerja pada identitas karyawan</span>
+                                        <span class="font-bold text-slate-700 dark:text-slate-300">Tampilkan rincian hari hadir kerja pada identitas karyawan</span>
                                     </label>
                                 </div>
                             </div>
@@ -6535,17 +6535,17 @@ try {
                             <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base flex items-center space-x-2">
                                 <span>📱 Pengiriman Nota Elektronik via WhatsApp & Telegram</span>
                             </h3>
-                            <p class="text-xs text-slate-500">Konfigurasikan gateway WhatsApp dan Bot Telegram untuk pengiriman nota digital ke pelanggan dan channel toko.</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Konfigurasikan gateway WhatsApp dan Bot Telegram untuk pengiriman nota digital ke pelanggan dan channel toko.</p>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-xs">
                             <!-- WhatsApp Gateway Block -->
-                            <div class="p-5 bg-emerald-50/50 rounded-3xl border border-emerald-200 space-y-4">
-                                <div class="flex items-center space-x-2.5 pb-2 border-b border-emerald-200">
+                            <div class="p-5 bg-emerald-50/50 dark:bg-slate-800/80 rounded-3xl border border-emerald-200 dark:border-slate-700/80 space-y-4">
+                                <div class="flex items-center space-x-2.5 pb-2 border-b border-emerald-200 dark:border-slate-700/80">
                                     <span class="p-2 bg-emerald-600 text-white rounded-xl font-bold">💬</span>
                                     <div>
-                                        <h4 class="font-black text-emerald-950 text-sm">WhatsApp Gateway API</h4>
-                                        <p class="text-[11px] text-emerald-700">Kirim nota digital otomatis ke nomor WA pelanggan</p>
+                                        <h4 class="font-black text-emerald-950 dark:text-emerald-300 text-sm">WhatsApp Gateway API</h4>
+                                        <p class="text-[11px] text-emerald-700 dark:text-emerald-400">Kirim nota digital otomatis ke nomor WA pelanggan</p>
                                     </div>
                                 </div>
 
@@ -6570,13 +6570,13 @@ try {
 
                                 <div>
                                     <div class="flex items-center justify-between mb-1">
-                                        <label class="block font-bold text-slate-700">Template Pesan WhatsApp</label>
-                                        <button type="button" onclick="syncWaTemplateWithReceiptLayout()" class="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center space-x-1 cursor-pointer">
+                                        <label class="block font-bold text-slate-700 dark:text-slate-300">Template Pesan WhatsApp</label>
+                                        <button type="button" onclick="syncWaTemplateWithReceiptLayout()" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center space-x-1 cursor-pointer">
                                             <span>⚡ Samakan dengan Layout Nota Struk</span>
                                         </button>
                                     </div>
                                     <textarea id="set-wa-template" rows="5" class="w-full p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-[11px] text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500" placeholder="Biarkan kosong atau isi {receipt_layout} agar 100% mengikuti Pengaturan Layout Nota Struk..."></textarea>
-                                    <p class="text-[10px] text-slate-400 mt-1">Variabel tersedia: <span class="font-bold text-indigo-600">{receipt_layout}</span> (Format Layout Nota Lengkap), {customer_name}, {store_title}, {store_subtitle}, {branch_name}, {branch_address}, {custom_legal}, {invoice_number}, {date}, {sales_type}, {grand_total}, {payment_method}, {items_summary}, {footer_1}, {footer_2}, {footer_3}</p>
+                                    <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Variabel tersedia: <span class="font-bold text-indigo-600 dark:text-indigo-400">{receipt_layout}</span> (Format Layout Nota Lengkap), {customer_name}, {store_title}, {store_subtitle}, {branch_name}, {branch_address}, {custom_legal}, {invoice_number}, {date}, {sales_type}, {grand_total}, {payment_method}, {items_summary}, {footer_1}, {footer_2}, {footer_3}</p>
                                 </div>
 
                                 <div class="pt-2 flex items-center justify-between">
@@ -6588,12 +6588,12 @@ try {
                             </div>
 
                             <!-- Telegram Bot Block -->
-                            <div class="p-5 bg-sky-50/50 rounded-3xl border border-sky-200 space-y-4">
-                                <div class="flex items-center space-x-2.5 pb-2 border-b border-sky-200">
+                            <div class="p-5 bg-sky-50/50 dark:bg-slate-800/80 rounded-3xl border border-sky-200 dark:border-slate-700/80 space-y-4">
+                                <div class="flex items-center space-x-2.5 pb-2 border-b border-sky-200 dark:border-slate-700/80">
                                     <span class="p-2 bg-sky-600 text-white rounded-xl font-bold">✈️</span>
                                     <div>
-                                        <h4 class="font-black text-sky-950 text-sm">Telegram Bot Channel</h4>
-                                        <p class="text-[11px] text-sky-700">Kirim struk rekap & notifikasi transaksi ke grup/owner</p>
+                                        <h4 class="font-black text-sky-950 dark:text-sky-300 text-sm">Telegram Bot Channel</h4>
+                                        <p class="text-[11px] text-sky-700 dark:text-sky-400">Kirim struk rekap & notifikasi transaksi ke grup/owner</p>
                                     </div>
                                 </div>
 
@@ -6610,7 +6610,7 @@ try {
                                 <div>
                                     <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Template Pesan Telegram (Markdown)</label>
                                     <textarea id="set-tg-template" rows="5" class="w-full p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-[11px] text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500" placeholder="🛒 *TRANSAKSI KASIR BARU*..."></textarea>
-                                    <p class="text-[10px] text-slate-400 mt-1">Variabel tersedia: {customer_name}, {cashier_name}, {store_name}, {branch_name}, {invoice_number}, {date}, {grand_total}, {payment_method}, {items_summary}</p>
+                                    <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Variabel tersedia: {customer_name}, {cashier_name}, {store_name}, {branch_name}, {invoice_number}, {date}, {grand_total}, {payment_method}, {items_summary}</p>
                                 </div>
 
                                 <div class="pt-2 flex items-center justify-between">
@@ -6627,12 +6627,12 @@ try {
                 <!-- SUBTAB 7: Sinkronisasi Database Master Hosting & Lokal -->
                 <div id="settings-subtab-sync" class="space-y-6 hidden">
                     <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-                        <div class="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
+                        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
                             <div>
                                 <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base flex items-center space-x-2">
                                     <span>🌐 Sinkronisasi Database Master Hosting & Lokal</span>
                                 </h3>
-                                <p class="text-xs text-slate-500 mt-0.5">
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                                     Selaraskan katalog produk, cabang, akun karyawan, formula BOM, pelanggan, dan konfigurasi dari server hosting live (MySQL) ke database lokal (SQLite). Transaksi kasir lokal tidak akan tertimpa.
                                 </p>
                             </div>
@@ -6648,53 +6648,53 @@ try {
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-slate-700">Target Server Hosting</span>
-                                    <span id="subtab-sync-badge-status" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-700">Belum Diuji</span>
+                                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Target Server Hosting</span>
+                                    <span id="subtab-sync-badge-status" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80">Belum Diuji</span>
                                 </div>
                                 <div class="flex items-center space-x-2">
                                     <input type="text" id="subtab-sync-hosting-url" value="https://kadtech.my.id" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
-                                    <button type="button" onclick="testHostingConnection('subtab-sync-hosting-url', 'subtab-sync-badge-status')" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-all shrink-0">
+                                    <button type="button" onclick="testHostingConnection('subtab-sync-hosting-url', 'subtab-sync-badge-status')" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-all shrink-0">
                                         Uji
                                     </button>
                                 </div>
-                                <p class="text-[10px] text-slate-400">URL utama production (default: kadtech.my.id)</p>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400">URL utama production (default: kadtech.my.id)</p>
                             </div>
 
-                            <div class="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-2">
-                                <span class="text-xs font-bold text-indigo-900 block">Status Database Lokal</span>
+                            <div class="p-4 bg-indigo-50/50 dark:bg-slate-800/60 rounded-2xl border border-indigo-100 dark:border-slate-700 space-y-2">
+                                <span class="text-xs font-bold text-indigo-900 dark:text-indigo-300 block">Status Database Lokal</span>
                                 <div class="flex items-center space-x-2">
                                     <span class="text-lg">💾</span>
                                     <div>
-                                        <p class="text-xs font-black text-slate-800">SQLite Engine (Lokal)</p>
-                                        <p class="text-[10px] text-slate-500">database.sqlite aktif & terhubung</p>
+                                        <p class="text-xs font-black text-slate-800 dark:text-slate-100">SQLite Engine (Lokal)</p>
+                                        <p class="text-[10px] text-slate-500 dark:text-slate-400">database.sqlite aktif & terhubung</p>
                                     </div>
                                 </div>
-                                <p class="text-[10px] text-indigo-600 font-medium">Bebas diakses tanpa internet</p>
+                                <p class="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">Bebas diakses tanpa internet</p>
                             </div>
 
-                            <div class="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 space-y-2">
-                                <span class="text-xs font-bold text-emerald-900 block">Integritas Transaksi</span>
+                            <div class="p-4 bg-emerald-50/50 dark:bg-slate-800/60 rounded-2xl border border-emerald-100 dark:border-slate-700 space-y-2">
+                                <span class="text-xs font-bold text-emerald-900 dark:text-emerald-300 block">Integritas Transaksi</span>
                                 <div class="flex items-center space-x-2">
                                     <span class="text-lg">🛡️</span>
                                     <div>
-                                        <p class="text-xs font-black text-slate-800">Proteksi Transaksi Kasir</p>
-                                        <p class="text-[10px] text-slate-500">Data penjualan lokal tetap aman</p>
+                                        <p class="text-xs font-black text-slate-800 dark:text-slate-100">Proteksi Transaksi Kasir</p>
+                                        <p class="text-[10px] text-slate-500 dark:text-slate-400">Data penjualan lokal tetap aman</p>
                                     </div>
                                 </div>
-                                <p class="text-[10px] text-emerald-600 font-medium">Hanya memperbarui tabel master</p>
+                                <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Hanya memperbarui tabel master</p>
                             </div>
                         </div>
 
                         <!-- 3 Kartu Metode Sinkronisasi -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
                             <!-- Metode 1: Tarik Otomatis -->
-                            <div class="p-5 bg-gradient-to-b from-indigo-50/80 to-white rounded-3xl border border-indigo-200 space-y-3.5 flex flex-col justify-between">
+                            <div class="p-5 bg-gradient-to-b from-indigo-50/80 to-white dark:from-slate-800/90 dark:to-slate-900 rounded-3xl border border-indigo-200 dark:border-slate-800 space-y-3.5 flex flex-col justify-between">
                                 <div class="space-y-2">
                                     <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black shadow-md">
                                         <i data-lucide="cloud-download" class="w-5 h-5"></i>
                                     </div>
-                                    <h4 class="font-black text-slate-800 text-sm">1. Tarik Otomatis Dari Hosting</h4>
-                                    <p class="text-[11px] text-slate-500 leading-relaxed">
+                                    <h4 class="font-black text-slate-800 dark:text-slate-100 text-sm">1. Tarik Otomatis Dari Hosting</h4>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                                         Menghubungkan langsung aplikasi lokal dengan hosting melalui API untuk mengunduh seluruh data master terbaru secara otomatis dalam 1 klik.
                                     </p>
                                 </div>
@@ -6705,18 +6705,18 @@ try {
                             </div>
 
                             <!-- Metode 2: Impor File JSON -->
-                            <div class="p-5 bg-gradient-to-b from-blue-50/80 to-white rounded-3xl border border-blue-200 space-y-3.5 flex flex-col justify-between">
+                            <div class="p-5 bg-gradient-to-b from-blue-50/80 to-white dark:from-slate-800/90 dark:to-slate-900 rounded-3xl border border-blue-200 dark:border-slate-800 space-y-3.5 flex flex-col justify-between">
                                 <div class="space-y-2">
                                     <div class="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black shadow-md">
                                         <i data-lucide="upload-cloud" class="w-5 h-5"></i>
                                     </div>
-                                    <h4 class="font-black text-slate-800 text-sm">2. Impor Berkas Cadangan JSON</h4>
-                                    <p class="text-[11px] text-slate-500 leading-relaxed">
+                                    <h4 class="font-black text-slate-800 dark:text-slate-100 text-sm">2. Impor Berkas Cadangan JSON</h4>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                                         Gunakan berkas JSON master jika koneksi internet laptop offline atau IP lokal dibatasi oleh firewall server hosting.
                                     </p>
                                 </div>
                                 <div class="space-y-2">
-                                    <input type="file" id="subtab-sync-file-input" accept=".json" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer">
+                                    <input type="file" id="subtab-sync-file-input" accept=".json" class="w-full text-[11px] text-slate-500 dark:text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-100 dark:file:bg-blue-950/80 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-200 dark:hover:file:bg-blue-900 cursor-pointer">
                                     <button type="button" onclick="executeQuickMasterSyncFile()" id="btn-quick-sync-file" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center justify-center space-x-2 transition-all">
                                         <i data-lucide="upload" class="w-4 h-4"></i>
                                         <span>Terapkan Berkas JSON</span>
@@ -6725,13 +6725,13 @@ try {
                             </div>
 
                             <!-- Metode 3: Ekspor Master Lokal -->
-                            <div class="p-5 bg-gradient-to-b from-emerald-50/80 to-white rounded-3xl border border-emerald-200 space-y-3.5 flex flex-col justify-between">
+                            <div class="p-5 bg-gradient-to-b from-emerald-50/80 to-white dark:from-slate-800/90 dark:to-slate-900 rounded-3xl border border-emerald-200 dark:border-slate-800 space-y-3.5 flex flex-col justify-between">
                                 <div class="space-y-2">
                                     <div class="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black shadow-md">
                                         <i data-lucide="download" class="w-5 h-5"></i>
                                     </div>
-                                    <h4 class="font-black text-slate-800 text-sm">3. Ekspor & Cadangkan Master</h4>
-                                    <p class="text-[11px] text-slate-500 leading-relaxed">
+                                    <h4 class="font-black text-slate-800 dark:text-slate-100 text-sm">3. Ekspor & Cadangkan Master</h4>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                                         Unduh seluruh data master lokal sebagai berkas JSON untuk backup atau diunggah ke server hosting lainnya.
                                     </p>
                                 </div>
@@ -6740,8 +6740,8 @@ try {
                                         <i data-lucide="download" class="w-4 h-4"></i>
                                         <span>Unduh Master Lokal (.json)</span>
                                     </button>
-                                    <button type="button" onclick="downloadMasterDataJson(true)" class="w-full py-2.5 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold border border-slate-200 flex items-center justify-center space-x-2 transition-all" title="Buka tautan unduh master data langsung dari hosting live">
-                                        <i data-lucide="cloud" class="w-4 h-4 text-indigo-600"></i>
+                                    <button type="button" onclick="downloadMasterDataJson(true)" class="w-full py-2.5 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 flex items-center justify-center space-x-2 transition-all" title="Buka tautan unduh master data langsung dari hosting live">
+                                        <i data-lucide="cloud" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>
                                         <span>Unduh dari Hosting Live</span>
                                     </button>
                                 </div>
@@ -6770,11 +6770,11 @@ try {
                             <div>
                                 <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base flex items-center space-x-2">
                                     <span>🛡️ Perisai Keamanan Siber & Perlindungan Server Hosting</span>
-                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80">
                                         Active Defense 🟢
                                     </span>
                                 </h3>
-                                <p class="text-xs text-slate-500 mt-0.5">
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                                     Perlindungan proaktif tingkat aplikasi untuk mencegah peretasan (hacking), serangan brute force kata sandi/PIN kasir, injeksi berbahaya (SQLi/XSS/RCE), bot scanner, dan penolakan layanan (DoS / Takedown).
                                 </p>
                             </div>
@@ -6791,74 +6791,74 @@ try {
                             <!-- Pilar 1: WAF -->
                             <div class="p-4 bg-slate-50/80 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-slate-600 uppercase">WAF Filter</span>
+                                    <span class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">WAF Filter</span>
                                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                                 </div>
                                 <div class="font-black text-slate-900 dark:text-white text-base flex items-center gap-1.5">
                                     <span>🧱</span> <span>Virtual Patching</span>
                                 </div>
-                                <p class="text-[11px] text-slate-500">Mendeteksi dan memblokir seketika payload SQL Injection, XSS, RCE & Path Traversal.</p>
-                                <div class="pt-1 text-[10px] font-bold text-emerald-700">Status: Aktif & Memindai</div>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Mendeteksi dan memblokir seketika payload SQL Injection, XSS, RCE & Path Traversal.</p>
+                                <div class="pt-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">Status: Aktif & Memindai</div>
                             </div>
 
                             <!-- Pilar 2: Anti-Brute Force -->
                             <div class="p-4 bg-slate-50/80 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-slate-600 uppercase">Anti-Brute Force</span>
+                                    <span class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Anti-Brute Force</span>
                                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                                 </div>
                                 <div class="font-black text-slate-900 dark:text-white text-base flex items-center gap-1.5">
                                     <span>🔐</span> <span>Lockout Engine</span>
                                 </div>
-                                <p class="text-[11px] text-slate-500">Batas toleransi 5x salah kata sandi/PIN ➔ Lockout 10 menit + progressive tarpit delay.</p>
-                                <div class="pt-1 text-[10px] font-bold text-emerald-700">Status: Lockout 10 Menit Aktif</div>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Batas toleransi 5x salah kata sandi/PIN ➔ Lockout 10 menit + progressive tarpit delay.</p>
+                                <div class="pt-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">Status: Lockout 10 Menit Aktif</div>
                             </div>
 
                             <!-- Pilar 3: Anti-Flood DoS -->
                             <div class="p-4 bg-slate-50/80 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-slate-600 uppercase">Anti-Takedown</span>
+                                    <span class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Anti-Takedown</span>
                                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                                 </div>
                                 <div class="font-black text-slate-900 dark:text-white text-base flex items-center gap-1.5">
                                     <span>🌊</span> <span>Rate Limiting</span>
                                 </div>
-                                <p class="text-[11px] text-slate-500">Membatasi frekuensi request (120 req/menit per IP) untuk mencegah server hosting overload.</p>
-                                <div class="pt-1 text-[10px] font-bold text-emerald-700">Status: Token Bucket Aktif</div>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Membatasi frekuensi request (120 req/menit per IP) untuk mencegah server hosting overload.</p>
+                                <div class="pt-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">Status: Token Bucket Aktif</div>
                             </div>
 
                             <!-- Pilar 4: Headers & Hardening -->
                             <div class="p-4 bg-slate-50/80 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-slate-600 uppercase">Server Hardening</span>
+                                    <span class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Server Hardening</span>
                                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                                 </div>
                                 <div class="font-black text-slate-900 dark:text-white text-base flex items-center gap-1.5">
                                     <span>🛡️</span> <span>HTTP Headers</span>
                                 </div>
-                                <p class="text-[11px] text-slate-500">X-Frame-Options, X-Content-Type, HSTS, serta isolasi berkas sensitif .htaccess.</p>
-                                <div class="pt-1 text-[10px] font-bold text-emerald-700">Status: Terpasang Ketat</div>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">X-Frame-Options, X-Content-Type, HSTS, serta isolasi berkas sensitif .htaccess.</p>
+                                <div class="pt-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">Status: Terpasang Ketat</div>
                             </div>
                         </div>
 
                         <!-- Panel Alamat IP Pengguna Saat Ini -->
-                        <div class="p-3 bg-indigo-50/60 rounded-2xl border border-indigo-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div class="p-3 bg-indigo-50/60 dark:bg-slate-800/80 rounded-2xl border border-indigo-100 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 text-xs">
                             <div class="flex items-center gap-2">
-                                <span class="font-bold text-indigo-900">Alamat IP Anda Saat Ini:</span>
-                                <span id="sec-current-ip-badge" class="font-mono font-black text-indigo-700 dark:text-indigo-300 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-lg border border-indigo-200 dark:border-indigo-800">127.0.0.1</span>
+                                <span class="font-bold text-indigo-900 dark:text-indigo-300">Alamat IP Anda Saat Ini:</span>
+                                <span id="sec-current-ip-badge" class="font-mono font-black text-indigo-700 dark:text-indigo-300 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-indigo-200 dark:border-slate-700">127.0.0.1</span>
                             </div>
-                            <span class="text-[11px] text-slate-500">Terverifikasi aman & terhubung ke sistem</span>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400">Terverifikasi aman & terhubung ke sistem</span>
                         </div>
 
                         <!-- Daftar IP yang Sedang Diblokir (Active IP Bans) -->
                         <div class="space-y-3">
                             <div class="flex items-center justify-between">
-                                <h4 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                                <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm flex items-center gap-1.5">
                                     <span>🚫 Daftar Alamat IP yang Sedang Diblokir</span>
                                     <span id="sec-banned-count-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">0 IP</span>
                                 </h4>
                             </div>
-                            <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                            <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
                                 <table class="w-full text-left text-xs">
                                     <thead class="bg-slate-50 dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800">
                                         <tr>
@@ -6869,7 +6869,7 @@ try {
                                             <th class="py-2.5 px-3 text-center">Aksi</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="sec-banned-ips-tbody" class="divide-y divide-slate-100">
+                                    <tbody id="sec-banned-ips-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
                                         <tr>
                                             <td colspan="5" class="py-6 text-center text-slate-400 text-xs">Semua aman! Tidak ada alamat IP yang sedang diblokir.</td>
                                         </tr>
@@ -6881,12 +6881,12 @@ try {
                         <!-- Log Audit Insiden Keamanan Terbaru -->
                         <div class="space-y-3">
                             <div class="flex items-center justify-between">
-                                <h4 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                                <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm flex items-center gap-1.5">
                                     <span>📋 Log Audit Insiden & Aktivitas Keamanan Terbaru</span>
                                     <span id="sec-logs-count-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">0 Aktivitas</span>
                                 </h4>
                             </div>
-                            <div class="overflow-x-auto rounded-2xl border border-slate-200 max-h-80 overflow-y-auto">
+                            <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 max-h-80 overflow-y-auto">
                                 <table class="w-full text-left text-[11px]">
                                     <thead class="bg-slate-50 dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800 sticky top-0">
                                         <tr>
@@ -6897,7 +6897,7 @@ try {
                                             <th class="py-2.5 px-3">Target URI</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="sec-audit-logs-tbody" class="divide-y divide-slate-100">
+                                    <tbody id="sec-audit-logs-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
                                         <tr>
                                             <td colspan="5" class="py-6 text-center text-slate-400 text-xs">Belum ada rekaman insiden keamanan.</td>
                                         </tr>
@@ -13849,11 +13849,11 @@ try {
 
             if (badgeEl) {
                 if (remainingSec < 1800) { // kurang dari 30 menit
-                    badgeEl.className = 'hidden md:flex items-center space-x-1.5 bg-rose-50 border border-rose-300 text-rose-800 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0 animate-pulse';
+                    badgeEl.className = 'hidden md:flex items-center space-x-1.5 bg-rose-50 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-300 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0 animate-pulse';
                 } else if (remainingSec < 7200) { // kurang dari 2 jam
-                    badgeEl.className = 'hidden md:flex items-center space-x-1.5 bg-amber-50 border border-amber-300 text-amber-800 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0';
+                    badgeEl.className = 'hidden md:flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0';
                 } else {
-                    badgeEl.className = 'hidden md:flex items-center space-x-1.5 bg-indigo-50 border border-indigo-200 text-indigo-800 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0';
+                    badgeEl.className = 'hidden md:flex items-center space-x-1.5 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 text-indigo-800 dark:text-indigo-300 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shrink-0';
                 }
             }
         }
@@ -27473,11 +27473,11 @@ Manager / Supervisor: __________________
             document.getElementById('pnl-total-expenses').innerText = `(${formatRupiah(pnl.total_operating_expenses)})`;
 
             document.getElementById('pnl-expenses-list').innerHTML = pnl.operating_expenses_list.map(exp => `
-                <div class="flex justify-between items-center py-1 border-b border-dashed border-slate-100">
-                    <span>${exp.category} ${exp.source === 'REIMBURSEMENT_ESS' ? '<span class="text-[9px] px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full font-bold ml-1">ESS Klaim</span>' : ''}</span>
-                    <span class="font-bold text-slate-700 font-mono">${formatRupiah(exp.total_amount)}</span>
+                <div class="flex justify-between items-center py-1 border-b border-dashed border-slate-100 dark:border-slate-800">
+                    <span class="text-slate-600 dark:text-slate-300">${exp.category} ${exp.source === 'REIMBURSEMENT_ESS' ? '<span class="text-[9px] px-2 py-0.5 bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80 rounded-full font-bold ml-1">ESS Klaim</span>' : ''}</span>
+                    <span class="font-bold text-slate-700 dark:text-slate-200 font-mono">${formatRupiah(exp.total_amount)}</span>
                 </div>
-            `).join('') || `<p class="text-slate-400">Belum ada beban operasional tercatat</p>`;
+            `).join('') || `<p class="text-slate-400 dark:text-slate-500">Belum ada beban operasional tercatat</p>`;
 
             document.getElementById('pnl-operating-income').innerText = formatRupiah(pnl.operating_income);
             document.getElementById('pnl-tax').innerText = `(${formatRupiah(pnl.estimated_tax)})`;
@@ -36378,16 +36378,16 @@ Manager / Supervisor: __________________
                 const bannedTbody = document.getElementById('sec-banned-ips-tbody');
                 if (bannedTbody) {
                     if (!d.banned_ips || d.banned_ips.length === 0) {
-                        bannedTbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">Semua aman! Tidak ada alamat IP yang sedang diblokir.</td></tr>';
+                        bannedTbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400 dark:text-slate-500 text-xs">Semua aman! Tidak ada alamat IP yang sedang diblokir.</td></tr>';
                     } else {
                         bannedTbody.innerHTML = d.banned_ips.map(function(b) {
-                            return '<tr class="hover:bg-slate-50">' +
-                                '<td class="py-2.5 px-3 font-mono font-bold text-rose-700">' + escapeHtml(b.ip_address) + '</td>' +
-                                '<td class="py-2.5 px-3 text-slate-600">' + escapeHtml(b.reason || 'Mencurigakan') + '</td>' +
-                                '<td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">' + escapeHtml(b.banned_at || '-') + '</td>' +
-                                '<td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">' + escapeHtml(b.banned_until || '-') + '</td>' +
+                            return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">' +
+                                '<td class="py-2.5 px-3 font-mono font-bold text-rose-700 dark:text-rose-400">' + escapeHtml(b.ip_address) + '</td>' +
+                                '<td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">' + escapeHtml(b.reason || 'Mencurigakan') + '</td>' +
+                                '<td class="py-2.5 px-3 font-mono text-[11px] text-slate-500 dark:text-slate-400">' + escapeHtml(b.banned_at || '-') + '</td>' +
+                                '<td class="py-2.5 px-3 font-mono text-[11px] text-slate-500 dark:text-slate-400">' + escapeHtml(b.banned_until || '-') + '</td>' +
                                 '<td class="py-2.5 px-3 text-center">' +
-                                    '<button type="button" onclick="executeUnbanSecurityIp(\'' + escapeHtml(b.ip_address) + '\')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[10px] font-bold transition-all">' +
+                                    '<button type="button" onclick="executeUnbanSecurityIp(\'' + escapeHtml(b.ip_address) + '\')" class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/80 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-[10px] font-bold transition-all">' +
                                         'Buka Blokir' +
                                     '</button>' +
                                 '</td>' +
@@ -36400,26 +36400,26 @@ Manager / Supervisor: __________________
                 const logsTbody = document.getElementById('sec-audit-logs-tbody');
                 if (logsTbody) {
                     if (!d.recent_logs || d.recent_logs.length === 0) {
-                        logsTbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">Belum ada rekaman insiden keamanan.</td></tr>';
+                        logsTbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400 dark:text-slate-500 text-xs">Belum ada rekaman insiden keamanan.</td></tr>';
                     } else {
                         logsTbody.innerHTML = d.recent_logs.map(function(l) {
                             var typeClass = 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700';
                             if (l.event_type === 'LOGIN_SUCCESS') {
-                                typeClass = 'bg-emerald-100 text-emerald-800';
+                                typeClass = 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 font-bold';
                             } else if (l.event_type === 'LOGIN_FAILED') {
-                                typeClass = 'bg-amber-100 text-amber-800';
+                                typeClass = 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80 font-bold';
                             } else if (l.event_type === 'LOGIN_LOCKOUT' || l.event_type === 'BRUTE_FORCE_BLOCKED' || l.event_type === 'IP_BANNED') {
-                                typeClass = 'bg-rose-100 text-rose-800 font-bold';
+                                typeClass = 'bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80 font-bold';
                             } else if (l.event_type.indexOf('SQL') !== -1 || l.event_type.indexOf('WAF') !== -1 || l.event_type.indexOf('RCE') !== -1) {
-                                typeClass = 'bg-purple-100 text-purple-800 font-bold';
+                                typeClass = 'bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/80 font-bold';
                             }
 
-                            return '<tr class="hover:bg-slate-50">' +
-                                '<td class="py-2 px-3 font-mono text-[10px] text-slate-500 whitespace-nowrap">' + escapeHtml(l.created_at || '-') + '</td>' +
-                                '<td class="py-2 px-3 font-mono font-semibold text-slate-700 whitespace-nowrap">' + escapeHtml(l.ip_address) + '</td>' +
+                            return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">' +
+                                '<td class="py-2 px-3 font-mono text-[10px] text-slate-500 dark:text-slate-400 whitespace-nowrap">' + escapeHtml(l.created_at || '-') + '</td>' +
+                                '<td class="py-2 px-3 font-mono font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">' + escapeHtml(l.ip_address) + '</td>' +
                                 '<td class="py-2 px-3"><span class="px-2 py-0.5 rounded text-[10px] ' + typeClass + '">' + escapeHtml(l.event_type) + '</span></td>' +
-                                '<td class="py-2 px-3 text-slate-600 max-w-xs truncate" title="' + escapeHtml(l.details || '') + '">' + escapeHtml(l.details || '-') + '</td>' +
-                                '<td class="py-2 px-3 font-mono text-[10px] text-slate-400 max-w-xs truncate" title="' + escapeHtml(l.request_uri || l.user_agent || '') + '">' + escapeHtml(l.request_uri || '-') + '</td>' +
+                                '<td class="py-2 px-3 text-slate-600 dark:text-slate-300 max-w-xs truncate" title="' + escapeHtml(l.details || '') + '">' + escapeHtml(l.details || '-') + '</td>' +
+                                '<td class="py-2 px-3 font-mono text-[10px] text-slate-400 dark:text-slate-500 max-w-xs truncate" title="' + escapeHtml(l.request_uri || l.user_agent || '') + '">' + escapeHtml(l.request_uri || '-') + '</td>' +
                             '</tr>';
                         }).join('');
                     }

@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.8.6",
-    "build": "20261103-112",
+    "version": "1.8.7",
+    "build": "20261103-113",
     "release_date": "2026-11-03",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.8.7",
+            "commit": "HEAD",
+            "date": "2026-11-03",
+            "title": "Harmonisasi Badge Timer Sesi Topbar, Subtab Pengaturan Sistem, dan Laporan Laba Rugi untuk Dark Mode",
+            "description": "Menyelaraskan tema gelap pada beberapa area sistem: (1) Badge Timer Sesi Login Topbar: Memperbaiki updateSessionBadgeUI agar tidak menimpa class dark mode dengan latar putih terang (kini memakai dark:bg-indigo-950/60 dark:border-indigo-800/80 dark:text-indigo-300, serta varian warning/critical yang harmonis); (2) Konfigurasi Sistem (#tab-settings): Menyelaraskan kartu WhatsApp Gateway API & Telegram Bot Channel dengan dark:bg-slate-800/80 dark:border-slate-700/80 dark:text-slate-100; menyelaraskan panel status hosting dan 3 kartu aksi sinkronisasi (Tarik Otomatis, Impor Berkas JSON, Ekspor Master) dengan gradient dark mode dan file input khusus dark; menyelaraskan kartu Perisai Keamanan (Alamat IP pengguna, 4 pilar keamanan WAF/Anti-Brute Force/Anti-DoS/Hardening, badge event audit log, dan tabel IP diblokir); menyelaraskan printer thermal, nota struk (live preview), dan slip gaji; (3) Laporan Laba Rugi (#tab-pnl): Memperbaiki kontras teks sekunder, rincian beban operasional per kategori, dan garis pembatas putus-putus pada dark mode; (4) Kompilasi Tailwind CSS.",
+            "rollback_command": "git checkout v1.8.6"
+        },
         {
             "version": "1.8.6",
             "commit": "HEAD",
