@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.8.5",
-    "build": "20261103-111",
+    "version": "1.8.6",
+    "build": "20261103-112",
     "release_date": "2026-11-03",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.8.6",
+            "commit": "HEAD",
+            "date": "2026-11-03",
+            "title": "Harmonisasi Tabel CRM, Logistik/Armada, Kelola Cabang, dan Metode Pembayaran untuk Dark Mode",
+            "description": "Menyelaraskan tema gelap pada 4 modul sistem: (1) Pelanggan & Mitra CRM (#tab-customers): Menyelaraskan badge tipe pelanggan (Mitra B2B, Member, Reseller, Ritel Reguler), teks nomor kontak, email, cabang penugasan, diskon default, catatan, tombol [Set Kontrak] (dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800), serta tabel harga kontrak mitra dan menu cabang; (2) Kurir & Biaya Kirim (#tab-logistics): Menyelaraskan badge plat nomor armada kendaraan (dark:bg-indigo-950/60 dark:text-indigo-200), nama kurir, status operasional, tombol [Edit], serta riwayat log bensin BBM (badge beban BBM, efisiensi konsumsi, jarak KM) dan riwayat servis; (3) Kelola Cabang (#tab-branches): Menyelaraskan badge kode cabang (dark:bg-indigo-950/60 dark:text-indigo-300), nama outlet, alamat fisik, koordinat maps (dark:bg-indigo-950/60), badge staf & produk, status aktif, dan tombol aksi; (4) Metode Pembayaran (#tab-payments): Menyelaraskan teks metode pembayaran, badge kategori saluran, nomor rekening/NMID, nama pemilik akun, badge tipe (Tunai/Non-Tunai), dan badge status aktif.",
+            "rollback_command": "git checkout v1.8.5"
+        },
         {
             "version": "1.8.5",
             "commit": "HEAD",

@@ -29496,36 +29496,36 @@ Manager / Supervisor: __________________
                 }
 
                 tbody.innerHTML = custs.map(c => {
-                    const catBadge = c.category === 'MITRA' ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">🤝 Mitra B2B</span>' :
-                                    (c.category === 'MEMBER' ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800">⭐ Member VIP</span>' :
-                                    (c.category === 'RESELLER' ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">📦 Reseller</span>' :
+                    const catBadge = c.category === 'MITRA' ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">🤝 Mitra B2B</span>' :
+                                    (c.category === 'MEMBER' ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-800">⭐ Member VIP</span>' :
+                                    (c.category === 'RESELLER' ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">📦 Reseller</span>' :
                                     '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">Ritel Reguler</span>'));
 
                     return `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td class="py-3 px-4 font-mono font-bold text-slate-600">${c.code}</td>
+                            <td class="py-3 px-4 font-mono font-bold text-slate-600 dark:text-slate-400">${c.code}</td>
                             <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">${c.name}</td>
                             <td class="py-3 px-4">${catBadge}</td>
-                            <td class="py-3 px-4 text-slate-600">${c.phone || '-'} <br><span class="text-[10px] text-slate-400">${c.email || ''}</span></td>
-                            <td class="py-3 px-4 text-slate-600">${c.branch_name || 'Semua Cabang'}</td>
-                            <td class="py-3 px-4 font-bold text-indigo-700">${c.discount_percent > 0 ? c.discount_percent + '%' : '-'}</td>
-                            <td class="py-3 px-4 text-slate-500 max-w-[180px] truncate">${c.notes || '-'}</td>
+                            <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${c.phone || '-'} <br><span class="text-[10px] text-slate-400 dark:text-slate-400">${c.email || ''}</span></td>
+                            <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${c.branch_name || 'Semua Cabang'}</td>
+                            <td class="py-3 px-4 font-bold text-indigo-700 dark:text-indigo-400">${c.discount_percent > 0 ? c.discount_percent + '%' : '-'}</td>
+                            <td class="py-3 px-4 text-slate-500 dark:text-slate-400 max-w-[180px] truncate">${c.notes || '-'}</td>
                             <td class="py-3 px-4 text-center">
                                 <div class="flex items-center justify-center space-x-1.5">
                                     ${c.category === 'MITRA' ? `
-                                        <button onclick="switchDirectToMitraContract(${c.id})" title="Kelola Harga Kontrak Mitra Ini" class="px-2 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white rounded-lg border border-emerald-200 transition-colors flex items-center space-x-1 shadow-2xs">
+                                        <button onclick="switchDirectToMitraContract(${c.id})" title="Kelola Harga Kontrak Mitra Ini" class="px-2 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-600 dark:hover:bg-emerald-900/60 hover:text-white rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center space-x-1 shadow-2xs">
                                             <i data-lucide="file-signature" class="w-3.5 h-3.5"></i>
                                             <span>Set Kontrak</span>
                                         </button>
                                     ` : ''}
-                                    <button onclick="focusCustomerOnMap(${c.id})" title="Lihat Titik di Peta Maps" class="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg">
+                                    <button onclick="focusCustomerOnMap(${c.id})" title="Lihat Titik di Peta Maps" class="p-1.5 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 rounded-lg transition-colors">
                                         <i data-lucide="map-pin" class="w-4 h-4"></i>
                                     </button>
-                                    <button onclick="editCustomer(${c.id})" title="Edit Pelanggan" class="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg">
+                                    <button onclick="editCustomer(${c.id})" title="Edit Pelanggan" class="p-1.5 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
                                         <i data-lucide="edit-3" class="w-4 h-4"></i>
                                     </button>
                                     ${c.id !== 1 ? `
-                                        <button onclick="deleteCustomer(${c.id})" title="Hapus Pelanggan" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg">
+                                        <button onclick="deleteCustomer(${c.id})" title="Hapus Pelanggan" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/60 rounded-lg transition-colors">
                                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                                         </button>
                                     ` : ''}
@@ -31320,20 +31320,20 @@ Manager / Supervisor: __________________
                     return `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">${p.image_emoji || '📦'} ${p.name}</td>
-                            <td class="py-3 px-4 font-mono text-slate-500">${p.sku}</td>
-                            <td class="py-3 px-4 text-right text-slate-600 font-semibold">${formatRupiah(defaultRetail)}</td>
-                            <td class="py-3 px-4 text-right font-black ${isContractSet ? 'text-emerald-700 text-sm' : 'text-slate-400'}">
+                            <td class="py-3 px-4 font-mono text-slate-500 dark:text-slate-400">${p.sku}</td>
+                            <td class="py-3 px-4 text-right text-slate-600 dark:text-slate-300 font-semibold">${formatRupiah(defaultRetail)}</td>
+                            <td class="py-3 px-4 text-right font-black ${isContractSet ? 'text-emerald-700 dark:text-emerald-400 text-sm' : 'text-slate-400 dark:text-slate-500'}">
                                 ${formatRupiah(contractPrice)}
                             </td>
                             <td class="py-3 px-4 text-center">
                                 ${isContractSet ? 
-                                    '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✅ Kontrak Aktif</span>' :
+                                    '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">✅ Kontrak Aktif</span>' :
                                     '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700" title="Belum diset kontrak. Produk ini tidak akan dimunculkan di menu POS untuk mitra ini.">⚪ Belum Diset (Tidak Tampil di POS)</span>'
                                 }
                             </td>
                             <td class="py-3 px-4 text-center">
                                 <div class="flex items-center justify-center space-x-1">
-                                    <button onclick="openMitraPriceModal(${p.id}, ${contractPrice})" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 font-bold text-[11px] rounded-lg border border-indigo-200 transition-colors">
+                                    <button onclick="openMitraPriceModal(${p.id}, ${contractPrice})" class="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-600 dark:hover:bg-indigo-900/60 hover:text-white text-indigo-700 dark:text-indigo-300 font-bold text-[11px] rounded-lg border border-indigo-200 dark:border-indigo-800 transition-colors shadow-2xs">
                                         ${isContractSet ? 'Edit Kontrak' : '+ Set Kontrak'}
                                     </button>
                                     ${isContractSet ? `
@@ -31542,31 +31542,31 @@ Manager / Supervisor: __________________
                     let delivBadgeClass = 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 border-slate-300 hover:bg-slate-200';
                     let delivBadgeText = '⚪ Standar Toko';
                     if (currentDelivMode === 2) {
-                        delivBadgeClass = 'bg-emerald-100 text-emerald-900 border-emerald-300 hover:bg-emerald-200';
+                        delivBadgeClass = 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-200 dark:hover:bg-emerald-900/60';
                         delivBadgeText = '🎁 Termasuk Kirim';
                     } else if (currentDelivMode === 1) {
-                        delivBadgeClass = 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200';
+                        delivBadgeClass = 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border-amber-300 dark:border-amber-800 hover:bg-amber-200 dark:hover:bg-amber-900/60';
                         delivBadgeText = '🚚 Wajib Ongkir';
                     }
 
                     return `
-                        <tr class="hover:bg-slate-50 transition-colors ${!isActive ? 'bg-slate-50/70 opacity-75' : ''}">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${!isActive ? 'bg-slate-50/70 dark:bg-slate-800/30 opacity-75' : ''}">
                             <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">
                                 <div class="flex items-center space-x-2">
                                     <span class="text-base">${st.image_emoji || '📦'}</span>
                                     <div>
-                                        <div class="${!isActive ? 'line-through text-slate-500' : ''}">${st.name}</div>
-                                        ${!isActive ? '<span class="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">Nonaktif di Cabang</span>' : ''}
+                                        <div class="${!isActive ? 'line-through text-slate-500 dark:text-slate-400' : ''}">${st.name}</div>
+                                        ${!isActive ? '<span class="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-1.5 py-0.5 rounded border border-rose-200 dark:border-rose-800">Nonaktif di Cabang</span>' : ''}
                                     </div>
                                 </div>
                             </td>
-                            <td class="py-3 px-4 font-mono text-slate-500">${st.sku}</td>
-                            <td class="py-3 px-4 text-slate-600">${st.category}</td>
+                            <td class="py-3 px-4 font-mono text-slate-500 dark:text-slate-400">${st.sku}</td>
+                            <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${st.category}</td>
                             <td class="py-3 px-4 text-center">
                                 <div class="inline-flex items-center space-x-2">
                                     <button onclick="toggleBranchProductStatus(${currentBranchId}, ${st.product_id}, ${isActive ? 0 : 1})" 
                                             title="${isActive ? 'Klik untuk nonaktifkan menu di cabang ini' : 'Klik untuk aktifkan menu di cabang ini'}"
-                                            class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors cursor-pointer ${isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 border-slate-300 hover:bg-slate-200'}">
+                                            class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors cursor-pointer ${isActive ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 border-slate-300 hover:bg-slate-200'}">
                                         <span class="w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-400'}"></span>
                                         <span>${isActive ? 'Dijual (Aktif)' : 'Nonaktif'}</span>
                                     </button>
@@ -31581,11 +31581,11 @@ Manager / Supervisor: __________________
                                     </button>
                                 </div>
                             </td>
-                            <td class="py-3 px-4 text-right text-rose-700 font-semibold">${formatRupiah(cogs)}</td>
-                            <td class="py-3 px-4 text-right font-black text-indigo-950 text-sm">${formatRupiah(price)}</td>
-                            <td class="py-3 px-4 text-right font-bold ${margin >= 40 ? 'text-emerald-700' : 'text-amber-700'}">${margin}%</td>
+                            <td class="py-3 px-4 text-right text-rose-700 dark:text-rose-400 font-semibold">${formatRupiah(cogs)}</td>
+                            <td class="py-3 px-4 text-right font-black text-indigo-950 dark:text-indigo-200 text-sm">${formatRupiah(price)}</td>
+                            <td class="py-3 px-4 text-right font-bold ${margin >= 40 ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}">${margin}%</td>
                             <td class="py-3 px-4 text-center">
-                                <button onclick="openBranchPriceModal(${st.product_id}, '${st.name.replace(/'/g, "\\'")}', ${cogs}, ${price}, ${isActive ? 1 : 0}, ${currentDelivMode})" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 font-bold text-[11px] rounded-lg border border-indigo-200 transition-colors">
+                                <button onclick="openBranchPriceModal(${st.product_id}, '${st.name.replace(/'/g, "\\'")}', ${cogs}, ${price}, ${isActive ? 1 : 0}, ${currentDelivMode})" class="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-600 dark:hover:bg-indigo-900/60 hover:text-white text-indigo-700 dark:text-indigo-300 font-bold text-[11px] rounded-lg border border-indigo-200 dark:border-indigo-800 transition-colors shadow-2xs">
                                     Edit Menu & Harga
                                 </button>
                             </td>
@@ -32307,9 +32307,9 @@ Manager / Supervisor: __________________
                 
                 let statusBadge = '';
                 if (v.status === 'ACTIVE') {
-                    statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✅ Aktif Operasional</span>';
+                    statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">✅ Aktif Operasional</span>';
                 } else if (v.status === 'MAINTENANCE') {
-                    statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">🔧 Sedang Servis</span>';
+                    statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">🔧 Sedang Servis</span>';
                 } else {
                     statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">Nonaktif</span>';
                 }
@@ -32317,25 +32317,25 @@ Manager / Supervisor: __________________
                 return `
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                         <td class="py-3 px-4">
-                            <span class="font-mono font-black text-indigo-950 px-2 py-1 bg-indigo-50 border border-indigo-200 rounded-lg text-xs tracking-wider">${v.plate_number}</span>
+                            <span class="font-mono font-black text-indigo-950 dark:text-indigo-200 px-2 py-1 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs tracking-wider">${v.plate_number}</span>
                         </td>
-                        <td class="py-3 px-4 font-bold text-slate-800">
+                        <td class="py-3 px-4 font-bold text-slate-800 dark:text-slate-100">
                             <span>${v.vehicle_type === 'MOTOR' ? '🛵' : '🚚'} ${v.vehicle_name}</span>
                         </td>
-                        <td class="py-3 px-4 text-slate-600 font-medium">${v.driver_name || '-'}</td>
-                        <td class="py-3 px-4 text-slate-600">${branchName}</td>
-                        <td class="py-3 px-4 font-mono font-bold text-slate-800 text-right">${Number(v.current_odometer).toLocaleString('id-ID')} km</td>
+                        <td class="py-3 px-4 text-slate-600 dark:text-slate-300 font-medium">${v.driver_name || '-'}</td>
+                        <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${branchName}</td>
+                        <td class="py-3 px-4 font-mono font-bold text-slate-800 dark:text-slate-200 text-right">${Number(v.current_odometer).toLocaleString('id-ID')} km</td>
                         <td class="py-3 px-4 text-center">
-                            <span class="font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 text-[11px]">${ratioText}</span>
-                            <span class="text-[10px] text-slate-400 block">${v.fuel_type || 'Pertalite'}</span>
+                            <span class="font-mono font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800 text-[11px]">${ratioText}</span>
+                            <span class="text-[10px] text-slate-400 dark:text-slate-400 block">${v.fuel_type || 'Pertalite'}</span>
                         </td>
                         <td class="py-3 px-4 text-center">${statusBadge}</td>
                         <td class="py-3 px-4 text-center">
                             <div class="flex items-center justify-center space-x-1">
-                                <button onclick="editVehicle(${v.id})" class="px-2 py-1 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 font-bold text-[11px] rounded-lg border border-indigo-200 transition-colors">
+                                <button onclick="editVehicle(${v.id})" class="px-2 py-1 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-600 dark:hover:bg-indigo-900/60 hover:text-white text-indigo-700 dark:text-indigo-300 font-bold text-[11px] rounded-lg border border-indigo-200 dark:border-indigo-800 transition-colors shadow-2xs">
                                     Edit
                                 </button>
-                                <button onclick="deleteVehicle(${v.id})" title="Hapus Kendaraan" class="p-1 text-slate-400 hover:text-rose-600 rounded-lg">
+                                <button onclick="deleteVehicle(${v.id})" title="Hapus Kendaraan" class="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors">
                                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                 </button>
                             </div>
@@ -32577,36 +32577,36 @@ Manager / Supervisor: __________________
                 tbody.innerHTML = filtered.map(l => {
                     const ratioText = (l.fuel_ratio_unit === 'METER_PER_LITER') ? `${formatDecimal(l.configured_ratio)} m/L` : `${formatDecimal(l.configured_ratio)} km/L`;
                     const efficiency = Number(l.efficiency_percent || 100);
-                    let badgeClass = 'bg-emerald-100 text-emerald-800';
-                    if (efficiency < 85) badgeClass = 'bg-rose-100 text-rose-800 font-bold';
-                    else if (efficiency < 95) badgeClass = 'bg-amber-100 text-amber-800';
+                    let badgeClass = 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300';
+                    if (efficiency < 85) badgeClass = 'bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 font-bold';
+                    else if (efficiency < 95) badgeClass = 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300';
 
                     return `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td class="py-3 px-4 font-mono text-slate-600">${l.log_date}</td>
+                            <td class="py-3 px-4 font-mono text-slate-600 dark:text-slate-400">${l.log_date}</td>
                             <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">
                                 <span class="font-mono bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded text-[11px]">${l.plate_number}</span>
-                                <span class="block text-[11px] text-slate-500 font-normal">${l.vehicle_name}</span>
+                                <span class="block text-[11px] text-slate-500 dark:text-slate-400 font-normal">${l.vehicle_name}</span>
                             </td>
                             <td class="py-3 px-4 text-slate-700 dark:text-slate-300 font-medium">${l.driver_name || '-'}</td>
-                            <td class="py-3 px-4 font-mono text-center text-slate-600">
-                                <span class="text-[10px] text-slate-400">${Number(l.last_odometer || 0).toLocaleString('id-ID')} &rarr;</span>
+                            <td class="py-3 px-4 font-mono text-center text-slate-600 dark:text-slate-400">
+                                <span class="text-[10px] text-slate-400 dark:text-slate-500">${Number(l.last_odometer || 0).toLocaleString('id-ID')} &rarr;</span>
                                 <span class="font-bold text-slate-800 dark:text-slate-200">${Number(l.current_odometer || 0).toLocaleString('id-ID')} km</span>
                             </td>
-                            <td class="py-3 px-4 font-mono font-black text-indigo-900 text-right text-xs">+${formatDecimal(l.distance_traveled)} km</td>
+                            <td class="py-3 px-4 font-mono font-black text-indigo-900 dark:text-indigo-300 text-right text-xs">+${formatDecimal(l.distance_traveled)} km</td>
                             <td class="py-3 px-4 font-mono font-bold text-slate-800 dark:text-slate-200 text-right">${formatDecimal(l.liters_bought)} L</td>
-                            <td class="py-3 px-4 font-mono font-black text-rose-600 text-right text-xs">${formatRupiah(l.total_cost)}</td>
+                            <td class="py-3 px-4 font-mono font-black text-rose-600 dark:text-rose-400 text-right text-xs">${formatRupiah(l.total_cost)}</td>
                             <td class="py-3 px-4 text-center font-mono text-[11px] text-slate-700 dark:text-slate-300 font-bold">${ratioText}</td>
                             <td class="py-3 px-4 text-center">
                                 <span class="px-2 py-0.5 rounded-full text-[10px] ${badgeClass}">${formatDecimal(efficiency)}%</span>
                             </td>
                             <td class="py-3 px-4 text-center">
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                                     ⛽ Beban BBM Cabang
                                 </span>
                             </td>
                             <td class="py-3 px-4 text-center">
-                                <button onclick="deleteFuelLog(${l.id})" title="Hapus Log BBM" class="p-1 text-slate-400 hover:text-rose-600 rounded-lg">
+                                <button onclick="deleteFuelLog(${l.id})" title="Hapus Log BBM" class="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors">
                                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                 </button>
                             </td>
@@ -32772,25 +32772,25 @@ Manager / Supervisor: __________________
 
                 tbody.innerHTML = filtered.map(sl => `
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                        <td class="py-3 px-4 font-mono text-slate-600">${sl.service_date}</td>
+                        <td class="py-3 px-4 font-mono text-slate-600 dark:text-slate-400">${sl.service_date}</td>
                         <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">
                             <span class="font-mono bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded text-[11px]">${sl.plate_number}</span>
-                            <span class="block text-[11px] text-slate-500 font-normal">${sl.vehicle_name}</span>
+                            <span class="block text-[11px] text-slate-500 dark:text-slate-400 font-normal">${sl.vehicle_name}</span>
                         </td>
                         <td class="py-3 px-4 font-mono text-center text-slate-700 dark:text-slate-300">${Number(sl.odometer_km).toLocaleString()} km</td>
                         <td class="py-3 px-4">
                             <span class="font-bold text-slate-800 dark:text-slate-200">${sl.service_type}</span>
                         </td>
-                        <td class="py-3 px-4 text-slate-600">${sl.workshop_name || '-'}</td>
-                        <td class="py-3 px-4 font-mono font-black text-rose-700 text-right text-xs">${formatRupiah(sl.cost)}</td>
+                        <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${sl.workshop_name || '-'}</td>
+                        <td class="py-3 px-4 font-mono font-black text-rose-700 dark:text-rose-400 text-right text-xs">${formatRupiah(sl.cost)}</td>
                         <td class="py-3 px-4 text-center">
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
                                 📊 Masuk Beban Cabang
                             </span>
                         </td>
-                        <td class="py-3 px-4 text-slate-500 max-w-[150px] truncate">${sl.notes || '-'}</td>
+                        <td class="py-3 px-4 text-slate-500 dark:text-slate-400 max-w-[150px] truncate">${sl.notes || '-'}</td>
                         <td class="py-3 px-4 text-center">
-                            <button onclick="deleteServiceLog(${sl.id})" title="Hapus Riwayat Servis" class="p-1 text-slate-400 hover:text-rose-600 rounded-lg">
+                            <button onclick="deleteServiceLog(${sl.id})" title="Hapus Riwayat Servis" class="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                             </button>
                         </td>
@@ -33194,21 +33194,21 @@ Manager / Supervisor: __________________
                     const isMain = b.id == 1;
 
                     return `
-                        <tr class="hover:bg-slate-50/80 transition-colors">
-                            <td class="py-3 px-4 font-mono font-black text-indigo-700">
-                                <span class="bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md text-[11px]">${b.code}</span>
+                        <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                            <td class="py-3 px-4 font-mono font-black text-indigo-700 dark:text-indigo-400">
+                                <span class="bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-md text-[11px]">${b.code}</span>
                             </td>
-                            <td class="py-3 px-4 font-bold text-slate-800">
+                            <td class="py-3 px-4 font-bold text-slate-800 dark:text-slate-100">
                                 <div class="flex items-center space-x-1.5">
                                     <span>${b.name}</span>
-                                    ${isMain ? '<span class="px-1.5 py-0.2 bg-purple-100 text-purple-700 rounded text-[9px] font-black uppercase">Pusat</span>' : ''}
+                                    ${isMain ? '<span class="px-1.5 py-0.2 bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 rounded text-[9px] font-black uppercase border border-purple-200 dark:border-purple-800">Pusat</span>' : ''}
                                 </div>
                             </td>
-                            <td class="py-3 px-4 text-slate-600 max-w-xs truncate" title="${b.address}">${b.address}</td>
-                            <td class="py-3 px-4 font-mono text-[11px] text-slate-500">
+                            <td class="py-3 px-4 text-slate-600 dark:text-slate-300 max-w-xs truncate" title="${b.address}">${b.address}</td>
+                            <td class="py-3 px-4 font-mono text-[11px] text-slate-500 dark:text-slate-400">
                                 <div class="flex items-center space-x-1.5">
-                                    <button onclick="focusBranchOnMap(${b.id})" title="Lihat Titik di Peta Maps" class="px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-[10px] transition-colors flex items-center space-x-1 border border-indigo-200">
-                                        <i data-lucide="map-pin" class="w-3 h-3 text-indigo-600"></i>
+                                    <button onclick="focusBranchOnMap(${b.id})" title="Lihat Titik di Peta Maps" class="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold rounded-lg text-[10px] transition-colors flex items-center space-x-1 border border-indigo-200 dark:border-indigo-800 shadow-2xs">
+                                        <i data-lucide="map-pin" class="w-3 h-3 text-indigo-600 dark:text-indigo-400"></i>
                                         <span>${Number(b.latitude).toFixed(4)}, ${Number(b.longitude).toFixed(4)}</span>
                                     </button>
                                 </div>
@@ -33216,29 +33216,29 @@ Manager / Supervisor: __________________
                             <td class="py-3 px-4 text-center font-bold text-slate-700">
                                 <span class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-full text-[10px]">${b.radius_meters || 100} m</span>
                             </td>
-                            <td class="py-3 px-4 text-slate-600">${b.phone || '-'}</td>
+                            <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${b.phone || '-'}</td>
                             <td class="py-3 px-4 text-center">
                                 <div class="flex items-center justify-center space-x-2 text-[11px]">
-                                    <span title="Jumlah Staf" class="bg-blue-50 text-blue-700 font-bold px-1.5 py-0.5 rounded">👥 ${b.total_staff || 0}</span>
-                                    <span title="Katalog Produk" class="bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded">📦 ${b.total_products || 0}</span>
+                                    <span title="Jumlah Staf" class="bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-bold px-1.5 py-0.5 rounded">👥 ${b.total_staff || 0}</span>
+                                    <span title="Katalog Produk" class="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold px-1.5 py-0.5 rounded">📦 ${b.total_products || 0}</span>
                                 </div>
                             </td>
                             <td class="py-3 px-4 text-center">
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${isActive ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800' : 'bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800'}">
                                     ${isActive ? '● Aktif' : '○ Nonaktif'}
                                 </span>
                             </td>
                             <td class="py-3 px-4 text-center whitespace-nowrap">
                                 <div class="flex items-center justify-center space-x-1">
-                                    <button onclick="focusBranchOnMap(${b.id})" title="Buka di Peta Maps" class="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg">
+                                    <button onclick="focusBranchOnMap(${b.id})" title="Buka di Peta Maps" class="p-1.5 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 rounded-lg transition-colors">
                                         <i data-lucide="map" class="w-4 h-4"></i>
                                     </button>
-                                    <button onclick="editBranchById(${b.id})" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-[11px] transition-colors flex items-center space-x-1">
+                                    <button onclick="editBranchById(${b.id})" class="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold rounded-lg text-[11px] border border-indigo-200 dark:border-indigo-800 transition-colors flex items-center space-x-1 shadow-2xs">
                                         <i data-lucide="edit-3" class="w-3 h-3"></i>
                                         <span>Edit</span>
                                     </button>
                                     ${!isMain ? `
-                                        <button onclick="deleteBranch(${b.id}, '${b.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg text-[11px] transition-colors flex items-center space-x-1">
+                                        <button onclick="deleteBranch(${b.id}, '${b.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 font-bold rounded-lg text-[11px] border border-rose-200 dark:border-rose-800 transition-colors flex items-center space-x-1 shadow-2xs">
                                             <i data-lucide="trash-2" class="w-3 h-3"></i>
                                             <span>Hapus</span>
                                         </button>
@@ -34022,18 +34022,18 @@ Manager / Supervisor: __________________
 
                 tbody.innerHTML = methods.map(m => {
                     const statusBadge = m.is_active != 0 
-                        ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Aktif</span>'
+                        ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">Aktif</span>'
                         : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">Nonaktif</span>';
 
                     const typeBadge = m.is_cash == 1
-                        ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">Tunai (Cash)</span>'
-                        : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800">Non-Tunai</span>';
+                        ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">Tunai (Cash)</span>'
+                        : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800">Non-Tunai</span>';
 
                     const isCashDefault = (m.id == 1 || m.code === 'CASH');
 
                     return `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td class="py-3 px-4 text-center font-bold text-slate-500">${m.sort_order || 0}</td>
+                            <td class="py-3 px-4 text-center font-bold text-slate-500 dark:text-slate-400">${m.sort_order || 0}</td>
                             <td class="py-3 px-4 font-mono font-bold text-indigo-700 dark:text-indigo-400">${m.code}</td>
                             <td class="py-3 px-4">
                                 <div class="font-bold text-slate-800 dark:text-slate-100">${m.name}</div>
@@ -34043,7 +34043,7 @@ Manager / Supervisor: __________________
                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">${m.category}</span>
                             </td>
                             <td class="py-3 px-4 font-mono font-medium text-slate-700 dark:text-slate-300">${m.account_number || '-'}</td>
-                            <td class="py-3 px-4 text-slate-600 font-medium">${m.account_holder || '-'}</td>
+                            <td class="py-3 px-4 text-slate-600 dark:text-slate-300 font-medium">${m.account_holder || '-'}</td>
                             <td class="py-3 px-4 text-center">${typeBadge}</td>
                             <td class="py-3 px-4 text-center">
                                 <span class="font-bold text-slate-700 dark:text-slate-300">${m.transaction_count || 0} tx</span>
