@@ -7488,18 +7488,18 @@ try {
     <!-- Modal 2: Shift Kasir (Opening Shift & Closing Shift) -->
     <div id="shift-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto hidden">
         <div class="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl max-w-4xl sm:max-w-5xl w-full p-4 sm:p-6 shadow-2xl flex flex-col border border-slate-100 dark:border-slate-800 my-auto text-slate-800 dark:text-slate-100" style="max-height: calc(100vh - 1.5rem); height: auto;">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 shrink-0">
                 <div>
-                    <h3 id="shift-modal-title" class="font-black text-slate-800 text-base sm:text-lg tracking-wide">Opening Shift</h3>
-                    <p id="shift-modal-desc" class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Formulir pembukaan kas & verifikasi stok awal sebelum penjualan.</p>
+                    <h3 id="shift-modal-title" class="font-black text-slate-800 dark:text-slate-100 text-base sm:text-lg tracking-wide">Opening Shift</h3>
+                    <p id="shift-modal-desc" class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">Formulir pembukaan kas & verifikasi stok awal sebelum penjualan.</p>
                 </div>
                 <button onclick="closeShiftModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center font-bold text-sm transition-colors">✕</button>
             </div>
             <div id="shift-modal-body" class="space-y-3 sm:space-y-4 overflow-y-auto pr-1 sm:pr-2 flex-1 min-h-0 py-1"></div>
-            <div id="shift-modal-footer" class="pt-3 border-t border-slate-100 shrink-0">
+            <div id="shift-modal-footer" class="pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
                 <div class="grid grid-cols-2 gap-2 sm:gap-3">
                     <button onclick="closeShiftModal()" class="py-2.5 sm:py-3 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl sm:rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-300 transition-colors">Batal</button>
-                    <button id="shift-modal-action-btn" onclick="executeShiftAction()" class="py-2.5 sm:py-3 px-4 bg-emerald-600 hover:bg-emerald-700 rounded-xl sm:rounded-2xl text-xs font-black text-white shadow-md shadow-emerald-200 transition-all uppercase tracking-wider">BUKA PENJUALAN</button>
+                    <button id="shift-modal-action-btn" onclick="executeShiftAction()" class="py-2.5 sm:py-3 px-4 bg-emerald-600 hover:bg-emerald-700 rounded-xl sm:rounded-2xl text-xs font-black text-white shadow-md shadow-emerald-200 dark:shadow-none transition-all uppercase tracking-wider">BUKA PENJUALAN</button>
                 </div>
             </div>
         </div>
@@ -7903,7 +7903,7 @@ try {
                         </div>
 
                         <!-- Kolom Kanan: Peta Geospasial & Radius Geofence (7 Cols) -->
-                        <div class="lg:col-span-7 space-y-3 bg-slate-50 dark:bg-slate-800/60/70 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80">
+                        <div class="lg:col-span-7 space-y-3 bg-slate-50 dark:bg-slate-800/70 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80">
                             <div class="flex items-center justify-between pb-1 border-b border-slate-200/60">
                                 <div>
                                     <label class="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
@@ -9106,7 +9106,7 @@ try {
                     
                     <!-- SISI KIRI: INFORMASI UTAMA, JENIS, SATUAN & HARGA -->
                     <div class="space-y-4">
-                        <div class="p-4 bg-slate-50 dark:bg-slate-800/60/80 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3">
+                        <div class="p-4 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3">
                             <h4 class="font-extrabold text-slate-700 text-xs flex items-center space-x-1.5 uppercase tracking-wider">
                                 <span>🏷️ Identitas Produk</span>
                             </h4>
@@ -9161,7 +9161,7 @@ try {
                         </div>
 
                         <!-- HPP, Harga Jual, Reorder, BOM -->
-                        <div class="p-4 bg-slate-50 dark:bg-slate-800/60/80 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3">
+                        <div class="p-4 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3">
                             <h4 class="font-extrabold text-slate-700 text-xs flex items-center space-x-1.5 uppercase tracking-wider">
                                 <span>💰 Harga & Formula Resep</span>
                             </h4>
@@ -9271,29 +9271,29 @@ try {
                         </button>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                        <div class="bg-white dark:bg-slate-800/90/80 p-2.5 rounded-xl border border-emerald-200/60 shadow-xs dark:border-slate-700 text-slate-800 dark:text-slate-200">
+                        <div class="bg-white dark:bg-slate-800/80 p-2.5 rounded-xl border border-emerald-200/60 shadow-xs dark:border-slate-700 text-slate-800 dark:text-slate-200">
                             <div class="flex items-center justify-between mb-1">
-                                <label class="font-bold text-slate-700">Mitra Umum (Rp):</label>
+                                <label class="font-bold text-slate-700 dark:text-slate-200">Mitra Umum (Rp):</label>
                                 <span class="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-1.5 py-0.2 rounded">Tier Mitra</span>
                             </div>
                             <input type="number" id="prod-mitra-price" placeholder="Contoh: 25000" class="w-full p-2 bg-white border border-emerald-300 rounded-lg font-mono font-bold text-emerald-900 focus:ring-2 focus:ring-emerald-500 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500">
-                            <p class="text-[10px] text-slate-500 mt-1">Diterapkan jika pelanggan berada pada kategori tier MITRA tanpa kontrak individu (Default: harga ritel).</p>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Diterapkan jika pelanggan berada pada kategori tier MITRA tanpa kontrak individu (Default: harga ritel).</p>
                         </div>
-                        <div class="bg-white dark:bg-slate-800/90/80 p-2.5 rounded-xl border border-blue-200/60 shadow-xs dark:border-slate-700 text-slate-800 dark:text-slate-200">
+                        <div class="bg-white dark:bg-slate-800/80 p-2.5 rounded-xl border border-blue-200/60 shadow-xs dark:border-slate-700 text-slate-800 dark:text-slate-200">
                             <div class="flex items-center justify-between mb-1">
-                                <label class="font-bold text-slate-700">Reseller / Grosir (Rp):</label>
+                                <label class="font-bold text-slate-700 dark:text-slate-200">Reseller / Grosir (Rp):</label>
                                 <span class="text-[10px] text-blue-700 font-bold bg-blue-100 px-1.5 py-0.2 rounded">Tier Reseller</span>
                             </div>
                             <input type="number" id="prod-reseller-price" placeholder="Contoh: 25000" class="w-full p-2 bg-white border border-blue-300 rounded-lg font-mono font-bold text-blue-900 focus:ring-2 focus:ring-blue-500 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500">
-                            <p class="text-[10px] text-slate-500 mt-1">Diterapkan untuk pelanggan pada kategori tier RESELLER / Grosir (Default: harga ritel).</p>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Diterapkan untuk pelanggan pada kategori tier RESELLER / Grosir (Default: harga ritel).</p>
                         </div>
-                        <div class="bg-white dark:bg-slate-800/90/80 p-2.5 rounded-xl border border-purple-200/60 shadow-xs dark:border-slate-700 text-slate-800 dark:text-slate-200">
+                        <div class="bg-white dark:bg-slate-800/80 p-2.5 rounded-xl border border-purple-200/60 shadow-xs dark:border-slate-700 text-slate-800 dark:text-slate-200">
                             <div class="flex items-center justify-between mb-1">
-                                <label class="font-bold text-slate-700">Member VIP (Rp):</label>
+                                <label class="font-bold text-slate-700 dark:text-slate-200">Member VIP (Rp):</label>
                                 <span class="text-[10px] text-purple-700 font-bold bg-purple-100 px-1.5 py-0.2 rounded">Tier Member</span>
                             </div>
                             <input type="number" id="prod-member-price" placeholder="Contoh: 25000" class="w-full p-2 bg-white border border-purple-300 rounded-lg font-mono font-bold text-purple-900 focus:ring-2 focus:ring-purple-500 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500">
-                            <p class="text-[10px] text-slate-500 mt-1">Diterapkan untuk pelanggan pada kategori tier MEMBER (Default: harga ritel).</p>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Diterapkan untuk pelanggan pada kategori tier MEMBER (Default: harga ritel).</p>
                         </div>
                     </div>
                 </div>
@@ -9603,7 +9603,7 @@ try {
                         </div>
 
                         <!-- Kolom Kanan: Peta Geospasial Pelanggan, Acuan Kurir & Pencarian Google Maps (7 Cols) -->
-                        <div class="lg:col-span-7 space-y-3 bg-slate-50 dark:bg-slate-800/60/70 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80">
+                        <div class="lg:col-span-7 space-y-3 bg-slate-50 dark:bg-slate-800/70 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80">
                             <div class="flex items-center justify-between pb-1 border-b border-slate-200/60">
                                 <div>
                                     <label class="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
@@ -16414,18 +16414,18 @@ try {
                                 <div class="bg-white/90 dark:bg-slate-800/90 p-2.5 sm:p-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xs grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
                                     <div class="sm:col-span-5 min-w-0 pr-1">
                                         <div class="flex items-center gap-1.5 flex-wrap">
-                                            <span class="text-xs font-black text-slate-800 uppercase leading-snug break-words">${itemName}</span>
+                                            <span class="text-xs font-black text-slate-800 dark:text-slate-100 uppercase leading-snug break-words">${itemName}</span>
                                             <span class="text-[9px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded font-bold shrink-0">${itemUnit}</span>
                                             ${sopBadge}
                                         </div>
                                         <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${item.sku}</span>
-                                        <span class="block text-[10px] text-indigo-700 font-semibold mt-0.5">Stok Awal: <b>${formatDecimal(initQtyVal)}</b>${openAddQtyVal > 0 ? ` • +Opening: <b>+${formatDecimal(openAddQtyVal)}</b>` : ''} ${itemUnit}</span>
+                                        <span class="block text-[10px] text-indigo-700 dark:text-indigo-300 font-semibold mt-0.5">Stok Awal: <b>${formatDecimal(initQtyVal)}</b>${openAddQtyVal > 0 ? ` • +Opening: <b>+${formatDecimal(openAddQtyVal)}</b>` : ''} ${itemUnit}</span>
                                         ${extraShiftBadge}
                                     </div>
                                     <div class="sm:col-span-3 text-left sm:text-center">
                                         <span class="text-[10px] text-slate-400 uppercase font-bold block sm:hidden">Total Pagi</span>
-                                        <span class="inline-block px-2.5 py-1 bg-indigo-50 text-indigo-900 border border-indigo-100 rounded-xl text-xs font-black">
-                                            ${formatDecimal(item.opening_qty)} <span class="text-[9px] font-normal text-indigo-500">${itemUnit}</span>
+                                        <span class="inline-block px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/80 text-indigo-900 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/80 rounded-xl text-xs font-black">
+                                            ${formatDecimal(item.opening_qty)} <span class="text-[9px] font-normal text-indigo-500 dark:text-indigo-400">${itemUnit}</span>
                                         </span>
                                     </div>
                                     <div class="sm:col-span-4">
@@ -16446,28 +16446,28 @@ try {
 
                 body.innerHTML = `
                     <!-- 1. Rekonsiliasi Kas di Laci Kasir -->
-                    <div class="bg-gradient-to-br from-rose-50/80 via-white to-amber-50/60 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-rose-200/80 shadow-sm space-y-3.5">
-                        <div class="flex items-center justify-between border-b border-rose-100 pb-2">
+                    <div class="bg-gradient-to-br from-rose-50/80 via-white to-amber-50/60 dark:from-slate-800/90 dark:via-slate-800/80 dark:to-slate-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-rose-200/80 dark:border-slate-700/80 shadow-sm space-y-3.5">
+                        <div class="flex items-center justify-between border-b border-rose-100 dark:border-slate-700/80 pb-2">
                             <div class="flex items-center space-x-2">
-                                <span class="text-xs sm:text-sm font-black text-rose-950 uppercase tracking-wider">Rekonsiliasi Kas Laci Kasir</span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800">Cash Audit</span>
+                                <span class="text-xs sm:text-sm font-black text-rose-950 dark:text-rose-300 uppercase tracking-wider">Rekonsiliasi Kas Laci Kasir</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80">Cash Audit</span>
                             </div>
-                            <span class="text-[10px] sm:text-[11px] font-bold text-slate-500">${txCount} Transaksi Penjualan Tunai</span>
+                            <span class="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400">${txCount} Transaksi Penjualan Tunai</span>
                         </div>
 
                         <!-- Opsi Pengeluaran Kas Laci Kasir (Beban, Kasbon, Uang Makan) -->
                         <div class="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-2xl border border-rose-200 dark:border-rose-900/50 shadow-2xs space-y-3">
-                            <div class="flex items-center justify-between border-b border-slate-100 pb-2 flex-wrap gap-2">
+                            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 flex-wrap gap-2">
                                 <div>
                                     <div class="flex items-center space-x-1.5">
-                                        <span class="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wide">💸 Pengeluaran Kas Laci Kasir</span>
-                                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-50 text-rose-700">Petty Cash</span>
+                                        <span class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-wide">💸 Pengeluaran Kas Laci Kasir</span>
+                                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80">Petty Cash</span>
                                     </div>
-                                    <span class="text-[10px] text-slate-400 block mt-0.5">Catat uang tunai yang dikeluarkan dari laci kasir (Beban Toko, Kasbon, atau Uang Makan).</span>
+                                    <span class="text-[10px] text-slate-400 dark:text-slate-500 block mt-0.5">Catat uang tunai yang dikeluarkan dari laci kasir (Beban Toko, Kasbon, atau Uang Makan).</span>
                                 </div>
                                 <div class="flex items-center space-x-2">
-                                    <span class="text-[10px] text-slate-500 font-bold hidden sm:inline">Total Kas Keluar:</span>
-                                    <span id="closing-total-disbursements-badge" class="px-2.5 py-0.5 rounded-full text-xs font-black bg-rose-100 text-rose-800 font-mono">- Rp 0</span>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 font-bold hidden sm:inline">Total Kas Keluar:</span>
+                                    <span id="closing-total-disbursements-badge" class="px-2.5 py-0.5 rounded-full text-xs font-black bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80 font-mono">- Rp 0</span>
                                 </div>
                             </div>
 
@@ -16486,12 +16486,12 @@ try {
 
                             <!-- Pane 1: Beban Operasional Toko -->
                             <div id="disb-pane-expense" class="disb-tab-pane space-y-2.5">
-                                <div class="flex items-center justify-between text-xs text-slate-600">
+                                <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
                                     <div>
-                                        <span class="font-bold text-slate-800">Biaya Beban / Pengeluaran Toko</span>
-                                        <span class="text-[10px] text-slate-400 block sm:inline sm:ml-1">• Terhubung ke Menu Beban Operasional & Laba Rugi</span>
+                                        <span class="font-bold text-slate-800 dark:text-slate-100">Biaya Beban / Pengeluaran Toko</span>
+                                        <span class="text-[10px] text-slate-400 dark:text-slate-500 block sm:inline sm:ml-1">• Terhubung ke Menu Beban Operasional & Laba Rugi</span>
                                     </div>
-                                    <button type="button" onclick="addShiftExpenseRow()" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-lg text-[11px] font-black transition-colors flex items-center space-x-1">
+                                    <button type="button" onclick="addShiftExpenseRow()" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/80 hover:bg-rose-100 dark:hover:bg-rose-900 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 rounded-lg text-[11px] font-black transition-colors flex items-center space-x-1">
                                         <span>+</span><span>Tambah Beban Toko</span>
                                     </button>
                                 </div>
@@ -16500,20 +16500,20 @@ try {
                                         Tidak ada biaya beban toko selama shift ini. Klik "+ Tambah Beban Toko" jika ada pengeluaran kasir.
                                     </div>
                                 </div>
-                                <div class="text-[10px] text-slate-500 flex justify-between pt-1 border-t border-slate-100">
+                                <div class="text-[10px] text-slate-500 dark:text-slate-400 flex justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
                                     <span>Subtotal Biaya Beban Toko:</span>
-                                    <span id="closing-sub-expense" class="font-bold text-rose-700 font-mono">Rp 0</span>
+                                    <span id="closing-sub-expense" class="font-bold text-rose-700 dark:text-rose-400 font-mono">Rp 0</span>
                                 </div>
                             </div>
 
                             <!-- Pane 2: Kasbon Karyawan -->
                             <div id="disb-pane-loan" class="disb-tab-pane space-y-2.5 hidden">
-                                <div class="flex items-center justify-between text-xs text-slate-600">
+                                <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
                                     <div>
-                                        <span class="font-bold text-slate-800">Kasbon Karyawan (Pinjaman Tunai dari Laci Kasir)</span>
-                                        <span class="text-[10px] text-slate-400 block sm:inline sm:ml-1">• Terhubung ke Pencatatan Gaji / Potongan Kasbon</span>
+                                        <span class="font-bold text-slate-800 dark:text-slate-100">Kasbon Karyawan (Pinjaman Tunai dari Laci Kasir)</span>
+                                        <span class="text-[10px] text-slate-400 dark:text-slate-500 block sm:inline sm:ml-1">• Terhubung ke Pencatatan Gaji / Potongan Kasbon</span>
                                     </div>
-                                    <button type="button" onclick="addShiftLoanRow()" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 rounded-lg text-[11px] font-black transition-colors flex items-center space-x-1">
+                                    <button type="button" onclick="addShiftLoanRow()" class="px-2.5 py-1 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 rounded-lg text-[11px] font-black transition-colors flex items-center space-x-1">
                                         <span>+</span><span>Tambah Kasbon</span>
                                     </button>
                                 </div>
@@ -16522,20 +16522,20 @@ try {
                                         Tidak ada kasbon karyawan selama shift ini. Klik "+ Tambah Kasbon" jika ada pencairan kasbon kasir.
                                     </div>
                                 </div>
-                                <div class="text-[10px] text-slate-500 flex justify-between pt-1 border-t border-slate-100">
+                                <div class="text-[10px] text-slate-500 dark:text-slate-400 flex justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
                                     <span>Subtotal Kasbon Karyawan:</span>
-                                    <span id="closing-sub-loan" class="font-bold text-amber-800 font-mono">Rp 0</span>
+                                    <span id="closing-sub-loan" class="font-bold text-amber-800 dark:text-amber-400 font-mono">Rp 0</span>
                                 </div>
                             </div>
 
                             <!-- Pane 3: Uang Makan Karyawan -->
                             <div id="disb-pane-meal" class="disb-tab-pane space-y-2.5 hidden">
-                                <div class="flex items-center justify-between text-xs text-slate-600">
+                                <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
                                     <div>
-                                        <span class="font-bold text-slate-800">Uang Makan Karyawan Shift</span>
-                                        <span class="text-[10px] text-slate-400 block sm:inline sm:ml-1">• Terhubung ke Pencatatan Gaji & Beban Operasional</span>
+                                        <span class="font-bold text-slate-800 dark:text-slate-100">Uang Makan Karyawan Shift</span>
+                                        <span class="text-[10px] text-slate-400 dark:text-slate-500 block sm:inline sm:ml-1">• Terhubung ke Pencatatan Gaji & Beban Operasional</span>
                                     </div>
-                                    <button type="button" onclick="addShiftMealRow()" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 rounded-lg text-[11px] font-black transition-colors flex items-center space-x-1">
+                                    <button type="button" onclick="addShiftMealRow()" class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/80 hover:bg-emerald-100 dark:hover:bg-emerald-900 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 rounded-lg text-[11px] font-black transition-colors flex items-center space-x-1">
                                         <span>+</span><span>Tambah Uang Makan</span>
                                     </button>
                                 </div>
@@ -16544,16 +16544,16 @@ try {
                                         Tidak ada uang makan yang dicairkan. Klik "+ Tambah Uang Makan" jika kasir memberikan uang makan tunai.
                                     </div>
                                 </div>
-                                <div class="text-[10px] text-slate-500 flex justify-between pt-1 border-t border-slate-100">
+                                <div class="text-[10px] text-slate-500 dark:text-slate-400 flex justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
                                     <span>Subtotal Uang Makan Karyawan:</span>
-                                    <span id="closing-sub-meal" class="font-bold text-emerald-800 font-mono">Rp 0</span>
+                                    <span id="closing-sub-meal" class="font-bold text-emerald-800 dark:text-emerald-400 font-mono">Rp 0</span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Input Uang Fisik Aktual di Laci Kasir (Blind Cash Count - Tanpa Bocoran Clue/Ekspektasi Sistem) -->
                         <div class="space-y-1.5 pt-1">
-                            <label class="block text-xs font-black text-slate-800">Total Uang Fisik Aktual di Laci Kasir (Kertas + Koin):</label>
+                            <label class="block text-xs font-black text-slate-800 dark:text-slate-100">Total Uang Fisik Aktual di Laci Kasir (Kertas + Koin):</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-sm font-bold text-slate-400">Rp</span>
                                 <input type="number" id="shift-input-actual-cash" placeholder="Hitung dan input seluruh uang fisik di laci kasir..." class="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-900 border-2 border-rose-300 dark:border-rose-900/70 rounded-xl font-black text-rose-950 dark:text-rose-200 text-sm sm:text-base focus:ring-2 focus:ring-rose-500 shadow-inner">
@@ -16562,16 +16562,16 @@ try {
                     </div>
 
                     <!-- 2. Laporan Stok Fisik Akhir Malam (Closing Stock) -->
-                    <div class="bg-slate-50 dark:bg-slate-800/60/80 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-700/80 shadow-sm space-y-3">
-                        <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <div class="bg-slate-50 dark:bg-slate-800/60 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-700/80 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700/80 pb-2">
                             <div>
                                 <div class="flex items-center space-x-2">
-                                    <span class="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider">Laporan Stok Fisik Akhir Malam (Closing Stock)</span>
+                                    <span class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">Laporan Stok Fisik Akhir Malam (Closing Stock)</span>
                                     <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">Serah Terima</span>
                                 </div>
-                                <span class="block text-[10px] sm:text-[11px] text-slate-500 mt-0.5">Sisa stok fisik di toko malam ini yang akan diserahterimakan ke shift pagi berikutnya.</span>
+                                <span class="block text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Sisa stok fisik di toko malam ini yang akan diserahterimakan ke shift pagi berikutnya.</span>
                             </div>
-                            <span class="text-[10px] sm:text-[11px] font-bold text-slate-500">Hitung Fisik Sisa</span>
+                            <span class="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400">Hitung Fisik Sisa</span>
                         </div>
 
                         <!-- Header Kolom Komparasi -->
@@ -16586,7 +16586,7 @@ try {
                             ${closingItemsRows}
                         </div>
 
-                        <div class="p-3 bg-amber-50/80 rounded-2xl border border-amber-200 text-[11px] text-amber-900 flex items-start space-x-2">
+                        <div class="p-3 bg-amber-50/80 dark:bg-amber-950/40 rounded-2xl border border-amber-200 dark:border-amber-800/80 text-[11px] text-amber-900 dark:text-amber-200 flex items-start space-x-2">
                             <span class="text-base leading-none">🌙</span>
                             <span class="leading-relaxed">
                                 <b>Penting untuk Shift Terakhir:</b> Laporan sisa stok fisik malam yang Anda simpan di sini akan <b>otomatis terkunci</b> dan menjadi <b>STOK MALAM</b> bagi kasir shift pagi esok hari.
@@ -16595,31 +16595,31 @@ try {
                     </div>
 
                     <!-- 2.3 Opsi Penutupan Toko Harian (Final Shift) -->
-                    <div class="bg-indigo-50/70 p-3 sm:p-3.5 rounded-2xl border border-indigo-200 flex items-center justify-between gap-3">
+                    <div class="bg-indigo-50/70 dark:bg-slate-800/80 p-3 sm:p-3.5 rounded-2xl border border-indigo-200 dark:border-slate-700 flex items-center justify-between gap-3">
                         <div class="flex items-start sm:items-center space-x-2.5">
                             <input type="checkbox" id="check-is-final-shift" onchange="toggleFinalShiftWaterMeter()" ${isFinalCandidate ? 'checked' : ''} class="w-4 h-4 mt-0.5 sm:mt-0 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer">
                             <div>
-                                <label for="check-is-final-shift" class="text-xs font-black text-indigo-950 block cursor-pointer">Tutup Toko Hari Ini (Closing Akhir / Selesai Operasional Malam 🌙)</label>
-                                <span class="text-[10px] text-indigo-700 block leading-tight">Centang jika ini adalah penutupan shift terakhir hari ini. Sisa stok fisik akan terkunci permanen sebagai Stok Akhir Malam Toko dan form meteran air mesin akan diisi.</span>
+                                <label for="check-is-final-shift" class="text-xs font-black text-indigo-950 dark:text-indigo-300 block cursor-pointer">Tutup Toko Hari Ini (Closing Akhir / Selesai Operasional Malam 🌙)</label>
+                                <span class="text-[10px] text-indigo-700 dark:text-indigo-400 block leading-tight">Centang jika ini adalah penutupan shift terakhir hari ini. Sisa stok fisik akan terkunci permanen sebagai Stok Akhir Malam Toko dan form meteran air mesin akan diisi.</span>
                             </div>
                         </div>
                         <span class="text-xl shrink-0">🏪</span>
                     </div>
 
                     <!-- 2.4 Pencatatan Meteran Air Mesin Isi Ulang (Display Counter) - Ditampilkan jika Tutup Toko Dicentang -->
-                    <div id="closing-water-meter-section" class="${isFinalCandidate ? '' : 'hidden '}bg-gradient-to-br from-sky-50 via-cyan-50/40 to-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-sky-200/90 shadow-sm space-y-3.5">
-                        <div class="flex items-center justify-between border-b border-sky-100 pb-2 flex-wrap gap-2">
+                    <div id="closing-water-meter-section" class="${isFinalCandidate ? '' : 'hidden '}bg-gradient-to-br from-sky-50 via-cyan-50/40 to-white dark:from-slate-800/90 dark:via-slate-800/80 dark:to-slate-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-sky-200/90 dark:border-slate-700/80 shadow-sm space-y-3.5">
+                        <div class="flex items-center justify-between border-b border-sky-100 dark:border-slate-700/80 pb-2 flex-wrap gap-2">
                             <div class="flex items-center space-x-2">
                                 <span class="text-base">💧</span>
-                                <span class="text-xs sm:text-sm font-black text-sky-950 uppercase tracking-wider">Meteran Air Mesin Isi Ulang (Display Counter)</span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-sky-100 text-sky-800">Closing Harian</span>
+                                <span class="text-xs sm:text-sm font-black text-sky-950 dark:text-sky-300 uppercase tracking-wider">Meteran Air Mesin Isi Ulang (Display Counter)</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-sky-100 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800/80">Closing Harian</span>
                             </div>
                             <div class="text-[10px] text-sky-700 dark:text-sky-300 bg-white/90 dark:bg-slate-800 border border-sky-200 dark:border-sky-800 px-2.5 py-0.5 rounded-lg font-mono font-bold">
                                 Rumus: (Hari Ini - Kemarin) / 782
                             </div>
                         </div>
 
-                        <p class="text-[11px] text-slate-500 leading-relaxed">
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                             Karyawan shift terakhir mencatat angka counter terakhir yang tertera pada display meteran mesin isi ulang untuk menghitung estimasi pengeluaran galon.
                         </p>
 
@@ -16628,7 +16628,7 @@ try {
                             <!-- Meteran Kemarin (Awal) -->
                             <div class="sm:col-span-4 space-y-1">
                                 <div class="flex items-center justify-between">
-                                    <label class="text-[11px] font-black text-slate-700 uppercase">Meter Kemarin (Awal):</label>
+                                    <label class="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase">Meter Kemarin (Awal):</label>
                                     <button type="button" onclick="unlockYesterdayMeter()" id="btn-unlock-yesterday" class="text-[10px] font-bold text-sky-600 hover:text-sky-800 underline">Ubah</button>
                                 </div>
                                 <div class="relative">
@@ -16639,7 +16639,7 @@ try {
 
                             <!-- Meteran Hari Ini (Display Akhir) -->
                             <div class="sm:col-span-4 space-y-1">
-                                <label class="text-[11px] font-black text-sky-950 uppercase flex items-center justify-between">
+                                <label class="text-[11px] font-black text-sky-950 dark:text-sky-300 uppercase flex items-center justify-between">
                                     <span>Meter Hari Ini (Display):</span>
                                     <span class="text-[10px] text-rose-500 font-bold">*Wajib Closing Day</span>
                                 </label>
@@ -16660,7 +16660,7 @@ try {
 
                     <!-- 3. Catatan Shift / Serah Terima (Opsional) -->
                     <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1.5">
-                        <label class="block text-xs font-bold text-slate-700">Catatan Serah Terima / Operasional Shift (Opsional):</label>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Catatan Serah Terima / Operasional Shift (Opsional):</label>
                         <textarea id="shift-input-notes" rows="2" placeholder="Tuliskan catatan kejadian penting, kendala kasir, atau pesan untuk shift berikutnya..." class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-slate-400 focus:outline-none"></textarea>
                     </div>
                 `;
@@ -16749,11 +16749,11 @@ try {
                                     </div>
                                 </div>
 
-                                <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 flex items-start space-x-3 text-xs text-amber-900">
+                                <div class="p-4 bg-amber-50 dark:bg-amber-950/40 rounded-2xl border border-amber-200 dark:border-amber-800/80 flex items-start space-x-3 text-xs text-amber-900 dark:text-amber-200">
                                     <span class="text-xl shrink-0">ℹ️</span>
                                     <div class="space-y-1">
-                                        <div class="font-bold">Ketentuan SOP Shift Kasir:</div>
-                                        <p class="text-amber-800 leading-relaxed">
+                                        <div class="font-bold text-amber-900 dark:text-amber-300">Ketentuan SOP Shift Kasir:</div>
+                                        <p class="text-amber-800 dark:text-amber-400 leading-relaxed">
                                             Sesuai SOP, setelah penutupan toko (closing harian) tidak diperkenankan membuka shift lanjutan di hari yang sama.
                                             Operasional kasir baru akan <b>kembali dibuka dari Shift 1 (Pagi) pada hari esok</b>.
                                         </p>
@@ -16780,15 +16780,15 @@ try {
 
                     title.innerHTML = `
                         <div class="flex items-center space-x-2 flex-wrap">
-                            <span>Buka Penjualan Toko Hari Ini</span>
-                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                            <span class="text-slate-800 dark:text-slate-100">Buka Penjualan Toko Hari Ini</span>
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 uppercase tracking-wider">
                                 Opening Harian (Pagi) 🌅
                             </span>
                         </div>
                     `;
                     desc.innerText = `Cabang: ${(state.currentBranch ? state.currentBranch.name : 'Cabang') || 'Cabang'} • Kasir Pembuka: ${(state.currentUser ? state.currentUser.name : 'Kasir') || 'Kasir'}`;
                     btn.innerText = 'BUKA PENJUALAN TOKO HARI INI';
-                    btn.className = 'py-3.5 px-5 bg-emerald-600 hover:bg-emerald-700 rounded-2xl text-xs font-black text-white shadow-lg shadow-emerald-200 transition-all uppercase tracking-wider cursor-pointer';
+                    btn.className = 'py-3.5 px-5 bg-emerald-600 hover:bg-emerald-700 rounded-2xl text-xs font-black text-white shadow-lg shadow-emerald-200 dark:shadow-none transition-all uppercase tracking-wider cursor-pointer';
                     btn.onclick = () => executeShiftAction();
                     btn.setAttribute('data-next-shift-number', 1);
                     btn.setAttribute('data-next-shift-name', 'Shift 1 (Pagi)');
@@ -16799,15 +16799,15 @@ try {
                     let handoverBannerHtml = '';
                     if (isContinuation && prevInfo) {
                         handoverBannerHtml = `
-                            <div class="p-3 sm:p-3.5 bg-amber-50 rounded-2xl border border-amber-200 flex flex-wrap items-center justify-between gap-2.5 text-xs text-amber-950">
+                            <div class="p-3 sm:p-3.5 bg-amber-50 dark:bg-amber-950/40 rounded-2xl border border-amber-200 dark:border-amber-800/80 flex flex-wrap items-center justify-between gap-2.5 text-xs text-amber-950 dark:text-amber-200">
                                 <div class="flex items-center space-x-2.5">
                                     <span class="text-xl shrink-0">🤝</span>
                                     <div>
-                                        <div class="font-black text-amber-900">Serah Terima dari ${escapeHtml(prevInfo.cashier_name || 'Kasir')} (${escapeHtml(prevInfo.shift_name || 'Shift ' + (nextNum - 1))})</div>
-                                        <div class="text-[11px] text-amber-800/90 mt-0.5">Shift sebelumnya telah ditutup pada <b>${prevInfo.end_time || '-'}</b>. Sisa fisik otomatis diselaraskan.</div>
+                                        <div class="font-black text-amber-900 dark:text-amber-300">Serah Terima dari ${escapeHtml(prevInfo.cashier_name || 'Kasir')} (${escapeHtml(prevInfo.shift_name || 'Shift ' + (nextNum - 1))})</div>
+                                        <div class="text-[11px] text-amber-800/90 dark:text-amber-400 mt-0.5">Shift sebelumnya telah ditutup pada <b>${prevInfo.end_time || '-'}</b>. Sisa fisik otomatis diselaraskan.</div>
                                     </div>
                                 </div>
-                                <span class="px-2.5 py-1 bg-amber-200/80 rounded-xl text-[10px] font-black text-amber-900 uppercase">Stok Terhubung ✅</span>
+                                <span class="px-2.5 py-1 bg-amber-200/80 dark:bg-amber-900/60 rounded-xl text-[10px] font-black text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800/80 uppercase">Stok Terhubung ✅</span>
                             </div>
                         `;
                     }
@@ -16845,27 +16845,27 @@ try {
                             }
 
                             const acuanSubLabel = hasPrevShift 
-                                ? ('Stok Malam: <b class="text-slate-700">' + formatDecimal(nightVal) + '</b> ' + itemUnit)
-                                : ('Stok Awal: <b class="text-slate-700">' + formatDecimal(baseAcuanVal) + '</b> ' + itemUnit);
+                                ? ('Stok Malam: <b class="text-slate-700 dark:text-slate-300">' + formatDecimal(nightVal) + '</b> ' + itemUnit)
+                                : ('Stok Awal: <b class="text-slate-700 dark:text-slate-300">' + formatDecimal(baseAcuanVal) + '</b> ' + itemUnit);
 
                             return `
-                                <div class="bg-white/95 dark:bg-slate-800/90 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-900/40 shadow-2xs flex flex-col space-y-2">
+                                <div class="bg-white/95 dark:bg-slate-800/90 p-3 rounded-2xl border border-emerald-100 dark:border-slate-700/80 shadow-2xs flex flex-col space-y-2">
                                     <div class="flex items-center justify-between gap-2">
                                         <div class="min-w-0 flex-1">
                                             <div class="flex items-center gap-1.5 flex-wrap">
-                                                <span class="text-xs font-black text-slate-800 uppercase leading-snug break-words">${itemName}</span>
-                                                <span class="text-[9px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded font-bold">${itemUnit}</span>
+                                                <span class="text-xs font-black text-slate-800 dark:text-slate-100 uppercase leading-snug break-words">${itemName}</span>
+                                                <span class="text-[9px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 rounded font-bold">${itemUnit}</span>
                                             </div>
-                                            <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${item.sku} • ${acuanSubLabel}</span>
+                                            <span class="block text-[10px] text-slate-400 dark:text-slate-400 font-mono mt-0.5">${item.sku} • ${acuanSubLabel}</span>
                                         </div>
                                         <div class="flex items-center space-x-1.5 shrink-0">
-                                            <span class="text-xs font-black text-emerald-600">+</span>
-                                            <input type="number" ${legacyId} data-product-id="${item.product_id}" data-sku="${item.sku}" data-product-name="${itemName}" data-unit="${itemUnit}" data-night-stock="${baseAcuanVal}" data-has-prev-shift="${hasPrevShift ? '1' : '0'}" oninput="calculateOpeningShiftVariance()" value="" min="0" placeholder="" class="shift-added-item-input w-20 sm:w-24 text-center py-1.5 px-2 bg-emerald-50/50 border-2 border-emerald-300 rounded-xl font-black text-emerald-950 text-sm focus:ring-2 focus:ring-emerald-500 shadow-inner">
+                                            <span class="text-xs font-black text-emerald-600 dark:text-emerald-400">+</span>
+                                            <input type="number" ${legacyId} data-product-id="${item.product_id}" data-sku="${item.sku}" data-product-name="${itemName}" data-unit="${itemUnit}" data-night-stock="${baseAcuanVal}" data-has-prev-shift="${hasPrevShift ? '1' : '0'}" oninput="calculateOpeningShiftVariance()" value="" min="0" placeholder="" class="shift-added-item-input w-20 sm:w-24 text-center py-1.5 px-2 bg-emerald-50/50 dark:bg-slate-900 border-2 border-emerald-300 dark:border-emerald-600/70 rounded-xl font-black text-emerald-950 dark:text-emerald-300 text-sm focus:ring-2 focus:ring-emerald-500 shadow-inner">
                                         </div>
                                     </div>
-                                    <div id="item-calc-badge-${item.product_id}" class="text-[11px] pt-1.5 border-t border-slate-100 flex items-center justify-between text-slate-600 transition-all">
-                                        <span>Stok Awal: <b class="font-mono text-slate-900 font-black">${formatDecimal(baseAcuanVal)}</b> ${itemUnit}</span>
-                                        <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">✓ Stok Tetap</span>
+                                    <div id="item-calc-badge-${item.product_id}" class="text-[11px] pt-1.5 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-slate-600 dark:text-slate-300 transition-all">
+                                        <span>Stok Awal: <b class="font-mono text-slate-900 dark:text-white font-black">${formatDecimal(baseAcuanVal)}</b> ${itemUnit}</span>
+                                        <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">✓ Stok Tetap</span>
                                     </div>
                                 </div>
                             `;
@@ -16900,24 +16900,24 @@ try {
                             const nightSourceLabel = hasPrevShift ? 'Sisa Closing Kemarin' : 'Stok Awal Tercatat';
 
                             return `
-                                <div class="bg-white/90 dark:bg-slate-800/90 p-3 rounded-2xl border border-slate-200/90 dark:border-slate-700 shadow-2xs flex flex-col space-y-2">
+                                <div class="bg-white/90 dark:bg-slate-800/90 p-3 rounded-2xl border border-slate-200/90 dark:border-slate-700/80 shadow-2xs flex flex-col space-y-2">
                                     <div class="flex items-center justify-between gap-2">
                                         <div class="min-w-0 flex-1">
                                             <div class="flex items-center gap-1.5 flex-wrap">
-                                                <span class="text-xs font-black text-slate-700 uppercase leading-snug break-words">${itemName}</span>
-                                                <span class="text-[9px] px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 rounded font-bold">${itemUnit}</span>
+                                                <span class="text-xs font-black text-slate-700 dark:text-slate-100 uppercase leading-snug break-words">${itemName}</span>
+                                                <span class="text-[9px] px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 rounded font-bold">${itemUnit}</span>
                                             </div>
-                                            <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${item.sku} • ${nightSourceLabel}</span>
+                                            <span class="block text-[10px] text-slate-400 dark:text-slate-400 font-mono mt-0.5">${item.sku} • ${nightSourceLabel}</span>
                                         </div>
-                                        <div class="w-20 sm:w-24 text-center py-1.5 px-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl font-black text-slate-700 dark:text-slate-200 text-sm shadow-inner relative">
+                                        <div class="w-20 sm:w-24 text-center py-1.5 px-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl font-black text-slate-700 dark:text-slate-200 text-sm shadow-inner relative">
                                             <input type="hidden" ${legacyIdNight} data-product-id="${item.product_id}" value="${baseAcuanVal}" class="shift-night-item-input">
                                             <span>${formatDecimal(baseAcuanVal)}</span>
                                             <span class="absolute right-1.5 top-2 text-[10px] text-slate-400">🔒</span>
                                         </div>
                                     </div>
-                                    <div class="text-[11px] pt-1.5 border-t border-slate-100 flex items-center justify-between text-slate-500">
+                                    <div class="text-[11px] pt-1.5 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-slate-500 dark:text-slate-400">
                                         <span>Total Stok Awal:</span>
-                                        <span id="item-night-total-${item.product_id}" class="font-mono font-black text-indigo-950">${formatDecimal(baseAcuanVal)} ${itemUnit}</span>
+                                        <span id="item-night-total-${item.product_id}" class="font-mono font-black text-indigo-950 dark:text-indigo-300">${formatDecimal(baseAcuanVal)} ${itemUnit}</span>
                                     </div>
                                 </div>
                             `;
@@ -16943,16 +16943,16 @@ try {
                             <!-- 2. GRID 2 KOLOM: PENAMBAHAN STOK DI KIRI & STOK ACUAN DI KANAN -->
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                                 <!-- Kolom Kiri: TAMBAH STOK BARU (+) -->
-                                <div class="bg-emerald-50/40 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border border-emerald-200/80 shadow-sm flex flex-col space-y-3">
+                                <div class="bg-emerald-50/40 dark:bg-slate-800/60 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border border-emerald-200/80 dark:border-slate-700/80 shadow-sm flex flex-col space-y-3">
                                     <div>
-                                        <div class="flex items-center justify-between border-b border-emerald-100 pb-2">
+                                        <div class="flex items-center justify-between border-b border-emerald-100 dark:border-slate-700/80 pb-2">
                                             <div class="flex items-center space-x-2">
-                                                <span class="text-xs sm:text-sm font-black text-emerald-950 uppercase tracking-wider">TAMBAH STOK BARU (+)</span>
-                                                <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-emerald-100 text-emerald-800">Kasir Pertama</span>
+                                                <span class="text-xs sm:text-sm font-black text-emerald-950 dark:text-emerald-300 uppercase tracking-wider">TAMBAH STOK BARU (+)</span>
+                                                <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80">Kasir Pertama</span>
                                             </div>
-                                            <span class="text-[10px] sm:text-[11px] text-emerald-700 font-bold">Input Tambahan Saja</span>
+                                            <span class="text-[10px] sm:text-[11px] text-emerald-700 dark:text-emerald-400 font-bold">Input Tambahan Saja</span>
                                         </div>
-                                        <p class="text-[10px] text-slate-500 italic mt-1 leading-snug">
+                                        <p class="text-[10px] text-slate-500 dark:text-slate-400 italic mt-1 leading-snug">
                                             Kosongkan jika tidak ada penambahan stok baru masuk pagi ini. Rumus: <b>Stok Awal = Input Tambahan + Stok Acuan</b>.
                                         </p>
                                     </div>
@@ -16962,18 +16962,18 @@ try {
                                 </div>
 
                                 <!-- Kolom Kanan: STOK ACUAN MALAM (Terkunci 🔒 / Readonly) -->
-                                <div class="bg-slate-50 dark:bg-slate-800/60/80 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-700/80 shadow-sm flex flex-col space-y-3">
+                                <div class="bg-slate-50 dark:bg-slate-800/60 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-700/80 shadow-sm flex flex-col space-y-3">
                                     <div>
-                                        <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                                        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700/80 pb-2">
                                             <div class="flex items-center space-x-2">
-                                                <span class="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider">STOK MALAM KEMARIN</span>
+                                                <span class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">STOK MALAM KEMARIN</span>
                                                 <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 flex items-center space-x-1">
                                                     <span>🔒</span><span>Terkunci</span>
                                                 </span>
                                             </div>
-                                            <span class="text-[10px] sm:text-[11px] text-slate-500 font-bold">Laporan Kemarin</span>
+                                            <span class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-bold">Laporan Kemarin</span>
                                         </div>
-                                        <p class="text-[10px] text-slate-400 italic mt-1 leading-snug">
+                                        <p class="text-[10px] text-slate-400 dark:text-slate-400 italic mt-1 leading-snug">
                                             ${escapeHtml(refTitle)}. <b>Tidak perlu diinput ulang</b> dan otomatis menjadi dasar perhitungan.
                                         </p>
                                     </div>
@@ -16984,7 +16984,7 @@ try {
                             </div>
 
                             <!-- 3. Ringkasan Status & Perhitungan Stok Awal Pagi -->
-                            <div id="opening-variance-box" class="p-3.5 rounded-2xl text-xs font-bold transition-all bg-emerald-50 border border-emerald-200 text-emerald-800">
+                            <div id="opening-variance-box" class="p-3.5 rounded-2xl text-xs font-bold transition-all bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-800 dark:text-emerald-300">
                                 ✓ Memuat analisis stok awal...
                             </div>
                         `;
@@ -16993,12 +16993,12 @@ try {
                         // Sesuai instruksi: Kasir berikutnya HANYA menginputkan uang modal awal saja!
                         shiftSpecificContent = `
                             <!-- KASIR BERIKUTNYA: STOK OTOMATIS DISERAH TERIMAKAN -->
-                            <div class="bg-gradient-to-br from-emerald-50 via-teal-50/40 to-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-emerald-200/90 shadow-sm space-y-3.5">
-                                <div class="flex items-center justify-between border-b border-emerald-100 pb-2 flex-wrap gap-2">
+                            <div class="bg-gradient-to-br from-emerald-50 via-teal-50/40 to-white dark:from-slate-800/90 dark:via-slate-800/80 dark:to-slate-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-emerald-200/90 dark:border-slate-700/80 shadow-sm space-y-3.5">
+                                <div class="flex items-center justify-between border-b border-emerald-100 dark:border-slate-700/80 pb-2 flex-wrap gap-2">
                                     <div class="flex items-center space-x-2">
                                         <span class="text-base">🤝</span>
-                                        <span class="text-xs sm:text-sm font-black text-emerald-950 uppercase tracking-wider">Stok Toko Otomatis Diserahterimakan</span>
-                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">Tanpa Perlu Input Stok ✅</span>
+                                        <span class="text-xs sm:text-sm font-black text-emerald-950 dark:text-emerald-300 uppercase tracking-wider">Stok Toko Otomatis Diserahterimakan</span>
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80">Tanpa Perlu Input Stok ✅</span>
                                     </div>
                                     <span class="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold bg-white dark:bg-slate-800 px-2.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800">Shift ${nextNum - 1} Selesai</span>
                                 </div>
@@ -17012,13 +17012,13 @@ try {
                                     <div class="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Rincian Sisa Stok Fisik yang Diteruskan (Read-Only):</div>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                                         ${items.map(it => `
-                                            <div class="shift-carried-item bg-white/95 dark:bg-slate-800/90 p-2.5 rounded-xl border border-emerald-100/90 dark:border-emerald-900/40 flex items-center justify-between shadow-2xs text-slate-800 dark:text-slate-200" data-product-id="${it.product_id}" data-stock="${it.night_stock}">
+                                            <div class="shift-carried-item bg-white/95 dark:bg-slate-800/90 p-2.5 rounded-xl border border-emerald-100/90 dark:border-slate-700/80 flex items-center justify-between shadow-2xs text-slate-800 dark:text-slate-200" data-product-id="${it.product_id}" data-stock="${it.night_stock}">
                                                 <div class="min-w-0 pr-2">
-                                                    <div class="text-[11px] font-black text-slate-800 truncate">${escapeHtml(it.name)}</div>
+                                                    <div class="text-[11px] font-black text-slate-800 dark:text-slate-100 truncate">${escapeHtml(it.name)}</div>
                                                     <div class="text-[9px] text-slate-400 font-mono">${it.sku}</div>
                                                 </div>
                                                 <div class="text-right shrink-0">
-                                                    <span class="text-xs font-black text-emerald-950 font-mono">${it.night_stock}</span>
+                                                    <span class="text-xs font-black text-emerald-950 dark:text-emerald-300 font-mono">${it.night_stock}</span>
                                                     <span class="text-[9px] text-slate-400 block">${it.unit} 🔒</span>
                                                 </div>
                                             </div>
@@ -17033,11 +17033,11 @@ try {
                         ${handoverBannerHtml}
 
                         <!-- 1. Bagian MODAL KASIR -->
-                        <div class="bg-slate-50 dark:bg-slate-800/60/90 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700/80 flex flex-wrap items-center justify-between gap-2.5">
+                        <div class="bg-slate-50 dark:bg-slate-800/80 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700/80 flex flex-wrap items-center justify-between gap-2.5">
                             <div class="flex items-center space-x-2 flex-wrap">
-                                <span class="text-xs sm:text-sm font-black text-slate-900 tracking-wider">MODAL KASIR</span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">Uang Pangkal</span>
-                                <span class="text-[11px] text-slate-400 hidden sm:inline">• Pecahan kecil kembalian di laci kasir</span>
+                                <span class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 tracking-wider">MODAL KASIR</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80">Uang Pangkal</span>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline">• Pecahan kecil kembalian di laci kasir</span>
                             </div>
                             <div class="w-44 sm:w-52">
                                 <div class="relative">
@@ -17096,17 +17096,17 @@ try {
 
                 if (badge) {
                     if (addedVal > 0) {
-                        badge.className = 'text-[11px] pt-1.5 border-t border-emerald-100 flex items-center justify-between text-emerald-800 transition-all';
+                        badge.className = 'text-[11px] pt-1.5 border-t border-emerald-100 dark:border-emerald-800/60 flex items-center justify-between text-emerald-800 dark:text-emerald-300 transition-all';
                         const sourceTag = hasPrev ? 'malam' : 'awal';
                         badge.innerHTML = `
-                            <span>Stok Awal: <b class="font-mono text-emerald-950 font-black">${formatDecimal(totalOpeningVal)}</b> ${unit} <span class="text-[10px] text-emerald-700 font-bold">(${formatDecimal(nightVal)} ${sourceTag} + ${formatDecimal(addedVal)} baru)</span></span>
-                            <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">📥 +${formatDecimal(addedVal)} Masuk</span>
+                            <span>Stok Awal: <b class="font-mono text-emerald-950 dark:text-emerald-300 font-black">${formatDecimal(totalOpeningVal)}</b> ${unit} <span class="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">(${formatDecimal(nightVal)} ${sourceTag} + ${formatDecimal(addedVal)} baru)</span></span>
+                            <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80">📥 +${formatDecimal(addedVal)} Masuk</span>
                         `;
                     } else {
-                        badge.className = 'text-[11px] pt-1.5 border-t border-slate-100 flex items-center justify-between text-slate-600 transition-all';
+                        badge.className = 'text-[11px] pt-1.5 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-slate-600 dark:text-slate-300 transition-all';
                         badge.innerHTML = `
-                            <span>Stok Awal: <b class="font-mono text-slate-900">${formatDecimal(nightVal)}</b> ${unit}</span>
-                            <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">✓ Stok Tetap</span>
+                            <span>Stok Awal: <b class="font-mono text-slate-900 dark:text-slate-100 font-black">${formatDecimal(nightVal)}</b> ${unit}</span>
+                            <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">✓ Stok Tetap</span>
                         `;
                     }
                 }
@@ -17119,32 +17119,32 @@ try {
             });
 
             if (addedItems.length > 0) {
-                box.className = 'p-3.5 rounded-2xl text-xs font-medium transition-all bg-emerald-50 border border-emerald-300 text-emerald-900 space-y-1.5 shadow-sm';
+                box.className = 'p-3.5 rounded-2xl text-xs font-medium transition-all bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800/80 text-emerald-900 dark:text-emerald-200 space-y-1.5 shadow-sm';
                 let addedRows = addedItems.map(it => {
                     const prefix = it.hasPrev ? ('Sisa malam ' + formatDecimal(it.night)) : ('Stok awal ' + formatDecimal(it.night));
-                    return `• <b>${it.name}</b>: ${prefix} + <b class="text-emerald-700 font-black">+${formatDecimal(it.added)} ${it.unit} Tambahan Baru</b> = <b>Total Stok Awal ${formatDecimal(it.total)} ${it.unit}</b>`;
+                    return `• <b>${it.name}</b>: ${prefix} + <b class="text-emerald-700 dark:text-emerald-300 font-black">+${formatDecimal(it.added)} ${it.unit} Tambahan Baru</b> = <b>Total Stok Awal ${formatDecimal(it.total)} ${it.unit}</b>`;
                 }).join('<br>');
                 box.innerHTML = `
-                    <div class="flex items-center space-x-2 font-black text-emerald-950 text-sm">
+                    <div class="flex items-center space-x-2 font-black text-emerald-950 dark:text-emerald-300 text-sm">
                         <span>📥</span>
                         <span>Penambahan Stok Baru Pagi Terverifikasi:</span>
                     </div>
                     <div class="pl-6 text-[11px] leading-relaxed">
                         ${addedRows}
                     </div>
-                    <p class="text-[10px] text-emerald-700 pl-6 italic">Perhitungan: Stok Awal = Stok Input Awal Shift (+ Tambahan) + Acuan Stok.</p>
+                    <p class="text-[10px] text-emerald-700 dark:text-emerald-400 pl-6 italic">Perhitungan: Stok Awal = Stok Input Awal Shift (+ Tambahan) + Acuan Stok.</p>
                 `;
             } else {
-                box.className = 'p-3.5 rounded-2xl text-xs font-bold transition-all bg-slate-50 border border-slate-200 text-slate-700 flex items-center space-x-2.5';
+                box.className = 'p-3.5 rounded-2xl text-xs font-bold transition-all bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 flex items-center space-x-2.5';
                 const bannerTitle = hasAnyPrevShift ? 'Stok Awal Pagi = Stok Malam Hari Kemarin' : 'Stok Awal Pagi = Saldo Stok Awal Tercatat';
                 const bannerDesc = hasAnyPrevShift
                     ? `Tidak ada penambahan stok baru masuk pagi ini (Stok Awal = 0 + Stok Malam). Seluruh ${sameCount} item siap dijual.`
                     : `Tidak ada penambahan stok baru masuk pagi ini (Stok Awal = Saldo Stok Cabang). Seluruh ${sameCount} item siap dijual.`;
                 box.innerHTML = `
-                    <span class="p-1 bg-emerald-100 text-emerald-700 rounded-lg text-sm">✓</span>
+                    <span class="p-1 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 rounded-lg text-sm">✓</span>
                     <div>
-                        <span class="font-black text-slate-900">${bannerTitle}</span>
-                        <span class="block text-[10px] font-normal text-slate-500">${bannerDesc}</span>
+                        <span class="font-black text-slate-900 dark:text-white">${bannerTitle}</span>
+                        <span class="block text-[10px] font-normal text-slate-500 dark:text-slate-400">${bannerDesc}</span>
                     </div>
                 `;
             }
@@ -19333,14 +19333,14 @@ try {
                         </div>
 
                         <!-- Info Petugas Kasir & Waktu -->
-                        <div class="bg-slate-50 dark:bg-slate-800/60/80 p-3 rounded-2xl border border-slate-100 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div class="bg-slate-50 dark:bg-slate-800/70 p-3 rounded-2xl border border-slate-100 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs">
                             <div>
                                 <span class="text-[10px] text-slate-400 font-bold uppercase block">Kasir Bertugas</span>
-                                <span class="font-black text-slate-800 text-sm flex items-center gap-1">
+                                <span class="font-black text-slate-800 dark:text-slate-100 text-sm flex items-center gap-1">
                                     👤 ${escapeHtml(s.cashier_name)} <span class="text-[10px] font-normal text-slate-400">(${escapeHtml(s.cashier_nik || 'KASIR')})</span>
                                 </span>
                             </div>
-                            <div class="text-right text-[11px] text-slate-500 font-medium">
+                            <div class="text-right text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                                 <div>Mulai: <b>${s.start_time || '-'}</b></div>
                                 <div>Selesai: <b>${s.end_time || (isOpen ? 'Shift Berjalan' : '-')}</b></div>
                             </div>
@@ -19348,29 +19348,29 @@ try {
 
                         <!-- Rincian Finansial Shift (Isolasi Kasir) -->
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                            <div class="bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100/80">
+                            <div class="bg-indigo-50/50 dark:bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-100/80 dark:border-indigo-800/60">
                                 <span class="text-[9px] text-indigo-500 font-bold uppercase block">Modal Awal</span>
-                                <span class="font-black text-indigo-950 text-xs sm:text-sm mt-0.5 block">${formatRupiah(s.initial_cash)}</span>
+                                <span class="font-black text-indigo-950 dark:text-indigo-200 text-xs sm:text-sm mt-0.5 block">${formatRupiah(s.initial_cash)}</span>
                             </div>
                             <div class="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700">
-                                <span class="text-[9px] text-slate-500 font-bold uppercase block">Penjualan Tunai</span>
-                                <span class="font-black text-slate-900 text-xs sm:text-sm mt-0.5 block">${formatRupiah(s.cash_sales)}</span>
+                                <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase block">Penjualan Tunai</span>
+                                <span class="font-black text-slate-900 dark:text-slate-100 text-xs sm:text-sm mt-0.5 block">${formatRupiah(s.cash_sales)}</span>
                             </div>
                             <div class="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700">
-                                <span class="text-[9px] text-slate-500 font-bold uppercase block">Non-Tunai (QRIS/Trf)</span>
-                                <span class="font-black text-slate-900 text-xs sm:text-sm mt-0.5 block">${formatRupiah(s.non_cash_sales)}</span>
+                                <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase block">Non-Tunai (QRIS/Trf)</span>
+                                <span class="font-black text-slate-900 dark:text-slate-100 text-xs sm:text-sm mt-0.5 block">${formatRupiah(s.non_cash_sales)}</span>
                             </div>
-                            <div class="bg-emerald-50/60 p-2.5 rounded-xl border border-emerald-100">
-                                <span class="text-[9px] text-emerald-700 font-bold uppercase block">Total Omzet Shift</span>
-                                <span class="font-black text-emerald-900 text-xs sm:text-sm mt-0.5 block">${formatRupiah(s.total_sales)}</span>
+                            <div class="bg-emerald-50/60 dark:bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-100 dark:border-emerald-800/60">
+                                <span class="text-[9px] text-emerald-700 dark:text-emerald-400 font-bold uppercase block">Total Omzet Shift</span>
+                                <span class="font-black text-emerald-900 dark:text-emerald-300 text-xs sm:text-sm mt-0.5 block">${formatRupiah(s.total_sales)}</span>
                             </div>
                         </div>
 
                         <!-- Rekonsiliasi Kas Laci Kasir -->
                         <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/70 space-y-2 text-xs">
-                            <div class="flex items-center justify-between text-slate-600 font-medium">
+                            <div class="flex items-center justify-between text-slate-600 dark:text-slate-300 font-medium">
                                 <span>Kas Terhitung Sistem (Modal + Tunai - Pengeluaran):</span>
-                                <span class="font-bold text-slate-900">${formatRupiah(s.expected_cash)}</span>
+                                <span class="font-bold text-slate-900 dark:text-slate-100">${formatRupiah(s.expected_cash)}</span>
                             </div>
                             ${(s.total_disbursements > 0) ? `
                                 <div class="p-2.5 bg-rose-50/70 rounded-xl border border-rose-200/80 space-y-1.5">
@@ -19401,13 +19401,13 @@ try {
                                     ` : ''}
                                 </div>
                             ` : ''}
-                            <div class="flex items-center justify-between text-slate-600 font-medium">
+                            <div class="flex items-center justify-between text-slate-600 dark:text-slate-300 font-medium">
                                 <span>Kas Fisik Aktual Diserahkan:</span>
-                                <span class="font-black text-slate-900 text-sm">${isOpen ? 'Menunggu Closing' : formatRupiah(s.actual_cash)}</span>
+                                <span class="font-black text-slate-900 dark:text-slate-100 text-sm">${isOpen ? 'Menunggu Closing' : formatRupiah(s.actual_cash)}</span>
                             </div>
                             ${!isOpen ? `
-                                <div class="flex items-center justify-between pt-1 border-t border-slate-200">
-                                    <span class="font-bold text-slate-700">Hasil Audit Kas Laci:</span>
+                                <div class="flex items-center justify-between pt-1 border-t border-slate-200 dark:border-slate-700">
+                                    <span class="font-bold text-slate-700 dark:text-slate-200">Hasil Audit Kas Laci:</span>
                                     <span class="px-2.5 py-1 rounded-lg text-xs font-black border ${diffBadgeClass}">${diffText}</span>
                                 </div>
                             ` : ''}

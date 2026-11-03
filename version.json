@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.8.7",
-    "build": "20261103-113",
+    "version": "1.8.8",
+    "build": "20261103-114",
     "release_date": "2026-11-03",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.8.8",
+            "commit": "HEAD",
+            "date": "2026-11-03",
+            "title": "Harmonisasi Dark Mode Modal Buka Toko (Opening Shift), Tutup Shift (Closing Shift), dan Detail Riwayat Shift",
+            "description": "Menyelaraskan tema gelap pada Modal Shift & Toko: (1) Modal Buka Penjualan Toko / Opening Shift: Memperbaiki kontainer 'MODAL KASIR' dan 'STOK MALAM KEMARIN' yang sebelumnya berlatar putih terang akibat kesalahan sintaks opacity Tailwind (dark:bg-slate-800/60/80 dan dark:bg-slate-800/60/90 menjadi dark:bg-slate-800/80), memperbaiki nama produk (seperti 'TUTUP GALON MINERAL') yang sebelumnya tidak terbaca (gelap di atas abu-abu) dengan dark:text-slate-100, mempercantik input stok tambahan (+), nilai stok malam, serta badge dan kartu selisih/varian; (2) Modal Tutup Shift (Closing Shift): Menyelaraskan seluruh baris audit fisik, pengeluaran kasir (petty cash), dan input konfirmasi; (3) Modal Detail Riwayat Shift Kasir: Menyelaraskan kartu petugas kasir, rincian finansial (modal awal, penjualan tunai, non-tunai, omzet), rekonsiliasi kas laci, tabel audit pemakaian stok, dan rincian pulsa meteran air; (4) Memperbaiki sisa kesalahan sintaks opacity Tailwind di modal cabang dan modal produk; (5) Kompilasi ulang Tailwind CSS.",
+            "rollback_command": "git checkout v1.8.7"
+        },
         {
             "version": "1.8.7",
             "commit": "HEAD",
