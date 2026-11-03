@@ -273,102 +273,176 @@ try {
 <body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-row overflow-x-hidden">
 
     <!-- ======================================================== -->
-    <!-- 0. LOGIN OVERLAY / SCREEN                                -->
+    <!-- 0. LOGIN OVERLAY / SCREEN (3D THE VOID AESTHETIC)       -->
     <!-- ======================================================== -->
-    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="relative bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-8 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-6">
-            <!-- Theme Toggle on Login Screen -->
-            <button type="button" onclick="toggleTheme()" class="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" title="Ubah Tema (Gelap / Terang)">
-                <i data-lucide="sun" class="theme-icon-sun w-4 h-4 hidden"></i>
-                <i data-lucide="moon" class="theme-icon-moon w-4 h-4"></i>
-            </button>
+    <div id="login-screen" class="fixed inset-0 z-50 bg-[#05060b] text-slate-100 flex items-center justify-center p-3 sm:p-5 lg:p-8 overflow-y-auto overflow-x-hidden selection:bg-purple-600 selection:text-white">
+        
+        <!-- Ambient Radial Glow Effects (Background Depth) -->
+        <div class="fixed inset-0 pointer-events-none overflow-hidden">
+            <div class="absolute -top-40 -left-40 w-96 sm:w-[500px] h-96 sm:h-[500px] bg-indigo-600/20 rounded-full blur-[120px]"></div>
+            <div class="absolute top-1/2 left-1/3 -translate-y-1/2 w-80 sm:w-[600px] h-80 sm:h-[600px] bg-purple-600/15 rounded-full blur-[140px]"></div>
+            <div class="absolute -bottom-40 -right-40 w-96 sm:w-[500px] h-96 sm:h-[500px] bg-violet-600/20 rounded-full blur-[120px]"></div>
+            <!-- Subtle Cyber Grid Lines -->
+            <div class="absolute inset-0 opacity-[0.035]" style="background-image: linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px); background-size: 40px 40px;"></div>
+        </div>
 
-            <div class="text-center space-y-2">
-                <?php if (!empty($initialLogoUrl)): ?>
-                    <span id="login-app-logo" class="inline-flex items-center justify-center w-20 h-20 p-2 bg-indigo-100 dark:bg-indigo-950/80 rounded-2xl shadow-inner overflow-hidden mx-auto"><img src="<?= htmlspecialchars($initialLogoUrl) ?>" class="max-w-full max-h-full object-contain" alt="Logo"></span>
-                <?php else: ?>
-                    <span id="login-app-logo" class="inline-block p-3 bg-indigo-100 dark:bg-indigo-950/80 rounded-2xl text-4xl shadow-inner"><?= htmlspecialchars($initialLogoEmoji) ?></span>
-                <?php endif; ?>
-                <h2 id="login-app-name" class="text-2xl font-black text-slate-800 dark:text-white tracking-tight"><?= htmlspecialchars($initialAppName) ?></h2>
-                <p id="login-app-subtitle" class="text-xs text-slate-500 dark:text-slate-400"><?= htmlspecialchars($initialAppSubtitle) ?></p>
-            </div>
-
-            <!-- Login Form -->
-            <form onsubmit="handleLogin(event)" class="space-y-4">
-                <div id="login-error-alert" style="display: none;" class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs rounded-xl items-center space-x-2">
-                    <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
-                    <span id="login-error-text" class="font-medium">Kredensial tidak valid</span>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">NIK atau Email:</label>
-                    <div class="relative">
-                        <i data-lucide="user" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-                        <input type="text" id="login-username" value="" autocomplete="username" placeholder="Contoh: CSR001 atau siti@jkt.retail.com" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium" required>
+        <!-- Main 3D Portal Split Card -->
+        <div class="relative w-full max-w-5xl my-auto rounded-[2rem] border border-white/10 bg-slate-950/60 backdrop-blur-3xl shadow-[0_0_80px_-20px_rgba(147,51,234,0.35)] overflow-hidden grid grid-cols-1 lg:grid-cols-12 z-10">
+            
+            <!-- Left Column: 3D Wireframe Scene & Typography (Hero) -->
+            <div class="lg:col-span-7 p-6 sm:p-10 lg:p-12 flex flex-col justify-between relative overflow-hidden min-h-[380px] sm:min-h-[440px] lg:min-h-[580px] border-b lg:border-b-0 lg:border-r border-white/10">
+                <!-- Dedicated 3D Canvas Layer -->
+                <canvas id="canvas-3d-void" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
+                
+                <!-- Left Header: Protocol & App Meta -->
+                <div class="relative z-10 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/25 text-purple-400 font-mono text-xs font-bold shadow-inner">
+                            ⚡
+                        </span>
+                        <div>
+                            <span class="block text-[11px] font-mono font-bold tracking-[0.25em] text-indigo-300 uppercase">SECURE ACCESS // 01</span>
+                            <span class="text-[9px] text-slate-500 font-mono">ENCRYPTED WORKSPACE</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-xs">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                            <span>ONLINE</span>
+                        </span>
                     </div>
                 </div>
 
-                <div>
-                    <div class="flex items-center justify-between mb-1">
-                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Kata Sandi / PIN 6-Digit:</label>
-                        <span class="text-[10px] font-semibold text-rose-500">*Wajib diisi</span>
-                    </div>
-                    <div class="relative">
-                        <i data-lucide="lock" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-                        <input type="password" id="login-password" value="" autocomplete="new-password" placeholder="Ketik kata sandi / PIN Anda" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium" required>
-                    </div>
-                    <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1">Demi keamanan, Anda diwajibkan memasukkan kata sandi setiap kali login.</p>
+                <!-- Left Middle: The Iconic 'ENTER STARQUA' Typography -->
+                <div class="relative z-10 my-auto py-8 select-none">
+                    <p class="text-xs sm:text-sm font-mono tracking-[0.35em] text-indigo-400/90 uppercase font-semibold mb-1">WELCOME TO</p>
+                    <h1 class="font-black text-5xl sm:text-7xl lg:text-8xl tracking-tighter uppercase leading-[0.85] text-transparent"
+                        style="-webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.28); text-stroke: 1.5px rgba(255, 255, 255, 0.28); font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                        ENTER
+                    </h1>
+                    <h2 class="font-black text-5xl sm:text-7xl lg:text-8xl tracking-tighter uppercase leading-[0.9] text-white bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-purple-400 drop-shadow-[0_0_40px_rgba(168,85,247,0.5)]">
+                        STARQUA
+                    </h2>
+                    <p class="mt-4 text-xs sm:text-sm text-slate-400 font-normal max-w-md leading-relaxed tracking-wide">
+                        A minimal portal to your workspace. Designed for focus, built for speed.
+                    </p>
                 </div>
 
-                <button type="submit" id="btn-login-submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg transition-colors flex items-center justify-center space-x-2 text-sm cursor-pointer">
-                    <i data-lucide="log-in" class="w-4 h-4"></i>
-                    <span>Masuk ke Sistem</span>
-                </button>
-            </form>
-
-            <!-- Quick Account Selection (Manual Password Required) -->
-            <div class="pt-4 border-t border-slate-100 dark:border-slate-800">
-                <div class="flex items-center justify-between mb-1.5">
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Pilih Cepat Akun:</p>
-                    <span class="text-[9px] text-slate-500 dark:text-slate-400 font-semibold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">Wajib Isi Sandi</span>
-                </div>
-                <p class="text-[10px] text-slate-400 dark:text-slate-500 mb-2.5">Pilih profil akun di bawah, lalu masukkan kata sandi / PIN Anda untuk masuk</p>
-                <div id="quick-accounts-grid" class="grid grid-cols-2 gap-2 text-xs">
-                    <?php if (!empty($quickUsers)): ?>
-                        <?php foreach ($quickUsers as $qu): 
-                            $roleMeta = getQuickUserRoleInfo($qu['role']);
-                            $displayName = htmlspecialchars($qu['name']);
-                            $displayNik = htmlspecialchars($qu['nik']);
-                            $escapedName = htmlspecialchars(addslashes($qu['name']));
-                            $branchName = !empty($qu['branch_name']) ? htmlspecialchars($qu['branch_name']) : '';
-                        ?>
-                            <button type="button" onclick="selectQuickAccount('<?= $displayNik ?>', '<?= $escapedName ?>')" class="p-2.5 bg-slate-50 dark:bg-slate-800/80 hover:bg-indigo-50/80 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 rounded-xl text-left transition-all group shadow-2xs hover:shadow-xs cursor-pointer">
-                                <div class="flex items-center justify-between">
-                                    <p class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-900 dark:group-hover:text-indigo-300 text-[11px] truncate"><?= $roleMeta['emoji'] ?> <?= htmlspecialchars($roleMeta['label']) ?></p>
-                                    <?php if (!empty($branchName)): ?>
-                                        <span class="text-[9px] text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 truncate max-w-[65px] ml-1 shrink-0"><?= $branchName ?></span>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="flex items-center justify-between mt-1">
-                                    <p class="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 font-medium truncate"><?= $displayName ?> (<?= $displayNik ?>)</p>
-                                </div>
-                            </button>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <div class="col-span-2 text-center py-2 text-slate-400 text-[11px]">Memuat akun karyawan...</div>
-                    <?php endif; ?>
+                <!-- Left Footer: Version & Theme -->
+                <div class="relative z-10 pt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+                    <button type="button" onclick="openVersionModal()" class="hover:text-indigo-300 font-mono text-[11px] transition-colors inline-flex items-center space-x-2 group text-left cursor-pointer">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                        <span class="font-semibold group-hover:underline">Base Ver: v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</span>
+                    </button>
+                    <!-- Theme Toggle on Login Screen -->
+                    <button type="button" onclick="toggleTheme()" class="p-2 rounded-xl text-slate-400 hover:text-amber-300 hover:bg-white/5 transition-colors cursor-pointer border border-white/5" title="Ubah Tema (Gelap / Terang)">
+                        <i data-lucide="sun" class="theme-icon-sun w-4 h-4 hidden"></i>
+                        <i data-lucide="moon" class="theme-icon-moon w-4 h-4"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- Version Badge & System Info -->
-            <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
-                <button type="button" onclick="openVersionModal()" class="hover:text-indigo-600 dark:hover:text-indigo-400 font-mono transition-colors inline-flex items-center space-x-1.5 group text-left">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                    <span class="font-bold group-hover:underline">Base Ver: v<?= htmlspecialchars($appVersionData['version']) ?> (<?= htmlspecialchars($appVersionData['commit_hash']) ?>)</span>
-                </button>
-                <button type="button" onclick="openVersionModal()" class="text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors">
-                    Riwayat / Rollback
-                </button>
+            <!-- Right Column: Glassmorphism Sign-In Card -->
+            <div class="lg:col-span-5 p-6 sm:p-8 lg:p-10 flex flex-col justify-center relative z-10 bg-slate-900/70 backdrop-blur-2xl space-y-5">
+                
+                <!-- Card Header -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] font-mono tracking-widest text-slate-500 uppercase">// SYSTEM CREDENTIALS</span>
+                        <span class="text-[10px] font-mono text-purple-400/80">ID: CMH-01</span>
+                    </div>
+                    <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Sign in</h3>
+                    <p class="text-xs text-slate-400 mt-1">Your workspace is waiting.</p>
+                </div>
+
+                <!-- Hidden anchors for JS settings updater compatibility -->
+                <div class="hidden">
+                    <span id="login-app-logo"></span>
+                    <h2 id="login-app-name"><?= htmlspecialchars($initialAppName) ?></h2>
+                    <p id="login-app-subtitle"><?= htmlspecialchars($initialAppSubtitle) ?></p>
+                </div>
+
+                <!-- Login Form -->
+                <form onsubmit="handleLogin(event)" class="space-y-4">
+                    <div id="login-error-alert" style="display: none;" class="p-3 bg-rose-950/60 border border-rose-500/50 text-rose-300 text-xs rounded-xl items-center space-x-2 shadow-lg shadow-rose-950/50">
+                        <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400 shrink-0"></i>
+                        <span id="login-error-text" class="font-medium">Kredensial tidak valid</span>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] font-mono font-bold tracking-wider text-slate-400 uppercase">
+                            EMAIL / NIK LOGIN
+                        </label>
+                        <div class="relative">
+                            <i data-lucide="user" class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500 pointer-events-none"></i>
+                            <input type="text" id="login-username" value="" autocomplete="username" placeholder="CSR001 atau siti@jkt.retail.com" class="w-full pl-10 pr-3 py-3 bg-black/50 border border-white/10 hover:border-white/20 focus:border-indigo-400 text-white placeholder-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/25 font-mono transition-all" required>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-[10px] font-mono font-bold tracking-wider text-slate-400 uppercase">
+                                PASSWORD / PIN 6-DIGIT
+                            </label>
+                            <span class="text-[9px] font-mono text-purple-400 font-semibold">*Wajib diisi</span>
+                        </div>
+                        <div class="relative">
+                            <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500 pointer-events-none"></i>
+                            <input type="password" id="login-password" value="" autocomplete="new-password" placeholder="••••••••" class="w-full pl-10 pr-3 py-3 bg-black/50 border border-white/10 hover:border-white/20 focus:border-indigo-400 text-white placeholder-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/25 font-mono transition-all" required>
+                        </div>
+                    </div>
+
+                    <!-- Options: Remember me & Forgot Password -->
+                    <div class="flex items-center justify-between text-xs text-slate-400 pt-1">
+                        <label class="inline-flex items-center space-x-2 cursor-pointer select-none group">
+                            <input type="checkbox" id="login-remember-me" checked class="rounded border-white/20 bg-black/40 text-indigo-500 focus:ring-0 focus:ring-offset-0 cursor-pointer">
+                            <span class="text-[11px] text-slate-400 group-hover:text-slate-300 font-medium">Remember me</span>
+                        </label>
+                        <a href="javascript:void(0)" onclick="alert('Silakan hubungi Super Admin toko atau manajer untuk reset kata sandi / PIN kasir.')" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium hover:underline transition-colors">
+                            Forgot password?
+                        </a>
+                    </div>
+
+                    <!-- The Iconic CONTINUE -> Button with ACCESS GRANTED state -->
+                    <button type="submit" id="btn-login-submit" class="w-full py-3.5 px-5 bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-500 bg-[length:200%_auto] hover:bg-right text-white font-extrabold rounded-xl shadow-[0_0_30px_rgba(99,102,241,0.35)] hover:shadow-[0_0_40px_rgba(168,85,247,0.55)] transition-all duration-300 flex items-center justify-center space-x-2 text-sm tracking-wider cursor-pointer active:scale-[0.98]">
+                        <span>CONTINUE</span>
+                        <span class="text-base">&rarr;</span>
+                    </button>
+                </form>
+
+                <!-- Quick Account Selection Drawer (Pilih Cepat Akun) -->
+                <div class="pt-4 border-t border-white/10">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">PILIH CEPAT AKUN:</p>
+                        <span class="text-[9px] font-mono text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full">1-Klik Pilih</span>
+                    </div>
+                    <div id="quick-accounts-grid" class="grid grid-cols-2 gap-2 text-xs">
+                        <?php if (!empty($quickUsers)): ?>
+                            <?php foreach ($quickUsers as $qu): 
+                                $roleMeta = getQuickUserRoleInfo($qu['role']);
+                                $displayName = htmlspecialchars($qu['name']);
+                                $displayNik = htmlspecialchars($qu['nik']);
+                                $escapedName = htmlspecialchars(addslashes($qu['name']));
+                                $branchName = !empty($qu['branch_name']) ? htmlspecialchars($qu['branch_name']) : '';
+                            ?>
+                                <button type="button" onclick="selectQuickAccount('<?= $displayNik ?>', '<?= $escapedName ?>')" class="p-2.5 bg-black/40 hover:bg-purple-950/40 border border-white/5 hover:border-purple-500/40 rounded-xl text-left transition-all group shadow-xs cursor-pointer">
+                                    <div class="flex items-center justify-between">
+                                        <p class="font-bold text-slate-200 group-hover:text-purple-300 text-[11px] truncate"><?= $roleMeta['emoji'] ?> <?= htmlspecialchars($roleMeta['label']) ?></p>
+                                        <?php if (!empty($branchName)): ?>
+                                            <span class="text-[9px] text-slate-500 group-hover:text-purple-400 truncate max-w-[60px] ml-1 shrink-0"><?= $branchName ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="flex items-center justify-between mt-1">
+                                        <p class="text-[10px] text-slate-400 group-hover:text-slate-200 font-medium truncate"><?= $displayName ?></p>
+                                    </div>
+                                </button>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="col-span-2 text-center py-2 text-slate-500 text-[11px] font-mono">Memuat akun pengguna...</div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -13740,7 +13814,7 @@ try {
             const errText = document.getElementById('login-error-text');
             if (message && errAlert && errText) {
                 errText.innerText = message;
-                errAlert.className = 'p-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-xl flex items-center space-x-2';
+                errAlert.className = 'p-3 bg-purple-950/60 border border-purple-500/50 text-purple-200 text-xs rounded-xl flex items-center space-x-2 shadow-lg shadow-purple-950/50';
                 errAlert.style.display = 'flex';
                 if (window.lucide) lucide.createIcons();
             } else if (errAlert && !message) {
@@ -13753,6 +13827,9 @@ try {
             updateSessionBadgeUI(null);
             if (typeof loadQuickLoginAccounts === 'function') {
                 loadQuickLoginAccounts();
+            }
+            if (typeof startVoid3DCanvas === 'function') {
+                startVoid3DCanvas();
             }
         }
 
@@ -13777,16 +13854,16 @@ try {
 
                     const safeName = (u.name || '').replace(/'/g, "\\'");
                     const safeNik = (u.nik || '').replace(/'/g, "\\'");
-                    const branchText = u.branch_name ? `<span class="text-[9px] text-slate-400 group-hover:text-indigo-500 truncate max-w-[70px]">${escapeHtml(u.branch_name)}</span>` : '';
+                    const branchText = u.branch_name ? `<span class="text-[9px] text-slate-500 group-hover:text-purple-400 truncate max-w-[60px] ml-1 shrink-0">${escapeHtml(u.branch_name)}</span>` : '';
 
                     return `
-                        <button type="button" onclick="selectQuickAccount('${safeNik}', '${safeName}')" class="p-2.5 bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50/80 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 rounded-xl text-left transition-all group shadow-2xs hover:shadow-xs cursor-pointer">
+                        <button type="button" onclick="selectQuickAccount('${safeNik}', '${safeName}')" class="p-2.5 bg-black/40 hover:bg-purple-950/40 border border-white/5 hover:border-purple-500/40 rounded-xl text-left transition-all group shadow-xs cursor-pointer">
                             <div class="flex items-center justify-between">
-                                <p class="font-bold text-slate-800 group-hover:text-indigo-900 text-[11px] truncate">${badge} ${escapeHtml(roleLabel)}</p>
+                                <p class="font-bold text-slate-200 group-hover:text-purple-300 text-[11px] truncate">${badge} ${escapeHtml(roleLabel)}</p>
                                 ${branchText}
                             </div>
                             <div class="flex items-center justify-between mt-1">
-                                <p class="text-[10px] text-slate-500 group-hover:text-indigo-700 font-medium truncate">${escapeHtml(u.name)} (${escapeHtml(u.nik)})</p>
+                                <p class="text-[10px] text-slate-400 group-hover:text-slate-200 font-medium truncate">${escapeHtml(u.name)}</p>
                             </div>
                         </button>
                     `;
@@ -13801,6 +13878,9 @@ try {
             if (screen) {
                 screen.style.setProperty('display', 'none', 'important');
                 screen.classList.add('hidden');
+            }
+            if (typeof stopVoid3DCanvas === 'function') {
+                stopVoid3DCanvas();
             }
         }
 
@@ -13868,11 +13948,34 @@ try {
             const errText = document.getElementById('login-error-text');
             const btnSubmit = document.getElementById('btn-login-submit');
 
+            const setSubmitDefault = function() {
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.className = 'w-full py-3.5 px-5 bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-500 bg-[length:200%_auto] hover:bg-right text-white font-extrabold rounded-xl shadow-[0_0_30px_rgba(99,102,241,0.35)] hover:shadow-[0_0_40px_rgba(168,85,247,0.55)] transition-all duration-300 flex items-center justify-center space-x-2 text-sm tracking-wider cursor-pointer active:scale-[0.98]';
+                    btnSubmit.innerHTML = '<span>CONTINUE</span><span class="text-base">&rarr;</span>';
+                }
+            };
+
+            const setSubmitLoading = function() {
+                if (btnSubmit) {
+                    btnSubmit.disabled = true;
+                    btnSubmit.className = 'w-full py-3.5 px-5 bg-purple-900/80 text-purple-200 font-extrabold rounded-xl shadow-inner transition-all flex items-center justify-center space-x-2 text-sm tracking-wider opacity-90 cursor-wait';
+                    btnSubmit.innerHTML = '<span class="inline-flex items-center gap-2"><svg class="animate-spin w-4 h-4 text-purple-300" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>VERIFYING...</span>';
+                }
+            };
+
+            const setSubmitSuccess = function() {
+                if (btnSubmit) {
+                    btnSubmit.className = 'w-full py-3.5 px-5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black rounded-xl shadow-[0_0_40px_rgba(16,185,129,0.7)] transition-all flex items-center justify-center space-x-2 text-sm tracking-wider animate-pulse';
+                    btnSubmit.innerHTML = '<span class="inline-flex items-center gap-2"><svg class="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>ACCESS GRANTED &rarr;</span>';
+                }
+            };
+
             if (!username) {
                 const msg = 'Silakan isi NIK atau Email login.';
                 if (errAlert && errText) {
                     errText.innerText = msg;
-                    errAlert.className = 'p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center space-x-2';
+                    errAlert.className = 'p-3 bg-rose-950/60 border border-rose-500/50 text-rose-300 text-xs rounded-xl flex items-center space-x-2 shadow-lg shadow-rose-950/50';
                     errAlert.style.display = 'flex';
                 }
                 if (usernameInput) usernameInput.focus();
@@ -13883,17 +13986,14 @@ try {
                 const msg = 'Kata sandi / PIN wajib diisi ulang untuk masuk ke sistem.';
                 if (errAlert && errText) {
                     errText.innerText = msg;
-                    errAlert.className = 'p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center space-x-2';
+                    errAlert.className = 'p-3 bg-rose-950/60 border border-rose-500/50 text-rose-300 text-xs rounded-xl flex items-center space-x-2 shadow-lg shadow-rose-950/50';
                     errAlert.style.display = 'flex';
                 }
                 if (passwordInput) passwordInput.focus();
                 return;
             }
 
-            if (btnSubmit) {
-                btnSubmit.disabled = true;
-                btnSubmit.innerText = 'Memverifikasi...';
-            }
+            setSubmitLoading();
             if (errAlert) {
                 errAlert.style.display = 'none';
             }
@@ -13905,13 +14005,11 @@ try {
                     body: JSON.stringify({ username, password })
                 });
                 const data = await res.json();
-                
-                if (btnSubmit) {
-                    btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i><span>Masuk ke Sistem</span>`;
-                }
 
                 if (data.success) {
+                    setSubmitSuccess();
+                    await new Promise(function(resolve) { setTimeout(resolve, 450); });
+
                     state.loggedInUser = data.user;
                     state.isOfflineMode = false;
                     try { localStorage.setItem('esbas_logged_in_user', JSON.stringify(data.user)); } catch(e){}
@@ -13949,16 +14047,18 @@ try {
                     }
                     if (passwordInput) passwordInput.value = ''; // Selalu kosongkan password setelah berhasil
                     hideLoginScreen();
+                    setSubmitDefault();
                     try {
                         await initApp();
                     } catch (initErr) {
                         console.error('Error saat inisialisasi aplikasi:', initErr);
                     }
                 } else {
+                    setSubmitDefault();
                     const errorMsg = data.message || data.error || 'Kredensial login tidak valid.';
                     if (errAlert && errText) {
                         errText.innerText = errorMsg;
-                        errAlert.className = 'p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center space-x-2';
+                        errAlert.className = 'p-3 bg-rose-950/60 border border-rose-500/50 text-rose-300 text-xs rounded-xl flex items-center space-x-2 shadow-lg shadow-rose-950/50';
                         errAlert.style.display = 'flex';
                     }
                     alert('Login Gagal: ' + errorMsg);
@@ -13973,15 +14073,14 @@ try {
                 console.warn('Jaringan server tidak terjangkau, menguji login offline...', err);
                 const offlineAuth = await authenticateOfflineUser(username, password);
                 if (offlineAuth.success) {
-                    if (btnSubmit) {
-                        btnSubmit.disabled = false;
-                        btnSubmit.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i><span>Masuk ke Sistem</span>`;
-                    }
+                    setSubmitSuccess();
+                    await new Promise(function(resolve) { setTimeout(resolve, 450); });
                     if (passwordInput) passwordInput.value = '';
                     state.loggedInUser = offlineAuth.user;
                     state.isOfflineMode = true;
                     try { localStorage.setItem('esbas_logged_in_user', JSON.stringify(offlineAuth.user)); } catch(e){}
                     hideLoginScreen();
+                    setSubmitDefault();
                     try {
                         await initApp();
                     } catch (initErr) {
@@ -13991,14 +14090,11 @@ try {
                     return;
                 }
 
-                if (btnSubmit) {
-                    btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i><span>Masuk ke Sistem</span>`;
-                }
+                setSubmitDefault();
                 const errorMsg = offlineAuth.error || ('Koneksi ke server gagal: ' + (err.message || 'Periksa koneksi jaringan'));
                 if (errAlert && errText) {
                     errText.innerText = errorMsg;
-                    errAlert.className = 'p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center space-x-2';
+                    errAlert.className = 'p-3 bg-rose-950/60 border border-rose-500/50 text-rose-300 text-xs rounded-xl flex items-center space-x-2 shadow-lg shadow-rose-950/50';
                     errAlert.style.display = 'flex';
                 }
                 alert('Gagal Masuk (Mode Offline): ' + errorMsg);
@@ -14018,8 +14114,8 @@ try {
             const errAlert = document.getElementById('login-error-alert');
             const errText = document.getElementById('login-error-text');
             if (errAlert && errText) {
-                errText.innerHTML = `Akun <strong>${escapeHtml(roleLabel)}</strong> (${escapeHtml(username)}) dipilih. Silakan masukkan kata sandi / PIN Anda.`;
-                errAlert.className = 'p-2.5 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs rounded-xl flex items-center space-x-2';
+                errText.innerHTML = `Akun <strong>${escapeHtml(roleLabel)}</strong> (${escapeHtml(username)}) dipilih. Masukkan kata sandi / PIN Anda.`;
+                errAlert.className = 'p-2.5 bg-purple-950/60 border border-purple-500/40 text-purple-300 text-xs rounded-xl flex items-center space-x-2 shadow-md';
                 errAlert.style.display = 'flex';
                 if (window.lucide) lucide.createIcons();
             }
@@ -38525,12 +38621,299 @@ Manager / Supervisor: __________________
             }
         });
 
-        // Initialize theme UI and session check on DOM ready
+        // ==========================================
+        // 3D VOID PROCEDURAL WIREFRAME ENGINE (STARQUA AESTHETIC)
+        // ==========================================
+        var void3D = {
+            canvas: null,
+            ctx: null,
+            animId: null,
+            isRunning: false,
+            rotX: 0.35,
+            rotY: 0.45,
+            targetRotX: 0.35,
+            targetRotY: 0.45,
+            meshRings: [],
+            particles: [],
+            numSteps: 90,
+            tubeSteps: 8
+        };
+
+        function initVoid3DCanvas() {
+            var canvas = document.getElementById('canvas-3d-void');
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            void3D.canvas = canvas;
+            void3D.ctx = ctx;
+
+            // Generate Trefoil Torus Knot Curve (P=2, Q=3)
+            var P = 2, Q = 3;
+            var numSteps = void3D.numSteps;
+            var tubeSteps = void3D.tubeSteps;
+            var knotRadius = 1.85;
+            var tubeRadius = 0.42;
+
+            var curvePoints = [];
+            for (var i = 0; i < numSteps; i++) {
+                var t = (i / numSteps) * Math.PI * 2;
+                var r = (Math.cos(Q * t) + 2.0) * (knotRadius * 0.46);
+                var x = r * Math.cos(P * t);
+                var y = r * Math.sin(P * t);
+                var z = -Math.sin(Q * t) * 1.25;
+                curvePoints.push({ x: x, y: y, z: z, t: t });
+            }
+
+            // Generate 3D Mesh Tube Rings along Frenet-like frame
+            void3D.meshRings = [];
+            for (var i = 0; i < numSteps; i++) {
+                var curr = curvePoints[i];
+                var next = curvePoints[(i + 1) % numSteps];
+                var tx = next.x - curr.x;
+                var ty = next.y - curr.y;
+                var tz = next.z - curr.z;
+                var tLen = Math.sqrt(tx * tx + ty * ty + tz * tz) || 1;
+                tx /= tLen; ty /= tLen; tz /= tLen;
+
+                var nx = -ty;
+                var ny = tx;
+                var nz = 0;
+                var nLen = Math.sqrt(nx * nx + ny * ny + nz * nz);
+                if (nLen < 0.001) {
+                    nx = 1; ny = 0; nz = 0;
+                } else {
+                    nx /= nLen; ny /= nLen; nz /= nLen;
+                }
+
+                var bx = ty * nz - tz * ny;
+                var by = tz * nx - tx * nz;
+                var bz = tx * ny - ty * nx;
+
+                var ring = [];
+                for (var j = 0; j < tubeSteps; j++) {
+                    var phi = (j / tubeSteps) * Math.PI * 2;
+                    var cosP = Math.cos(phi) * tubeRadius;
+                    var sinP = Math.sin(phi) * tubeRadius;
+                    var vx = curr.x + (nx * cosP + bx * sinP);
+                    var vy = curr.y + (ny * cosP + by * sinP);
+                    var vz = curr.z + (nz * cosP + bz * sinP);
+                    ring.push({ x: vx, y: vy, z: vz });
+                }
+                void3D.meshRings.push(ring);
+            }
+
+            // Ambient Dust Particles
+            void3D.particles = [];
+            for (var k = 0; k < 45; k++) {
+                void3D.particles.push({
+                    x: (Math.random() - 0.5) * 6,
+                    y: (Math.random() - 0.5) * 6,
+                    z: (Math.random() - 0.5) * 4,
+                    size: Math.random() * 1.5 + 0.8,
+                    alpha: Math.random() * 0.6 + 0.25,
+                    speed: Math.random() * 0.006 + 0.003
+                });
+            }
+
+            function resizeCanvas() {
+                if (!void3D.canvas) return;
+                var parent = void3D.canvas.parentElement;
+                var w = parent ? parent.clientWidth : 600;
+                var h = parent ? parent.clientHeight : 600;
+                var dpr = window.devicePixelRatio || 1;
+                void3D.canvas.width = Math.max(300, w) * dpr;
+                void3D.canvas.height = Math.max(300, h) * dpr;
+                void3D.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            // Interactive mouse / touch movement
+            window.addEventListener('mousemove', function(e) {
+                var halfW = window.innerWidth / 2;
+                var halfH = window.innerHeight / 2;
+                void3D.targetRotY = ((e.clientX - halfW) / halfW) * 0.75 + 0.45;
+                void3D.targetRotX = -((e.clientY - halfH) / halfH) * 0.55 + 0.35;
+            });
+
+            startVoid3DCanvas();
+        }
+
+        function startVoid3DCanvas() {
+            if (void3D.isRunning) return;
+            void3D.isRunning = true;
+
+            function loop() {
+                if (!void3D.isRunning) return;
+                var screen = document.getElementById('login-screen');
+                if (!screen || screen.classList.contains('hidden') || screen.style.display === 'none') {
+                    void3D.animId = requestAnimationFrame(loop);
+                    return;
+                }
+
+                var canvas = void3D.canvas;
+                var ctx = void3D.ctx;
+                if (!canvas || !ctx) {
+                    void3D.animId = requestAnimationFrame(loop);
+                    return;
+                }
+
+                var parent = canvas.parentElement;
+                var w = parent ? parent.clientWidth : 600;
+                var h = parent ? parent.clientHeight : 600;
+                if (w === 0 || h === 0) {
+                    void3D.animId = requestAnimationFrame(loop);
+                    return;
+                }
+
+                ctx.clearRect(0, 0, w, h);
+
+                // Smooth damping rotation
+                void3D.rotX += (void3D.targetRotX - void3D.rotX) * 0.045;
+                void3D.rotY += (void3D.targetRotY - void3D.rotY) * 0.045;
+                void3D.targetRotY += 0.007; // gentle continuous rotation
+                void3D.targetRotX += 0.002;
+
+                var cosX = Math.cos(void3D.rotX), sinX = Math.sin(void3D.rotX);
+                var cosY = Math.cos(void3D.rotY), sinY = Math.sin(void3D.rotY);
+
+                // Place 3D object slightly to the right of left column to align with the video aesthetic
+                var cx = w * 0.58;
+                var cy = h * 0.50;
+                var fov = Math.min(w, h) * 0.85;
+                var cameraZ = 4.3;
+
+                function projectPoint(p) {
+                    var x1 = p.x * cosY + p.z * sinY;
+                    var y1 = p.y;
+                    var z1 = -p.x * sinY + p.z * cosY;
+
+                    var x2 = x1;
+                    var y2 = y1 * cosX - z1 * sinX;
+                    var z2 = y1 * sinX + z1 * cosX;
+
+                    var depth = z2 + cameraZ;
+                    if (depth <= 0.1) depth = 0.1;
+                    var scale = fov / depth;
+                    return {
+                        sx: cx + x2 * scale,
+                        sy: cy + y2 * scale,
+                        depth: depth,
+                        z: z2
+                    };
+                }
+
+                // Render background floating particles
+                for (var pIdx = 0; pIdx < void3D.particles.length; pIdx++) {
+                    var pt = void3D.particles[pIdx];
+                    pt.y -= pt.speed;
+                    if (pt.y < -3) pt.y = 3;
+                    var pp = projectPoint(pt);
+                    if (pp.sx >= 0 && pp.sx <= w && pp.sy >= 0 && pp.sy <= h) {
+                        var pAlpha = Math.max(0, Math.min(1, pt.alpha * (1 - pp.depth / 8)));
+                        ctx.fillStyle = 'rgba(192, 132, 252, ' + pAlpha + ')';
+                        ctx.beginPath();
+                        ctx.arc(pp.sx, pp.sy, pt.size * (fov / pp.depth * 0.009), 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+
+                // Project 3D rings
+                var numSteps = void3D.numSteps;
+                var tubeSteps = void3D.tubeSteps;
+                var projRings = [];
+                for (var rIdx = 0; rIdx < numSteps; rIdx++) {
+                    var pRing = [];
+                    var ring = void3D.meshRings[rIdx];
+                    for (var vIdx = 0; vIdx < tubeSteps; vIdx++) {
+                        pRing.push(projectPoint(ring[vIdx]));
+                    }
+                    projRings.push(pRing);
+                }
+
+                ctx.save();
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                // Draw longitudinal wireframe ribbons (Purple & Indigo glow)
+                for (var vIdx = 0; vIdx < tubeSteps; vIdx++) {
+                    ctx.beginPath();
+                    for (var rIdx = 0; rIdx < numSteps; rIdx++) {
+                        var pt = projRings[rIdx][vIdx];
+                        if (rIdx === 0) ctx.moveTo(pt.sx, pt.sy);
+                        else ctx.lineTo(pt.sx, pt.sy);
+                    }
+                    ctx.closePath();
+
+                    if (vIdx % 2 === 0) {
+                        ctx.strokeStyle = 'rgba(168, 85, 247, 0.48)'; // purple-500
+                        ctx.lineWidth = 1.3;
+                        ctx.shadowColor = '#a855f7';
+                        ctx.shadowBlur = 9;
+                    } else {
+                        ctx.strokeStyle = 'rgba(99, 102, 241, 0.38)'; // indigo-500
+                        ctx.lineWidth = 0.95;
+                        ctx.shadowColor = '#6366f1';
+                        ctx.shadowBlur = 6;
+                    }
+                    ctx.stroke();
+                }
+
+                // Draw cross-section rings
+                for (var rIdx = 0; rIdx < numSteps; rIdx += 2) {
+                    ctx.beginPath();
+                    var ring = projRings[rIdx];
+                    for (var vIdx = 0; vIdx < tubeSteps; vIdx++) {
+                        var pt = ring[vIdx];
+                        if (vIdx === 0) ctx.moveTo(pt.sx, pt.sy);
+                        else ctx.lineTo(pt.sx, pt.sy);
+                    }
+                    ctx.closePath();
+                    var avgDepth = ring[0].depth;
+                    var alpha = Math.max(0.08, Math.min(0.65, 1.8 / avgDepth));
+                    ctx.strokeStyle = 'rgba(192, 132, 252, ' + alpha + ')';
+                    ctx.lineWidth = 1;
+                    ctx.shadowBlur = 4;
+                    ctx.stroke();
+                }
+
+                // Glowing node points
+                for (var rIdx = 0; rIdx < numSteps; rIdx += 4) {
+                    for (var vIdx = 0; vIdx < tubeSteps; vIdx += 2) {
+                        var pt = projRings[rIdx][vIdx];
+                        var nAlpha = Math.max(0.2, Math.min(0.9, 1.6 / pt.depth));
+                        ctx.fillStyle = 'rgba(232, 121, 249, ' + nAlpha + ')';
+                        ctx.shadowColor = '#e879f9';
+                        ctx.shadowBlur = 6;
+                        ctx.beginPath();
+                        ctx.arc(pt.sx, pt.sy, 1.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+
+                ctx.restore();
+                void3D.animId = requestAnimationFrame(loop);
+            }
+
+            void3D.animId = requestAnimationFrame(loop);
+        }
+
+        function stopVoid3DCanvas() {
+            void3D.isRunning = false;
+            if (void3D.animId) {
+                cancelAnimationFrame(void3D.animId);
+                void3D.animId = null;
+            }
+        }
+
+        // Initialize theme UI, 3D Canvas, and session check on DOM ready
         document.addEventListener('DOMContentLoaded', () => {
             updateThemeUI();
             if (window.innerWidth >= 768 && state.sidebarCollapsed) {
                 applySidebarState();
             }
+            initVoid3DCanvas();
             checkAuthSession();
         });
     </script>

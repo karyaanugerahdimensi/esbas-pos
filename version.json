@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.8.8",
-    "build": "20261103-114",
+    "version": "1.8.9",
+    "build": "20261103-115",
     "release_date": "2026-11-03",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.8.9",
+            "commit": "HEAD",
+            "date": "2026-11-03",
+            "title": "Implementasi Tampilan Login 3D Futuristik 'ENTER STARQUA' (Cyberpunk Glassmorphism & Procedural 3D Mesh)",
+            "description": "Mentransformasi halaman login sistem menjadi desain modern 3D persis seperti video referensi konsep viral 'TRY THIS 3D ONE INSTEAD': (1) Sisi Kiri Hero: Tipografi outline bergaris tegas 'ENTER', judul besar 'STARQUA' dengan glow neon lavender/ungu, tagline 'A minimal portal to your workspace. Designed for focus, built for speed.', badge 'SECURE ACCESS // 01' & status pill 'ONLINE'; (2) Engine Procedural 3D Canvas 60 FPS: Menghadirkan pita wireframe 3D Torus Knot bercahaya neon ungu/indigo yang melayang, berputar halus, dan merespons pergerakan kursor mouse/touch interaktif, lengkap dengan floating particle dust (0 dependency, hemat memori, auto-pause saat masuk POS); (3) Sisi Kanan Dark Glassmorphism: Kartu sign-in kaca transparan mewah berlatar gelap, form input minimalis bercahaya saat fokus (EMAIL/NIK dan PASSWORD/PIN), remember me, link forgot password; (4) Micro-Interactions: Tombol dinamis gradasi 'CONTINUE →' yang berubah menjadi 'ACCESS GRANTED →' dengan animasi denyut sukses sebelum transisi masuk ke dashboard; (5) Drawer Pilih Cepat Akun yang selaras dengan tema cyberpunk; (6) Kompilasi Tailwind CSS.",
+            "rollback_command": "git checkout v1.8.8"
+        },
         {
             "version": "1.8.8",
             "commit": "HEAD",
