@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.7.9",
-    "build": "20261102-105",
-    "release_date": "2026-11-02",
+    "version": "1.8.0",
+    "build": "20261103-106",
+    "release_date": "2026-11-03",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.8.0",
+            "commit": "HEAD",
+            "date": "2026-11-03",
+            "title": "Penyempurnaan Tema Gelap (Dark Mode) Menyeluruh pada Modul ESS Karyawan, Form Reimbursement, Banner Status GPS, Seluruh Modal & Template Dinamis",
+            "description": "Menyempurnakan harmonisasi warna Dark Mode pada seluruh menu aplikasi tanpa celah: (1) Modul Portal ESS Karyawan: Mengonversi form input nominal dan keterangan reimbursement menjadi tema gelap, menata header tabel (thead) daftar klaim toko dan riwayat status pencairan, serta memperbarui banner alert status GPS dan badge presensi dinamis agar kontras dan tidak silau; (2) Seluruh Modal Popup: Menyelaraskan tombol batal, dialog konfirmasi, banner info, preview struk live, preview dokumen slip gaji, dan container border di seluruh modal aplikasi; (3) Komponen & Template JavaScript: Memperbarui badge role, badge metode bayar, baris transfer stok, dan badge umur piutang; (4) Kompilasi Ulang Tailwind CSS v4 Standalone: Membangun kembali tailwind.min.css untuk utility classes baru.",
+            "rollback_command": "git checkout v1.7.9"
+        },
         {
             "version": "1.7.9",
             "commit": "HEAD",
