@@ -9372,15 +9372,15 @@ try {
     <!-- Modal 5: Tambah Komponen / Bahan ke Formula Resep (BOM) -->
     <div id="recipe-add-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 space-y-4 text-slate-800 dark:text-slate-100">
-            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                 <div>
                     <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base flex items-center space-x-2">
-                        <i data-lucide="layers" class="w-5 h-5 text-indigo-600"></i>
+                        <i data-lucide="layers" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
                         <span>Tambah Komponen / Resep BOM</span>
                     </h3>
-                    <p id="recipe-modal-product-name" class="text-xs text-indigo-600 font-bold mt-0.5">Produk: Caramel Macchiato</p>
+                    <p id="recipe-modal-product-name" class="text-xs text-indigo-600 dark:text-indigo-400 font-bold mt-0.5">Produk: Caramel Macchiato</p>
                 </div>
-                <button type="button" onclick="closeRecipeModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                <button type="button" onclick="closeRecipeModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 rounded-lg">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -9416,8 +9416,8 @@ try {
 
                 <!-- Info HPP Preview -->
                 <div id="recipe-cogs-preview" class="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center text-[11px]">
-                    <span class="text-slate-500 font-medium">Estimasi Modal Komponen:</span>
-                    <span id="recipe-cogs-val" class="font-bold text-slate-700 font-mono">Rp 0</span>
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Estimasi Modal Komponen:</span>
+                    <span id="recipe-cogs-val" class="font-bold text-slate-700 dark:text-slate-200 font-mono">Rp 0</span>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2 pt-2">
@@ -10884,8 +10884,8 @@ try {
     <div id="variant-recipe-add-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 space-y-4 text-slate-800 dark:text-slate-100">
             <div>
-                <h3 class="font-bold text-slate-800 text-base">Tambah Bahan Baku ke Varian</h3>
-                <p id="vr-modal-title-desc" class="text-xs text-indigo-600 font-bold">Varian: Pakai Tutup Segel</p>
+                <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base">Tambah Bahan Baku ke Varian</h3>
+                <p id="vr-modal-title-desc" class="text-xs text-indigo-600 dark:text-indigo-400 font-bold">Varian: Pakai Tutup Segel</p>
             </div>
             <form onsubmit="saveVariantRecipeItemForm(event)" class="space-y-3 text-xs">
                 <input type="hidden" id="vr-variant-id">
@@ -10920,22 +10920,22 @@ try {
     <!-- Modal 15: Kelola / Tambah / Edit Varian Produk & Penetapan Harga (Sub-Tab Resep Pilihan Varian & Master Produk) -->
     <div id="product-variant-add-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 space-y-4 text-slate-800 dark:text-slate-100">
-            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                 <div>
-                    <h3 id="pvam-modal-title" class="font-bold text-slate-800 text-base flex items-center space-x-1.5">
-                        <i data-lucide="layers" class="w-4 h-4 text-indigo-600"></i>
+                    <h3 id="pvam-modal-title" class="font-bold text-slate-800 dark:text-slate-100 text-base flex items-center space-x-1.5">
+                        <i data-lucide="layers" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>
                         <span>Tambah Varian Produk</span>
                     </h3>
-                    <p id="pvam-product-title" class="text-xs text-indigo-600 font-bold mt-0.5">Produk: Galon Air Mineral 19L</p>
+                    <p id="pvam-product-title" class="text-xs text-indigo-600 dark:text-indigo-400 font-bold mt-0.5">Produk: Galon Air Mineral 19L</p>
                 </div>
                 <button type="button" onclick="closeProductVariantModal()" class="p-1 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <div class="bg-indigo-50/70 border border-indigo-200 p-3 rounded-2xl text-[11px] text-slate-600 space-y-1">
-                <div class="font-bold text-indigo-950 flex items-center space-x-1">
-                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-600"></i>
+            <div class="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/80 p-3 rounded-2xl text-[11px] text-slate-600 dark:text-slate-300 space-y-1">
+                <div class="font-bold text-indigo-950 dark:text-indigo-200 flex items-center space-x-1">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400"></i>
                     <span>Aturan Tambahan Harga Varian:</span>
                 </div>
                 <p>• <strong>Tanpa Tambahan Harga:</strong> Isi <code>0</code> (Harga jual mengikuti harga dasar / tier pelanggan).</p>
@@ -10949,8 +10949,8 @@ try {
                 <!-- Parent Product Selection (Multi-select: Boleh diset ke beberapa produk induk / jadi) -->
                 <div id="pvam-product-select-container" class="hidden space-y-2 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">
                     <div class="flex items-center justify-between">
-                        <label class="block font-black text-slate-800 text-[11px] uppercase tracking-wider flex items-center space-x-1.5">
-                            <i data-lucide="package-check" class="w-3.5 h-3.5 text-indigo-600"></i>
+                        <label class="block font-black text-slate-800 dark:text-slate-200 text-[11px] uppercase tracking-wider flex items-center space-x-1.5">
+                            <i data-lucide="package-check" class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400"></i>
                             <span>Pilih Produk Induk / Jadi <span class="text-rose-500">*</span></span>
                         </label>
                         <div class="space-x-1.5 text-[10px]">
@@ -10958,7 +10958,7 @@ try {
                             <button type="button" onclick="toggleAllVariantParentProducts(false)" class="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-semibold transition-colors border border-slate-300 dark:border-slate-700">Hapus Semua</button>
                         </div>
                     </div>
-                    <p class="text-[10px] text-slate-500 leading-tight">Centang produk jadi yang akan menerapkan varian ini sekaligus (tanpa perlu buat ulang):</p>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">Centang produk jadi yang akan menerapkan varian ini sekaligus (tanpa perlu buat ulang):</p>
                     <div id="pvam-product-checkboxes" class="max-h-40 overflow-y-auto p-1.5 bg-white dark:bg-slate-800/90 border border-slate-200/80 rounded-xl space-y-1 divide-y divide-slate-100 dark:border-slate-700 text-slate-800 dark:text-slate-200">
                         <!-- Populated via JS -->
                     </div>
@@ -11002,35 +11002,35 @@ try {
     <!-- Modal 16: Terapkan Varian ke Produk Jadi Lainnya (Multi-Product Assignment) -->
     <div id="apply-variant-to-products-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 space-y-4 text-slate-800 dark:text-slate-100">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div class="flex items-center space-x-2.5">
-                    <div class="w-9 h-9 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600">
+                    <div class="w-9 h-9 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                         <i data-lucide="copy-plus" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h3 class="font-black text-slate-800 text-base">Terapkan ke Produk Jadi Lain</h3>
-                        <p class="text-xs text-slate-400">Gunakan varian ini pada beberapa produk jadi sekaligus</p>
+                        <h3 class="font-black text-slate-800 dark:text-slate-100 text-base">Terapkan ke Produk Jadi Lain</h3>
+                        <p class="text-xs text-slate-400 dark:text-slate-400">Gunakan varian ini pada beberapa produk jadi sekaligus</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeApplyVariantModal()" class="p-1 rounded-xl text-slate-400 hover:bg-slate-100">
+                <button type="button" onclick="closeApplyVariantModal()" class="p-1 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
             <!-- Detail Varian Asal -->
-            <div class="bg-indigo-50/70 border border-indigo-200 p-3.5 rounded-2xl text-xs space-y-1">
+            <div class="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/80 p-3.5 rounded-2xl text-xs space-y-1">
                 <div class="flex items-center justify-between">
-                    <span class="text-[11px] text-slate-500 uppercase font-bold">Varian Terpilih:</span>
-                    <span id="avp-variant-badge" class="font-extrabold text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded-full text-[10px] border border-indigo-300">-</span>
+                    <span class="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-bold">Varian Terpilih:</span>
+                    <span id="avp-variant-badge" class="font-extrabold text-indigo-800 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/60 px-2 py-0.5 rounded-full text-[10px] border border-indigo-300 dark:border-indigo-700">-</span>
                 </div>
-                <h4 id="avp-variant-name" class="font-black text-slate-800 text-sm">-</h4>
-                <p class="text-[11px] text-slate-600">
-                    Produk Asal: <strong id="avp-source-product" class="text-indigo-950">-</strong>
+                <h4 id="avp-variant-name" class="font-black text-slate-800 dark:text-slate-100 text-sm">-</h4>
+                <p class="text-[11px] text-slate-600 dark:text-slate-300">
+                    Produk Asal: <strong id="avp-source-product" class="text-indigo-950 dark:text-indigo-200">-</strong>
                 </p>
                 <div class="pt-1 flex flex-wrap gap-2 text-[11px]">
-                    <span class="text-slate-600">Tambahan Harga: <strong id="avp-add-price" class="text-emerald-700">Rp 0</strong></span>
-                    <span class="text-slate-300">•</span>
-                    <span class="text-slate-600">BOM Bahan Tambahan: <strong id="avp-bom-info" class="text-purple-700">0 Bahan</strong></span>
+                    <span class="text-slate-600 dark:text-slate-300">Tambahan Harga: <strong id="avp-add-price" class="text-emerald-700 dark:text-emerald-400">Rp 0</strong></span>
+                    <span class="text-slate-300 dark:text-slate-600">•</span>
+                    <span class="text-slate-600 dark:text-slate-300">BOM Bahan Tambahan: <strong id="avp-bom-info" class="text-purple-700 dark:text-purple-400">0 Bahan</strong></span>
                 </div>
             </div>
 
@@ -11040,28 +11040,28 @@ try {
                 <!-- Checklist Target Products -->
                 <div class="space-y-1.5">
                     <div class="flex items-center justify-between">
-                        <label class="block font-bold text-slate-700">
+                        <label class="block font-bold text-slate-700 dark:text-slate-300">
                             Pilih Produk Jadi Tujuan <span class="text-rose-500">*</span>:
                         </label>
                         <div class="space-x-2 text-[10px]">
-                            <button type="button" onclick="toggleAllApplyVariantProducts(true)" class="text-indigo-600 hover:underline font-bold">Pilih Semua</button>
-                            <span class="text-slate-300">|</span>
-                            <button type="button" onclick="toggleAllApplyVariantProducts(false)" class="text-slate-500 hover:underline">Hapus Semua</button>
+                            <button type="button" onclick="toggleAllApplyVariantProducts(true)" class="text-indigo-600 dark:text-indigo-400 hover:underline font-bold">Pilih Semua</button>
+                            <span class="text-slate-300 dark:text-slate-600">|</span>
+                            <button type="button" onclick="toggleAllApplyVariantProducts(false)" class="text-slate-500 dark:text-slate-400 hover:underline">Hapus Semua</button>
                         </div>
                     </div>
-                    <p class="text-[10px] text-slate-500 leading-tight">Centang produk jadi yang ingin ditambahkan varian ini secara otomatis:</p>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">Centang produk jadi yang ingin ditambahkan varian ini secara otomatis:</p>
                     <div id="avp-target-products-list" class="max-h-48 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl space-y-1.5">
                         <!-- Populated by JS -->
                     </div>
                 </div>
 
                 <!-- Opsi Salin Resep BOM Bahan Baku -->
-                <div class="p-3 bg-purple-50/70 border border-purple-200 rounded-2xl space-y-1">
+                <div class="p-3 bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/80 rounded-2xl space-y-1">
                     <label class="flex items-start space-x-2.5 cursor-pointer">
                         <input type="checkbox" id="avp-copy-recipes" checked class="mt-0.5 rounded text-purple-600 focus:ring-purple-500 w-4 h-4">
                         <div>
-                            <span class="font-bold text-purple-950 text-xs block">Salin juga Formula Resep BOM Bahan Baku Varian</span>
-                            <span class="text-[10px] text-purple-700 leading-tight block">Jika dicentang, semua takaran bahan baku tambahan (seperti tutup, segel, dll.) pada varian ini otomatis disalin ke varian produk yang dipilih.</span>
+                            <span class="font-bold text-purple-950 dark:text-purple-200 text-xs block">Salin juga Formula Resep BOM Bahan Baku Varian</span>
+                            <span class="text-[10px] text-purple-700 dark:text-purple-300 leading-tight block">Jika dicentang, semua takaran bahan baku tambahan (seperti tutup, segel, dll.) pada varian ini otomatis disalin ke varian produk yang dipilih.</span>
                         </div>
                     </label>
                 </div>
@@ -24346,10 +24346,10 @@ Manager / Supervisor: __________________
                 containerEl.innerHTML = '<p class="text-slate-400 text-xs italic py-2 text-center">Tidak ada produk jadi aktif.</p>';
             } else {
                 containerEl.innerHTML = fgList.map((fg, idx) => `
-                    <label class="flex items-center space-x-2.5 p-2 hover:bg-indigo-50/40 rounded-xl cursor-pointer transition-colors">
+                    <label class="flex items-center space-x-2.5 p-2 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/30 rounded-xl cursor-pointer transition-colors">
                         <input type="checkbox" name="pvam-parent-products" value="${fg.id}" data-sku="${fg.sku}" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 shrink-0" ${idx === 0 ? 'checked' : ''}>
                         <div class="flex-1 min-w-0">
-                            <span class="text-xs font-bold text-slate-800 block truncate">${fg.name}</span>
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-100 block truncate">${fg.name}</span>
                             <span class="text-[10px] text-slate-400 font-mono block">${fg.sku} • Dasar: ${formatRupiah(fg.selling_price || 0)}</span>
                         </div>
                     </label>
@@ -24403,10 +24403,10 @@ Manager / Supervisor: __________________
                 containerEl.innerHTML = fgList.map(fg => {
                     const isAttached = attachedProductIds.includes(fg.id);
                     return `
-                        <label class="flex items-center space-x-2.5 p-2 ${isAttached ? 'bg-indigo-50/70 border border-indigo-200' : 'hover:bg-indigo-50/40'} rounded-xl cursor-pointer transition-colors">
+                        <label class="flex items-center space-x-2.5 p-2 ${isAttached ? 'bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800' : 'hover:bg-indigo-50/40 dark:hover:bg-indigo-950/30'} rounded-xl cursor-pointer transition-colors">
                             <input type="checkbox" name="pvam-parent-products" value="${fg.id}" data-sku="${fg.sku}" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 shrink-0" ${isAttached ? 'checked' : ''}>
                             <div class="flex-1 min-w-0">
-                                <span class="text-xs font-bold ${isAttached ? 'text-indigo-900' : 'text-slate-800'} block truncate">${fg.name} ${isAttached ? '<span class="text-[9px] px-1.5 py-0.2 bg-indigo-200 text-indigo-800 rounded-md font-black ml-1">Terdaftar</span>' : ''}</span>
+                                <span class="text-xs font-bold ${isAttached ? 'text-indigo-900 dark:text-indigo-200' : 'text-slate-800 dark:text-slate-100'} block truncate">${fg.name} ${isAttached ? '<span class="text-[9px] px-1.5 py-0.2 bg-indigo-200 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 rounded-md font-black ml-1">Terdaftar</span>' : ''}</span>
                                 <span class="text-[10px] text-slate-400 font-mono block">${fg.sku} • Dasar: ${formatRupiah(fg.selling_price || 0)}</span>
                             </div>
                         </label>
@@ -24574,7 +24574,7 @@ Manager / Supervisor: __________________
                     <label class="flex items-center space-x-2.5 p-2 hover:bg-white dark:hover:bg-slate-800 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700 text-slate-800 dark:text-slate-200">
                         <input type="checkbox" name="avp-target-product" value="${fg.id}" data-sku="${fg.sku}" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" checked>
                         <div class="flex-1 min-w-0">
-                            <span class="text-xs font-bold text-slate-800 block truncate">${fg.name}</span>
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-100 block truncate">${fg.name}</span>
                             <span class="text-[10px] text-slate-400 font-mono">${fg.sku} • Harga Dasar: ${formatRupiah(fg.selling_price || 0)}</span>
                         </div>
                     </label>
@@ -25410,22 +25410,22 @@ Manager / Supervisor: __________________
                 var ingHtml = (fg.ingredients && fg.ingredients.length > 0) ? fg.ingredients.map(function(ing) {
                     var isFg = (ing.ingredient_product_type === 'FINISHED_GOODS');
                     var typeBadge = isFg 
-                        ? '<span class="px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-amber-100 text-amber-800 border border-amber-200">📦 Produk Jadi</span>'
-                        : '<span class="px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-slate-200/70 text-slate-700">🧪 Bahan Baku</span>';
+                        ? '<span class="px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">📦 Produk Jadi</span>'
+                        : '<span class="px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700">🧪 Bahan Baku</span>';
                     var escapedName = ing.ingredient_name ? escapeHtml(ing.ingredient_name) : '-';
                     var escapedUnit = ing.unit ? escapeHtml(ing.unit) : 'pcs';
 
                     return '<div class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700">' +
                         '<div>' +
                             '<div class="flex items-center space-x-1.5">' +
-                                '<span class="font-bold text-slate-700">' + escapedName + '</span>' +
+                                '<span class="font-bold text-slate-700 dark:text-slate-200">' + escapedName + '</span>' +
                                 typeBadge +
                             '</div>' +
                             '<span class="text-[10px] text-slate-400 block">' + formatDecimal(ing.qty_needed) + ' ' + escapedUnit + ' @ ' + formatRupiah(ing.ingredient_cogs) + '/' + escapedUnit + '</span>' +
                         '</div>' +
                         '<div class="flex items-center space-x-2">' +
-                            '<span class="font-mono text-slate-700 font-bold">' + formatRupiah(ing.subtotal_ingredient_cost) + '</span>' +
-                            '<button type="button" onclick="deleteRecipeItem(' + ing.id + ')" class="text-rose-500 hover:text-rose-700 p-1" title="Hapus dari formula resep">' +
+                            '<span class="font-mono text-slate-700 dark:text-slate-200 font-bold">' + formatRupiah(ing.subtotal_ingredient_cost) + '</span>' +
+                            '<button type="button" onclick="deleteRecipeItem(' + ing.id + ')" class="text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 p-1" title="Hapus dari formula resep">' +
                                 '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i>' +
                             '</button>' +
                         '</div>' +
@@ -25434,15 +25434,15 @@ Manager / Supervisor: __________________
 
                 var hasBOM = (fg.ingredients && fg.ingredients.length > 0);
                 var deleteBtnHtml = hasBOM ? 
-                    '<button type="button" onclick="deleteBaseBOM(' + fg.id + ', \'' + (fg.name ? fg.name.replace(/'/g, "\\'") : '') + '\')" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold border border-rose-200 flex items-center space-x-1 transition-colors shadow-2xs" title="Hapus seluruh formula resep Base BOM untuk ' + escapeHtml(fg.name) + '">' +
-                        '<i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-500"></i>' +
+                    '<button type="button" onclick="deleteBaseBOM(' + fg.id + ', \'' + (fg.name ? fg.name.replace(/'/g, "\\'") : '') + '\')" class="px-2.5 py-1.5 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold border border-rose-200 dark:border-rose-800/80 flex items-center space-x-1 transition-colors shadow-2xs" title="Hapus seluruh formula resep Base BOM untuk ' + escapeHtml(fg.name) + '">' +
+                        '<i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-500 dark:text-rose-400"></i>' +
                         '<span>Hapus BOM</span>' +
                     '</button>' : '';
 
                 return '<div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 text-slate-800 dark:text-slate-100">' +
-                    '<div class="flex items-center justify-between border-b pb-2.5">' +
+                    '<div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">' +
                         '<div>' +
-                            '<h4 class="font-bold text-slate-800 text-sm flex items-center space-x-1.5">' +
+                            '<h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm flex items-center space-x-1.5">' +
                                 '<span class="text-xl">☕</span>' +
                                 '<span>' + escapeHtml(fg.name) + '</span>' +
                             '</h4>' +
@@ -25450,7 +25450,7 @@ Manager / Supervisor: __________________
                         '</div>' +
                         '<div class="flex items-center space-x-1.5">' +
                             deleteBtnHtml +
-                            '<button type="button" onclick="openAddRecipeModal(' + fg.id + ', \'' + (fg.name ? fg.name.replace(/'/g, "\\'") : '') + '\')" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold border border-indigo-200 flex items-center space-x-1 transition-colors">' +
+                            '<button type="button" onclick="openAddRecipeModal(' + fg.id + ', \'' + (fg.name ? fg.name.replace(/'/g, "\\'") : '') + '\')" class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-bold border border-indigo-200 dark:border-indigo-800 flex items-center space-x-1 transition-colors shadow-2xs">' +
                                 '<i data-lucide="plus" class="w-3.5 h-3.5"></i>' +
                                 '<span>+ Komponen Resep</span>' +
                             '</button>' +
@@ -25463,9 +25463,9 @@ Manager / Supervisor: __________________
                     '</div>' +
 
                     '<!-- Total BOM Cost Calculation -->' +
-                    '<div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex justify-between items-center text-xs">' +
-                        '<span class="font-bold text-emerald-900">Total HPP Berbasis Resep:</span>' +
-                        '<span class="font-black text-emerald-800 text-sm font-mono">' + formatRupiah(fg.calculated_cogs) + '</span>' +
+                    '<div class="p-3 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl border border-emerald-200 dark:border-emerald-800/80 flex justify-between items-center text-xs">' +
+                        '<span class="font-bold text-emerald-900 dark:text-emerald-300">Total HPP Berbasis Resep:</span>' +
+                        '<span class="font-black text-emerald-800 dark:text-emerald-400 text-sm font-mono">' + formatRupiah(fg.calculated_cogs) + '</span>' +
                     '</div>' +
                 '</div>';
             }).join('');
@@ -25528,9 +25528,9 @@ Manager / Supervisor: __________________
                 var btn = document.getElementById(t.id);
                 if (!btn) return;
                 if (t.type === activeType) {
-                    btn.className = 'py-1.5 px-2 rounded-lg font-bold text-[11px] bg-white text-indigo-600 shadow-2xs transition-all';
+                    btn.className = 'py-1.5 px-2 rounded-lg font-bold text-[11px] bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-2xs transition-all';
                 } else {
-                    btn.className = 'py-1.5 px-2 rounded-lg font-bold text-[11px] text-slate-600 hover:bg-white/60 transition-all';
+                    btn.className = 'py-1.5 px-2 rounded-lg font-bold text-[11px] text-slate-600 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-slate-700/60 transition-all';
                 }
             });
         }
@@ -25782,8 +25782,8 @@ Manager / Supervisor: __________________
                     }];
 
                     const priceBadge = isFree
-                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 border border-slate-300">Harga Normal (+Rp 0 Bebas Biaya)</span>`
-                        : `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">+${formatRupiah(addPrice)} (Ada Tambahan Harga)</span>`;
+                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">Harga Normal (+Rp 0 Bebas Biaya)</span>`
+                        : `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">+${formatRupiah(addPrice)} (Ada Tambahan Harga)</span>`;
 
                     return `
                         <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col">
@@ -25796,48 +25796,48 @@ Manager / Supervisor: __________________
                                         </div>
                                         <div class="min-w-0">
                                             <div class="flex flex-wrap items-center gap-1.5">
-                                                <h4 class="font-black text-slate-900 text-sm leading-snug">
+                                                <h4 class="font-black text-slate-900 dark:text-slate-100 text-sm leading-snug">
                                                     ${v.variant_name}
                                                 </h4>
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black ${hasIngs ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 border border-slate-200'}">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black ${hasIngs ? 'bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'}">
                                                     ${hasIngs ? '⚡ Potong BOM Tambahan' : '🛡️ Tanpa Potong Bahan'}
                                                 </span>
                                             </div>
                                             <p class="text-[11px] text-slate-400 font-mono mt-0.5">
-                                                Kode / SKU Varian: <span class="text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">${v.sku_variant}</span>
+                                                Kode / SKU Varian: <span class="text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-100 dark:border-indigo-800/80">${v.sku_variant}</span>
                                             </p>
                                         </div>
                                     </div>
 
                                     <!-- Quick Delete Variant Action -->
-                                    <button onclick="deleteProductVariantGroup('${v.variant_name.replace(/'/g, "\\'")}', ${JSON.stringify(v.variant_ids || [v.id])})" class="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl border border-rose-200 transition-colors shrink-0 shadow-2xs" title="Hapus Varian '${v.variant_name}' dari Semua Produk">
+                                    <button onclick="deleteProductVariantGroup('${v.variant_name.replace(/'/g, "\\'")}', ${JSON.stringify(v.variant_ids || [v.id])})" class="p-2 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-xl border border-rose-200 dark:border-rose-800 transition-colors shrink-0 shadow-2xs" title="Hapus Varian '${v.variant_name}' dari Semua Produk">
                                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                                     </button>
                                 </div>
 
                                 <!-- Action Buttons Toolbar -->
-                                <div class="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-100">
-                                    <button onclick='openApplyVariantToProductsModal(${JSON.stringify(v)})' class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold border border-indigo-200 flex items-center space-x-1.5 transition-colors shadow-2xs">
-                                        <i data-lucide="copy-plus" class="w-3.5 h-3.5 text-indigo-600 shrink-0"></i>
+                                <div class="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+                                    <button onclick='openApplyVariantToProductsModal(${JSON.stringify(v)})' class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-bold border border-indigo-200 dark:border-indigo-800 flex items-center space-x-1.5 transition-colors shadow-2xs">
+                                        <i data-lucide="copy-plus" class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0"></i>
                                         <span>+ Kelola / Tambah Produk Induk</span>
                                     </button>
-                                    <button onclick='openEditVariantFromBOMModal(${JSON.stringify(v)})' class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl text-xs font-bold border border-amber-200 flex items-center space-x-1 transition-colors shadow-2xs">
-                                        <i data-lucide="edit-3" class="w-3.5 h-3.5 text-amber-600 shrink-0"></i>
+                                    <button onclick='openEditVariantFromBOMModal(${JSON.stringify(v)})' class="px-2.5 py-1.5 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-bold border border-amber-200 dark:border-amber-800 flex items-center space-x-1 transition-colors shadow-2xs">
+                                        <i data-lucide="edit-3" class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0"></i>
                                         <span>Edit Harga</span>
                                     </button>
-                                    <button onclick="openAddVariantRecipeModal(${primaryVarId}, '${v.variant_name.replace(/'/g, "\\'")}', 'Semua Produk Terkait')" class="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl text-xs font-bold border border-purple-200 flex items-center space-x-1 transition-colors shadow-2xs">
-                                        <i data-lucide="plus" class="w-3.5 h-3.5 text-purple-600 shrink-0"></i>
+                                    <button onclick="openAddVariantRecipeModal(${primaryVarId}, '${v.variant_name.replace(/'/g, "\\'")}', 'Semua Produk Terkait')" class="px-2.5 py-1.5 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-800 flex items-center space-x-1 transition-colors shadow-2xs">
+                                        <i data-lucide="plus" class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0"></i>
                                         <span>+ Resep Bahan</span>
                                     </button>
                                 </div>
 
                                 <!-- Parent Product Section: Multi-Products Pills Container -->
-                                <div class="bg-slate-50 dark:bg-slate-800/60/90 rounded-2xl p-3 border border-slate-200 dark:border-slate-700/80 space-y-2">
+                                <div class="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3 border border-slate-200 dark:border-slate-700 space-y-2">
                                     <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
-                                        <div class="flex items-center space-x-1.5 font-black text-slate-700 uppercase tracking-wider text-[10px]">
-                                            <span class="text-indigo-600">📦</span>
+                                        <div class="flex items-center space-x-1.5 font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">
+                                            <span class="text-indigo-600 dark:text-indigo-400">📦</span>
                                             <span>Diterapkan Pada Produk Induk:</span>
-                                            <span class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full text-[10px] font-bold">${productsList.length} Produk</span>
+                                            <span class="bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 rounded-full text-[10px] font-bold">${productsList.length} Produk</span>
                                         </div>
                                         <div>
                                             ${priceBadge}
@@ -25849,17 +25849,17 @@ Manager / Supervisor: __________________
                                         ${productsList.map(p => `
                                             <div class="inline-flex items-center space-x-1.5 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-indigo-200 dark:border-indigo-800 shadow-2xs text-xs text-slate-800 dark:text-slate-200">
                                                 <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                                                <span class="font-bold text-slate-800">${p.product_name}</span>
-                                                <span class="text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-1 py-0.5 rounded">(${p.product_sku})</span>
+                                                <span class="font-bold text-slate-800 dark:text-slate-100">${p.product_name}</span>
+                                                <span class="text-[10px] font-mono text-slate-400 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-1 py-0.5 rounded">(${p.product_sku})</span>
                                                 ${productsList.length > 1 ? `
-                                                    <button onclick="detachProductFromVariant(${p.variant_id}, '${p.product_name.replace(/'/g, "\\'")}', '${v.variant_name.replace(/'/g, "\\'")}')" class="text-slate-300 hover:text-rose-600 ml-1 p-0.5 transition-colors" title="Lepas varian '${v.variant_name}' dari produk ${p.product_name}">
+                                                    <button onclick="detachProductFromVariant(${p.variant_id}, '${p.product_name.replace(/'/g, "\\'")}', '${v.variant_name.replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 ml-1 p-0.5 transition-colors" title="Lepas varian '${v.variant_name}' dari produk ${p.product_name}">
                                                         <i data-lucide="x" class="w-3 h-3"></i>
                                                     </button>
                                                 ` : ''}
                                             </div>
                                         `).join('')}
 
-                                        <button onclick='openApplyVariantToProductsModal(${JSON.stringify(v)})' class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl border border-dashed border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-[11px] font-bold transition-colors">
+                                        <button onclick='openApplyVariantToProductsModal(${JSON.stringify(v)})' class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl border border-dashed border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-[11px] font-bold transition-colors">
                                             <i data-lucide="plus" class="w-3 h-3"></i>
                                             <span>+ Tambah Produk Lain</span>
                                         </button>
@@ -25869,7 +25869,7 @@ Manager / Supervisor: __________________
 
                             <!-- Card Body (Variant Ingredients: Berlaku untuk semua produk di atas) -->
                             <div class="p-4 flex-1 space-y-2 text-xs">
-                                <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 pb-0.5">
+                                <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 pb-0.5">
                                     <span>🧪 Formula Bahan Tambahan (Potong Stok saat Checkout):</span>
                                     <span class="text-slate-400 font-normal">Berlaku untuk semua produk induk</span>
                                 </div>
@@ -25878,12 +25878,12 @@ Manager / Supervisor: __________________
                                         ${v.ingredients.map(ing => `
                                             <div class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700">
                                                 <div class="min-w-0 pr-2">
-                                                    <span class="font-bold text-slate-700 block truncate">${ing.ingredient_name}</span>
+                                                    <span class="font-bold text-slate-700 dark:text-slate-200 block truncate">${ing.ingredient_name}</span>
                                                     <span class="text-[10px] text-slate-400 block">${formatDecimal(ing.qty_needed)} ${ing.unit} @ ${formatRupiah(ing.ingredient_cogs)}/${ing.unit} ${ing.notes ? `• ${ing.notes}` : ''}</span>
                                                 </div>
                                                 <div class="flex items-center space-x-2 shrink-0">
-                                                    <span class="font-mono text-slate-700 font-bold">${formatRupiah(ing.subtotal_ingredient_cost)}</span>
-                                                    <button onclick="deleteVariantRecipeItem(${ing.id})" class="text-rose-500 hover:text-rose-700 p-1" title="Hapus bahan">
+                                                    <span class="font-mono text-slate-700 dark:text-slate-200 font-bold">${formatRupiah(ing.subtotal_ingredient_cost)}</span>
+                                                    <button onclick="deleteVariantRecipeItem(${ing.id})" class="text-rose-500 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 p-1" title="Hapus bahan">
                                                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                                     </button>
                                                 </div>
@@ -25891,17 +25891,17 @@ Manager / Supervisor: __________________
                                         `).join('')}
                                     </div>
                                 ` : `
-                                    <div class="p-3 bg-slate-50/70 rounded-xl border border-dashed border-slate-200 text-center">
-                                        <p class="text-slate-500 text-xs font-semibold">Tidak ada bahan baku tambahan.</p>
+                                    <div class="p-3 bg-slate-50/70 dark:bg-slate-800/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-center">
+                                        <p class="text-slate-500 dark:text-slate-400 text-xs font-semibold">Tidak ada bahan baku tambahan.</p>
                                         <p class="text-[10px] text-slate-400 mt-0.5">Saat varian ini dipilih (contoh: galon tanpa tutup / refill), stok bahan tutup TIDAK akan dipotong.</p>
                                     </div>
                                 `}
                             </div>
 
                             <!-- Card Footer (Total Variant Additional BOM Cost) -->
-                            <div class="p-3.5 bg-gradient-to-r from-purple-50/90 to-indigo-50/90 border-t border-purple-100 flex justify-between items-center text-xs">
-                                <span class="font-bold text-purple-900">Total HPP Tambahan Varian:</span>
-                                <span class="font-black text-purple-900 text-sm font-mono">${formatRupiah(v.calculated_variant_cogs || 0)}</span>
+                            <div class="p-3.5 bg-gradient-to-r from-purple-50/90 to-indigo-50/90 dark:from-purple-950/60 dark:to-indigo-950/60 border-t border-purple-100 dark:border-purple-900/50 flex justify-between items-center text-xs">
+                                <span class="font-bold text-purple-900 dark:text-purple-300">Total HPP Tambahan Varian:</span>
+                                <span class="font-black text-purple-900 dark:text-purple-300 text-sm font-mono">${formatRupiah(v.calculated_variant_cogs || 0)}</span>
                             </div>
                         </div>
                     `;

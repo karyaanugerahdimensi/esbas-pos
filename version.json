@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.8.4",
-    "build": "20261103-110",
+    "version": "1.8.5",
+    "build": "20261103-111",
     "release_date": "2026-11-03",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.8.5",
+            "commit": "HEAD",
+            "date": "2026-11-03",
+            "title": "Harmonisasi Menu Resep / BOM Bahan (Base BOM & Variant BOM) untuk Dark Mode",
+            "description": "Menyelaraskan tema gelap pada modul Formula Resep & Bill of Materials (BOM) (#tab-bom): (1) Resep Produk Utama (Base BOM): Menyelaraskan nama produk menjadi dark:text-slate-100 agar kontras dan terbaca jelas, tombol aksi [Hapus BOM] dan [+ Komponen Resep] diubah menggunakan dark:bg-rose-950/60 dan dark:bg-indigo-950/60 sehingga tidak lagi berupa tombol putih terang yang mencolok, list bahan baku diselaraskan dengan dark:text-slate-200, dan kotak total kalkulasi HPP diselaraskan dengan dark:bg-emerald-950/50 dark:border-emerald-800/80 dark:text-emerald-300; (2) Resep Pilihan Varian (Variant BOM): Menyelaraskan kartu varian, badge kode SKU varian, badge aturan potong bahan, tombol aksi [+ Kelola Produk Induk], [Edit Harga], [+ Resep Bahan], pil produk induk terkait, list bahan baku tambahan, dan kotak total HPP varian; (3) Modal Resep & Varian: Menyelaraskan dialog modal Tambah Resep BOM, Tambah Resep Varian, Kelola Varian Produk, dan Terapkan Varian ke Produk Lain untuk kenyamanan Dark Mode; (4) Kompilasi Tailwind CSS.",
+            "rollback_command": "git checkout v1.8.4"
+        },
         {
             "version": "1.8.4",
             "commit": "HEAD",
