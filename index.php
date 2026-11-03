@@ -23077,18 +23077,18 @@ Manager / Supervisor: __________________
                 // Shift badge
                 let shiftBadge = '';
                 if (isExempt) {
-                    shiftBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 border border-slate-200">Fleksibel (Manajerial)</span>`;
+                    shiftBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">Fleksibel (Manajerial)</span>`;
                 } else if (e.default_shift_name) {
-                    shiftBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">${e.default_shift_code ? '[' + e.default_shift_code + '] ' : ''}${e.default_shift_name}</span>`;
+                    shiftBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">${e.default_shift_code ? '[' + e.default_shift_code + '] ' : ''}${e.default_shift_name}</span>`;
                 } else {
-                    shiftBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Belum Diset</span>`;
+                    shiftBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">Belum Diset</span>`;
                 }
 
                 // Branch placement badge
                 let branchPlacementHtml = '';
                 if (isSuper) {
                     branchPlacementHtml = `
-                        <div class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[10px] font-black bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-900 border border-purple-200 shadow-2xs">
+                        <div class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[10px] font-black bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-950/70 dark:to-indigo-950/70 text-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-800 shadow-2xs">
                             <span>🌐</span>
                             <span>Global (Seluruh Cabang)</span>
                         </div>
@@ -23100,18 +23100,18 @@ Manager / Supervisor: __________________
                         const names = assignedBranches.map(b => b.name).join(', ');
                         branchPlacementHtml = `
                             <div class="space-y-1">
-                                <div class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-blue-100 text-blue-900 border border-blue-200" title="${names}">
-                                    <i data-lucide="building-2" class="w-3 h-3 text-blue-700"></i>
+                                <div class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-blue-100 dark:bg-blue-950/70 text-blue-900 dark:text-blue-300 border border-blue-200 dark:border-blue-800" title="${names}">
+                                    <i data-lucide="building-2" class="w-3 h-3 text-blue-700 dark:text-blue-400"></i>
                                     <span>${count} Cabang Terhubung</span>
                                 </div>
-                                <div class="text-[10px] text-slate-600 font-medium truncate max-w-[200px]" title="${names}">
+                                <div class="text-[10px] text-slate-600 dark:text-slate-400 font-medium truncate max-w-[200px]" title="${names}">
                                     ${names}
                                 </div>
                             </div>
                         `;
                     } else {
                         branchPlacementHtml = `
-                            <div class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 border border-slate-200">
+                            <div class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                                 <span>${e.branch_name || 'Belum Diset'}</span>
                             </div>
                         `;
@@ -23131,7 +23131,7 @@ Manager / Supervisor: __________________
                     <td class="py-2.5 px-4 font-semibold text-slate-800 dark:text-slate-100">${e.name}</td>
                     <td class="py-2.5 px-4"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${isSuper ? 'bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800' : (isManager ? 'bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700')}">${e.role}</span></td>
                     <td class="py-2.5 px-4">${branchPlacementHtml}</td>
-                    <td class="py-2.5 px-4 text-slate-500 dark:text-slate-400">${e.email || '-'} / ${e.phone || '-'}</td>
+                    <td class="py-2.5 px-4 text-slate-600 dark:text-slate-300 font-mono text-xs">${e.email || '-'} / ${e.phone || '-'}</td>
                     <td class="py-2.5 px-4">${shiftBadge}</td>
                     <td class="py-2.5 px-4">
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${e.is_active ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800'}">
@@ -23763,57 +23763,57 @@ Manager / Supervisor: __________________
 
             document.getElementById('master-products-table-body').innerHTML = data.products.map(p => {
                 const typeBadge = p.product_type === 'FINISHED_GOODS' 
-                    ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Barang Jadi</span>'
+                    ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">Barang Jadi</span>'
                     : (p.product_type === 'RAW_MATERIAL'
-                        ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Bahan Baku</span>'
-                        : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">Jasa</span>');
+                        ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">Bahan Baku</span>'
+                        : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">Jasa</span>');
 
                 const variantsText = p.variants && p.variants.length > 0 
                     ? p.variants.map(v => {
                         const addPrice = Number(v.additional_price || 0);
                         const isFree = addPrice === 0;
                         return `
-                            <span class="inline-flex items-center gap-1 ${isFree ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 border-slate-200' : 'bg-emerald-50 text-emerald-800 border-emerald-300'} border px-2 py-0.5 rounded-lg text-[10px] mr-1 mb-1 font-semibold">
+                            <span class="inline-flex items-center gap-1 ${isFree ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'} px-2 py-0.5 rounded-lg text-[10px] mr-1 mb-1 font-semibold">
                                 <span>${v.variant_name}</span>
-                                <span class="font-bold ${isFree ? 'text-slate-500' : 'text-emerald-700'}">${isFree ? '(+Rp 0 / Bebas Biaya)' : '(+' + formatRupiah(addPrice) + ')'}</span>
-                                <button type="button" onclick="deleteProductVariant(${v.id}, '${v.variant_name.replace(/'/g, "\\'")}')" class="text-rose-400 hover:text-rose-600 ml-1 font-bold">×</button>
+                                <span class="font-bold ${isFree ? 'text-slate-500 dark:text-slate-400' : 'text-emerald-700 dark:text-emerald-400'}">${isFree ? '(+Rp 0 / Bebas Biaya)' : '(+' + formatRupiah(addPrice) + ')'}</span>
+                                <button type="button" onclick="deleteProductVariant(${v.id}, '${v.variant_name.replace(/'/g, "\\'")}')" class="text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 ml-1 font-bold">×</button>
                             </span>
                         `;
                     }).join('')
-                    : '<span class="text-slate-400 text-[10px]">Standar (Tanpa Varian)</span>';
+                    : '<span class="text-slate-400 dark:text-slate-500 text-[10px]">Standar (Tanpa Varian)</span>';
 
                 const isTaxable = p.is_taxable !== undefined ? Number(p.is_taxable) : 1;
                 const taxName = p.tax_name || (isTaxable ? 'PPN 11%' : 'Bebas Pajak');
                 const taxBadge = isTaxable === 1 
-                    ? `<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${taxName}</span>`
-                    : `<span class="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 border border-slate-200 px-2 py-0.5 rounded-full text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Non-Pajak</span>`;
+                    ? `<span class="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 px-2 py-0.5 rounded-full text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${taxName}</span>`
+                    : `<span class="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-full text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Non-Pajak</span>`;
 
                 const isDelivInc = Number(p.is_delivery_included || 0) === 1 || Number(p.is_delivery_required || 0) === 2;
                 const isDelivReq = Number(p.is_delivery_required || 0) === 1;
                 const deliveryBadge = isDelivInc
-                    ? `<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>🎁 Termasuk Kirim</span>`
+                    ? `<span class="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 px-2 py-0.5 rounded-full text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>🎁 Termasuk Kirim</span>`
                     : (isDelivReq
-                        ? `<span class="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>🚚 Wajib Ongkir</span>`
+                        ? `<span class="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 px-2 py-0.5 rounded-full text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>🚚 Wajib Ongkir</span>`
                         : `<span class="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-full text-[10px] font-medium">Standar</span>`);
 
                 return `
-                    <tr class="hover:bg-slate-50">
-                        <td class="py-2.5 px-3 font-mono font-bold text-indigo-700">${p.sku}<br><span class="text-[10px] text-slate-400">${p.barcode}</span></td>
-                        <td class="py-2.5 px-3 font-semibold text-slate-800">
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td class="py-2.5 px-3 font-mono font-bold text-indigo-700 dark:text-indigo-400">${p.sku}<br><span class="text-[10px] text-slate-400 dark:text-slate-500">${p.barcode}</span></td>
+                        <td class="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-100">
                             <span class="mr-1.5">${p.image_emoji || '📦'}</span>${p.name}${
                                 (Number(p.is_stockable) === 2)
-                                    ? ' <span class="inline-block text-[9px] px-1.5 py-0.2 bg-amber-100 text-amber-800 border border-amber-300 rounded font-bold">🔄 Hibrida</span>'
-                                    : ((p.effective_is_stockable === 0 || p.requires_stock === 0) ? ' <span class="inline-block text-[9px] px-1.5 py-0.2 bg-violet-100 text-violet-800 border border-violet-200 rounded font-bold">⚡ Tanpa Stok</span>' : '')
+                                    ? ' <span class="inline-block text-[9px] px-1.5 py-0.2 bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded font-bold">🔄 Hibrida</span>'
+                                    : ((p.effective_is_stockable === 0 || p.requires_stock === 0) ? ' <span class="inline-block text-[9px] px-1.5 py-0.2 bg-violet-100 dark:bg-violet-950/70 text-violet-800 dark:text-violet-300 border border-violet-200 dark:border-violet-800 rounded font-bold">⚡ Tanpa Stok</span>' : '')
                             }
                         </td>
                         <td class="py-2.5 px-3">${typeBadge}</td>
-                        <td class="py-2.5 px-3 text-slate-600">${p.category}</td>
-                        <td class="py-2.5 px-3 text-slate-500 font-medium">${p.unit}</td>
-                        <td class="py-2.5 px-3 text-right font-medium text-slate-700 font-mono">${formatRupiah(p.cogs)}</td>
+                        <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">${p.category}</td>
+                        <td class="py-2.5 px-3 text-slate-500 dark:text-slate-400 font-medium">${p.unit}</td>
+                        <td class="py-2.5 px-3 text-right font-medium text-slate-700 dark:text-slate-300 font-mono">${formatRupiah(p.cogs)}</td>
                         <td class="py-2.5 px-3 text-right font-mono">
                             ${p.product_type === 'RAW_MATERIAL' ? '-' : `
-                                <span class="font-bold text-indigo-900">${formatRupiah(p.selling_price)}</span>
-                                <div class="text-[9px] text-emerald-700 font-semibold tracking-tight" title="Harga Tier Mitra Umum">Mitra: ${formatRupiah(p.mitra_price > 0 ? p.mitra_price : p.selling_price)}</div>
+                                <span class="font-bold text-indigo-900 dark:text-indigo-300">${formatRupiah(p.selling_price)}</span>
+                                <div class="text-[9px] text-emerald-700 dark:text-emerald-400 font-semibold tracking-tight" title="Harga Tier Mitra Umum">Mitra: ${formatRupiah(p.mitra_price > 0 ? p.mitra_price : p.selling_price)}</div>
                             `}
                         </td>
                         <td class="py-2.5 px-3 text-center">
@@ -23827,16 +23827,16 @@ Manager / Supervisor: __________________
                                 ${variantsText}
                             </div>
                             <div class="mt-1 flex items-center space-x-2">
-                                <button onclick="openProductVariantModal(${p.id}, '${p.name.replace(/'/g, "\\'")}', '${p.sku}')" class="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold flex items-center space-x-0.5">
+                                <button onclick="openProductVariantModal(${p.id}, '${p.name.replace(/'/g, "\\'")}', '${p.sku}')" class="text-[10px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-bold flex items-center space-x-0.5">
                                     <span>➕ Tambah Varian</span>
                                 </button>
-                                ${p.has_bom ? '<span class="text-[9px] text-emerald-600 font-bold">🧪 Ada BOM</span>' : ''}
+                                ${p.has_bom ? '<span class="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">🧪 Ada BOM</span>' : ''}
                             </div>
                         </td>
                         <td class="py-2.5 px-3 text-center whitespace-nowrap">
                             <div class="inline-flex items-center space-x-1">
-                                <button onclick='editProduct(${JSON.stringify(p)})' class="px-2.5 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-[11px] font-bold transition-colors">Edit</button>
-                                <button onclick="deleteProduct(${p.id}, '${p.name.replace(/'/g, "\\'")}')" class="px-2 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-[11px] font-bold transition-colors flex items-center space-x-0.5" title="Hapus Produk">
+                                <button onclick='editProduct(${JSON.stringify(p)})' class="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 rounded-lg text-[11px] font-bold transition-colors">Edit</button>
+                                <button onclick="deleteProduct(${p.id}, '${p.name.replace(/'/g, "\\'")}')" class="px-2 py-1 bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 rounded-lg text-[11px] font-bold transition-colors flex items-center space-x-0.5" title="Hapus Produk">
                                     <i data-lucide="trash-2" class="w-3 h-3"></i>
                                     <span>Hapus</span>
                                 </button>
@@ -24744,21 +24744,21 @@ Manager / Supervisor: __________________
                     const stockStatus = (c.is_stockable !== undefined) ? Number(c.is_stockable) : 1;
                     let stockBadge = '';
                     if (stockStatus === 2) {
-                        stockBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">🔄 Hibrida</span>
-                                      <button onclick="toggleCategoryStockable(${c.id}, 1)" class="text-[9px] text-slate-400 hover:text-indigo-600 underline">Ubah ke Wajib Stok</button>`;
+                        stockBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">🔄 Hibrida</span>
+                                      <button onclick="toggleCategoryStockable(${c.id}, 1)" class="text-[9px] text-slate-400 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 underline">Ubah ke Wajib Stok</button>`;
                     } else if (stockStatus === 0) {
-                        stockBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-800 border border-violet-200">⚡ Tanpa Stok (BOM)</span>
-                                      <button onclick="toggleCategoryStockable(${c.id}, 2)" class="text-[9px] text-slate-400 hover:text-indigo-600 underline">Ubah ke Hibrida</button>`;
+                        stockBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 dark:bg-violet-950/70 text-violet-800 dark:text-violet-300 border border-violet-200 dark:border-violet-800">⚡ Tanpa Stok (BOM)</span>
+                                      <button onclick="toggleCategoryStockable(${c.id}, 2)" class="text-[9px] text-slate-400 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 underline">Ubah ke Hibrida</button>`;
                     } else {
-                        stockBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">📦 Wajib Stok</span>
-                                      <button onclick="toggleCategoryStockable(${c.id}, 0)" class="text-[9px] text-slate-400 hover:text-indigo-600 underline">Ubah ke Tanpa Stok</button>`;
+                        stockBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">📦 Wajib Stok</span>
+                                      <button onclick="toggleCategoryStockable(${c.id}, 0)" class="text-[9px] text-slate-400 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 underline">Ubah ke Tanpa Stok</button>`;
                     }
                     return `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td class="py-3 px-4 font-mono font-bold text-slate-500">#${c.id}</td>
+                            <td class="py-3 px-4 font-mono font-bold text-slate-500 dark:text-slate-400">#${c.id}</td>
                             <td class="py-3 px-4 text-xl">${c.icon || '🏷️'}</td>
-                            <td class="py-3 px-4 font-bold text-slate-800">${c.name}</td>
-                            <td class="py-3 px-4 font-semibold text-slate-600">${c.product_count || 0} Produk Terkait</td>
+                            <td class="py-3 px-4 font-bold text-slate-800 dark:text-slate-100">${c.name}</td>
+                            <td class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">${c.product_count || 0} Produk Terkait</td>
                             <td class="py-3 px-4 text-center">
                                 <div class="inline-flex flex-col items-center gap-1">
                                     ${stockBadge}
@@ -24896,21 +24896,21 @@ Manager / Supervisor: __________________
                 tbody.innerHTML = data.product_types.map(pt => {
                     const isCore = coreCodes.includes(pt.code);
                     const stockableBadge = Number(pt.is_stockable) === 1
-                        ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Ya (Stok Fisik)</span>'
+                        ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">Ya (Stok Fisik)</span>'
                         : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">Tidak</span>';
                     const saleableBadge = Number(pt.is_saleable) === 1
-                        ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800">Ya (Kasir POS)</span>'
-                        : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Bahan Resep</span>';
+                        ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 dark:bg-indigo-950/70 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">Ya (Kasir POS)</span>'
+                        : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">Bahan Resep</span>';
 
                     return `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td class="py-3 px-4 font-mono font-bold text-teal-800">${pt.icon_emoji || '📦'} ${pt.code}</td>
-                            <td class="py-3 px-4 font-bold text-slate-800">${pt.name}</td>
-                            <td class="py-3 px-4 text-center font-mono font-black text-indigo-600 bg-indigo-50/50 rounded">${pt.prefix}-00001</td>
+                            <td class="py-3 px-4 font-mono font-bold text-teal-800 dark:text-teal-400">${pt.icon_emoji || '📦'} ${pt.code}</td>
+                            <td class="py-3 px-4 font-bold text-slate-800 dark:text-slate-100">${pt.name}</td>
+                            <td class="py-3 px-4 text-center font-mono font-black text-indigo-600 dark:text-indigo-300 bg-indigo-50/50 dark:bg-indigo-950/50 rounded">${pt.prefix}-00001</td>
                             <td class="py-3 px-4 text-center">${stockableBadge}</td>
                             <td class="py-3 px-4 text-center">${saleableBadge}</td>
-                            <td class="py-3 px-4 text-slate-600">${pt.description || '-'}</td>
-                            <td class="py-3 px-4 text-center font-bold text-slate-700">${pt.product_count || 0} Item</td>
+                            <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${pt.description || '-'}</td>
+                            <td class="py-3 px-4 text-center font-bold text-slate-700 dark:text-slate-300">${pt.product_count || 0} Item</td>
                             <td class="py-3 px-4 text-center space-x-1">
                                 <button onclick='editProductType(${JSON.stringify(pt)})' class="px-2.5 py-1 bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900/60 rounded-lg text-[11px] font-bold transition-colors border border-teal-200 dark:border-teal-800">Edit</button>
                                 ${!isCore ? `<button onclick="deleteProductType(${pt.id}, '${pt.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 rounded-lg text-[11px] font-bold transition-colors border border-rose-200 dark:border-rose-800">Hapus</button>` : '<span class="text-[10px] text-slate-400 dark:text-slate-400 font-semibold px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">Sistem Inti</span>'}
@@ -25031,19 +25031,19 @@ Manager / Supervisor: __________________
 
                 tbody.innerHTML = data.product_units.map(u => {
                     const statusBadge = Number(u.is_active) === 1
-                        ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Aktif</span>'
-                        : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">Nonaktif</span>';
+                        ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">Aktif</span>'
+                        : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-950/70 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800">Nonaktif</span>';
 
                     return `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td class="py-3 px-4 font-mono font-bold text-sky-800 lowercase">${u.code}</td>
-                            <td class="py-3 px-4 font-bold text-slate-800">${u.name}</td>
-                            <td class="py-3 px-4 text-slate-600">${u.description || '-'}</td>
+                            <td class="py-3 px-4 font-mono font-bold text-sky-800 dark:text-sky-400 lowercase">${u.code}</td>
+                            <td class="py-3 px-4 font-bold text-slate-800 dark:text-slate-100">${u.name}</td>
+                            <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${u.description || '-'}</td>
                             <td class="py-3 px-4 text-center">${statusBadge}</td>
-                            <td class="py-3 px-4 text-center font-bold text-slate-700">${u.product_count || 0} Item</td>
+                            <td class="py-3 px-4 text-center font-bold text-slate-700 dark:text-slate-300">${u.product_count || 0} Item</td>
                             <td class="py-3 px-4 text-center space-x-1">
-                                <button onclick='editProductUnit(${JSON.stringify(u)})' class="px-2.5 py-1 bg-sky-50 text-sky-700 hover:bg-sky-100 rounded-lg text-[11px] font-bold transition-colors">Edit</button>
-                                <button onclick="deleteProductUnit(${u.id}, '${u.code}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-[11px] font-bold transition-colors">Hapus</button>
+                                <button onclick='editProductUnit(${JSON.stringify(u)})' class="px-2.5 py-1 bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/60 rounded-lg text-[11px] font-bold transition-colors border border-sky-200 dark:border-sky-800">Edit</button>
+                                <button onclick="deleteProductUnit(${u.id}, '${u.code}')" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 rounded-lg text-[11px] font-bold transition-colors border border-rose-200 dark:border-rose-800">Hapus</button>
                             </td>
                         </tr>
                     `;
@@ -25146,20 +25146,20 @@ Manager / Supervisor: __________________
 
                 tbody.innerHTML = data.taxes.map(t => {
                     const statusBadge = t.is_active != 0 
-                        ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Aktif</span>'
-                        : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">Nonaktif</span>';
+                        ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">Aktif</span>'
+                        : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-950/70 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800">Nonaktif</span>';
 
                     return `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td class="py-3 px-4 font-mono font-bold text-indigo-700">${t.code}</td>
-                            <td class="py-3 px-4 font-semibold text-slate-800">${t.name}</td>
-                            <td class="py-3 px-4 text-center font-mono font-black text-amber-700">${Number(t.rate_percent).toFixed(1)}%</td>
-                            <td class="py-3 px-4 text-slate-600">${t.description || '-'}</td>
-                            <td class="py-3 px-4 text-center font-bold text-slate-700">${t.product_count || 0} Item</td>
+                            <td class="py-3 px-4 font-mono font-bold text-indigo-700 dark:text-indigo-400">${t.code}</td>
+                            <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-100">${t.name}</td>
+                            <td class="py-3 px-4 text-center font-mono font-black text-amber-700 dark:text-amber-400">${Number(t.rate_percent).toFixed(1)}%</td>
+                            <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${t.description || '-'}</td>
+                            <td class="py-3 px-4 text-center font-bold text-slate-700 dark:text-slate-300">${t.product_count || 0} Item</td>
                             <td class="py-3 px-4 text-center">${statusBadge}</td>
                             <td class="py-3 px-4 text-center space-x-1">
-                                <button onclick='editTax(${JSON.stringify(t)})' class="px-2.5 py-1 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg text-[11px] font-bold transition-colors">Edit</button>
-                                ${t.id !== 1 ? `<button onclick="deleteTax(${t.id}, '${t.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-[11px] font-bold transition-colors">Hapus</button>` : ''}
+                                <button onclick='editTax(${JSON.stringify(t)})' class="px-2.5 py-1 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 rounded-lg text-[11px] font-bold transition-colors border border-amber-200 dark:border-amber-800">Edit</button>
+                                ${t.id !== 1 ? `<button onclick="deleteTax(${t.id}, '${t.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 rounded-lg text-[11px] font-bold transition-colors border border-rose-200 dark:border-rose-800">Hapus</button>` : ''}
                             </td>
                         </tr>
                     `;
@@ -25278,26 +25278,26 @@ Manager / Supervisor: __________________
 
                     return `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td class="py-3 px-4 text-center font-mono font-bold text-slate-500">${p.sort_order || (idx + 1)}</td>
-                            <td class="py-3 px-4 font-mono font-bold text-indigo-700">${p.sku}</td>
-                            <td class="py-3 px-4 font-black text-slate-800">
+                            <td class="py-3 px-4 text-center font-mono font-bold text-slate-500 dark:text-slate-400">${p.sort_order || (idx + 1)}</td>
+                            <td class="py-3 px-4 font-mono font-bold text-indigo-700 dark:text-indigo-400">${p.sku}</td>
+                            <td class="py-3 px-4 font-black text-slate-800 dark:text-slate-100">
                                 <span class="mr-1.5">${p.image_emoji || '📦'}</span>${p.name}${
                                     (Number(p.is_stockable) === 2)
-                                        ? ' <span class="inline-block text-[9px] px-1.5 py-0.2 bg-amber-100 text-amber-800 border border-amber-300 rounded font-bold">🔄 Hibrida</span>'
-                                        : ((p.effective_is_stockable === 0 || p.requires_stock === 0) ? ' <span class="inline-block text-[9px] px-1.5 py-0.2 bg-violet-100 text-violet-800 border border-violet-200 rounded font-bold">⚡ Tanpa Stok</span>' : '')
+                                        ? ' <span class="inline-block text-[9px] px-1.5 py-0.2 bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded font-bold">🔄 Hibrida</span>'
+                                        : ((p.effective_is_stockable === 0 || p.requires_stock === 0) ? ' <span class="inline-block text-[9px] px-1.5 py-0.2 bg-violet-100 dark:bg-violet-950/70 text-violet-800 dark:text-violet-300 border border-violet-200 dark:border-violet-800 rounded font-bold">⚡ Tanpa Stok</span>' : '')
                                 }
                             </td>
                             <td class="py-3 px-4">
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${p.product_type === 'RAW_MATERIAL' ? 'bg-amber-100 text-amber-900' : 'bg-indigo-100 text-indigo-900'}">${p.product_type}</span>
-                                <span class="text-[11px] text-slate-500 ml-1">• ${p.category}</span>
+                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${p.product_type === 'RAW_MATERIAL' ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-900 dark:text-amber-300' : 'bg-indigo-100 dark:bg-indigo-950/70 text-indigo-900 dark:text-indigo-300'}">${p.product_type}</span>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 ml-1">• ${p.category}</span>
                             </td>
-                            <td class="py-3 px-4 font-semibold text-slate-600">${p.unit}</td>
+                            <td class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">${p.unit}</td>
                             <td class="py-3 px-4 text-center">${statusBadge}</td>
                             <td class="py-3 px-4 text-center space-x-1 whitespace-nowrap">
-                                <button onclick="toggleOpeningShiftProductStatus(${p.product_id}, ${p.is_active != 0 ? 0 : 1})" class="px-2.5 py-1 ${p.is_active != 0 ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'} rounded-lg text-[11px] font-bold transition-colors">
+                                <button onclick="toggleOpeningShiftProductStatus(${p.product_id}, ${p.is_active != 0 ? 0 : 1})" class="px-2.5 py-1 ${p.is_active != 0 ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60' : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'} rounded-lg text-[11px] font-bold transition-colors border ${p.is_active != 0 ? 'border-amber-200 dark:border-amber-800' : 'border-emerald-200 dark:border-emerald-800'}">
                                     ${p.is_active != 0 ? 'Nonaktifkan' : 'Aktifkan'}
                                 </button>
-                                <button onclick="deleteOpeningShiftProduct(${p.product_id}, '${p.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-[11px] font-bold transition-colors">
+                                <button onclick="deleteOpeningShiftProduct(${p.product_id}, '${p.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 rounded-lg text-[11px] font-bold transition-colors border border-rose-200 dark:border-rose-800">
                                     Hapus
                                 </button>
                             </td>

@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.8.3",
-    "build": "20261103-109",
+    "version": "1.8.4",
+    "build": "20261103-110",
     "release_date": "2026-11-03",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.8.4",
+            "commit": "HEAD",
+            "date": "2026-11-03",
+            "title": "Harmonisasi Tabel Kelola Karyawan dan Tabel Master Produk & Varian untuk Dark Mode",
+            "description": "Menyelaraskan tampilan visual pada 2 modul utama: (1) Kelola Karyawan (#tab-employees): Menyelaraskan badge Shift Kerja dinamis ([S1] Shift 1, [SM], dsb.) dengan dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 sehingga tidak lagi berupa pil putih terang; menyelaraskan badge penempatan Global dan Multi-Cabang; memperjelas teks email, telepon, dan nama staf; (2) Master Produk & Varian (#tab-products): Menyelaraskan teks Nama Produk menjadi dark:text-slate-100 (tidak lagi abu-abu gelap sulit dibaca), teks HPP dasar menjadi dark:text-slate-300, badge status pengiriman (Termasuk Kirim) menjadi dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800, serta tombol aksi Edit dan Hapus disesuaikan agar serasi dengan latar gelap; (3) Sub-Tabel Kategori, Jenis, Satuan, Pajak, dan Opening Sales: Menyelaraskan seluruh badge status, kode item, dan tombol aksi untuk tema gelap; (4) Kompilasi Tailwind CSS.",
+            "rollback_command": "git checkout v1.8.3"
+        },
         {
             "version": "1.8.3",
             "commit": "HEAD",
