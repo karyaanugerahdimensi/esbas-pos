@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.8.0",
-    "build": "20261103-106",
+    "version": "1.8.1",
+    "build": "20261103-107",
     "release_date": "2026-11-03",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.8.1",
+            "commit": "HEAD",
+            "date": "2026-11-03",
+            "title": "Harmonisasi Kontras & Warna Dark Mode pada Tabel Saldo Stok, Kartu Mutasi, dan Template JavaScript Dinamis",
+            "description": "Menyempurnakan kontras teks dan styling tombol pada tabel modul Manajemen Stok & Kartu Mutasi (#tab-stocks): (1) Tabel Saldo Stok: Mengubah teks nama item (text-slate-800 menjadi dark:text-slate-100), teks SKU (text-indigo-700 menjadi dark:text-indigo-400), satuan (dark:text-slate-400), angka stok fisik & HPP agar sangat jelas terbaca dan kontras tinggi; (2) Tombol Aksi Tambah / Atur Stok: Menyesuaikan tombol aksi menjadi dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800 sehingga selaras dengan latar belakang gelap dan tidak silau; (3) Badge Status Stok & Jenis Produk: Menerapkan styling tema gelap pada badge Finished Goods, Bahan Baku, Aman, dan Menipis; (4) Tabel Kartu Mutasi Stok (Stock Movement Ledger): Memperbarui seluruh baris pergerakan stok, badge tipe mutasi (BOM, Penjualan, Pembelian, dsb.), dan nomor referensi; (5) Kompilasi Tailwind CSS v4 Standalone.",
+            "rollback_command": "git checkout v1.8.0"
+        },
         {
             "version": "1.8.0",
             "commit": "HEAD",

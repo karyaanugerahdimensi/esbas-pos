@@ -18459,9 +18459,9 @@ try {
                         }
 
                         return `
-                            <tr class="hover:bg-slate-50 transition-colors">
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                 <td class="py-2.5 px-3">
-                                    <div class="font-bold text-slate-800">${m.name}</div>
+                                    <div class="font-bold text-slate-800 dark:text-slate-100">${m.name}</div>
                                     <div class="text-[10px] text-slate-400 font-mono">${m.sku || '-'}</div>
                                 </td>
                                 <td class="py-2.5 px-3 text-slate-600 font-medium">Bahan Baku / Raw</td>
@@ -18488,7 +18488,7 @@ try {
                         const typeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-semibold ${isVar ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'}">${isVar ? 'VARIANT' : 'BASE BOM'}</span>`;
                         const qty = Math.abs(Number(log.qty_change)) || 0;
                         return `
-                            <tr class="hover:bg-slate-50 transition-colors">
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                 <td class="py-2.5 px-3 font-mono text-slate-500 text-[11px]">${log.created_at}</td>
                                 <td class="py-2.5 px-3">
                                     <span class="font-mono font-bold text-indigo-600 hover:underline cursor-pointer" onclick="openSaleDetailModal('${log.reference_no}')">${log.reference_no}</span>
@@ -18619,7 +18619,7 @@ try {
                             const cName = escapeHtml(c.courier_name || '-');
                             const plate = escapeHtml(c.plate_number || '-');
                             const veh = (c.vehicle_name && c.vehicle_name !== '-') ? (' <span class="text-[10px] text-slate-400">(' + escapeHtml(c.vehicle_name) + ')</span>') : '';
-                            return '<tr class="hover:bg-slate-50 transition-colors">' +
+                            return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">' +
                                 '<td class="py-2.5 px-3 font-bold text-slate-800">🚚 ' + cName + '</td>' +
                                 '<td class="py-2.5 px-3 text-slate-600 font-medium">' + plate + veh + '</td>' +
                                 '<td class="py-2.5 px-3 text-center"><span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-sky-100 text-sky-800">' + (Number(c.total_trips) || 0) + ' Nota</span></td>' +
@@ -18654,7 +18654,7 @@ try {
                                 : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">🎁 Free / Include</span>';
                             const distNum = Number(dv.delivery_distance_km) || 0;
                             const distCell = distNum > 0 ? (formatDecimal(distNum) + ' km') : '-';
-                            return '<tr class="hover:bg-slate-50 transition-colors">' +
+                            return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">' +
                                 '<td class="py-2.5 px-3 font-mono font-bold">' +
                                     '<button type="button" onclick="openSaleDetailModal(\'' + inv + '\')" class="text-indigo-600 hover:text-indigo-800 hover:underline flex items-center space-x-1 font-bold text-left">' +
                                         '<span>' + inv + '</span>' +
@@ -18775,7 +18775,7 @@ try {
                         rulesTbody.innerHTML = rulesList.map(function(rs) {
                             const isAuto = (rs.trigger_mode === 'AUTO');
                             const modeBadge = isAuto ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">⚡ AUTO</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">🔘 MANUAL</span>';
-                            return '<tr class="hover:bg-slate-50 transition-colors">' +
+                            return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">' +
                                 '<td class="py-2.5 px-3 font-bold text-slate-800">' + escapeHtml(rs.rule_name || 'Diskon Manual Kasir') + '</td>' +
                                 '<td class="py-2.5 px-3 text-center font-mono text-[11px] text-slate-500">' + escapeHtml(rs.rule_code || '-') + '</td>' +
                                 '<td class="py-2.5 px-3 text-center">' + modeBadge + '</td>' +
@@ -18832,7 +18832,7 @@ try {
                             const gSub = Number(cs.gross_subtotal) || 0;
                             const tDisc = Number(cs.total_discount) || 0;
                             const pct = gSub > 0 ? formatDecimal((tDisc / gSub) * 100, 1) : '0';
-                            return '<tr class="hover:bg-slate-50 transition-colors">' +
+                            return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">' +
                                 '<td class="py-2.5 px-3 font-bold text-slate-800">' + escapeHtml(cs.cashier_name || '-') + '</td>' +
                                 '<td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">' + (Number(cs.discount_orders) || 0) + 'x</span></td>' +
                                 '<td class="py-2.5 px-3 text-right text-slate-600">' + formatRupiah(gSub) + '</td>' +
@@ -18855,7 +18855,7 @@ try {
                         custTbody.innerHTML = customers.map(function(cu) {
                             const gSub = Number(cu.gross_subtotal) || 0;
                             const tDisc = Number(cu.total_discount) || 0;
-                            return '<tr class="hover:bg-slate-50 transition-colors">' +
+                            return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">' +
                                 '<td class="py-2.5 px-3 font-bold text-slate-800">' + escapeHtml(cu.customer_name || 'Pelanggan Umum') + '</td>' +
                                 '<td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700">' + escapeHtml(cu.customer_category || 'REGULER') + '</span></td>' +
                                 '<td class="py-2.5 px-3 text-center font-semibold text-slate-700">' + (Number(cu.discount_orders) || 0) + 'x</td>' +
@@ -18884,7 +18884,7 @@ try {
                             const discPct = formatDecimal(Number(dr.discount_percent) || 0, 1);
                             const gpNum = Number(dr.gross_profit) || 0;
                             const gpClass = gpNum < 0 ? 'text-rose-700' : 'text-emerald-700';
-                            return '<tr class="hover:bg-slate-50 transition-colors">' +
+                            return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">' +
                                 '<td class="py-2.5 px-3 font-mono font-bold">' +
                                     '<button type="button" onclick="openSaleDetailModal(\'' + inv + '\')" class="text-indigo-600 hover:text-indigo-800 hover:underline flex items-center space-x-1 font-bold text-left">' +
                                         '<span>' + inv + '</span>' +
@@ -19810,7 +19810,7 @@ Manager / Supervisor: __________________
                         : 'p-1 px-2.5 text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold shadow-sm transition-colors flex items-center space-x-1';
 
                     return `
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td class="py-3 px-3 font-mono font-bold">
                                 <button onclick="openReceivableDetailModal(${r.id})" class="text-indigo-600 hover:text-indigo-900 hover:underline flex items-center space-x-1 text-left" title="Lihat detail faktur piutang">
                                     <span>${r.invoice_number}</span>
@@ -24745,7 +24745,7 @@ Manager / Supervisor: __________________
                                       <button onclick="toggleCategoryStockable(${c.id}, 0)" class="text-[9px] text-slate-400 hover:text-indigo-600 underline">Ubah ke Tanpa Stok</button>`;
                     }
                     return `
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td class="py-3 px-4 font-mono font-bold text-slate-500">#${c.id}</td>
                             <td class="py-3 px-4 text-xl">${c.icon || '🏷️'}</td>
                             <td class="py-3 px-4 font-bold text-slate-800">${c.name}</td>
@@ -24894,7 +24894,7 @@ Manager / Supervisor: __________________
                         : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Bahan Resep</span>';
 
                     return `
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td class="py-3 px-4 font-mono font-bold text-teal-800">${pt.icon_emoji || '📦'} ${pt.code}</td>
                             <td class="py-3 px-4 font-bold text-slate-800">${pt.name}</td>
                             <td class="py-3 px-4 text-center font-mono font-black text-indigo-600 bg-indigo-50/50 rounded">${pt.prefix}-00001</td>
@@ -25026,7 +25026,7 @@ Manager / Supervisor: __________________
                         : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">Nonaktif</span>';
 
                     return `
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td class="py-3 px-4 font-mono font-bold text-sky-800 lowercase">${u.code}</td>
                             <td class="py-3 px-4 font-bold text-slate-800">${u.name}</td>
                             <td class="py-3 px-4 text-slate-600">${u.description || '-'}</td>
@@ -25141,7 +25141,7 @@ Manager / Supervisor: __________________
                         : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">Nonaktif</span>';
 
                     return `
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td class="py-3 px-4 font-mono font-bold text-indigo-700">${t.code}</td>
                             <td class="py-3 px-4 font-semibold text-slate-800">${t.name}</td>
                             <td class="py-3 px-4 text-center font-mono font-black text-amber-700">${Number(t.rate_percent).toFixed(1)}%</td>
@@ -25268,7 +25268,7 @@ Manager / Supervisor: __________________
                         : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">Nonaktif</span>';
 
                     return `
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td class="py-3 px-4 text-center font-mono font-bold text-slate-500">${p.sort_order || (idx + 1)}</td>
                             <td class="py-3 px-4 font-mono font-bold text-indigo-700">${p.sku}</td>
                             <td class="py-3 px-4 font-black text-slate-800">
@@ -26117,7 +26117,7 @@ Manager / Supervisor: __________________
                         <div class="flex flex-wrap gap-1 mt-1 justify-end">
                             ${s.branch_breakdown.map(bb => `
                                 <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 border border-slate-200 font-mono" title="${bb.branch_name}">
-                                    <span class="font-semibold text-slate-800 mr-1">${bb.branch_name.replace('Cabang ', '')}:</span> ${formatDecimal(bb.stock)}
+                                    <span class="font-semibold text-slate-800 dark:text-slate-200 mr-1">${bb.branch_name.replace('Cabang ', '')}:</span> ${formatDecimal(bb.stock)}
                                 </span>
                             `).join('')}
                         </div>
@@ -26125,31 +26125,31 @@ Manager / Supervisor: __________________
                 }
 
                 const actionBtnHtml = isManagerOrAdmin ? `
-                    <button onclick="openStockAdjustModal(${s.product_id}, ${isGlobal ? 'null' : bId})" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-[11px] font-bold shadow-sm transition-colors inline-flex items-center space-x-1" title="Atur / Setel Stok Awal Cabang">
+                    <button onclick="openStockAdjustModal(${s.product_id}, ${isGlobal ? 'null' : bId})" class="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/70 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-lg text-[11px] font-bold shadow-sm transition-colors inline-flex items-center space-x-1" title="Atur / Setel Stok Awal Cabang">
                         <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                         <span>Atur Stok</span>
                     </button>
                 ` : `
-                    <button onclick="openStockAdjustModal(${s.product_id}, ${isGlobal ? 'null' : bId})" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[11px] font-bold shadow-sm transition-colors inline-flex items-center space-x-1" title="Tambah Stok Barang Masuk Cabang">
+                    <button onclick="openStockAdjustModal(${s.product_id}, ${isGlobal ? 'null' : bId})" class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/70 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-[11px] font-bold shadow-sm transition-colors inline-flex items-center space-x-1" title="Tambah Stok Barang Masuk Cabang">
                         <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
                         <span>+ Tambah Stok</span>
                     </button>
                 `;
 
                 return `
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="py-2.5 px-3 font-mono font-bold text-indigo-700">${s.sku}</td>
-                        <td class="py-2.5 px-3 font-semibold text-slate-800">${s.image_emoji || ''} ${s.name}</td>
-                        <td class="py-2.5 px-3"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${s.product_type === 'FINISHED_GOODS' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${s.product_type}</span></td>
-                        <td class="py-2.5 px-3 text-slate-500 font-medium">${s.unit}</td>
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td class="py-2.5 px-3 font-mono font-bold text-indigo-700 dark:text-indigo-400">${s.sku}</td>
+                        <td class="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-100">${s.image_emoji || ''} ${s.name}</td>
+                        <td class="py-2.5 px-3"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${s.product_type === 'FINISHED_GOODS' ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800'}">${s.product_type}</span></td>
+                        <td class="py-2.5 px-3 text-slate-500 dark:text-slate-400 font-medium">${s.unit}</td>
                         <td class="py-2.5 px-3 text-right">
-                            <span class="font-black text-sm font-mono ${isWarning ? 'text-rose-600' : 'text-slate-800'}">${formatDecimal(s.stock)}</span>
+                            <span class="font-black text-sm font-mono ${isWarning ? 'text-rose-600 dark:text-rose-400' : 'text-slate-800 dark:text-slate-100'}">${formatDecimal(s.stock)}</span>
                             ${breakdownHtml}
                         </td>
-                        <td class="py-2.5 px-3 text-right text-slate-500 font-mono">${formatDecimal(s.reorder_point)}</td>
-                        <td class="py-2.5 px-3 text-right text-slate-700 font-mono">${formatRupiah(s.local_cogs)}</td>
+                        <td class="py-2.5 px-3 text-right text-slate-500 dark:text-slate-400 font-mono">${formatDecimal(s.reorder_point)}</td>
+                        <td class="py-2.5 px-3 text-right text-slate-700 dark:text-slate-300 font-mono">${formatRupiah(s.local_cogs)}</td>
                         <td class="py-2.5 px-3">
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isWarning ? 'bg-rose-100 text-rose-800 animate-pulse' : 'bg-emerald-100 text-emerald-800'}">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isWarning ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800 animate-pulse' : 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'}">
                                 ${isWarning ? '⚠️ Menipis' : 'Aman'}
                             </span>
                         </td>
@@ -26177,30 +26177,30 @@ Manager / Supervisor: __________________
 
             document.getElementById('stock-movements-table-body').innerHTML = data.movements.map(m => {
                 let badgeClass = 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-bold';
-                if (m.movement_type === 'BOM_DEDUCTION') badgeClass = 'bg-purple-100 text-purple-800 font-black';
-                else if (m.movement_type === 'STOCK_OUT_SALE') badgeClass = 'bg-rose-100 text-rose-800 font-bold';
-                else if (m.movement_type === 'PURCHASE') badgeClass = 'bg-emerald-100 text-emerald-800 font-bold';
-                else if (m.movement_type === 'INITIAL_STOCK') badgeClass = 'bg-indigo-100 text-indigo-800 font-black';
-                else if (m.movement_type === 'ADJUSTMENT_DAMAGE') badgeClass = 'bg-rose-100 text-rose-800 font-bold';
-                else if (m.movement_type === 'ADJUSTMENT_OPNAME') badgeClass = 'bg-amber-100 text-amber-800 font-bold';
-                else if (m.movement_type === 'TRANSFER_IN') badgeClass = 'bg-teal-100 text-teal-800 font-bold';
-                else if (m.movement_type === 'TRANSFER_OUT') badgeClass = 'bg-orange-100 text-orange-800 font-bold';
+                if (m.movement_type === 'BOM_DEDUCTION') badgeClass = 'bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800 font-black';
+                else if (m.movement_type === 'STOCK_OUT_SALE') badgeClass = 'bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800 font-bold';
+                else if (m.movement_type === 'PURCHASE') badgeClass = 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold';
+                else if (m.movement_type === 'INITIAL_STOCK') badgeClass = 'bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-black';
+                else if (m.movement_type === 'ADJUSTMENT_DAMAGE') badgeClass = 'bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800 font-bold';
+                else if (m.movement_type === 'ADJUSTMENT_OPNAME') badgeClass = 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 font-bold';
+                else if (m.movement_type === 'TRANSFER_IN') badgeClass = 'bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800 font-bold';
+                else if (m.movement_type === 'TRANSFER_OUT') badgeClass = 'bg-orange-100 dark:bg-orange-950/80 text-orange-800 dark:text-orange-300 border border-orange-200 dark:border-orange-800 font-bold';
 
                 const qtyVal = parseFloat(m.qty_change);
                 return `
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap text-[11px] font-mono">${m.created_at}</td>
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td class="py-2.5 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap text-[11px] font-mono">${m.created_at}</td>
                         <td class="py-2.5 px-3 font-semibold text-indigo-900 text-[11px] whitespace-nowrap">
                             <span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-md border border-slate-200 dark:border-slate-700">${m.branch_name || '-'}</span>
                         </td>
-                        <td class="py-2.5 px-3 font-semibold text-slate-800">${m.product_name} (${m.unit})</td>
+                        <td class="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-100">${m.product_name} (${m.unit})</td>
                         <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] ${badgeClass}">${m.movement_type}</span></td>
                         <td class="py-2.5 px-3 text-right font-black font-mono ${qtyVal < 0 ? 'text-rose-600' : 'text-emerald-600'}">${qtyVal > 0 ? '+' : ''}${formatDecimal(m.qty_change)}</td>
-                        <td class="py-2.5 px-3 text-right text-slate-400 font-mono">${formatDecimal(m.stock_before)}</td>
-                        <td class="py-2.5 px-3 text-right text-slate-800 font-bold font-mono">${formatDecimal(m.stock_after)}</td>
-                        <td class="py-2.5 px-3 font-mono text-[10px] text-indigo-700 font-bold">${m.reference_no || '-'}</td>
-                        <td class="py-2.5 px-3 text-slate-600 text-[11px]">${m.notes || '-'}</td>
-                        <td class="py-2.5 px-3 text-slate-500">${m.user_name || 'Admin'}</td>
+                        <td class="py-2.5 px-3 text-right text-slate-400 dark:text-slate-500 font-mono">${formatDecimal(m.stock_before)}</td>
+                        <td class="py-2.5 px-3 text-right text-slate-800 dark:text-slate-100 font-bold font-mono">${formatDecimal(m.stock_after)}</td>
+                        <td class="py-2.5 px-3 font-mono text-[10px] text-indigo-700 dark:text-indigo-400 font-bold">${m.reference_no || '-'}</td>
+                        <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300 text-[11px]">${m.notes || '-'}</td>
+                        <td class="py-2.5 px-3 text-slate-500 dark:text-slate-400">${m.user_name || 'Admin'}</td>
                     </tr>
                 `;
             }).join('') || `<tr><td colspan="10" class="py-8 text-center text-slate-400">Belum ada riwayat pergerakan stok untuk cabang terpilih.</td></tr>`;
@@ -26997,7 +26997,7 @@ Manager / Supervisor: __________________
             tbody.innerHTML = list.map(function(m) {
                 const isRaw = isStockInRawMaterial(m.product_type);
                 const icon = isRaw ? '🧪' : '📦';
-                return '<tr class="hover:bg-slate-50 transition-colors">' +
+                return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">' +
                     '<td class="py-2.5 px-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">' + escapeHtml(m.created_at || '-') + '</td>' +
                     '<td class="py-2.5 px-3 whitespace-nowrap"><span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md font-bold text-[11px] text-slate-700 dark:text-slate-300">'  + escapeHtml(m.branch_name || '-') + '</span></td>' +
                     '<td class="py-2.5 px-3 font-bold text-slate-800">' + icon + ' ' + escapeHtml(m.product_name || '-') + ' <span class="text-[10px] font-mono text-slate-400">(' + escapeHtml(m.product_sku || '') + ')</span></td>' +
@@ -27361,7 +27361,7 @@ Manager / Supervisor: __________________
                     actorInfo += '<span class="block text-[10px] text-rose-600">Batal: ' + escapeHtml(t.cancelled_by_name) + '</span>';
                 }
 
-                return '<tr class="hover:bg-slate-50 transition-colors">' +
+                return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">' +
                     '<td class="py-3 px-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">' + escapeHtml(t.created_at || '-') + '</td>' +
                     '<td class="py-3 px-3 font-mono text-[11px] font-black text-indigo-800 whitespace-nowrap">' + escapeHtml(t.transfer_no) + modeBadge + '</td>' +
                     '<td class="py-3 px-3 whitespace-nowrap">' +
@@ -28348,7 +28348,7 @@ Manager / Supervisor: __________________
                         '</div>';
                     }
 
-                    return '<tr class="hover:bg-slate-50 transition-colors">' +
+                    return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">' +
                         '<td class="py-3 px-4 font-mono text-slate-600">' + escapeHtml(exp.expense_date) + '</td>' +
                         '<td class="py-3 px-4 font-bold text-slate-800">' + escapeHtml(exp.category) + '</td>' +
                         '<td class="py-3 px-4 text-slate-600 font-medium">' + escapeHtml(exp.branch_name || 'Cabang') + '</td>' +
@@ -29493,9 +29493,9 @@ Manager / Supervisor: __________________
                                     '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">Ritel Reguler</span>'));
 
                     return `
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td class="py-3 px-4 font-mono font-bold text-slate-600">${c.code}</td>
-                            <td class="py-3 px-4 font-bold text-slate-900">${c.name}</td>
+                            <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">${c.name}</td>
                             <td class="py-3 px-4">${catBadge}</td>
                             <td class="py-3 px-4 text-slate-600">${c.phone || '-'} <br><span class="text-[10px] text-slate-400">${c.email || ''}</span></td>
                             <td class="py-3 px-4 text-slate-600">${c.branch_name || 'Semua Cabang'}</td>
@@ -31309,8 +31309,8 @@ Manager / Supervisor: __________________
                     const contractPrice = isContractSet ? Number(custom.custom_price) : defaultMitra;
 
                     return `
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="py-3 px-4 font-bold text-slate-900">${p.image_emoji || '📦'} ${p.name}</td>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">${p.image_emoji || '📦'} ${p.name}</td>
                             <td class="py-3 px-4 font-mono text-slate-500">${p.sku}</td>
                             <td class="py-3 px-4 text-right text-slate-600 font-semibold">${formatRupiah(defaultRetail)}</td>
                             <td class="py-3 px-4 text-right font-black ${isContractSet ? 'text-emerald-700 text-sm' : 'text-slate-400'}">
@@ -31542,7 +31542,7 @@ Manager / Supervisor: __________________
 
                     return `
                         <tr class="hover:bg-slate-50 transition-colors ${!isActive ? 'bg-slate-50/70 opacity-75' : ''}">
-                            <td class="py-3 px-4 font-bold text-slate-900">
+                            <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">
                                 <div class="flex items-center space-x-2">
                                     <span class="text-base">${st.image_emoji || '📦'}</span>
                                     <div>
@@ -32306,7 +32306,7 @@ Manager / Supervisor: __________________
                 }
 
                 return `
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                         <td class="py-3 px-4">
                             <span class="font-mono font-black text-indigo-950 px-2 py-1 bg-indigo-50 border border-indigo-200 rounded-lg text-xs tracking-wider">${v.plate_number}</span>
                         </td>
@@ -32573,21 +32573,21 @@ Manager / Supervisor: __________________
                     else if (efficiency < 95) badgeClass = 'bg-amber-100 text-amber-800';
 
                     return `
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td class="py-3 px-4 font-mono text-slate-600">${l.log_date}</td>
-                            <td class="py-3 px-4 font-bold text-slate-900">
+                            <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">
                                 <span class="font-mono bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded text-[11px]">${l.plate_number}</span>
                                 <span class="block text-[11px] text-slate-500 font-normal">${l.vehicle_name}</span>
                             </td>
-                            <td class="py-3 px-4 text-slate-700 font-medium">${l.driver_name || '-'}</td>
+                            <td class="py-3 px-4 text-slate-700 dark:text-slate-300 font-medium">${l.driver_name || '-'}</td>
                             <td class="py-3 px-4 font-mono text-center text-slate-600">
                                 <span class="text-[10px] text-slate-400">${Number(l.last_odometer || 0).toLocaleString('id-ID')} &rarr;</span>
-                                <span class="font-bold text-slate-800">${Number(l.current_odometer || 0).toLocaleString('id-ID')} km</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200">${Number(l.current_odometer || 0).toLocaleString('id-ID')} km</span>
                             </td>
                             <td class="py-3 px-4 font-mono font-black text-indigo-900 text-right text-xs">+${formatDecimal(l.distance_traveled)} km</td>
-                            <td class="py-3 px-4 font-mono font-bold text-slate-800 text-right">${formatDecimal(l.liters_bought)} L</td>
+                            <td class="py-3 px-4 font-mono font-bold text-slate-800 dark:text-slate-200 text-right">${formatDecimal(l.liters_bought)} L</td>
                             <td class="py-3 px-4 font-mono font-black text-rose-600 text-right text-xs">${formatRupiah(l.total_cost)}</td>
-                            <td class="py-3 px-4 text-center font-mono text-[11px] text-slate-700 font-bold">${ratioText}</td>
+                            <td class="py-3 px-4 text-center font-mono text-[11px] text-slate-700 dark:text-slate-300 font-bold">${ratioText}</td>
                             <td class="py-3 px-4 text-center">
                                 <span class="px-2 py-0.5 rounded-full text-[10px] ${badgeClass}">${formatDecimal(efficiency)}%</span>
                             </td>
@@ -32762,15 +32762,15 @@ Manager / Supervisor: __________________
                 }
 
                 tbody.innerHTML = filtered.map(sl => `
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                         <td class="py-3 px-4 font-mono text-slate-600">${sl.service_date}</td>
-                        <td class="py-3 px-4 font-bold text-slate-900">
+                        <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">
                             <span class="font-mono bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded text-[11px]">${sl.plate_number}</span>
                             <span class="block text-[11px] text-slate-500 font-normal">${sl.vehicle_name}</span>
                         </td>
-                        <td class="py-3 px-4 font-mono text-center text-slate-700">${Number(sl.odometer_km).toLocaleString()} km</td>
+                        <td class="py-3 px-4 font-mono text-center text-slate-700 dark:text-slate-300">${Number(sl.odometer_km).toLocaleString()} km</td>
                         <td class="py-3 px-4">
-                            <span class="font-bold text-slate-800">${sl.service_type}</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-200">${sl.service_type}</span>
                         </td>
                         <td class="py-3 px-4 text-slate-600">${sl.workshop_name || '-'}</td>
                         <td class="py-3 px-4 font-mono font-black text-rose-700 text-right text-xs">${formatRupiah(sl.cost)}</td>
@@ -34023,27 +34023,27 @@ Manager / Supervisor: __________________
                     const isCashDefault = (m.id == 1 || m.code === 'CASH');
 
                     return `
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td class="py-3 px-4 text-center font-bold text-slate-500">${m.sort_order || 0}</td>
-                            <td class="py-3 px-4 font-mono font-bold text-indigo-700">${m.code}</td>
+                            <td class="py-3 px-4 font-mono font-bold text-indigo-700 dark:text-indigo-400">${m.code}</td>
                             <td class="py-3 px-4">
-                                <div class="font-bold text-slate-800">${m.name}</div>
+                                <div class="font-bold text-slate-800 dark:text-slate-100">${m.name}</div>
                                 <div class="text-[11px] text-slate-400">${m.description || '-'}</div>
                             </td>
                             <td class="py-3 px-4">
                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">${m.category}</span>
                             </td>
-                            <td class="py-3 px-4 font-mono font-medium text-slate-700">${m.account_number || '-'}</td>
+                            <td class="py-3 px-4 font-mono font-medium text-slate-700 dark:text-slate-300">${m.account_number || '-'}</td>
                             <td class="py-3 px-4 text-slate-600 font-medium">${m.account_holder || '-'}</td>
                             <td class="py-3 px-4 text-center">${typeBadge}</td>
                             <td class="py-3 px-4 text-center">
-                                <span class="font-bold text-slate-700">${m.transaction_count || 0} tx</span>
+                                <span class="font-bold text-slate-700 dark:text-slate-300">${m.transaction_count || 0} tx</span>
                                 <div class="text-[10px] text-emerald-600 font-bold">${formatRupiah(m.total_volume || 0)}</div>
                             </td>
                             <td class="py-3 px-4 text-center">${statusBadge}</td>
                             <td class="py-3 px-4 text-center">
                                 <div class="flex items-center justify-center space-x-1.5">
-                                    <button onclick='editPaymentMethod(${JSON.stringify(m).replace(/'/g, "&#39;")})' class="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg" title="Edit Metode">
+                                    <button onclick='editPaymentMethod(${JSON.stringify(m).replace(/'/g, "&#39;")})' class="p-1.5 bg-indigo-50 dark:bg-indigo-950/70 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-lg transition-colors" title="Edit Metode">
                                         <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                     </button>
                                     ${isCashDefault ? `
@@ -34051,7 +34051,7 @@ Manager / Supervisor: __________________
                                             <i data-lucide="lock" class="w-3.5 h-3.5"></i>
                                         </button>
                                     ` : `
-                                        <button onclick="deletePaymentMethod(${m.id}, '${m.name}')" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg" title="Hapus / Nonaktifkan">
+                                        <button onclick="deletePaymentMethod(${m.id}, '${m.name}')" class="p-1.5 bg-rose-50 dark:bg-rose-950/70 hover:bg-rose-100 dark:hover:bg-rose-900/80 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 rounded-lg transition-colors" title="Hapus / Nonaktifkan">
                                             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                         </button>
                                     `}
@@ -34225,11 +34225,11 @@ Manager / Supervisor: __________________
                     const displayAmount = d.action_type === 'EXACT' ? 'Mengikuti Tagihan' : formatRupiah(d.amount);
 
                     return `
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td class="py-3 px-4 text-center font-bold text-slate-500">${d.sort_order || 0}</td>
-                            <td class="py-3 px-4 font-bold text-slate-800">${d.label}</td>
+                            <td class="py-3 px-4 font-bold text-slate-800 dark:text-slate-100">${d.label}</td>
                             <td class="py-3 px-4">${typeBadge}</td>
-                            <td class="py-3 px-4 font-mono font-bold text-slate-700">${displayAmount}</td>
+                            <td class="py-3 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">${displayAmount}</td>
                             <td class="py-3 px-4 text-center">
                                 <button type="button" class="py-1 px-2.5 text-xs font-bold rounded-lg border text-center bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-xs cursor-default">
                                     ${d.label}
