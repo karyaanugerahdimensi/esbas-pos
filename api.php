@@ -128,6 +128,18 @@ if (isset($pdo)) {
     try {
         $pdo->exec("ALTER TABLE cashier_shifts ADD COLUMN closed_by_user_id INTEGER DEFAULT NULL");
     } catch (Exception $eCol) {}
+    try {
+        $pdo->exec("ALTER TABLE sales ADD COLUMN is_backdate INTEGER DEFAULT 0");
+    } catch (Exception $eCol) {}
+    try {
+        $pdo->exec("ALTER TABLE sales ADD COLUMN backdate_note TEXT DEFAULT NULL");
+    } catch (Exception $eCol) {}
+    try {
+        $checkSet = $pdo->query("SELECT COUNT(*) FROM app_settings WHERE setting_key = 'pos_backdate_mode_enabled'")->fetchColumn();
+        if (!$checkSet) {
+            $pdo->prepare("INSERT INTO app_settings (setting_key, setting_value, setting_group, description) VALUES ('pos_backdate_mode_enabled', '0', 'POS', 'Mode input transaksi mundur / backdate di kasir POS (Khusus Superadmin)')")->execute();
+        }
+    } catch (Exception $eSet) {}
 }
 
 // ========================================================
@@ -6346,11 +6358,11 @@ try {
                 exit;
             }
 
-            $stmtSales = $pdo->prepare("SELECT COALESCE(SUM(grand_total), 0) FROM sales WHERE shift_id = ? AND payment_method = 'CASH'");
+            $stmtSales = $pdo->prepare("SELECT COALESCE(SUM(grand_total), 0) FROM sales WHERE shift_id = ? AND payment_method = 'CASH' AND (is_backdate IS NULL OR is_backdate = 0)");
             $stmtSales->execute([$shiftId]);
             $cashSales = (float)$stmtSales->fetchColumn();
 
-            $stmtTxCount = $pdo->prepare("SELECT COUNT(*) FROM sales WHERE shift_id = ?");
+            $stmtTxCount = $pdo->prepare("SELECT COUNT(*) FROM sales WHERE shift_id = ? AND (is_backdate IS NULL OR is_backdate = 0)");
             $stmtTxCount->execute([$shiftId]);
             $txCount = (int)$stmtTxCount->fetchColumn();
 
@@ -6774,7 +6786,7 @@ try {
             if ($closingRo === null && isset($closingMap[88])) $closingRo = (int)$closingMap[88];
             if ($closingPlastik === null && isset($closingMap[105])) $closingPlastik = (int)$closingMap[105];
 
-            $stmtSales = $pdo->prepare("SELECT COALESCE(SUM(grand_total), 0) FROM sales WHERE shift_id = ? AND payment_method = 'CASH'");
+            $stmtSales = $pdo->prepare("SELECT COALESCE(SUM(grand_total), 0) FROM sales WHERE shift_id = ? AND payment_method = 'CASH' AND (is_backdate IS NULL OR is_backdate = 0)");
             $stmtSales->execute([$shiftId]);
             $cashSales = (float)$stmtSales->fetchColumn();
 
@@ -7688,7 +7700,7 @@ try {
                         COALESCE(SUM(CASE WHEN payment_method = 'PIUTANG' THEN grand_total ELSE 0 END), 0) as piutang_sales,
                         COALESCE(SUM(total_cogs), 0) as total_cogs
                     FROM sales
-                    WHERE shift_id = ? AND (status IS NULL OR status != 'CANCELLED')
+                    WHERE shift_id = ? AND (status IS NULL OR status != 'CANCELLED') AND (is_backdate IS NULL OR is_backdate = 0)
                 ");
                 $stmtSales->execute([$sId]);
                 $salesData = $stmtSales->fetch();
@@ -8551,34 +8563,93 @@ try {
             $discountRuleId = !empty($input['discount_rule_id']) ? (int)$input['discount_rule_id'] : null;
             $discountName = !empty($input['discount_name']) ? trim($input['discount_name']) : ($discountNominal > 0 ? 'Diskon Manual Kasir' : null);
 
-            // ATURAN BISNIS MUTLAK: Jika tidak buka opening sales / shift kasir, maka transaksi penjualan tidak bisa dilakukan!
-            if (empty($shiftId)) {
-                $stmtActiveShift = $pdo->prepare("SELECT id FROM cashier_shifts WHERE branch_id = ? AND status = 'OPEN' ORDER BY id DESC LIMIT 1");
-                $stmtActiveShift->execute([$branchId]);
-                $activeShiftId = $stmtActiveShift->fetchColumn();
-                if ($activeShiftId) {
-                    $shiftId = (int)$activeShiftId;
+            $isBackdate = !empty($input['is_backdate']) ? 1 : 0;
+            $backdateDateTime = !empty($input['backdate_datetime']) ? trim($input['backdate_datetime']) : null;
+
+            if ($isBackdate) {
+                // 1. Cek apakah pengaturan pos_backdate_mode_enabled aktif di sistem (default '0')
+                $stmtSetBackdate = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'pos_backdate_mode_enabled'");
+                $stmtSetBackdate->execute();
+                $backdateSettingVal = (string)($stmtSetBackdate->fetchColumn() ?: '0');
+
+                if ($backdateSettingVal !== '1') {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Transaksi ditolak: Mode transaksi backdate (tanggal mundur) sedang dinonaktifkan di Pengaturan Sistem oleh Superadmin.'
+                    ]);
+                    exit;
                 }
-            }
 
-            if (empty($shiftId)) {
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Transaksi penjualan ditolak: Shift kasir (Opening Sales) belum dibuka! Silakan lakukan Buka Shift / Opening Sales terlebih dahulu.'
-                ]);
-                exit;
-            }
+                // 2. Cek apakah user yang melakukan checkout berwenang (Hanya SUPERADMIN)
+                $stmtRoleCheck = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                $stmtRoleCheck->execute([$userId]);
+                $userRole = strtoupper(trim($stmtRoleCheck->fetchColumn() ?: ''));
+                $normRole = str_replace(['_', ' '], '', $userRole);
 
-            // Pastikan shift kasir yang digunakan masih berstatus OPEN
-            $stmtShiftVerify = $pdo->prepare("SELECT status FROM cashier_shifts WHERE id = ?");
-            $stmtShiftVerify->execute([$shiftId]);
-            $currentShiftStatus = $stmtShiftVerify->fetchColumn();
-            if ($currentShiftStatus !== 'OPEN') {
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Transaksi penjualan ditolak: Shift kasir saat ini sudah ditutup. Silakan lakukan Opening Shift baru untuk melanjutkan transaksi.'
-                ]);
-                exit;
+                if ($normRole !== 'SUPERADMIN') {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Transaksi ditolak: Hanya Superadmin yang memiliki otorisasi untuk melakukan transaksi backdate (tanggal mundur).'
+                    ]);
+                    exit;
+                }
+
+                // 3. Validasi format dan nilai tanggal/waktu backdate
+                if (empty($backdateDateTime)) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Transaksi ditolak: Tanggal dan jam backdate belum dipilih.'
+                    ]);
+                    exit;
+                }
+
+                // Ubah format T ke spasi (misal 2026-11-01T14:30 -> 2026-11-01 14:30:00)
+                $backdateDateTime = str_replace('T', ' ', $backdateDateTime);
+                if (strlen($backdateDateTime) === 16) {
+                    $backdateDateTime .= ':00';
+                }
+
+                $backdateTs = strtotime($backdateDateTime);
+                if (!$backdateTs || $backdateTs > time() + 300) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Transaksi ditolak: Format tanggal backdate tidak valid atau melebihi waktu saat ini (tidak boleh mencatat tanggal masa depan).'
+                    ]);
+                    exit;
+                }
+
+                // Transaksi backdate diisolasi penuh dari shift aktif hari ini (shift_id = null)
+                $shiftId = null;
+            } else {
+                // ATURAN BISNIS MUTLAK: Jika tidak buka opening sales / shift kasir, maka transaksi penjualan tidak bisa dilakukan!
+                if (empty($shiftId)) {
+                    $stmtActiveShift = $pdo->prepare("SELECT id FROM cashier_shifts WHERE branch_id = ? AND status = 'OPEN' ORDER BY id DESC LIMIT 1");
+                    $stmtActiveShift->execute([$branchId]);
+                    $activeShiftId = $stmtActiveShift->fetchColumn();
+                    if ($activeShiftId) {
+                        $shiftId = (int)$activeShiftId;
+                    }
+                }
+
+                if (empty($shiftId)) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Transaksi penjualan ditolak: Shift kasir (Opening Sales) belum dibuka! Silakan lakukan Buka Shift / Opening Sales terlebih dahulu.'
+                    ]);
+                    exit;
+                }
+
+                // Pastikan shift kasir yang digunakan masih berstatus OPEN
+                $stmtShiftVerify = $pdo->prepare("SELECT status FROM cashier_shifts WHERE id = ?");
+                $stmtShiftVerify->execute([$shiftId]);
+                $currentShiftStatus = $stmtShiftVerify->fetchColumn();
+                if ($currentShiftStatus !== 'OPEN') {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Transaksi penjualan ditolak: Shift kasir saat ini sudah ditutup. Silakan lakukan Opening Shift baru untuk melanjutkan transaksi.'
+                    ]);
+                    exit;
+                }
             }
 
             if (empty($items)) {
@@ -8604,7 +8675,7 @@ try {
             $stmtBr->execute([$branchId]);
             $branchCode = $stmtBr->fetchColumn() ?: 'CAB';
 
-            $dateStr = date('Ymd');
+            $dateStr = $isBackdate ? date('Ymd', strtotime($backdateDateTime)) : date('Ymd');
             $maxId = (int)$pdo->query("SELECT MAX(id) FROM sales")->fetchColumn() + 1;
             $seq = str_pad($maxId, 4, '0', STR_PAD_LEFT);
             $invoiceNumber = "INV/{$branchCode}/{$dateStr}/{$seq}";
@@ -8786,7 +8857,7 @@ try {
                     $stmtDeduct = $pdo->prepare("UPDATE branch_stocks SET stock = ? WHERE branch_id = ? AND product_id = ?");
                     $stmtDeduct->execute([$newStock, $branchId, $pId]);
 
-                    $nowCheckoutSm = date('Y-m-d H:i:s');
+                    $nowCheckoutSm = $isBackdate ? $backdateDateTime : date('Y-m-d H:i:s');
                     // Record finished goods stock movement
                     $stmtMoveFG = $pdo->prepare("
                         INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id, created_at)
@@ -8862,7 +8933,7 @@ try {
                             ? "Konsumsi Base BOM ({$onDemandQty}x on-demand, {$fromStockQty}x dari stok produk jadi) untuk {$qty}x {$dispItemName}"
                             : "Konsumsi Base BOM untuk {$qty}x {$dispItemName}";
 
-                        $nowBaseBomSm = date('Y-m-d H:i:s');
+                        $nowBaseBomSm = $isBackdate ? $backdateDateTime : date('Y-m-d H:i:s');
                         $pdo->prepare("
                             INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id, created_at)
                             VALUES (?, ?, 'BOM_DEDUCTION', ?, ?, ?, ?, ?, ?, ?)
@@ -8896,7 +8967,7 @@ try {
                             ? "Konsumsi BOM Varian [{$variantName}] ({$onDemandQty}x on-demand, {$fromStockQty}x dari stok produk jadi) untuk {$qty}x {$stockRow['name']}"
                             : "Konsumsi BOM Varian [{$variantName}] untuk {$qty}x {$stockRow['name']}";
 
-                        $nowVarBomSm = date('Y-m-d H:i:s');
+                        $nowVarBomSm = $isBackdate ? $backdateDateTime : date('Y-m-d H:i:s');
                         $pdo->prepare("
                             INSERT INTO stock_movements (branch_id, product_id, movement_type, qty_change, stock_before, stock_after, reference_no, notes, user_id, created_at)
                             VALUES (?, ?, 'BOM_DEDUCTION', ?, ?, ?, ?, ?, ?, ?)
@@ -9035,7 +9106,7 @@ try {
                 $paymentStatus = 'PAID';
             }
 
-            $saleCreatedAt = date('Y-m-d H:i:s');
+            $saleCreatedAt = $isBackdate ? $backdateDateTime : date('Y-m-d H:i:s');
 
             // Insert Sale with Customer, Tier, Delivery & Payment Status Info
             $stmtSale = $pdo->prepare("
@@ -9044,13 +9115,13 @@ try {
                     sales_type, subtotal, discount, discount_rule_id, discount_name, tax, delivery_fee,
                     delivery_distance_km, courier_vehicle_id, driver_user_id, driver_name, is_delivery_included,
                     delivery_status, grand_total, total_cogs, payment_method, payment_status, cash_received,
-                    cash_change, created_at
+                    cash_change, created_at, is_backdate
                 ) VALUES (
                     ?, ?, ?, ?, ?, ?, ?,
                     ?, ?, ?, ?, ?, ?, ?,
                     ?, ?, ?, ?, ?,
                     ?, ?, ?, ?, ?, ?,
-                    ?, ?
+                    ?, ?, ?
                 )
             ");
             $stmtSale->execute([
@@ -9059,7 +9130,7 @@ try {
                 $subtotal, $discountNominal, $discountRuleId, $discountName, $tax, $deliveryFee, $deliveryDistanceKm,
                 $courierVehicleId, $driverUserId, $driverName, $isDeliveryIncluded, $deliveryStatus,
                 $grandTotal, $totalCogs, $paymentMethod, $paymentStatus, $cashReceived, $cashChange,
-                $saleCreatedAt
+                $saleCreatedAt, $isBackdate
             ]);
             $saleId = $pdo->lastInsertId();
 
@@ -9068,7 +9139,7 @@ try {
             if ($paymentMethod === 'PIUTANG') {
                 $dueDate = !empty($input['due_date']) ? $input['due_date'] : date('Y-m-d', strtotime('+30 days'));
                 $recNotes = !empty($input['notes']) ? trim($input['notes']) : ("Piutang penjualan POS kpd " . $customerName . " ({$customerCategory})");
-                $recCreatedAt = date('Y-m-d H:i:s');
+                $recCreatedAt = $isBackdate ? $backdateDateTime : date('Y-m-d H:i:s');
                 $stmtAR = $pdo->prepare("
                     INSERT INTO customer_receivables (
                         sale_id, invoice_number, customer_id, branch_id, total_amount, paid_amount,
@@ -9129,7 +9200,8 @@ try {
                     'receivable_id' => $receivableId,
                     'cash_received' => $cashReceived,
                     'cash_change' => $cashChange,
-                    'created_at' => date('d/m/Y H:i:s'),
+                    'is_backdate' => $isBackdate,
+                    'created_at' => date('d/m/Y H:i:s', strtotime($saleCreatedAt)),
                     'items' => $processedItems
                 ]
             ]);
@@ -18668,6 +18740,25 @@ try {
             if (!is_array($settings)) {
                 echo json_encode(['success' => false, 'message' => 'Format pengaturan tidak valid.']);
                 break;
+            }
+
+            // Otorisasi Khusus: Pengaturan pos_backdate_mode_enabled HANYA boleh diubah oleh SUPERADMIN
+            if (isset($settings['pos_backdate_mode_enabled'])) {
+                $reqUserId = !empty($input['user_id']) ? (int)$input['user_id'] : (!empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0);
+                $isSuperAdmin = false;
+                if ($reqUserId > 0) {
+                    $stmtUserAuth = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                    $stmtUserAuth->execute([$reqUserId]);
+                    $roleStr = strtoupper(trim($stmtUserAuth->fetchColumn() ?: ''));
+                    $isSuperAdmin = (str_replace(['_', ' '], '', $roleStr) === 'SUPERADMIN');
+                }
+                if (!$isSuperAdmin) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Akses ditolak: Hanya Superadmin yang diizinkan untuk mengaktifkan atau menonaktifkan fitur Mode Backdate POS.'
+                    ]);
+                    break;
+                }
             }
 
             $pdo->beginTransaction();

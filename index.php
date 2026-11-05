@@ -1115,6 +1115,38 @@ try {
                     </div>
                 </div>
 
+                <!-- Backdate Mode Bar (Visible ONLY when pos_backdate_mode_enabled is '1' AND current user is Super Admin) -->
+                <div id="pos-backdate-bar" class="hidden bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 border border-amber-300 dark:border-amber-600/50 rounded-2xl p-2.5 sm:p-3 flex-wrap items-center justify-between gap-3 shadow-xs transition-all" style="display: none;">
+                    <div class="flex items-center space-x-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+                            🕒
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[11px] font-black uppercase tracking-wider text-amber-900 dark:text-amber-300">Mode Transaksi Backdate</span>
+                                <span id="pos-backdate-active-badge" class="hidden px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-2xs animate-pulse">
+                                    ⚠️ AKTIF
+                                </span>
+                            </div>
+                            <p class="text-[10px] text-slate-600 dark:text-slate-400">
+                                Transaksi dicatat mundur ke tanggal masa lampau & terisolasi dari kas shift harian.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2 flex-wrap">
+                        <label class="flex items-center space-x-1.5 cursor-pointer text-xs font-bold text-amber-950 dark:text-amber-200 select-none bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-700 shadow-2xs">
+                            <input type="checkbox" id="check-pos-backdate" onchange="onPosBackdateToggleChange()" class="w-4 h-4 text-amber-600 rounded cursor-pointer accent-amber-600">
+                            <span>Aktifkan Tanggal Lampau</span>
+                        </label>
+                        <div id="pos-backdate-input-group" class="hidden items-center space-x-1.5">
+                            <input type="datetime-local" id="pos-backdate-input" onchange="onPosBackdateDateChange()" class="bg-white dark:bg-slate-800 border border-amber-400 dark:border-amber-600 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 dark:text-slate-100 shadow-inner focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                            <button type="button" onclick="setBackdateToYesterday()" class="px-2 py-1 bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 text-amber-800 dark:text-amber-300 rounded-lg text-[10px] font-bold border border-amber-300 dark:border-amber-700 transition-colors cursor-pointer" title="Set otomatis ke Kemarin">
+                                Kemarin
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Main POS Responsive Grid -->
                 <div id="pos-main-grid" class="grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-6 items-start">
                     
@@ -1254,7 +1286,6 @@ try {
 
                             <div class="flex justify-between text-base font-black text-indigo-900 dark:text-indigo-300 pt-2 border-t border-slate-200 dark:border-slate-700">
                                 <span>Grand Total:</span>
-                                <span id="summary-grand-total">Rp 0</span>
                                 <span id="summary-grand-total">Rp 0</span>
                             </div>
 
@@ -6318,6 +6349,47 @@ try {
                             </div>
                         </div>
                     </div>
+
+                    <!-- Fitur Khusus POS: Mode Backdate (Superadmin Only) -->
+                    <div id="settings-backdate-card" class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center text-amber-600 dark:text-amber-400 text-lg shadow-sm">
+                                    🕒
+                                </div>
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base">
+                                            Mode Transaksi Backdate (Tanggal Mundur) POS
+                                        </h3>
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                                            Superadmin Only
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                        Fitur otorisasi khusus untuk mengizinkan Superadmin mencatat transaksi penjualan dengan tanggal & jam masa lampau langsung dari layar kasir POS.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <label class="relative inline-flex items-center cursor-pointer select-none">
+                                    <input type="checkbox" id="set-pos-backdate-mode" onchange="onPosBackdateSettingChange(this.checked)" class="sr-only peer">
+                                    <div class="w-12 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-xs space-y-2">
+                            <div class="flex items-center space-x-2">
+                                <span id="settings-backdate-dot" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                                <span id="settings-backdate-status-text" class="font-bold text-slate-700 dark:text-slate-300">Status: NONAKTIF (Sembunyikan dari Kasir)</span>
+                            </div>
+                            <ul class="text-[11px] text-slate-500 dark:text-slate-400 list-disc list-inside space-y-1">
+                                <li>Jika <strong class="text-slate-700 dark:text-slate-300">NONAKTIF (OFF)</strong>: Seluruh opsi, form pemilih tanggal, dan indikator backdate <span class="text-rose-600 font-bold">100% tidak muncul</span> di layar POS penjualan kasir.</li>
+                                <li>Jika <strong class="text-slate-700 dark:text-slate-300">AKTIF (ON)</strong>: Bar pemilih tanggal mundur akan muncul di layar POS kasir <span class="text-amber-600 font-bold">hanya untuk akun Superadmin</span>.</li>
+                                <li>Transaksi backdate otomatis mencatat stok terpotong pada waktu tersebut dan <strong class="text-indigo-600 dark:text-indigo-400">TIDAK mempengaruhi rekonsiliasi kas laci kasir (opening/closing shift) hari ini</strong>.</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- SUBTAB 2: Hak Akses Role & Menu -->
@@ -7034,6 +7106,19 @@ try {
                         <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700">
                             <span class="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Ringkasan Pesanan</span>
                             <span id="pos-modal-summary-items-count" class="text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-950/80 px-2 py-0.5 rounded-full">0 Produk</span>
+                        </div>
+
+                        <!-- Backdate Alert Banner in Payment Modal -->
+                        <div id="pos-modal-backdate-banner" class="hidden p-2.5 bg-amber-500/15 border border-amber-500/40 rounded-xl text-xs space-y-1 text-amber-900 dark:text-amber-200">
+                            <div class="flex items-center space-x-1.5 font-black text-amber-700 dark:text-amber-300">
+                                <span>⚠️ MODE TRANSAKSI BACKDATE AKTIF</span>
+                            </div>
+                            <p class="text-[11px] leading-tight">
+                                Transaksi ini dicatat mundur pada: <span id="pos-modal-backdate-time-display" class="font-mono font-bold underline"></span>.
+                            </p>
+                            <p class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold leading-tight">
+                                *Penting: Nilai transaksi ini TIDAK masuk ke perhitungan kas shift aktif hari ini.
+                            </p>
                         </div>
 
                         <!-- Customer & Branch Info Box -->
@@ -14412,11 +14497,25 @@ try {
                 loadPaymentMethods();
                 loadCashDenominations();
             }
+            if (tab === 'pos') updatePosBackdateUI();
             if (tab === 'discounts') {
                 loadDiscountRules();
             }
             if (tab === 'sale-cancellations') loadSaleCancellations();
-            if (tab === 'settings') loadAppSettingsModule();
+            if (tab === 'settings') {
+                loadAppSettingsModule();
+                const curUser = state.currentUser || state.loggedInUser;
+                const role = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
+                const isSuperAdmin = (role === 'SUPERADMIN');
+                const bdCard = document.getElementById('settings-backdate-card');
+                if (bdCard) {
+                    if (isSuperAdmin) {
+                        bdCard.classList.remove('hidden');
+                    } else {
+                        bdCard.classList.add('hidden');
+                    }
+                }
+            }
 
             lucide.createIcons();
         }
@@ -15620,11 +15719,13 @@ try {
                 return;
             }
 
-            // Validasi Opening Shift
+            // Validasi Opening Shift (Dikecualikan jika Super Admin mengaktifkan mode backdate)
             if (!state.activeShift || state.activeShift.status !== 'OPEN') {
-                alert('PERINGATAN OPENING SHIFT:\nTransaksi penjualan tidak dapat dilakukan karena shift kasir (Opening Sales) belum dibuka!\n\nSilakan isi formulir Opening Shift (uang modal pangkal & verifikasi stok awal) untuk membuka penjualan.');
-                openShiftModal();
-                return;
+                if (!isBackdateActive()) {
+                    alert('PERINGATAN OPENING SHIFT:\nTransaksi penjualan tidak dapat dilakukan karena shift kasir (Opening Sales) belum dibuka!\n\nSilakan isi formulir Opening Shift (uang modal pangkal & verifikasi stok awal) untuk membuka penjualan.');
+                    openShiftModal();
+                    return;
+                }
             }
 
             // Hitung ulang kalkulasi total
@@ -15733,6 +15834,20 @@ try {
                 cashInput.value = '';
             }
             calculateChange();
+
+            // Tampilkan alert banner jika mode backdate aktif
+            const modalBackdateBanner = document.getElementById('pos-modal-backdate-banner');
+            if (modalBackdateBanner) {
+                if (isBackdateActive()) {
+                    const dtVal = _val('pos-backdate-input');
+                    const dtDisplay = dtVal ? dtVal.replace('T', ' ') : '-';
+                    const dispEl = document.getElementById('pos-modal-backdate-time-display');
+                    if (dispEl) dispEl.innerText = dtDisplay;
+                    modalBackdateBanner.classList.remove('hidden');
+                } else {
+                    modalBackdateBanner.classList.add('hidden');
+                }
+            }
 
             // 5. Buka Popup Modal & Fokus Input
             const modal = document.getElementById('pos-payment-modal');
@@ -15876,7 +15991,9 @@ try {
             }
 
             // ATURAN BISNIS MUTLAK: Jika tidak buka opening sales / shift kasir maka transaksi penjualan tidak bisa dilakukan!
-            if (!state.activeShift || state.activeShift.status !== 'OPEN') {
+            // Dikecualikan jika Super Admin mengaktifkan mode backdate (input transaksi tanggal lampau)
+            const isBackdate = isBackdateActive();
+            if (!isBackdate && (!state.activeShift || state.activeShift.status !== 'OPEN')) {
                 alert('PERINGATAN OPENING SHIFT:\nTransaksi penjualan tidak dapat dilakukan karena shift kasir (Opening Sales) belum dibuka!\n\nSilakan isi formulir Opening Shift (uang modal pangkal & verifikasi stok awal) untuk membuka penjualan.');
                 openShiftModal();
                 return;
@@ -15938,7 +16055,9 @@ try {
             const payload = {
                 branch_id: state.currentBranch.id,
                 user_id: state.currentUser.id,
-                shift_id: state.activeShift ? state.activeShift.id : null,
+                shift_id: isBackdate ? null : (state.activeShift ? state.activeShift.id : null),
+                is_backdate: isBackdate ? 1 : 0,
+                backdate_datetime: isBackdate ? _val('pos-backdate-input') : null,
                 customer_id: custId,
                 customer_name: custName,
                 customer_category: custCategory,
@@ -16110,7 +16229,7 @@ try {
             document.getElementById('receipt-branch-name').innerText = state.currentBranch.name;
             document.getElementById('receipt-branch-address').innerText = state.currentBranch.address || '';
             document.getElementById('receipt-invoice-no').innerText = sale.invoice_number;
-            document.getElementById('receipt-time').innerText = sale.created_at;
+            document.getElementById('receipt-time').innerText = sale.created_at + (Number(sale.is_backdate) === 1 ? ' [BACKDATE]' : '');
             document.getElementById('receipt-cashier-name').innerText = state.currentUser.name;
             document.getElementById('receipt-customer-name').innerText = sale.customer_name || 'Pelanggan Umum';
             document.getElementById('receipt-sales-type').innerText = sale.customer_category || 'REGULER';
@@ -36632,6 +36751,9 @@ Manager / Supervisor: __________________
 
             // Dokumen Title
             document.title = `${appName} - ${appSubtitle}`;
+
+            // Perbarui visibilitas Bar Backdate di POS sesuai pengaturan terkini
+            updatePosBackdateUI();
         }
 
         function applySubTabPermissions() {
@@ -36937,6 +37059,35 @@ Manager / Supervisor: __________________
             if (document.getElementById('set-tg-chat-id')) document.getElementById('set-tg-chat-id').value = s.telegram_chat_id || '';
             if (document.getElementById('set-tg-template')) document.getElementById('set-tg-template').value = s.telegram_template_message || '';
 
+            // 8. Mode Transaksi Backdate POS (Khusus Superadmin)
+            const isBackdateEnabled = (String(s.pos_backdate_mode_enabled || '0') === '1');
+            const setBackdateChk = document.getElementById('set-pos-backdate-mode');
+            if (setBackdateChk) setBackdateChk.checked = isBackdateEnabled;
+            const bdDot = document.getElementById('settings-backdate-dot');
+            const bdText = document.getElementById('settings-backdate-status-text');
+            if (bdDot && bdText) {
+                if (isBackdateEnabled) {
+                    bdDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
+                    bdText.innerHTML = '<span class="text-emerald-700 dark:text-emerald-400 font-bold">Status: AKTIF</span> (Superadmin diizinkan memilih tanggal mundur di POS)';
+                } else {
+                    bdDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-400';
+                    bdText.innerHTML = '<span class="text-slate-600 dark:text-slate-400 font-bold">Status: NONAKTIF (OFF)</span> (Opsi backdate tersembunyi total dari POS)';
+                }
+            }
+
+            // Batasi tampilan kartu setting backdate hanya jika yang sedang login adalah Superadmin
+            const curUser = state.currentUser || state.loggedInUser;
+            const role = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const isSuperAdmin = (role === 'SUPERADMIN');
+            const bdCard = document.getElementById('settings-backdate-card');
+            if (bdCard) {
+                if (isSuperAdmin) {
+                    bdCard.classList.remove('hidden');
+                } else {
+                    bdCard.classList.add('hidden');
+                }
+            }
+
             updateReceiptLivePreview();
         }
 
@@ -36989,7 +37140,10 @@ Manager / Supervisor: __________________
                 wa_template_message: _val('set-wa-template').trim() || '',
                 telegram_bot_token: _val('set-tg-token').trim() || '',
                 telegram_chat_id: _val('set-tg-chat-id').trim() || '',
-                telegram_template_message: _val('set-tg-template').trim() || ''
+                telegram_template_message: _val('set-tg-template').trim() || '',
+
+                // 8. Mode Transaksi Backdate POS (Khusus Superadmin)
+                pos_backdate_mode_enabled: _chk('set-pos-backdate-mode') ? '1' : '0'
             };
 
             try {
@@ -36998,6 +37152,7 @@ Manager / Supervisor: __________________
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         branch_id: branchId,
+                        user_id: (state.currentUser ? state.currentUser.id : 0),
                         settings: settingsPayload 
                     })
                 });
@@ -37013,6 +37168,144 @@ Manager / Supervisor: __________________
             } catch (err) {
                 alert('Terjadi kesalahan koneksi server.');
             }
+        }
+
+        async function onPosBackdateSettingChange(enabled) {
+            const curUser = state.currentUser || state.loggedInUser;
+            const role = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const isSuperAdmin = (role === 'SUPERADMIN');
+            if (!isSuperAdmin) {
+                alert('Akses Ditolak: Fitur Mode Backdate hanya dapat diubah oleh Superadmin.');
+                const chk = document.getElementById('set-pos-backdate-mode');
+                if (chk) chk.checked = !enabled;
+                return;
+            }
+
+            try {
+                const res = await fetch('api.php?action=save_app_settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        branch_id: 0,
+                        user_id: curUser ? curUser.id : 0,
+                        settings: {
+                            pos_backdate_mode_enabled: enabled ? '1' : '0'
+                        }
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    if (!state.appSettings) state.appSettings = {};
+                    state.appSettings.pos_backdate_mode_enabled = enabled ? '1' : '0';
+                    populateAppSettingsForm(state.appSettings);
+                    updatePosBackdateUI();
+                } else {
+                    alert(data.message || 'Gagal mengubah pengaturan mode backdate.');
+                    const chk = document.getElementById('set-pos-backdate-mode');
+                    if (chk) chk.checked = !enabled;
+                }
+            } catch (e) {
+                alert('Terjadi kesalahan jaringan.');
+                const chk = document.getElementById('set-pos-backdate-mode');
+                if (chk) chk.checked = !enabled;
+            }
+        }
+
+        function updatePosBackdateUI() {
+            const bar = document.getElementById('pos-backdate-bar');
+            if (!bar) return;
+
+            const curUser = state.currentUser || state.loggedInUser;
+            const role = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const isSuperAdmin = (role === 'SUPERADMIN');
+            const isSettingEnabled = (state.appSettings && String(state.appSettings.pos_backdate_mode_enabled) === '1');
+
+            // ATURAN MUTLAK: Jika setting OFF atau user bukan Superadmin, sembunyikan sepenuhnya dari tampilan POS!
+            if (!isSettingEnabled || !isSuperAdmin) {
+                bar.classList.add('hidden');
+                bar.style.display = 'none';
+                const chk = document.getElementById('check-pos-backdate');
+                if (chk) chk.checked = false;
+                onPosBackdateToggleChange();
+                return;
+            }
+
+            // Jika setting ON dan user Superadmin, tampilkan bar konfigurasi
+            bar.classList.remove('hidden');
+            bar.style.display = 'flex';
+        }
+
+        function isBackdateActive() {
+            const curUser = state.currentUser || state.loggedInUser;
+            const role = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
+            const isSuperAdmin = (role === 'SUPERADMIN');
+            const isSettingEnabled = (state.appSettings && String(state.appSettings.pos_backdate_mode_enabled) === '1');
+            const chk = document.getElementById('check-pos-backdate');
+            const isChecked = chk ? chk.checked : false;
+            const inputVal = _val('pos-backdate-input');
+            return (isSettingEnabled && isSuperAdmin && isChecked && !!inputVal);
+        }
+
+        function onPosBackdateToggleChange() {
+            const chk = document.getElementById('check-pos-backdate');
+            const isChecked = chk ? chk.checked : false;
+            const group = document.getElementById('pos-backdate-input-group');
+            const badge = document.getElementById('pos-backdate-active-badge');
+            const input = document.getElementById('pos-backdate-input');
+
+            if (isChecked) {
+                if (group) {
+                    group.classList.remove('hidden');
+                    group.classList.add('flex');
+                }
+                if (badge) badge.classList.remove('hidden');
+
+                // Set max value ke datetime sekarang agar tidak bisa memilih masa depan
+                const now = new Date();
+                const nowStr = formatLocalDateTimeForInput(now);
+                if (input) {
+                    input.max = nowStr;
+                    if (!input.value) {
+                        // Default set ke kemarin pada jam yang sama
+                        const defaultDate = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+                        input.value = formatLocalDateTimeForInput(defaultDate);
+                    }
+                }
+            } else {
+                if (group) {
+                    group.classList.add('hidden');
+                    group.classList.remove('flex');
+                }
+                if (badge) badge.classList.add('hidden');
+            }
+        }
+
+        function onPosBackdateDateChange() {
+            const input = document.getElementById('pos-backdate-input');
+            if (!input || !input.value) return;
+            const chosen = new Date(input.value);
+            const now = new Date();
+            if (chosen > now) {
+                alert('Peringatan: Tanggal transaksi backdate tidak boleh melebihi waktu sekarang (masa depan). Tanggal di-reset ke waktu saat ini.');
+                input.value = formatLocalDateTimeForInput(now);
+            }
+        }
+
+        function setBackdateToYesterday() {
+            const input = document.getElementById('pos-backdate-input');
+            if (!input) return;
+            const yesterday = new Date(Date.now() - (24 * 60 * 60 * 1000));
+            input.value = formatLocalDateTimeForInput(yesterday);
+        }
+
+        function formatLocalDateTimeForInput(d) {
+            const pad = function(n) { return String(n).padStart(2, '0'); };
+            const year = d.getFullYear();
+            const month = pad(d.getMonth() + 1);
+            const day = pad(d.getDate());
+            const hours = pad(d.getHours());
+            const minutes = pad(d.getMinutes());
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
         }
 
         function updateReceiptLivePreview() {

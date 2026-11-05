@@ -1964,6 +1964,7 @@ function autoMigrateAndSync($pdo) {
         ['company_name', 'ESBAS RETAIL INDONESIA', 'GENERAL', 'Nama perusahaan atau institusi'],
         ['company_address', 'Jl. Jenderal Sudirman No. 88, Jakarta Pusat', 'GENERAL', 'Alamat kantor pusat'],
         ['company_phone', '0812-3456-7890', 'GENERAL', 'Nomor telepon resmi toko'],
+        ['pos_backdate_mode_enabled', '0', 'POS', 'Mode input transaksi mundur / backdate di kasir POS (Khusus Superadmin)'],
 
         // 4. Setting Printer USB / IP
         ['printer_type', 'BROWSER', 'PRINTER', 'Tipe printer: BROWSER, USB, IP_NETWORK, BLUETOOTH'],

@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.8.10",
-    "build": "20261103-116",
-    "release_date": "2026-11-03",
+    "version": "1.8.11",
+    "build": "20261105-117",
+    "release_date": "2026-11-05",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.8.11",
+            "commit": "HEAD",
+            "date": "2026-11-05",
+            "title": "Fitur Mode Transaksi Backdate POS (Tanggal Mundur) Terproteksi Otorisasi Super Admin",
+            "description": "Mengimplementasikan fitur pencatatan transaksi tanggal masa lampau (backdate) dengan pembatasan hak akses ketat sesuai instruksi pengguna: (1) Otorisasi Sakelar Pengaturan Super Admin: Menambahkan kontrol pengaturan pos_backdate_mode_enabled (default: 0/OFF) di Pengaturan Sistem (#tab-settings) yang hanya dapat dilihat dan diaktifkan/dinonaktifkan oleh Super Admin (dilengkapi proteksi validasi peran ganda di sisi backend API & antarmuka UI); (2) Sembunyi Penuh Saat OFF: Jika sakelar dalam posisi NONAKTIF (OFF) atau akun yang login bukan Super Admin, seluruh bar pemilih tanggal, opsi checkbox, dan indikator mode backdate tersembunyi 100% dari layar kasir POS; (3) Bar Kontrol POS Super Admin: Saat diaktifkan, Super Admin dapat mengaktifkan 'Mode Tanggal Lampau' dengan pemilih tanggal/jam otomatis (maksimum waktu saat ini, tombol cepat 'Kemarin', dan badge peringatan visual yang berdenyut); (4) Perlindungan Rekonsiliasi Kas Laci (Zero Drawer Cash Distortion): Penjualan backdate diisolasi dari shift aktif kasir hari ini (shift_id = null & is_backdate = 1) serta dikecualikan dari perhitungan uang kas fisik shift, mencegah terjadinya selisih minus kas pada tutup toko harian; (5) Pemotongan Stok & Pembukuan Laba Rugi: Stok produk dan resep BOM dicatat terpotong sesuai tanggal masa lampau yang dipilih sehingga Laporan Laba Rugi dan mutasi stok pada tanggal lampau tersebut tercatat akurat; (6) Kompilasi Tailwind CSS.",
+            "rollback_command": "git checkout v1.8.10"
+        },
         {
             "version": "1.8.10",
             "commit": "HEAD",
