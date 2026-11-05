@@ -1115,7 +1115,7 @@ try {
                     </div>
                 </div>
 
-                <!-- Backdate Mode Bar (Visible ONLY when pos_backdate_mode_enabled is '1' AND current user is Super Admin) -->
+                <!-- Backdate Mode Bar (Visible when pos_backdate_mode_enabled is '1' in system settings) -->
                 <div id="pos-backdate-bar" class="hidden bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 border border-amber-300 dark:border-amber-600/50 rounded-2xl p-2.5 sm:p-3 flex-wrap items-center justify-between gap-3 shadow-xs transition-all" style="display: none;">
                     <div class="flex items-center space-x-2.5 min-w-0">
                         <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
@@ -6350,7 +6350,7 @@ try {
                         </div>
                     </div>
 
-                    <!-- Fitur Khusus POS: Mode Backdate (Superadmin Only) -->
+                    <!-- Fitur Khusus POS: Mode Backdate (Superadmin Control) -->
                     <div id="settings-backdate-card" class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
                         <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
                             <div class="flex items-center space-x-3">
@@ -6363,11 +6363,11 @@ try {
                                             Mode Transaksi Backdate (Tanggal Mundur) POS
                                         </h3>
                                         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-                                            Superadmin Only
+                                            Superadmin Control
                                         </span>
                                     </div>
                                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                        Fitur otorisasi khusus untuk mengizinkan Superadmin mencatat transaksi penjualan dengan tanggal & jam masa lampau langsung dari layar kasir POS.
+                                        Fitur otorisasi khusus: Sakelar aktivasi fitur pencatatan transaksi tanggal masa lampau pada POS penjualan bagi seluruh kasir/pengguna sistem.
                                     </p>
                                 </div>
                             </div>
@@ -6385,7 +6385,7 @@ try {
                             </div>
                             <ul class="text-[11px] text-slate-500 dark:text-slate-400 list-disc list-inside space-y-1">
                                 <li>Jika <strong class="text-slate-700 dark:text-slate-300">NONAKTIF (OFF)</strong>: Seluruh opsi, form pemilih tanggal, dan indikator backdate <span class="text-rose-600 font-bold">100% tidak muncul</span> di layar POS penjualan kasir.</li>
-                                <li>Jika <strong class="text-slate-700 dark:text-slate-300">AKTIF (ON)</strong>: Bar pemilih tanggal mundur akan muncul di layar POS kasir <span class="text-amber-600 font-bold">hanya untuk akun Superadmin</span>.</li>
+                                <li>Jika <strong class="text-slate-700 dark:text-slate-300">AKTIF (ON)</strong>: Bar pemilih tanggal mundur akan muncul di layar POS penjualan dan dapat digunakan oleh kasir/pengguna untuk menginput transaksi tanggal lampau.</li>
                                 <li>Transaksi backdate otomatis mencatat stok terpotong pada waktu tersebut dan <strong class="text-indigo-600 dark:text-indigo-400">TIDAK mempengaruhi rekonsiliasi kas laci kasir (opening/closing shift) hari ini</strong>.</li>
                             </ul>
                         </div>
@@ -37060,7 +37060,7 @@ Manager / Supervisor: __________________
             if (document.getElementById('set-tg-chat-id')) document.getElementById('set-tg-chat-id').value = s.telegram_chat_id || '';
             if (document.getElementById('set-tg-template')) document.getElementById('set-tg-template').value = s.telegram_template_message || '';
 
-            // 8. Mode Transaksi Backdate POS (Khusus Superadmin)
+            // 8. Mode Transaksi Backdate POS (Konfigurasi Khusus Superadmin)
             const isBackdateEnabled = (String(s.pos_backdate_mode_enabled || '0') === '1');
             const setBackdateChk = document.getElementById('set-pos-backdate-mode');
             if (setBackdateChk) setBackdateChk.checked = isBackdateEnabled;
@@ -37069,10 +37069,10 @@ Manager / Supervisor: __________________
             if (bdDot && bdText) {
                 if (isBackdateEnabled) {
                     bdDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
-                    bdText.innerHTML = '<span class="text-emerald-700 dark:text-emerald-400 font-bold">Status: AKTIF</span> (Superadmin diizinkan memilih tanggal mundur di POS)';
+                    bdText.innerHTML = '<span class="text-emerald-700 dark:text-emerald-400 font-bold">Status: AKTIF (ON)</span> (Bar mode transaksi backdate tampil di kasir POS bagi seluruh kasir/pengguna)';
                 } else {
                     bdDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-400';
-                    bdText.innerHTML = '<span class="text-slate-600 dark:text-slate-400 font-bold">Status: NONAKTIF (OFF)</span> (Opsi backdate tersembunyi total dari POS)';
+                    bdText.innerHTML = '<span class="text-slate-600 dark:text-slate-400 font-bold">Status: NONAKTIF (OFF)</span> (Bar mode transaksi backdate 100% tersembunyi dari layar kasir POS)';
                 }
             }
 
@@ -37216,13 +37216,11 @@ Manager / Supervisor: __________________
             const bar = document.getElementById('pos-backdate-bar');
             if (!bar) return;
 
-            const curUser = state.currentUser || state.loggedInUser;
-            const role = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
-            const isSuperAdmin = (role === 'SUPERADMIN');
             const isSettingEnabled = (state.appSettings && String(state.appSettings.pos_backdate_mode_enabled) === '1');
 
-            // ATURAN MUTLAK: Jika setting OFF atau user bukan Superadmin, sembunyikan sepenuhnya dari tampilan POS!
-            if (!isSettingEnabled || !isSuperAdmin) {
+            // ATURAN: Jika setting OFF di sistem, sembunyikan sepenuhnya dari tampilan POS!
+            // Jika setting ON (diaktifkan oleh Super Admin), bar backdate tampil dan dapat digunakan oleh seluruh pengguna/kasir POS.
+            if (!isSettingEnabled) {
                 bar.classList.add('hidden');
                 bar.style.display = 'none';
                 const chk = document.getElementById('check-pos-backdate');
@@ -37231,20 +37229,17 @@ Manager / Supervisor: __________________
                 return;
             }
 
-            // Jika setting ON dan user Superadmin, tampilkan bar konfigurasi
+            // Jika setting ON, tampilkan bar untuk kasir / pengguna POS
             bar.classList.remove('hidden');
             bar.style.display = 'flex';
         }
 
         function isBackdateActive() {
-            const curUser = state.currentUser || state.loggedInUser;
-            const role = String((curUser ? curUser.role : '') || '').toUpperCase().replace(/[^A-Z]/g, '');
-            const isSuperAdmin = (role === 'SUPERADMIN');
             const isSettingEnabled = (state.appSettings && String(state.appSettings.pos_backdate_mode_enabled) === '1');
             const chk = document.getElementById('check-pos-backdate');
             const isChecked = chk ? chk.checked : false;
             const inputVal = _val('pos-backdate-input');
-            return (isSettingEnabled && isSuperAdmin && isChecked && !!inputVal);
+            return (isSettingEnabled && isChecked && !!inputVal);
         }
 
         function onPosBackdateToggleChange() {

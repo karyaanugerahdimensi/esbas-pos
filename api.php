@@ -137,7 +137,7 @@ if (isset($pdo)) {
     try {
         $checkSet = $pdo->query("SELECT COUNT(*) FROM app_settings WHERE setting_key = 'pos_backdate_mode_enabled'")->fetchColumn();
         if (!$checkSet) {
-            $pdo->prepare("INSERT INTO app_settings (setting_key, setting_value, setting_group, description) VALUES ('pos_backdate_mode_enabled', '0', 'POS', 'Mode input transaksi mundur / backdate di kasir POS (Khusus Superadmin)')")->execute();
+            $pdo->prepare("INSERT INTO app_settings (setting_key, setting_value, setting_group, description) VALUES ('pos_backdate_mode_enabled', '0', 'POS', 'Mode input transaksi mundur / backdate di kasir POS (Dikonfigurasi oleh Superadmin)')")->execute();
         }
     } catch (Exception $eSet) {}
 }
@@ -8580,16 +8580,14 @@ try {
                     exit;
                 }
 
-                // 2. Cek apakah user yang melakukan checkout berwenang (Hanya SUPERADMIN)
-                $stmtRoleCheck = $pdo->prepare("SELECT role FROM users WHERE id = ?");
-                $stmtRoleCheck->execute([$userId]);
-                $userRole = strtoupper(trim($stmtRoleCheck->fetchColumn() ?: ''));
-                $normRole = str_replace(['_', ' '], '', $userRole);
-
-                if ($normRole !== 'SUPERADMIN') {
+                // 2. Verifikasi akun pengguna/kasir aktif dan valid di sistem
+                $stmtUserCheck = $pdo->prepare("SELECT id, name, status FROM users WHERE id = ?");
+                $stmtUserCheck->execute([$userId]);
+                $userRow = $stmtUserCheck->fetch(PDO::FETCH_ASSOC);
+                if (!$userRow || (isset($userRow['status']) && strtoupper((string)$userRow['status']) === 'INACTIVE')) {
                     echo json_encode([
                         'success' => false,
-                        'message' => 'Transaksi ditolak: Hanya Superadmin yang memiliki otorisasi untuk melakukan transaksi backdate (tanggal mundur).'
+                        'message' => 'Transaksi ditolak: Akun pengguna/kasir tidak valid atau nonaktif.'
                     ]);
                     exit;
                 }

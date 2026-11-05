@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.8.12",
-    "build": "20261105-118",
+    "version": "1.8.13",
+    "build": "20261105-119",
     "release_date": "2026-11-05",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.8.13",
+            "commit": "HEAD",
+            "date": "2026-11-05",
+            "title": "Perluasan Akses Mode Transaksi Backdate POS ke Seluruh Pengguna/Kasir dengan Kontrol Sentral Super Admin",
+            "description": "Menyempurnakan alur kerja transaksi backdate (tanggal mundur) POS sesuai instruksi: (1) Akses Transaksi Terbuka untuk Seluruh Pengguna: Ketika mode backdate diaktifkan (pos_backdate_mode_enabled = 1), bar kontrol backdate (#pos-backdate-bar) kini dapat dilihat dan digunakan oleh seluruh kasir, manager, admin, maupun superadmin untuk mencatat transaksi tanggal lampau; (2) Kontrol Sakelar Sentral Eksklusif Super Admin: Otorisasi untuk mengaktifkan atau menonaktifkan sakelar fitur backdate tetap diproteksi 100% hanya untuk Super Admin, baik pada antarmuka Pengaturan Sistem (#tab-settings) maupun pada validasi backend API (save_app_settings); (3) Pembersihan Validasi API: Validasi pada action checkout_sale di api.php kini memverifikasi keaktifan akun pengguna/kasir dan status sakelar sistem tanpa memblokir role selain superadmin; (4) Nol Distorsi Kas Kasir: Transaksi backdate oleh kasir mana pun tetap terisolasi dari kas laci shift harian (shift_id = null) sehingga tidak merusak rekonsiliasi kas opening/closing shift hari ini; (5) Kompilasi Tailwind CSS.",
+            "rollback_command": "git checkout v1.8.12"
+        },
         {
             "version": "1.8.12",
             "commit": "HEAD",
