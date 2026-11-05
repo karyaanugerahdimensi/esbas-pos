@@ -10932,24 +10932,24 @@ try {
     <!-- Modal 13: Pemilih Varian Produk POS (Varian Potong BOM) -->
     <div id="variant-select-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 space-y-4 text-slate-800 dark:text-slate-100">
-            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                 <div class="flex items-center space-x-2.5">
                     <span id="vsm-product-emoji" class="text-3xl">🥛</span>
                     <div>
-                        <h3 id="vsm-product-name" class="font-extrabold text-slate-900 text-base">Pilih Varian Produk</h3>
-                        <p id="vsm-product-sku" class="text-xs text-slate-400 font-mono">PRD-007</p>
+                        <h3 id="vsm-product-name" class="font-extrabold text-slate-900 dark:text-white text-base">Pilih Varian Produk</h3>
+                        <p id="vsm-product-sku" class="text-xs text-slate-400 dark:text-slate-400 font-mono">PRD-007</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeVariantSelectModal()" class="p-1 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                <button type="button" onclick="closeVariantSelectModal()" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <div class="bg-indigo-50/80 border border-indigo-200 p-3 rounded-2xl flex items-start space-x-2 text-xs text-indigo-900">
-                <i data-lucide="info" class="w-4 h-4 text-indigo-600 mt-0.5 shrink-0"></i>
+            <div class="bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 p-3 rounded-2xl flex items-start space-x-2 text-xs text-indigo-900 dark:text-indigo-200 shadow-2xs">
+                <i data-lucide="info" class="w-4 h-4 text-indigo-600 dark:text-indigo-400 mt-0.5 shrink-0"></i>
                 <div class="text-[11px] leading-relaxed">
                     Setiap varian memiliki resep bahan baku (BOM) tersendiri.
-                    <br><span class="font-bold text-indigo-950">Contoh:</span> Pilihan <em>Pakai Tutup</em> akan memotong stok tutup segel, sedangkan <em>Tanpa Tutup</em> tidak memotong stok tutup.
+                    <br><span class="font-bold text-indigo-950 dark:text-indigo-100">Contoh:</span> Pilihan <em class="font-semibold text-indigo-700 dark:text-indigo-300">Pakai Tutup</em> akan memotong stok tutup segel, sedangkan <em class="font-semibold text-indigo-700 dark:text-indigo-300">Tanpa Tutup</em> tidak memotong stok tutup.
                 </div>
             </div>
 
@@ -10959,7 +10959,7 @@ try {
             </div>
 
             <div class="pt-2">
-                <button type="button" onclick="closeVariantSelectModal()" class="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl font-bold text-slate-700 dark:text-slate-300 text-xs">Batal</button>
+                <button type="button" onclick="closeVariantSelectModal()" class="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-700 dark:text-slate-300 text-xs transition-colors cursor-pointer">Batal</button>
             </div>
         </div>
     </div>
@@ -14884,28 +14884,28 @@ try {
                 const finalVarPrice = basePriceInfo.price + addPrice;
                 const hasVarBOM = v.ingredients && v.ingredients.length > 0;
                 const bomDeductionSummary = hasVarBOM 
-                    ? v.ingredients.map(ing => `<span class="inline-block bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 rounded text-[10px] mr-1 mt-0.5 font-bold">🔻 Potong Stok: ${formatDecimal(ing.qty_needed)} ${ing.unit} ${ing.ingredient_name}</span>`).join('')
-                    : `<span class="inline-block bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded text-[10px] mr-1 mt-0.5 font-medium">🛡️ Tanpa potong stok bahan baku</span>`;
+                    ? v.ingredients.map(ing => `<span class="inline-block bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 px-2 py-0.5 rounded-lg text-[10px] mr-1 mt-0.5 font-bold">🔻 Potong Stok: ${formatDecimal(ing.qty_needed)} ${ing.unit} ${ing.ingredient_name}</span>`).join('')
+                    : `<span class="inline-block bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-lg text-[10px] mr-1 mt-0.5 font-medium">🛡️ Tanpa potong stok bahan baku</span>`;
 
                 const priceBadge = addPrice > 0
-                    ? `<span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">+${formatRupiah(addPrice)} (Ada Tambahan Harga)</span>`
-                    : `<span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 border border-slate-300">+Rp 0 (Tanpa Tambahan Biaya / Normal)</span>`;
+                    ? `<span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">+${formatRupiah(addPrice)} (Ada Tambahan Harga)</span>`
+                    : `<span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">+Rp 0 (Tanpa Tambahan Biaya / Normal)</span>`;
 
                 return `
-                    <div onclick="selectProductVariant(${product.id}, ${v.id})" class="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50/70 border border-slate-200 dark:border-slate-700 hover:border-indigo-400 rounded-2xl cursor-pointer transition-all flex flex-col justify-between group">
+                    <div onclick="selectProductVariant(${product.id}, ${v.id})" class="p-3.5 bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50/70 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 rounded-2xl cursor-pointer transition-all flex flex-col justify-between group shadow-2xs">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h4 class="font-black text-xs text-slate-800 group-hover:text-indigo-900">${v.variant_name}</h4>
-                                <span class="text-[10px] text-slate-400 font-mono">${v.sku_variant || ''}</span>
+                                <h4 class="font-black text-xs text-slate-800 dark:text-slate-100 group-hover:text-indigo-900 dark:group-hover:text-indigo-300">${v.variant_name}</h4>
+                                <span class="text-[10px] text-slate-400 dark:text-slate-400 font-mono">${v.sku_variant || ''}</span>
                             </div>
                             <div class="text-right">
-                                <span class="font-black text-sm text-indigo-700 font-mono">${formatRupiah(finalVarPrice)}</span>
+                                <span class="font-black text-sm text-indigo-700 dark:text-indigo-400 font-mono">${formatRupiah(finalVarPrice)}</span>
                                 <div class="mt-0.5">
                                     ${priceBadge}
                                 </div>
                             </div>
                         </div>
-                        <div class="mt-2 pt-2 border-t border-slate-200/60">
+                        <div class="mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
                             ${bomDeductionSummary}
                         </div>
                     </div>
@@ -14913,6 +14913,7 @@ try {
             }).join('');
 
             document.getElementById('variant-select-modal').classList.remove('hidden');
+            lucide.createIcons();
         }
 
         function closeVariantSelectModal() {

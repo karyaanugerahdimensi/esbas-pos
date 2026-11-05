@@ -1,11 +1,19 @@
 {
     "app_name": "KAD Tech Multicabang",
-    "version": "1.8.11",
-    "build": "20261105-117",
+    "version": "1.8.12",
+    "build": "20261105-118",
     "release_date": "2026-11-05",
     "commit_hash": "HEAD",
     "branch": "main",
     "history": [
+        {
+            "version": "1.8.12",
+            "commit": "HEAD",
+            "date": "2026-11-05",
+            "title": "Harmonisasi Dark Mode Modal Pilihan Varian Produk POS (Variant BOM Selection)",
+            "description": "Menyelaraskan tema gelap (dark mode) pada Modal 13 Pemilih Varian Produk POS (#variant-select-modal) agar kontras dan estetik: (1) Judul Produk (#vsm-product-name): Menambahkan dark:text-white sehingga nama produk terlihat jelas dan tajam (sebelumnya text-slate-900 hitam di atas modal gelap); (2) Kotak Info/Edukasi BOM: Mengubah latar terang bg-indigo-50/80 menjadi dark:bg-indigo-950/40 dengan border dark:border-indigo-800/60 dan teks kontras dark:text-indigo-200 / dark:text-indigo-100; (3) Kartu Opsi Varian Dinamis: Menambahkan dark:text-slate-100 pada nama varian (sebelumnya text-slate-800 tidak terbaca), dark:text-indigo-400 pada harga varian, dark:hover:bg-slate-800 dan dark:hover:border-indigo-500 pada interaksi hover; (4) Badge Potong Stok BOM: Menyelaraskan badge pemotongan bahan baku dengan dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-900/60 (sebelumnya bg-rose-50 terang); (5) Badge Selisih Biaya: Menambahkan dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800; (6) Tombol Batal & Tutup: Menambahkan border dan hover state dark mode; (7) Pemanggilan lucide.createIcons() saat modal dibuka; (8) Kompilasi Tailwind CSS.",
+            "rollback_command": "git checkout v1.8.11"
+        },
         {
             "version": "1.8.11",
             "commit": "HEAD",
